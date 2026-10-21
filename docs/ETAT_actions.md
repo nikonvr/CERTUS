@@ -107,3 +107,8 @@ mesurée contre l'étage actuel sur les trois 75 couches × deux graines, règle
 300 tirages, environ 20 min par calcul. *Livrable* : un profil (`cProfile`) d'une évaluation qui sépare noyau compilé et préparation Python ; les
 gains qui gardent les bits (préparation hors boucle, réutilisation des tableaux) prouvés identiques par un test ; les gains qui changent la
 recherche (présélection à moins de tirages) mesurés contre l'étage actuel avec une règle écrite d'avance ; un rapport avec la durée avant/après.
+
+**A14 — Valider l'étage sur tout le panel.** Il n'est mesuré que sur 75c, `r75x0.5` et `r75x2`. *Faire* : bancs aux réglages par défaut
+(dans un arbre jetable) sur `48c` (premium, recherche de fente), `35c`, `r75x1.5`, `r75x1.75`, `r75x2-2nm` et `75c` graine 101 ; juger chaque plan
+final contre le meilleur ELITE à ±0,005 et ±0,010 (`judge_bench.py.txt`). *Critère écrit d'avance* : jamais de SEEL dégradé ni d'arrêt ajouté,
+gain sur la majorité des designs, tenue à ±0,010. *Livrable* : `reports/STRAT_etage_panel_<date>/bilan.md`, une ligne par design.

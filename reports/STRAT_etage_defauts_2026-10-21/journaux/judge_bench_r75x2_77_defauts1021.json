@@ -1,0 +1,96 @@
+{
+ "report": {
+  "changes": [
+   "L7 450->480",
+   "L8 609->669",
+   "L9 609->599",
+   "L10 Rate",
+   "L11 609->559",
+   "L12 Rate",
+   "L14 609->659",
+   "L15 609->549",
+   "L17 609->629",
+   "L19 optical@650",
+   "L21 optical@720",
+   "L22 optical@730",
+   "L27 optical@710",
+   "L30 optical@730",
+   "L33 optical@710",
+   "L41 optical@470",
+   "L57 optical@700",
+   "L65 optical@700",
+   "L70 optical@700",
+   "L72 optical@700",
+   "L74 optical@690",
+   "L1 450->490",
+   "L2 450->470",
+   "L6 450->490",
+   "L7 Rate",
+   "L8 669->719",
+   "L11 559->599",
+   "L12 optical@620",
+   "L13 609->599",
+   "L16 609->639",
+   "L23 optical@750",
+   "L24 optical@740",
+   "L27 710->730",
+   "L28 optical@700",
+   "L32 optical@620",
+   "L34 optical@670",
+   "L37 optical@690",
+   "L40 optical@680",
+   "L42 optical@520",
+   "L50 optical@620",
+   "L59 optical@700",
+   "L62 optical@690",
+   "L65 Rate",
+   "L70 Rate",
+   "L72 Rate"
+  ],
+  "evaluations": 3631,
+  "search_seed": 7000080,
+  "check_seeds": [
+   7100080,
+   7100088
+  ],
+  "accepted": true,
+  "check_relative_gain": -0.5114140230596965,
+  "check_relative_se": 0.009462817040616718,
+  "check_stops": [
+   203,
+   15
+  ],
+  "check_p95": [
+   0.2339584432191696,
+   0.08658115753541033
+  ],
+  "start_strategy_id": 901250976,
+  "search_index_corridor": 0.01
+ },
+ "res": {
+  "0.005": {
+   "seel": {
+    "final": 0.4698837215778168,
+    "elite": 0.541065826909116
+   },
+   "stops": {
+    "final": 0,
+    "elite": 0
+   },
+   "rel": -0.4300718235645822,
+   "se": 0.00972286172949732
+  },
+  "0.01": {
+   "seel": {
+    "final": 0.588258720011996,
+    "elite": 0.7159215856883857
+   },
+   "stops": {
+    "final": 9,
+    "elite": 265
+   },
+   "rel": -0.5117012862851505,
+   "se": 0.00785748323344972
+  }
+ }
+}

@@ -1,0 +1,3 @@
+r75x0.5 s77: stage accepted True, changes 32, fallback 29/11, check gain -0.5958224390078006, stops [0, 2]; first row LOCAL_SEARCH SEEL 0.3663, best ELITE 0.4363 nm (Rate 47 vs 56)
+r75x0.5 s77 index +-0.005: SEEL elite 0.4360 -> final 0.3703 nm, stops 0 -> 0 / 9000, dRMSE2 -54.8 % (SE 1.6 %)
+r75x0.5 s77 index +-0.01: SEEL elite 0.5058 -> final 0.4105 nm, stops 0 -> 0 / 9000, dRMSE2 -57.4 % (SE 1.3 %)

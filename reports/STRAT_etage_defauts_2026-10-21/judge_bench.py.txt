@@ -1,0 +1,66 @@
+"""Judge a STRAT bench's final plan against its best ELITE plan, at +-0.005 and +-0.010 of index uncertainty.
+
+python -X utf8 judge_bench.py COMP BENCH_SEED TAG OFFSET
+Reads reports/blocs_vs_plantage_<COMP>_deep_s<SEED>_<TAG>.json. "final" = the plan STRAT ranks first (LOCAL_SEARCH when the
+stage was accepted), "elite" = the best non-LOCAL_SEARCH plan. Fresh seeds 20261023001+OFFSET.. (3 x 1000 draws), same
+draws for both plans; SEEL_strat = 2*sqrt(P95, max over levels), paired mean RMSE^2 at the nominal noise, stops.
+"""
+import json
+import os
+import subprocess
+import sys
+
+import numpy as np
+
+COMP, BSEED, TAG, OFF = sys.argv[1], int(sys.argv[2]), sys.argv[3], int(sys.argv[4])
+HERE = os.path.join(os.environ["TEMP"], "r75")
+V = os.path.join(HERE, "val")
+REPO = r"D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310"
+SEEDS = tuple(20261023001 + OFF + i for i in range(3))
+CORR = (0.005, 0.010)
+d = json.load(open(os.path.join(REPO, "reports", f"blocs_vs_plantage_{COMP}_deep_s{BSEED:03d}_{TAG}.json"), encoding="utf-8"))
+assert d.get("verdict") == "OK", d.get("verdict")
+
+
+def plan(w):
+    return dict(strategy_id=w["id"], origin=w["origine"], blocks=w["blocs"], rate_layers=w["rate_layers"],
+                witness_reset_layers=w.get("witness_reset_layers") or [], monochromator_resolution_nm=w.get("resolution_nm") or 2.0)
+
+
+rows = d["strategies"]
+final = rows[0]
+elite = sorted((x for x in rows if x.get("origine") != "LOCAL_SEARCH" and not x.get("crash_eliminated")), key=lambda x: x["score"])[0]
+rep = d.get("strat_local_search") or {}
+print(f"{COMP} s{BSEED}: stage accepted {rep.get('accepted')}, changes {len(rep.get('changes', []))}, fallback "
+      f"{rep.get('fallback_changes')}/{rep.get('fallback_tried')}, check gain {rep.get('check_relative_gain')}, stops {rep.get('check_stops')}; "
+      f"first row {final.get('origine')} SEEL {2 * final['score'] ** 0.5:.4f}, best ELITE {2 * elite['score'] ** 0.5:.4f} nm "
+      f"(Rate {len(final['rate_layers'])} vs {len(elite['rate_layers'])})", flush=True)
+plans = {"final": plan(final), "elite": plan(elite)}
+if final is elite or final.get("origine") != "LOCAL_SEARCH":
+    print(f"{COMP} s{BSEED}: no refined plan, nothing to judge", flush=True)
+    sys.exit(0)
+tag = f"jb_{COMP}_{BSEED}_{TAG}"
+jobs = [dict(name=f"{n}__{ic}__{s}", plan=p, seed=s, runs=1000, save=True, override={"index_corridor": ic})
+        for n, p in plans.items() for ic in CORR for s in SEEDS]
+jf, out = os.path.join(V, f"{tag}.json"), os.path.join(V, f"{tag}.jsonl")
+json.dump(jobs, open(jf, "w"))
+if os.path.exists(out):
+    os.remove(out)
+subprocess.run([sys.executable, "-X", "utf8", os.path.join(HERE, "r75_scan.py"), "--repo", REPO, "--jobs", jf, "--out", out,
+                "--comp", COMP, "--mode", "deep"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+z = {}
+for line in open(out, encoding="utf-8"):
+    r = json.loads(line)
+    z[r["name"]] = np.load(os.path.join(V, f"{tag}_arrays", r["name"] + ".npz"))
+res = {}
+for ic in CORR:
+    a = {n: [z[f"{n}__{ic}__{s}"] for s in SEEDS] for n in plans}
+    seel = {n: 2 * max(float(np.percentile(np.concatenate([x[f"rmse_{i}"] for x in a[n]]), 95)) for i in range(3)) ** 0.5 for n in plans}
+    st = {n: sum(int(x[f"crashed_{i}"].sum()) for x in a[n] for i in range(3)) for n in plans}
+    dd = np.concatenate([f["rmse_1"][~e["crashed_1"] & ~f["crashed_1"]] ** 2 - e["rmse_1"][~e["crashed_1"] & ~f["crashed_1"]] ** 2
+                         for e, f in zip(a["elite"], a["final"])])
+    base = np.mean(np.concatenate([e["rmse_1"][~e["crashed_1"]] ** 2 for e in a["elite"]]))
+    res[str(ic)] = dict(seel=seel, stops=st, rel=float(dd.mean() / base), se=float(dd.std(ddof=1) / np.sqrt(len(dd)) / base))
+    print(f"{COMP} s{BSEED} index +-{ic}: SEEL elite {seel['elite']:.4f} -> final {seel['final']:.4f} nm, stops {st['elite']} -> {st['final']} "
+          f"/ 9000, dRMSE2 {100 * res[str(ic)]['rel']:+.1f} % (SE {100 * res[str(ic)]['se']:.1f} %)", flush=True)
+json.dump(dict(report=rep, res=res), open(os.path.join(V, f"judge_bench_{COMP}_{BSEED}_{TAG}.json"), "w"), indent=1)

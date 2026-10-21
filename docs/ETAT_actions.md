@@ -39,9 +39,6 @@ python scripts\resumer_artefact_sonde.py reports\blocs_vs_plantage_r75x0.5_deep_
   tableau, ce qui n'est pas mesuré), mettre à jour ce document, `git worktree remove --force "%TEMP%\mesure_wt"`. Aucun chemin personnel dans un
   fichier versionné. Les entrées `.git/worktrees/*` que Drive refuse de supprimer sont normales.
 
-*Faits tirés de A1 et A2, terminées.* A1 (CI de la PR #9, contrôlée le 2026-10-13 sur la tête `bee0d3c5`) : tout vert sauf le contrôle des alertes CodeQL (SHA1 dans le suffixe de
-`scripts/probe_blocs_vs_plantage.py`, faux positif probable) ; SHA256 l'a remplacé ; l'alerte distante n'a pas été rejouée. A2 : voir « Acquis du Rate » dans `ETAT_acquis.md`.
-
 **A3 — Refaire les repères d'avant D106 et d'avant D96-D98** (§2 ; ≈ 6 h). *Pourquoi* : ces nombres datent d'avant D106 (qui coûte 8 % au juge de paix et retire tous les déposables optiques de `r75x2`)
 et d'avant le secours Rate : leur population n'est plus celle de la production. *Faire* : le juge de paix au banc officiel, aux défauts : `python scripts\bench_examples.py strat
 --auto-yes --out reports\STRAT_bench_juge_de_paix_<commit>_defauts_<date>.txt` (33 min ; `RESULT` et `STRAT_RANK00..09` sont les chiffres à reporter) ;
@@ -79,14 +76,6 @@ paramètre **inactif par défaut** qui perturbe l'épaisseur des couches Rate (t
 avant de committer ; (3) refaire `r75x0.5` (graine 101), le juge de paix et `r75x2` (graine 101) avec la dérive de 👤 divisée par 3, telle quelle et multipliée par 3,
 et comparer la forme du meilleur plan (queue, paquets alternés, optique pur). *Fini quand* : le tableau, le rapport, le §6 mis à jour. *Ne pas* : activer par
 défaut ; conclure sur une seule graine.
-
-**A7 — Proposer les corrections de la vitrine `pages/CERTUS_STRAT.html`, sans l'éditer** (2 h). *Pourquoi* : la vitrine suit un régime strict (CLAUDE.md §10) : 👤
-la relit avant qu'on la touche. Ses §10.18 et §10.19 citent les chiffres d'août ; ses déposables de `r75x2` sans rampes sont invalidés par D106 ; elle dit que le Rate
-est « offert mais jamais choisi » à ×1,5, ×1,75 et ×2 (« zero out of 1510 »), ce qui n'est plus vrai à `r75x2` aux défauts de production (tous les plans
-déposables portent du Rate ; ×1,5 et ×1,75 ne sont pas mesurés aux défauts). *Faire* : écrire un fichier
-« STRAT_vitrine_passages_a_relire » (date du jour) dans `reports\` : pour chaque passage, la ligne, le texte actuel, ce qui est faux, le texte proposé (en anglais,
-chaque nombre sourcé dans un rapport, la limite montrée : le modèle de Rate n'a pas de dérive). *Fini quand* : le fichier est écrit ; **la page n'est pas modifiée**.
-Après accord explicite de 👤, une action séparée l'édite puis lance `python scripts\verifier_html.py pages\CERTUS_STRAT.html` (0 point à instruire).
 
 **A8 — Dette technique** (§4 et §6) : un défaut par tâche, un commit par changement, jamais `ruff check --fix`, jamais agrandir `extend-ignore`.
 - *D25, lint* : mesure officielle `python -m ruff check . --isolated --select "E,F,I,B,UP,RUF,PT,PERF" --ignore E501 --line-length 120 --target-version py314 --statistics`

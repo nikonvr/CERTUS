@@ -1,0 +1,59 @@
+{
+  "prepared_utc": "2026-10-21T04:45:54.036309+00:00",
+  "config": "reports/serie_echelle_r75/cfg_x0.5.json",
+  "config_sha256": "a7394d3bc5decd15470c6e6018138de596442237057df797f976192353946ae7",
+  "probe_sha256": "5defd13ed6ff123f64be32265d0d31f3b0572a7fe39925bcc8ede057416537de",
+  "consensus_source_sha256": "249bd447f4db3b4f9c75cdb34bc68a9988d1810e83a42f678558f5c74e1c2656",
+  "ui_profiles_sha256": "2c239c2072a607700b7143a938fa99dc040d95844a58f10adc5144900a1aab3b",
+  "driver_sha256": "9673b60f66c6b7d41cd99eddd5440ebdbc3afbb6d81c7257af4f905425d57397",
+  "cases": [
+    [
+      "baseline",
+      "elite_rounds=3",
+      3,
+      true,
+      120
+    ],
+    [
+      "rounds6_no_stop",
+      "elite_rounds=6,elite_stop_on_no_gain=false",
+      6,
+      false,
+      120
+    ],
+    [
+      "rounds10_no_stop",
+      "elite_rounds=10,elite_stop_on_no_gain=false",
+      10,
+      false,
+      120
+    ],
+    [
+      "budget40",
+      "elite_rate_max_candidates=40",
+      3,
+      true,
+      40
+    ],
+    [
+      "budget360",
+      "elite_rate_max_candidates=360",
+      3,
+      true,
+      360
+    ]
+  ],
+  "search_seed": 101,
+  "consensus_seeds": [
+    41,
+    42,
+    43
+  ],
+  "mode": "deep",
+  "deadline_utc": "2026-10-21T08:00:00+00:00",
+  "independent_confirmation": false,
+  "primary_metric": "Best depositable non-fallback plan with finite positive consensus score, mean_std metadata, seeds exactly 41/42/43 and all three successful samples",
+  "secondary_metric": "Existing resumer_artefact_sonde global minimum, kept separate if score provenance differs",
+  "rate_packets": "Existing resumer_artefact_sonde.paquets on the selected plan's rate_layers",
+  "causal_scope": "rounds6 versus rounds10 isolates rounds; versus baseline changes rounds plus stopping rule; budgets each change one lever"
+}

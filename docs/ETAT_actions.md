@@ -81,7 +81,7 @@ registre `certus_strat_leviers.py`, un test qui prouve le chemin à 0 identique 
 `python scripts\metrics.py --dette tests\architecture_debt.json` après chaque dette payée (il ne fait que rétrécir), validation complète.
 
 **A9 — 99 couches en une campagne** (demande de 👤 du 2026-10-16). Protocole prêt : `reports/STRAT_99c_A9_protocole_2026-10-17/` (`chain_A9.sh`,
-graines réservées) ; il ne lance rien sans `GO_OWNER.txt` écrit par 👤. *Livrable* : sur plusieurs graines, plans déposables, plantages, SEEL de
+graines réservées) ; il ne lance rien sans `GO_OWNER.txt` écrit par 👤, que 👤 donnera après A14 (décision du 2026-10-21). *Livrable* : sur plusieurs graines, plans déposables, plantages, SEEL de
 consensus des plans figés, confirmation indépendante et coût, dans le dossier du protocole. *Ne pas* : lancer sans le GO.
 
 ### Claude
@@ -90,9 +90,6 @@ consensus des plans figés, confirmation indépendante et coût, dans le dossier
 et écarté l'assemblage des douze intervalles du 99 couches : croissance et notation n'y voient ni le même indice de bruit ni les mêmes domaines
 de normalisation d'indice (`reports/STRAT_A3_C2_assemblage_2026-10-21/`). *Livrable* : un protocole qui garantit C2, prouvé par un test qui
 échoue sur l'assemblage écarté, puis le repère dans la table §2 avec son rapport.
-
-**A6 — Le Rate avec dérive de la source.** Retirée par Codex à la demande de 👤 (sa branche, `619d84eb`) : à confirmer. Si elle revient, ne pas
-commencer sans la dérive observée par 👤.
 
 **A11 — Afficher la sensibilité de chaque stratégie à l'erreur d'indice.** *Pourquoi* : le but de STRAT est une stratégie peu sensible à l'indice
 (👤) ; la part d'indice se mesure (même plan, mêmes tirages, corridor actif puis nul : `outils/index_share.py.txt`). *Livrable* : un paramètre

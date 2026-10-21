@@ -1,0 +1,152 @@
+[
+  {
+    "case": "48c_premium",
+    "layers": 48,
+    "params": {
+      "execution_mode": "premium",
+      "robustness_seed": 42,
+      "phase_a_seed": 42,
+      "monochromator_resolution_nm": 2.0,
+      "search_resolution": true,
+      "index_corridor": 0.005,
+      "strat_local_search": true,
+      "tp_hysteresis_floor": 0.000415,
+      "injected_strategies": "",
+      "stack_string": "1.556,1.211,1.445,0.94,1.495,2.691,1.293,1.27,0.987,1.231,1.214,1.026,1.146,1.253,1.048,1.081,1.263,1.094,1.053,1.21,1.18,1.05,1.12,1.274,1.067,1.056,1.412,1.105,1.883,1.701,1.097,1.235,1.279,1.048,1.28,1.495,1.906,1.386,1.397,0.956,1.436,1.319,1.855,1.674,1.213,1.444,1.185,0.728",
+      "nH_id": "H800-Nb2O5",
+      "nL_id": "H800-SiO2",
+      "nSub_id": "SiO2",
+      "l0": 550.0,
+      "wl_range": [
+        400.0,
+        700.0
+      ],
+      "wl_step": 1.0
+    }
+  },
+  {
+    "case": "75c_fast",
+    "layers": 75,
+    "params": {
+      "execution_mode": "fast",
+      "robustness_seed": 42,
+      "phase_a_seed": 42,
+      "monochromator_resolution_nm": 2.0,
+      "search_resolution": false,
+      "index_corridor": 0.005,
+      "strat_local_search": true,
+      "tp_hysteresis_floor": 0.000415,
+      "injected_strategies": "",
+      "stack_string": "0.858,1.78,1.435,1.241,1.21,2.081,2.31,0.855,1.806,1.097,2.434,2.34,1.772,2.005,1.53,2.152,1.397,1.178,1.056,0.953,1.552,1.362,1.826,0.526,1.395,1.23,0.891,1.69,1.371,1.1,0.919,2.249,2.095,1.713,1.19,2.394,1.627,1.366,2.301,1.139,1.892,1.128,1.023,1.902,0.956,1.486,1.66,0.878,1.962,1.597,1.743,1.244,1.34,1.49,1.44,1.851,1.654,1.333,0.504,2.088,1.539,1.153,1.5,0.687,2.309,2.479,0.617,1.216,1.96,1.128,1.634,1.333,2.048,2.417,2.277",
+      "nH_id": "H800-Nb2O5",
+      "nL_id": "H800-SiO2",
+      "nSub_id": "SiO2",
+      "l0": 633.0,
+      "wl_range": [
+        550.0,
+        750.0
+      ],
+      "wl_step": 1.0
+    }
+  },
+  {
+    "case": "35c_deep",
+    "layers": 35,
+    "params": {
+      "execution_mode": "deep",
+      "robustness_seed": 42,
+      "phase_a_seed": 42,
+      "monochromator_resolution_nm": 2.0,
+      "search_resolution": true,
+      "index_corridor": 0.005,
+      "strat_local_search": true,
+      "tp_hysteresis_floor": 0.000415,
+      "injected_strategies": "",
+      "stack_string": "1.0,1.0,1.0,1.0,1.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,1.0,1.0,1.0,1.0,1.0",
+      "nH_id": "H800-Nb2O5",
+      "nL_id": "H800-SiO2",
+      "nSub_id": "SiO2",
+      "l0": 631.93,
+      "wl_range": [
+        600.0,
+        660.0
+      ],
+      "wl_step": 1.0
+    }
+  },
+  {
+    "case": "3cav_livre_36c_deep",
+    "layers": 36,
+    "params": {
+      "execution_mode": "deep",
+      "robustness_seed": 42,
+      "phase_a_seed": 42,
+      "monochromator_resolution_nm": 2.0,
+      "search_resolution": true,
+      "index_corridor": 0.005,
+      "strat_local_search": true,
+      "tp_hysteresis_floor": 0.000415,
+      "injected_strategies": "",
+      "stack_string": "1.0,1.0,1.0,1.0,1.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,2.0,1.0,1.0,1.0,1.0,1.0",
+      "nH_id": "H800-Nb2O5",
+      "nL_id": "H800-SiO2",
+      "nSub_id": "SiO2",
+      "l0": 631.93,
+      "wl_range": [
+        600.0,
+        660.0
+      ],
+      "wl_step": 1.0
+    }
+  },
+  {
+    "case": "r75x2_native_1nm_deep",
+    "layers": 75,
+    "params": {
+      "execution_mode": "deep",
+      "robustness_seed": 42,
+      "phase_a_seed": 42,
+      "monochromator_resolution_nm": 1.0,
+      "search_resolution": false,
+      "index_corridor": 0.005,
+      "strat_local_search": true,
+      "tp_hysteresis_floor": 0.000415,
+      "injected_strategies": "",
+      "stack_string": "1.716,3.56,2.87,2.482,2.42,4.162,4.62,1.71,3.612,2.194,4.868,4.68,3.544,4.01,3.06,4.304,2.794,2.356,2.112,1.906,3.104,2.724,3.652,1.052,2.79,2.46,1.782,3.38,2.742,2.2,1.838,4.498,4.19,3.426,2.38,4.788,3.254,2.732,4.602,2.278,3.784,2.256,2.046,3.804,1.912,2.972,3.32,1.756,3.924,3.194,3.486,2.488,2.68,2.98,2.88,3.702,3.308,2.666,1.008,4.176,3.078,2.306,3.0,1.374,4.618,4.958,1.234,2.432,3.92,2.256,3.268,2.666,4.096,4.834,4.554",
+      "nH_id": "H800-Nb2O5",
+      "nL_id": "H800-SiO2",
+      "nSub_id": "SiO2",
+      "l0": 633.0,
+      "wl_range": [
+        550.0,
+        750.0
+      ],
+      "wl_step": 1.0
+    }
+  },
+  {
+    "case": "r75x2_rampes_2nm_deep",
+    "layers": 75,
+    "params": {
+      "execution_mode": "deep",
+      "robustness_seed": 42,
+      "phase_a_seed": 42,
+      "monochromator_resolution_nm": 2.0,
+      "search_resolution": false,
+      "index_corridor": 0.005,
+      "strat_local_search": true,
+      "tp_hysteresis_floor": 0.000415,
+      "injected_strategies": "example/example_strat/rampes_r75x2-2nm.json",
+      "stack_string": "1.716,3.56,2.87,2.482,2.42,4.162,4.62,1.71,3.612,2.194,4.868,4.68,3.544,4.01,3.06,4.304,2.794,2.356,2.112,1.906,3.104,2.724,3.652,1.052,2.79,2.46,1.782,3.38,2.742,2.2,1.838,4.498,4.19,3.426,2.38,4.788,3.254,2.732,4.602,2.278,3.784,2.256,2.046,3.804,1.912,2.972,3.32,1.756,3.924,3.194,3.486,2.488,2.68,2.98,2.88,3.702,3.308,2.666,1.008,4.176,3.078,2.306,3.0,1.374,4.618,4.958,1.234,2.432,3.92,2.256,3.268,2.666,4.096,4.834,4.554",
+      "nH_id": "H800-Nb2O5",
+      "nL_id": "H800-SiO2",
+      "nSub_id": "SiO2",
+      "l0": 633.0,
+      "wl_range": [
+        550.0,
+        750.0
+      ],
+      "wl_step": 1.0
+    }
+  }
+]

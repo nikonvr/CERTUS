@@ -89,3 +89,4 @@ sources avant/après, diff et test rouge/vert. Le manifeste distingue les SHA or
 
 La reprise utilisera un nouveau dossier et une nouvelle tête, avec entrées et pilote à nouveau figés ;
 `--resume-interrupted` sur cet état ne convient pas après changement du code.
+Le correctif est committé `cd481836` ; [nouveau protocole et reprise](../STRAT_A3_reperes_reprise_2026-10-21/bilan.md).

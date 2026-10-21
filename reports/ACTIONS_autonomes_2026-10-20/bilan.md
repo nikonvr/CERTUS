@@ -12,14 +12,14 @@ Bilan prévu le 21 octobre 2026 à 10 h, Europe/Paris ; reprise automatique dans
 | A6 | retirée sur ordre du propriétaire ; `619d84eb` |
 | A7 | terminée : [neuf passages et propositions sourcées](../STRAT_vitrine_passages_a_relire_2026-10-20.md), page inchangée |
 | A8, corrections simples | premier correctif terminé, `37f27cb0` : trois photos identiques, validation complète ; dette restante ouverte |
-| A3 | premier banc échoué (`RESULT=None`) ; défaut reproduit et corrigé, validation complète réussie (8 425 tests) ; reprise à lancer dans un nouveau dossier |
+| A3 | défaut corrigé et validé, `cd481836` ; [protocole de reprise](../STRAT_A3_reperes_reprise_2026-10-21/bilan.md) figé, six bancs puis partition historique 99 couches ; consulter les états vivants |
 | A5 | ensuite : mesurer tours et budgets Rate |
 | A4 | ensuite : parents optiques garantis, chemin nul identique au bit |
 | A10 | ensuite : comparer les corridors et confirmer sur graines neuves |
 | A9 | ensuite : protocole borné 99 couches et confirmation indépendante |
 | A8, structure | en dernier : reproduire chaque défaut avant correction |
 
-Les actions non mesurées restent ouvertes. Aucun nouveau SEEL n'est encore acquis par cette campagne.
+Les actions non mesurées restent ouvertes.
 
 ## Validation initiale
 
@@ -100,6 +100,6 @@ Précontrôle après `37f27cb0` : `PREFLIGHT=GO`, arbre propre, aucun autre Pyth
 
 Le premier banc s'est arrêté sur un vrai `AttributeError` avant émission du résultat, au code `58ff57c5`. Le pilote a refusé `RESULT=None` et n'a lancé aucun autre composant. [Preuves, diagnostic et validation complète](../STRAT_A3_reperes_2026-10-21/bilan.md#échec-réel-et-correction-validée). Une ligne de `certus_strat_workers_pipeline.py` corrigée : accès à la clé du résultat hérité, aucun algorithme ni défaut modifié. Le nouveau test de frontière échoue avant et passe après, en couvrant aussi le chemin désactivé et le refus de la recherche locale.
 
-Validation terminée : 8 425 réussis, 19 ignorés, 3 échecs attendus ; Ruff et les trois contrôles documentaires passent. L'échec documentaire initial et sa correction sont conservés dans l'archive, avec l'essai officiel et le test rouge/vert. Prochaine étape après commit local du correctif : preflight, nouveau protocole A3, puis nouvelle mesure du juge de paix. Ne pas reprendre l'ancien état avec un code différent. La partie 99 couches reste ouverte.
+Correctif committé localement `cd481836` : 8 425 réussis, 19 ignorés, 3 échecs attendus ; Ruff et les trois contrôles documentaires passent. L'échec documentaire initial et sa correction sont conservés dans l'archive, avec l'essai officiel et le test rouge/vert. Le précontrôle de reprise donne `PREFLIGHT=GO`, puis les six profils à nouveau chargés donnent `A3_PARAMS=GO`.
 
-Préparation locale pendant cette validation, sans nouvelle mesure : `scratch/pack_A3_export_evidence.py` attend l'état complet pour archiver échec, sources avant/après, test rouge/vert et huit étapes de validation. Les brouillons `scratch/run_A3_retained_intervals.py`, `scratch/run_A3_suite.ps1` et `scratch/A3_reprise_bilan_template.md` préparent le 99 couches après les six bancs : partition historique figée, banque de robustesse 42/101/202, fast, dossiers neufs par essai, collecte des paramètres après surcharge, assemblage par les outils existants et garde horaire avant chaque lancement. Ce n'est ni une recherche de nouvelle partition ni une confirmation indépendante. Ces brouillons ne sont pas encore exécutés ni validés. Après commit du correctif, vérifier et figer le pilote d'intervalles dans le nouveau dossier avec `--outdir <nouveau-dossier> --prepare`, puis les profils des six bancs ; copier la chaîne et le modèle de bilan dans ce dossier, contrôler les documents et committer le protocole avant lancement. La chaîne PowerShell est faite pour être exécutée depuis son emplacement final sous `reports/`, pas depuis `scratch/`.
+Le [nouveau protocole A3](../STRAT_A3_reperes_reprise_2026-10-21/bilan.md) réserve les six bancs et la partition historique 99 couches sur la banque de robustesse 42/101/202 ; syntaxe des pilotes et préparation contrôlées, aucune recherche de nouvelle partition ni confirmation indépendante. Après commit du protocole, lancer sa chaîne PowerShell depuis `reports/STRAT_A3_reperes_reprise_2026-10-21/run_suite.ps1`. Les états `etat.json` et `intervalles_etat.json` de ce nouveau dossier sont l'autorité pour la mesure active et les étapes terminées ; attendre la sortie réelle des processus. Pendant toute la chaîne, ne modifier aucun fichier suivi ni committer. Après sa fin, dépouiller les sorties et reprendre les actions suivantes. Ne pas reprendre l'ancien état avec une tête différente.

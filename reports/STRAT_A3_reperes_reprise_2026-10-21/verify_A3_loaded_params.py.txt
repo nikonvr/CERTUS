@@ -1,0 +1,61 @@
+"""Load each A3 profile through the official loader and inspect collected parameters."""
+
+import json
+import os
+import runpy
+import sys
+from pathlib import Path
+
+ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "scripts/bench_examples.py").is_file())
+os.chdir(ROOT)
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "scripts"))
+import bench_examples as bench
+
+bench.qapp()
+bench.autoanswer_dialogs(True)
+from _composant import charger_configuration
+from CERTUS_STRAT import CertusStratApp
+
+folder = ROOT / (sys.argv[1] if len(sys.argv) > 1 else "reports/STRAT_A3_reperes_2026-10-21")
+CASES = runpy.run_path(str(folder / "run_A3_official_benches.py.txt"))["CASES"]
+
+rows = []
+for label, relative, count, mode in CASES:
+    path = ROOT / relative if relative else folder / "config_35c_deep_A3.json"
+    source = json.loads(path.read_text(encoding="utf-8"))
+    app = CertusStratApp()
+    app._post_load_config = lambda *args: None
+    charger_configuration(app, path)
+    params = app.collect_params()
+    actual_count = len([value for value in str(params["stack_string"]).split(",") if value.strip()])
+    assert actual_count == count, (label, actual_count, count)
+    assert params["execution_mode"] == mode, (label, params["execution_mode"], mode)
+    assert params["robustness_seed"] == 42, (label, params["robustness_seed"])
+    assert params["phase_a_seed"] == 42, (label, params["phase_a_seed"])
+    assert params["monochromator_resolution_nm"] == source["monochromator_resolution_nm"], label
+    assert params["index_corridor"] == source["index_corridor"] == 0.005, label
+    assert params["strat_local_search"] is True, label
+    assert params["tp_hysteresis_floor"] == 0.000415, label
+    assert str(params.get("injected_strategies", "")) == str(source.get("injected_strategies", "")), label
+    keys = (
+        "execution_mode", "robustness_seed", "phase_a_seed", "monochromator_resolution_nm",
+        "search_resolution", "index_corridor", "strat_local_search", "tp_hysteresis_floor",
+        "injected_strategies", "stack_string", "nH_id", "nL_id", "nSub_id", "l0", "wl_range", "wl_step",
+    )
+    rows.append({"case": label, "layers": actual_count, "params": {key: params.get(key) for key in keys}})
+    print(f"PARAMS_OK {label} layers={actual_count} mode={mode} seed=42", flush=True)
+    app.close()
+    app.deleteLater()
+    bench.qapp().processEvents()
+
+from certus.core.certus_core import _WarmupRegistry
+
+if _WarmupRegistry.thread is not None:
+    _WarmupRegistry.thread.join(timeout=300)
+    assert not _WarmupRegistry.thread.is_alive(), "Background warmup has not completed"
+target = folder / "params_effectifs.json"
+assert not target.exists(), "Preserve the earlier parameter audit"
+target.write_text(json.dumps(rows, indent=2, ensure_ascii=False, default=str) + "\n", encoding="utf-8")
+print("A3_PARAMS=GO", flush=True)

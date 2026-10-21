@@ -77,3 +77,13 @@ Les données binaires des épaisseurs sont identiques.
 
 [Reprise corrigée de l'assemblage](../STRAT_A3_intervalles_reprise_2026-10-21/bilan.md), sans recalculer les quatre intervalles 42.
 A3 reste ouverte jusqu'au bilan du 99 couches et à l'actualisation d'ETAT §2.
+
+## Contrôle final du 99 couches
+
+Les trois banques ont ensuite terminé numériquement ; [archive complète des 231 entrées](preuves_A3_completes_20261021T042912Z.zip),
+SHA-256 `9b954df54a6889cdfc6aeb93da30fc4d14e662de7ed33e5f1a65ae1729fc1c8d`.
+Intégrité ZIP et 229 empreintes de contenu vérifiées. « Complète » décrit la couverture des essais, pas leur validité scientifique.
+Les scores assemblés sont écartés après le [contrôle C2](../STRAT_A3_C2_assemblage_2026-10-21/bilan.md) :
+indice de niveau de bruit et domaines de normalisation incohérents entre croissance et assemblage.
+Les tableaux d'épaisseurs et les premiers scores restent conservés, sans moyenne publiée comme repère courant.
+Les six bancs sont reportés dans ETAT §2 ; le 99 couches y reste explicitement sans repère valide. La suite indépendante est A5.

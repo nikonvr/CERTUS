@@ -12,8 +12,8 @@ Bilan prévu le 21 octobre 2026 à 10 h, Europe/Paris ; reprise automatique dans
 | A6 | retirée sur ordre du propriétaire ; `619d84eb` |
 | A7 | terminée : [neuf passages et propositions sourcées](../STRAT_vitrine_passages_a_relire_2026-10-20.md), page inchangée |
 | A8, corrections simples | premier correctif terminé, `37f27cb0` : trois photos identiques, validation complète ; dette restante ouverte |
-| A3 | six bancs terminés ; quatre intervalles 42 mesurés, assemblage arrêté avant calcul sur un défaut du pilote ; [reprise de l'assemblage](../STRAT_A3_intervalles_reprise_2026-10-21/bilan.md) sans répéter les intervalles ; 99 couches et ETAT §2 encore ouverts |
-| A5 | ensuite : mesurer tours et budgets Rate |
+| A3 | six repères officiels publiés dans ETAT §2 ; douze intervalles mesurés, mais assemblage non conforme à C2 (flux et domaines d'indice différents) ; aucun score 99 couches retenu, [diagnostic et prototype bloqué](../STRAT_A3_C2_assemblage_2026-10-21/bilan.md) ; action partielle |
+| A5 | prochaine action indépendante : figer puis mesurer la référence courante et les quatre variantes de tours/budget |
 | A4 | ensuite : parents optiques garantis, chemin nul identique au bit |
 | A10 | ensuite : comparer les corridors et confirmer sur graines neuves |
 | A9 | ensuite : protocole borné 99 couches et confirmation indépendante |

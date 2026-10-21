@@ -49,25 +49,30 @@ régression (`tests/unit/test_the_architecture_debt_only_shrinks.py` ne tourne p
 | **Documentation** | règles dans `CLAUDE.md`, état ici ; 15 rapports HTML, 34 schémas Mermaid et 2 SVG validés le 2026-10-03 ; anciens dossiers lisibles dans Git | tenir « un fait, un seul endroit » |
 | **Validation externe** | 🔴 **aucune** : STRAT n'est validé que contre lui-même, et c'est assumé (décision de 👤 du 2026-10-06 : les deux dépôts réels du dichroïque ne sont plus prévus) | — |
 
-## 2. Repères mesurés — fente 2 nm, modèle courant
+## 2. Repères mesurés — conditions précisées par ligne
 
-| composant | SEEL | plantage | condition |
-|---|---|---|---|
-| dichroïque 48 couches, `JSON-strat-example` | **0,173 nm** | 0 % | 6 blocs, une campagne |
-| le même, D100 corrigé (`782972bf`) | **0,178 nm** | 0 % | 5 blocs (λ 544, 471, 466, 467, 462 nm), 823 stratégies dont 154 éliminées, `RESULT` 0,007917103726810235 ; `scripts\bench_examples.py strat` (`premium`), caches de l'arbre, 2026-10-11 (`reports/STRAT_bench_juge_de_paix_782972bf_D100_2026-10-11.txt`). Sous D100 (`b60d80e2`) : 0,175 nm |
-| le même, défauts du 2026-10-13 (D96 à D98, secours Rate, ELITE déplace les couches Rate) | **0,1721 nm** | 0 % | 2 blocs, 2 652 stratégies, toutes déposables, toutes avec du Rate ; `scripts/probe_blocs_vs_plantage.py 48c premium 1 0 2 0 42 0`, `cea0db66`, 2026-10-12. Sans les mouvements sur les couches Rate : **0,1849 nm** (1 bloc, 2 260 stratégies dont aucune éliminée, `RESULT` 0,00854267382381426 ; `scripts\bench_examples.py strat` (`premium`), caches de l'arbre, `03990e9a` ; `reports/STRAT_bench_juge_de_paix_03990e9a_D96-D98_secours_Rate_2026-10-12.txt`). Les cinq combinaisons du modèle d'arrêt au code final, sans ces mouvements : de 0,1759 à 0,1854 nm (`reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`). Sans le secours (`8d9ced13`) : 0,2000 nm, 2 plans déposables sur 1 112 |
-| passe-bande 3 cavités, 35 couches | **0,482 nm** | 0 % | 6 blocs, mode `deep` |
-| aléatoire `JSON-strat-random75`, 75 couches | **0,272 nm** | 0 % | une campagne, 241 déposables sur 662 |
-| passe-bande 5 cavités, 99 couches | **0,81 nm** | 0 % par campagne | 4 verres témoins, partition 0-22 / 22-42 / 42-76 / 76-99 |
-| le même en une seule campagne, mesure d'avant le secours Rate | aucun score valide | 100 % | 487 stratégies, toutes plantent : non fabricable |
-| le même en une seule campagne, défauts de production du 2026-10-16 (`0c7c1e2e`) | **0,7026 nm** (graine 42), 0,6559 nm (graine 101) | 0 % | `premium`, un seul verre témoin, `scripts/probe_blocs_vs_plantage.py 99c premium 0 0 2 0 <graine>`, consensus 41/42/43 : toutes les stratégies déposables (4 761 et 4 470) ; meilleur plan de queue (Rate de L11 ou L10 à L99, optique avant). SEEL du meilleur plan d'une graine de recherche, non comparable à la moyenne de trois graines de la ligne 0,81 nm ; modèle de Rate sans dérive de vitesse ; sans groupe frais. `reports/STRAT_99c_rate_elargi_2026-10-16/bilan.md` |
-| le même, profil élargi (`elite_rate_max_candidates=240`, `elite_rounds=6`, `elite_rate_joint_candidates=480`, `rate_post_refinement=True`) | **0,6084 nm** (graine 42), 0,6067 nm (graine 101) | 0 % | 6 302 déposables sur 6 338 et 5 989 sur 5 989 ; score de consensus −26,2 % et −23,2 % contre les défauts, SEEL −13,4 % et −7,5 % ; le raffinement final n'y compte que pour −0,89 % (graine 42) et 0 (graine 101). Exploratoire, hors protocole de campagne, non confirmé |
-| le même, budget Rate 240 seul, puis avec six tours | **0,6495 nm**, puis 0,6426 nm (graine 42) | 0 % | scores de consensus −15,9 % et −17,7 % contre les défauts (le profil élargi avec raffinement : −26,2 %) ; 4 827 et 5 378 stratégies, toutes déposables ; une graine, un chemin de décomposition. `reports/STRAT_99c_isolation_leviers_2026-10-17/bilan.md` |
-| aléatoire ×2 `r75x2`, fente native 1 nm | **0,6248 nm** | 0 % | `deep`, pur optique, 277 déposables ; mesuré avant D106 : à refaire |
-| `r75x2` à 2 nm, configuration livrée | **0,5676 nm** | 1,67 % | avec `example/example_strat/rampes_r75x2-2nm.json` ; étendue 0,55 % sur 3 graines ; mesuré avant D106 : à refaire |
-| `r75x2` à 2 nm, sans rampes, défauts de production du 2026-10-12 | **0,5406 nm** (graine 101), 0,5678 nm (graine 42) | 0 % | `deep`, `dbf8025f` : tous les plans de la liste déposables (4 175 et 4 307), aucun optique pur, du Rate (61 et 23 couches) ; l'optique pur sans secours Rate : 0 déposable aux deux graines (D106 corrigé). Avec ELITE qui déplace les couches Rate (`cea0db66`, graine 101) : 0,5358 nm ; graine 42 (`5da02db9`) : 0,5477 nm. `reports/STRAT_r75x2_D106_secours_Rate_2026-10-12.md` |
+Six bancs officiels du 21 octobre 2026, code `85a9e82f`, graine de robustesse et phase A 42.
+[Résultats, sources, dix rangs et preuves](../reports/STRAT_A3_reperes_reprise_2026-10-21/bilan.md).
+Le SEEL est celui du `RESULT` officiel ; le taux ci-dessous est celui de `RANK00`, pas de toute la population.
 
-Le passe-bande de 99 couches est chiffré en moyenne de trois graines, jamais par la meilleure.
+| composant | SEEL (nm) | plantage RANK00 | condition |
+|---|---:|---:|---|
+| dichroïque 48 couches, `JSON-strat-example` | **0,172 nm** | 0 % | premium ; fente de base 2 nm, recherche de fente active ; 2 652 stratégies retournées, 2 blocs au premier rang ; arrondi à 0,001 nm, valeur complète dans le rapport |
+| passe-bande 3 cavités, vrai 35 couches | **0,4907** | 0 % | deep dérivé du fichier 35 couches par le seul mode ; fente de base 2 nm, recherche active ; 1 245 retournées, 5 blocs |
+| passe-bande 3 cavités deep livré, 36 couches | **0,3238** | 0 % | deep livré ; fente de base 2 nm, recherche active ; 1 440 retournées, 29 blocs ; pile distincte du vrai 35 couches |
+| aléatoire `JSON-strat-random75`, 75 couches | **0,2225** | 0 % | fast livré ; fente fixe 2 nm ; 2 634 retournées, 51 blocs |
+| aléatoire ×2 `r75x2`, fente native 1 nm | **0,5833** | 0 % | deep livré ; fente fixe 1 nm ; 3 946 retournées, 15 blocs |
+| `r75x2` avec ses rampes livrées, fente 2 nm | **0,5092** | 0 % | deep livré ; fente fixe 2 nm ; 4 691 retournées, 56 blocs |
+| passe-bande 5 cavités, 99 couches, quatre verres témoins | **aucun repère courant valide** | non validé | douze intervalles mesurés, mais assemblage non conforme à C2 : flux de bruit et domaines d'indice décalés ; [preuves et limite](../reports/STRAT_A3_C2_assemblage_2026-10-21/bilan.md) ; A3 ouverte |
+
+Ces recherches ne sont pas des confirmations indépendantes de plans figés. Les populations retournées ne sont pas
+des décomptes de plans optiques purs. Une fente de base avec recherche active n'est pas une fente imposée à tous les candidats.
+Le 99 couches doit être chiffré sur les trois graines prévues, jamais par la meilleure ; les scores assemblés non conformes à C2 ne sont pas moyennés comme repère.
+
+Explorations historiques conservées, distinctes de ces références : [99 couches à Rate et profil élargi](../reports/STRAT_99c_rate_elargi_2026-10-16/bilan.md),
+[isolation des leviers 99 couches](../reports/STRAT_99c_isolation_leviers_2026-10-17/bilan.md),
+[`r75x2` sans rampes à 2 nm après D106](../reports/STRAT_r75x2_D106_secours_Rate_2026-10-12.md).
+Le nouveau 99 couches en une seule campagne relève d'A9 ; aucun ancien score ne remplace sa confirmation.
 
 **Lire ces chiffres :**
 
@@ -85,9 +90,8 @@ Le passe-bande de 99 couches est chiffré en moyenne de trois graines, jamais pa
 - Le banc `scripts\bench_examples.py strat` lit sa configuration dans `CERTUS_DESIGN_JSON` ; par défaut le juge de
   paix standard (`JSON-strat-example.json`). Les mesures `fast` de D5, D73, D20, D70 et D17 prenaient
   `JSON-strat-example-fast.json` (194 stratégies), celles de D14 et D15 le standard (370) : les deux ne se comparent pas.
-- Les repères du tableau, sauf les deux lignes du juge de paix au modèle de `782972bf` et de `03990e9a`, sont antérieurs à R130 et
-  à D96 à D98 par défaut (2026-10-12) : à refaire. Depuis R130, la gagnante est prise dans la classe du meilleur SEEL
-  (à un pas de 0,01 nm près) par rendement puis marge ; son SEEL dépasse le meilleur d'au plus un pas.
+- Les six références officielles ci-dessus ont été refaites après D103 et D106. Depuis R130, le premier rang est choisi
+  dans la classe du meilleur SEEL par rendement puis marge ; conserver `RESULT` et `RANK00` séparément.
 - La longueur seule ne met pas le monitoring optique en échec, la **structure** si :
   75 couches aléatoires passent, 99 couches à cavités et miroirs non. Sur un empilement
   structuré, la longueur pèse ensuite : sur 270 sous-intervalles du passe-bande de 99 couches,

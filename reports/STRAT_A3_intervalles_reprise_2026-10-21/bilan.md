@@ -32,4 +32,7 @@ python "reports/STRAT_A3_intervalles_reprise_2026-10-21/run_A3_retained_interval
 État vivant : `intervalles_etat.json`. Ne pas lancer l'ancienne chaîne PowerShell ni l'ancien pilote.
 Pendant cette reprise, conserver tête et fichiers suivis fixes. Aucun lancement après 10 h Europe/Paris.
 Un résultat absent, un repli ou une erreur ne devient pas un succès ; conserver les constats négatifs sans SEEL.
-L'assemblage et les deux autres graines restent à mesurer au moment de ce protocole.
+Les trois banques ont ensuite terminé numériquement. La première notation 42 est sortie sur une assertion LLVM
+après écriture du résultat et a été refusée ; un seul rejeu, à données identiques, a fini normalement. Cause non prouvée.
+La vérification finale a cependant montré un décalage entre le niveau de bruit mis en cache et le flux d'indice
+de notation : ces scores ne sont pas retenus comme repères scientifiques. [Réanalyse C2](../STRAT_A3_C2_assemblage_2026-10-21/bilan.md).

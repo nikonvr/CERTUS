@@ -42,15 +42,13 @@ python scripts\resumer_artefact_sonde.py reports\blocs_vs_plantage_r75x0.5_deep_
 *Faits tirés de A1 et A2, terminées.* A1 (CI de la PR #9, contrôlée le 2026-10-13 sur la tête `bee0d3c5`) : tout vert sauf le contrôle des alertes CodeQL (SHA1 dans le suffixe de
 `scripts/probe_blocs_vs_plantage.py`, faux positif probable) ; SHA256 l'a remplacé ; l'alerte distante n'a pas été rejouée. A2 : voir « Acquis du Rate » dans `ETAT_acquis.md`.
 
-**A3 — Refaire les repères d'avant D106 et d'avant D96-D98** (§2 ; ≈ 6 h). *Pourquoi* : ces nombres datent d'avant D106 (qui coûte 8 % au juge de paix et retire tous les déposables optiques de `r75x2`)
-et d'avant le secours Rate : leur population n'est plus celle de la production. *Faire* : le juge de paix au banc officiel, aux défauts : `python scripts\bench_examples.py strat
---auto-yes --out reports\STRAT_bench_juge_de_paix_<commit>_defauts_<date>.txt` (33 min ; `RESULT` et `STRAT_RANK00..09` sont les chiffres à reporter) ;
-puis, avec la variable `CERTUS_DESIGN_JSON` pointant le fichier de `example/example_strat/` (`set CERTUS_DESIGN_JSON=example\example_strat\JSON-strat-bandpass-3cav-deep.json`,
-à changer à chaque composant) la même commande pour le passe-bande de 35 couches (`JSON-strat-bandpass-3cav-deep.json`), l'aléatoire de 75 couches (`JSON-strat-random75.json`),
-`r75x2` à fente native (`JSON-strat-random75-x2-fabricable.json`) et la configuration livrée avec rampes (`JSON-strat-random75-x2-fabricable-2nm.json`) ;
-le passe-bande de 99 couches à verres témoins multiples se refait par intervalles (`python scripts\campagne_intervalles.py --etat` puis ses vagues : lire sa
-docstring, c'est long). *Fini quand* : chaque ligne concernée de la table du §2 porte le nombre refait, sa condition (commit, mode, graine) et son
-rapport ; les anciens nombres sont retirés (un fait, un seul endroit). *Ne pas* : modifier `example/example_strat/JSON-strat-example.json` (interdit 4).
+**A3 — Repères refaits en partie (21 octobre 2026), 99 couches encore ouvert.** Six bancs officiels aux paramètres livrés, code `85a9e82f`, graine 42 :
+juge de paix, random75 fast, vrai 35 deep, livré 36 deep, `r75x2` natif 1 nm et rampes 2 nm. Résultats, dix rangs et preuves dans
+[`STRAT_A3_reperes_reprise_2026-10-21`](../reports/STRAT_A3_reperes_reprise_2026-10-21/bilan.md), table §2 actualisée.
+Les douze intervalles de la partition historique 99 couches ont terminé, mais les scores assemblés ont été écartés : croissance et notation
+n'utilisent ni le même indice de bruit ni les mêmes domaines de normalisation d'indice. [Diagnostic C2, données et prototype bloqué](../reports/STRAT_A3_C2_assemblage_2026-10-21/bilan.md).
+Reprendre avec un protocole garantissant C2, sans réutiliser ces scores comme repère ; conserver les données et défauts scientifiques.
+Les autres actions indépendantes restent autorisées. Aucun exemple livré modifié.
 
 **A4 — Le Rate évince-t-il l'optique pure ?** (conception 2 h, mesure 2 h). *Pourquoi* : au juge de paix, les plans optiques purs déposables sont passés de
 487 à 50 (ancien modèle d'arrêt), le meilleur plan optique pur de 0,178 à 0,193 nm ; l'hypothèse, non mesurée, est qu'ELITE, dont les parents sont

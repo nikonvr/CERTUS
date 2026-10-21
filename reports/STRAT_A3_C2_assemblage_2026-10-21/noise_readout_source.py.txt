@@ -1,0 +1,32 @@
+"""Read the unchanged profile's noise levels; no growth or spectral replay."""
+
+import json
+import os
+import sys
+from pathlib import Path
+
+ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "scripts/bench_examples.py").is_file())
+sys.path[:0] = [str(ROOT), str(ROOT / "scripts")]
+import bench_examples as bench
+
+bench.qapp()
+bench.autoanswer_dialogs(True)
+from CERTUS_STRAT import CertusStratApp
+from _composant import charger_configuration
+from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+
+app = CertusStratApp()
+charger_configuration(app, ROOT / "example/example_strat/JSON-strat-bandpass-5cav-99c.json")
+app.widgets["execution_mode"].setCurrentText("fast")
+params = app.collect_params()
+params.update(monochromator_resolution_nm=2.0, search_resolution=False)
+levels = _resolve_robustness_noise_levels(params)
+payload = {"scope": "Post-run reconstruction with unchanged loader/profile; no new draws",
+           "thickness_tolerance_nm": params.get("thickness_tolerance_nm"),
+           "trigger_tolerance": params.get("reality_sim_params", {}).get("trigger_tolerance"),
+           "levels": levels, "cache_selected_level": min(levels, key=lambda level: abs(level - 1.0)),
+           "selection_rule": "Unchanged campagne_intervalles._epaisseurs: nearest noise_level to 1.0"}
+print("A3_NOISE_READOUT=" + json.dumps(payload), flush=True)
+sys.stdout.flush()
+sys.stderr.flush()
+os._exit(0)

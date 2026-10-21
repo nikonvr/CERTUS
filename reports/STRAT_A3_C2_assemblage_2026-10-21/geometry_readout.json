@@ -1,0 +1,242 @@
+[
+  {
+    "key": "s042_interval_000_022",
+    "score_matches_saved_choice": true,
+    "spectral_range": [
+      610.0,
+      655.0
+    ],
+    "selected_monitoring_range": [
+      450.0,
+      710.0
+    ],
+    "growth_normalization_domain": [
+      450.0,
+      710.0
+    ],
+    "matches_assembly_domain": false,
+    "noise_layer_offset": 0,
+    "index_corridor": 0.005,
+    "strategy_id": 900450365
+  },
+  {
+    "key": "s042_interval_022_042",
+    "score_matches_saved_choice": true,
+    "spectral_range": [
+      610.0,
+      655.0
+    ],
+    "selected_monitoring_range": [
+      456.0,
+      528.0
+    ],
+    "growth_normalization_domain": [
+      456.0,
+      655.0
+    ],
+    "matches_assembly_domain": false,
+    "noise_layer_offset": 22,
+    "index_corridor": 0.005,
+    "strategy_id": 900450266
+  },
+  {
+    "key": "s042_interval_042_076",
+    "score_matches_saved_choice": true,
+    "spectral_range": [
+      610.0,
+      655.0
+    ],
+    "selected_monitoring_range": [
+      450.0,
+      640.0
+    ],
+    "growth_normalization_domain": [
+      450.0,
+      655.0
+    ],
+    "matches_assembly_domain": false,
+    "noise_layer_offset": 42,
+    "index_corridor": 0.005,
+    "strategy_id": 900450132
+  },
+  {
+    "key": "s042_interval_076_099",
+    "score_matches_saved_choice": true,
+    "spectral_range": [
+      610.0,
+      655.0
+    ],
+    "selected_monitoring_range": [
+      450.0,
+      568.0
+    ],
+    "growth_normalization_domain": [
+      450.0,
+      655.0
+    ],
+    "matches_assembly_domain": false,
+    "noise_layer_offset": 76,
+    "index_corridor": 0.005,
+    "strategy_id": 900350308
+  },
+  {
+    "key": "s101_interval_000_022",
+    "score_matches_saved_choice": true,
+    "spectral_range": [
+      610.0,
+      655.0
+    ],
+    "selected_monitoring_range": [
+      455.0,
+      522.0
+    ],
+    "growth_normalization_domain": [
+      455.0,
+      655.0
+    ],
+    "matches_assembly_domain": false,
+    "noise_layer_offset": 0,
+    "index_corridor": 0.005,
+    "strategy_id": 900250281
+  },
+  {
+    "key": "s101_interval_022_042",
+    "score_matches_saved_choice": true,
+    "spectral_range": [
+      610.0,
+      655.0
+    ],
+    "selected_monitoring_range": [
+      450.0,
+      740.0
+    ],
+    "growth_normalization_domain": [
+      450.0,
+      740.0
+    ],
+    "matches_assembly_domain": false,
+    "noise_layer_offset": 22,
+    "index_corridor": 0.005,
+    "strategy_id": 900350295
+  },
+  {
+    "key": "s101_interval_042_076",
+    "score_matches_saved_choice": true,
+    "spectral_range": [
+      610.0,
+      655.0
+    ],
+    "selected_monitoring_range": [
+      450.0,
+      680.0
+    ],
+    "growth_normalization_domain": [
+      450.0,
+      680.0
+    ],
+    "matches_assembly_domain": false,
+    "noise_layer_offset": 42,
+    "index_corridor": 0.005,
+    "strategy_id": 900250378
+  },
+  {
+    "key": "s101_interval_076_099",
+    "score_matches_saved_choice": true,
+    "spectral_range": [
+      610.0,
+      655.0
+    ],
+    "selected_monitoring_range": [
+      457.0,
+      630.0
+    ],
+    "growth_normalization_domain": [
+      457.0,
+      655.0
+    ],
+    "matches_assembly_domain": false,
+    "noise_layer_offset": 76,
+    "index_corridor": 0.005,
+    "strategy_id": 902350098
+  },
+  {
+    "key": "s202_interval_000_022",
+    "score_matches_saved_choice": true,
+    "spectral_range": [
+      610.0,
+      655.0
+    ],
+    "selected_monitoring_range": [
+      455.0,
+      520.0
+    ],
+    "growth_normalization_domain": [
+      455.0,
+      655.0
+    ],
+    "matches_assembly_domain": false,
+    "noise_layer_offset": 0,
+    "index_corridor": 0.005,
+    "strategy_id": 900350523
+  },
+  {
+    "key": "s202_interval_022_042",
+    "score_matches_saved_choice": true,
+    "spectral_range": [
+      610.0,
+      655.0
+    ],
+    "selected_monitoring_range": [
+      450.0,
+      750.0
+    ],
+    "growth_normalization_domain": [
+      450.0,
+      750.0
+    ],
+    "matches_assembly_domain": false,
+    "noise_layer_offset": 22,
+    "index_corridor": 0.005,
+    "strategy_id": 900250249
+  },
+  {
+    "key": "s202_interval_042_076",
+    "score_matches_saved_choice": true,
+    "spectral_range": [
+      610.0,
+      655.0
+    ],
+    "selected_monitoring_range": [
+      450.0,
+      750.0
+    ],
+    "growth_normalization_domain": [
+      450.0,
+      750.0
+    ],
+    "matches_assembly_domain": false,
+    "noise_layer_offset": 42,
+    "index_corridor": 0.005,
+    "strategy_id": 990350180
+  },
+  {
+    "key": "s202_interval_076_099",
+    "score_matches_saved_choice": true,
+    "spectral_range": [
+      610.0,
+      655.0
+    ],
+    "selected_monitoring_range": [
+      457.0,
+      568.0
+    ],
+    "growth_normalization_domain": [
+      457.0,
+      655.0
+    ],
+    "matches_assembly_domain": false,
+    "noise_layer_offset": 76,
+    "index_corridor": 0.005,
+    "strategy_id": 902350098
+  }
+]

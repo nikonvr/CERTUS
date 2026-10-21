@@ -40,7 +40,7 @@ $plans = (Resolve-Path 'reports/STRAT_Rate_suite_2026-10-14/R0_replay_preparatio
 $protocol = (Resolve-Path 'reports/STRAT_Rate_suite_2026-10-14/R0_replay_preparation/protocol_R0.json').Path
 $reference = (Resolve-Path 'reports/STRAT_Rate_equilibre_AB_2026-10-13/etat.json').Path
 $controlOut = Join-Path (Get-Location).Path 'reports/STRAT_Rate_suite_2026-10-14/R0_fixed_points/attempt_01'
-python scratch/rate_fixed_replay_R0_suite.py --worktree $ratewt --plans $plans --protocol $protocol --reference-state $reference --output $controlOut --run control --deadline-utc '2026-10-16T07:00:00Z' --plan
+# Obsolète (copie scratch absente) : python scratch/rate_fixed_replay_R0_suite.py --worktree $ratewt --plans $plans --protocol $protocol --reference-state $reference --output $controlOut --run control --deadline-utc '2026-10-16T07:00:00Z' --plan
 ```
 
 L’échéance du16 octobre est une proposition de fenêtre ; la fixer dans le protocole réel en fonction

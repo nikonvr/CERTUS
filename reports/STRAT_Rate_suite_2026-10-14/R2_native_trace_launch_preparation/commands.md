@@ -23,7 +23,7 @@ Les chemins ci-dessous sont des modèles de dossiers nouveaux ; ne pas réutilis
 $ratewt = Join-Path $env:USERPROFILE '.codex\worktrees\rate-equilibre\certus0310'
 $reference = (Resolve-Path 'reports/STRAT_Rate_equilibre_AB_2026-10-13/etat.json').Path
 $verifyOut = Join-Path (Get-Location).Path 'reports/STRAT_Rate_suite_2026-10-14/R2_observer_verification/attempt_01'
-python scratch/verify_rate_native_pipeline_trace.py --worktree $ratewt --reference-state $reference --output $verifyOut
+# Obsolète (copie scratch absente) : python scratch/verify_rate_native_pipeline_trace.py --worktree $ratewt --reference-state $reference --output $verifyOut
 ```
 
 Ce script vérifie la factory réelle du worktree, y compris cinq chemins/états de génération avec/sans
@@ -38,7 +38,7 @@ revalider dans une autre tentative, sans réécrire le record précédent.
 $verifyRecord = Join-Path $verifyOut 'verification.json'
 $control = (Resolve-Path 'reports/STRAT_Rate_suite_2026-10-14/R0_fixed_points/attempt_01/control.json').Path
 $traceOut = Join-Path (Get-Location).Path 'reports/STRAT_Rate_suite_2026-10-14/R2_native_trace/attempt_01'
-python scratch/rate_native_pipeline_probe.py --worktree $ratewt --reference-state $reference --output $traceOut --deadline-utc '2026-10-16T07:00:00Z' --tag rate_native_trace_R2_20261014_v1 --verification-record $verifyRecord --validated-control $control --plan
+# Obsolète (copie scratch absente) : python scratch/rate_native_pipeline_probe.py --worktree $ratewt --reference-state $reference --output $traceOut --deadline-utc '2026-10-16T07:00:00Z' --tag rate_native_trace_R2_20261014_v1 --verification-record $verifyRecord --validated-control $control --plan
 ```
 
 L’échéance du16 octobre est **une proposition de fenêtre** pour le prochain run, pas une modification

@@ -1,0 +1,14 @@
+{
+  "case": "r75x2_rampes_2nm_deep",
+  "head": "85a9e82f10140da08024451d921f9c2b6a4a74c3",
+  "independent_confirmation": false,
+  "scope": "Delivered r75x2 with injected ramps, deep, seed 42, fixed slit 2 nm",
+  "result": "0.06481287745259888",
+  "seel_nm": 0.5091674673527321,
+  "returned_population": "4691",
+  "crash_eliminated": "0/4691",
+  "rank00": "id=900250598 origin=LOCAL_SEARCH score=0.064813 crash=0.0000 elim=False nblocks=56 nwl=21 wl=[680,580,640,640,640,670,640,540,640,520,460,510,640,610,450,510,640,550,640,450,640,660,640,710,640,630,640,690,640,630,640,469,590,469,620,690,660,610,650,690,610,469,510,700,690,469,510,700,469,740,700,690,469,690,469,670]",
+  "official_sha256_verified": "130f957c9e815ea391b104257fc38e02aa83264816458d66cb1207984532af77",
+  "raw_sha256_verified": "8d7751ea5382a4cc9337b84d1eb315b208087f98aaf09ab77a94dc4d4ac59353",
+  "reviewed_utc": "2026-10-21T04:04:00.1930372+00:00"
+}

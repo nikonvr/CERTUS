@@ -1,0 +1,23 @@
+"""Reproduce the real console import failure, then verify preloading before capture."""
+
+import argparse
+import importlib
+import io
+import sys
+from contextlib import redirect_stdout
+from pathlib import Path
+
+ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "scripts/bench_examples.py").is_file())
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "scripts"))
+import bench_examples as bench
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--preload", action="store_true")
+args = parser.parse_args()
+bench.qapp()
+if args.preload:
+    importlib.import_module("CERTUS_STRAT")
+with redirect_stdout(io.StringIO()):
+    importlib.import_module("CERTUS_STRAT")
+print("A3_CONSOLE_IMPORT=GO; import boundary only, no assembly or numerical measurement")

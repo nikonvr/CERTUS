@@ -1,0 +1,14 @@
+{
+  "independent_confirmation": false,
+  "seel_nm": 0.4907236255075494,
+  "official_sha256_verified": "ed7d0e0901983a5c25e31a2848e2f70e19811032475f5084b53d88ddbcb1ead1",
+  "returned_population": "1245",
+  "reviewed_utc": "2026-10-21T01:37:53.7043409Z",
+  "case": "35c_deep",
+  "crash_eliminated": "0/1245",
+  "rank00": "id=990500082 origin=RATE_L17(from 900600026) score=0.060202 crash=0.0000 elim=False nblocks=5 nwl=5 wl=[523,460,483,454,456]",
+  "result": "0.06020241915781839",
+  "head": "85a9e82f10140da08024451d921f9c2b6a4a74c3",
+  "scope": "Actual 35-layer source derived only by switching premium to deep; seed 42, slit 2 nm; distinct from delivered 36-layer deep file",
+  "raw_sha256_verified": "40c8f6e8bf1d6ea49d818132b099a41a43ee6bd96efec45ba21b14758301a894"
+}

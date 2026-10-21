@@ -1,0 +1,71 @@
+"""Preserve the failed assembly and adopt only verified, completed interval draws."""
+
+import argparse
+import hashlib
+import json
+import shutil
+import subprocess
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+OLD = ROOT / "reports/STRAT_A3_reperes_reprise_2026-10-21"
+NEW = ROOT / "reports/STRAT_A3_intervalles_reprise_2026-10-21"
+
+
+def read(path):
+    return json.loads(path.read_text(encoding="utf-8-sig"))
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def write(path, value):
+    with path.open("x", encoding="utf-8") as output:
+        json.dump(value, output, indent=2, ensure_ascii=False)
+        output.write("\n")
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--adopt-after-commit", action="store_true")
+args = parser.parse_args()
+if not args.adopt_after_commit:
+    NEW.mkdir(exist_ok=False)
+    original = (OLD / "run_A3_retained_intervals.py.txt").read_text(encoding="utf-8")
+    anchor = "    import classer_partitions as assembly\n"
+    assert original.count(anchor) == 1
+    patched = original.replace(anchor, anchor + '\n    __import__("CERTUS_STRAT")  # Complete console imports before redirect_stdout.\n')
+    (ROOT / "scratch/run_A3_intervals_console.py").write_text(patched, encoding="utf-8")
+    shutil.copy2(OLD / "sources_sha256.json", NEW / "sources_sha256.json")
+    state = read(OLD / "intervalles_etat.json")
+    assert state["status"] == "failed" and state["current_key"] == "s042_assembly"
+    reused = [item for item in state["attempts"] if item["measured"] and item["valid"]]
+    assert len(reused) == 4 and all(item["key"].startswith("s042_interval_") for item in reused)
+    manifest = {"source_head": state["head"], "source_state_sha256": sha(OLD / "intervalles_etat.json"),
+                "failed_assembly": state["attempts"][-1], "attempts": [], "files_sha256": {}}
+    for item in reused:
+        source = ROOT / item["slot"]
+        target = NEW / "intervalles" / source.name
+        assert sha(source / "raw.log") == item["raw_sha256"]
+        shutil.copytree(source, target)
+        adopted = {**item, "slot": target.relative_to(ROOT).as_posix(),
+                   "imported_from": item["slot"], "measurement_head": state["head"]}
+        manifest["attempts"].append(adopted)
+        for path in source.rglob("*"):
+            if path.is_file():
+                copied = target / path.relative_to(source)
+                assert sha(path) == sha(copied)
+                manifest["files_sha256"][copied.relative_to(NEW).as_posix()] = sha(copied)
+    write(NEW / "reuse_provenance.json", manifest)
+    print("A3_REUSE=PREPARED four completed interval slots copied byte-identically; no draw rerun")
+else:
+    manifest = read(NEW / "reuse_provenance.json")
+    for name, expected in manifest["files_sha256"].items():
+        assert sha(NEW / name) == expected, name
+    for name, expected in read(NEW / "sources_sha256.json").items():
+        assert sha(ROOT / name) == expected, name
+    assert not subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"], cwd=ROOT, text=True).strip()
+    head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    write(NEW / "intervalles_etat.json", {"head": head, "attempts": manifest["attempts"], "status": "prepared",
+          "imported_measurement_head": manifest["source_head"], "reuse_manifest_sha256": sha(NEW / "reuse_provenance.json")})
+    print("A3_REUSE=ADOPTED source hashes unchanged; only assembly and unmeasured seeds remain")

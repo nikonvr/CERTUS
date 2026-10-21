@@ -53,5 +53,27 @@ Un intervalle réellement sans plan déposable est conservé comme constat néga
 
 ## Résultats
 
-Les résultats de recherche restent à dépouiller après la chaîne ; les états vivants donnent les étapes réellement terminées.
-A3 et les actions suivantes restent ouvertes jusqu'à leur bilan mesuré. Aucun succès d'une recherche n'est une confirmation indépendante.
+Les six bancs ont terminé avec un résultat valide au code `85a9e82f`, graine 42. Empreintes des sorties vérifiées ;
+les reçus `revue_*_a01.json` conservent ces vérifications. [Conditions et limites de l'export](conditions_et_limites.md).
+
+| profil | RESULT officiel | SEEL (nm) | population retournée | durée du processus (s) |
+|---|---:|---:|---:|---:|
+| 48 premium | 0.007402488118579864 | 0.17207542670096582 | 2652 | 1035.64 |
+| 75 fast livré | 0.012373053745766442 | 0.2224684584004343 | 2634 | 1787.58 |
+| vrai 35 deep | 0.06020241915781839 | 0.4907236255075494 | 1245 | 500.18 |
+| 36 deep livré | 0.026218616702447725 | 0.32384327507266675 | 1440 | 569.29 |
+| r75x2 natif 1 nm deep | 0.085061538305979 | 0.5833062259430427 | 3946 | 3759.02 |
+| r75x2 rampes 2 nm deep | 0.06481287745259888 | 0.5091674673527321 | 4691 | 3670.23 |
+
+Les dix rangs sont présents, sans repli final. Les populations retournées ne prouvent pas un nombre de plans
+déposables ou optiques purs. Les listes de longueurs d'onde du banc ne portent pas les frontières complètes.
+Aucune comparaison statistique ni confirmation indépendante n'est revendiquée.
+
+Les quatre intervalles 42 ont terminé, puis l'assemblage a échoué avant calcul sur la capture de console.
+La chaîne s'est arrêtée, sans lancer les graines 101/202. [Archive partielle des 74 preuves](preuves_A3_partielles_20261021T040040Z.zip),
+SHA-256 `cd86605215ff0921e3c700b61a38c75cdd34c88dd3a1799cf26f0a1b09c9bbbe` : six bancs, intervalles,
+épaisseurs, paramètres, état et échec réel conservés, chemins normalisés et empreintes originales incluses.
+Les données binaires des épaisseurs sont identiques.
+
+[Reprise corrigée de l'assemblage](../STRAT_A3_intervalles_reprise_2026-10-21/bilan.md), sans recalculer les quatre intervalles 42.
+A3 reste ouverte jusqu'au bilan du 99 couches et à l'actualisation d'ETAT §2.

@@ -1,0 +1,14 @@
+{
+  "coherence": {
+    "original_sha256": "fdaafe8beae6588c3a85152b940d80f5148ae950837d249787c4b0028dbfc88e",
+    "archived_sha256": "3f59e46aa71cf663a608f0c6b99dd691833d3d8f505f80657bfbff08e175546d"
+  },
+  "claude": {
+    "original_sha256": "231482e48926ef064aec8dd6281274a14bc51a26b3bb9fcba76c25f8e5182e61",
+    "archived_sha256": "0bae814feff51eda08271aa2df0973cad360bca4136ac43a4a9ea33bccb6efbb"
+  },
+  "docs": {
+    "original_sha256": "4767bcb95e6ee704fef96765fadf8a306747377c94f2b85e9eb3e3ef87170319",
+    "archived_sha256": "24d90fa327e5003ed2f0607b4c3b446eb5126635d88a9332a9dd54904050046c"
+  }
+}

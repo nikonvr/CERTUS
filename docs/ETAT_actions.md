@@ -8,7 +8,7 @@
 **autonome** : pourquoi, quoi lancer (commandes exactes), quand elle est finie, ce qu'il ne faut pas faire. Les actions sont indépendantes les unes des autres, par priorité décroissante.
 Une action peut donner plusieurs commits, chacun d'une seule chose (C3). **Jamais de `git push` ni de fusion de PR sans l'ordre de 👤.**
 
-**[OK gemini]** : protocole écrit, les garde-fous (tests, cliquets, `c1_diff`, validation) attrapent l'erreur ; **[non gemini]** : conception, piège de reproductibilité ou interprétation, à confier à un modèle fort ou à faire relire (référence §12) avant fusion.
+**À qui confier l'action** (👤, 2026-10-21) : **[Gemini]** exécution d'un protocole écrit, les garde-fous (tests, cliquets, `c1_diff`, validation) attrapent l'erreur ; **[ChatGPT]** code ou campagne bien spécifiés ; **[Claude]** ce qui demande de l'intelligence : conception, piège de reproductibilité, interprétation. Toute branche est relue avant fusion (référence §12).
 
 **Mesurer, une fois pour toutes** (toutes les actions de mesure suivent ce protocole ; il a produit tous les rapports du 2026-10-12).
 ```bat
@@ -41,7 +41,7 @@ python scripts\resumer_artefact_sonde.py reports\blocs_vs_plantage_r75x0.5_deep_
   tableau, ce qui n'est pas mesuré), mettre à jour ce document, `git worktree remove --force "%TEMP%\mesure_wt"`. Aucun chemin personnel dans un
   fichier versionné. Les entrées `.git/worktrees/*` que Drive refuse de supprimer sont normales.
 
-**A3 — [non gemini] Refaire les repères d'avant D106 et d'avant D96-D98** (§2 ; ≈ 6 h). *Pourquoi* : ces nombres datent d'avant D106 (qui coûte 8 % au juge de paix et retire tous les déposables optiques de `r75x2`)
+**A3 — [Claude] Refaire les repères d'avant D106 et d'avant D96-D98** (§2 ; ≈ 6 h). *Pourquoi* : ces nombres datent d'avant D106 (qui coûte 8 % au juge de paix et retire tous les déposables optiques de `r75x2`)
 et d'avant le secours Rate : leur population n'est plus celle de la production. *Faire* : le juge de paix au banc officiel, aux défauts : `python scripts\bench_examples.py strat
 --auto-yes --out reports\STRAT_bench_juge_de_paix_<commit>_defauts_<date>.txt` (33 min ; `RESULT` et `STRAT_RANK00..09` sont les chiffres à reporter) ;
 puis, avec la variable `CERTUS_DESIGN_JSON` pointant le fichier de `example/example_strat/` (`set CERTUS_DESIGN_JSON=example\example_strat\JSON-strat-bandpass-3cav-deep.json`,
@@ -51,7 +51,7 @@ le passe-bande de 99 couches à verres témoins multiples se refait par interval
 docstring, c'est long). *Fini quand* : chaque ligne concernée de la table du §2 porte le nombre refait, sa condition (commit, mode, graine) et son
 rapport ; les anciens nombres sont retirés (un fait, un seul endroit). *Ne pas* : modifier `example/example_strat/JSON-strat-example.json` (interdit 4).
 
-**A4 — [non gemini] Le Rate évince-t-il l'optique pure ?** (conception 2 h, mesure 2 h). *Pourquoi* : au juge de paix, les plans optiques purs déposables sont passés de
+**A4 — [ChatGPT] Le Rate évince-t-il l'optique pure ?** (conception 2 h, mesure 2 h). *Pourquoi* : au juge de paix, les plans optiques purs déposables sont passés de
 487 à 50 (ancien modèle d'arrêt), le meilleur plan optique pur de 0,178 à 0,193 nm ; l'hypothèse, non mesurée, est qu'ELITE, dont les parents sont
 maintenant en majorité des plans Rate, raffine moins la lignée optique pure (`reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`, mesure 4). *Faire* : un
 levier `elite_optical_parents` (entier, `0` = le chemin d'avant, **bit pour bit** : le prouver comme `tests/unit/test_strat_elite_rate_moves.py` le fait
@@ -61,14 +61,14 @@ global et le nombre de plans optiques purs déposables, dans un rapport. **Le co
 lignes (plafond 1 500) et `_apply_elite_refinement_if_enabled` à 299 (plafond 300) : ne rien y ajouter qui ne soit pas compensé, mettre la logique dans
 `certus/core/certus_strat_robustness_rate.py` comme `_elite_rate_candidates`. *Ne pas* : l'armer par défaut (c'est à 👤).
 
-**A5 — [OK gemini] ELITE : plus de tours, autre budget pour les mouvements sur les couches Rate** (≈ 4 h). *Pourquoi* : ELITE fait 3 tours en `deep` et s'arrête
+**A5 — [Gemini] ELITE : plus de tours, autre budget pour les mouvements sur les couches Rate** (≈ 4 h). *Pourquoi* : ELITE fait 3 tours en `deep` et s'arrête
 quand rien ne progresse ; la recherche des paquets est une escalade qui n'a peut-être pas fini. *Faire* (`r75x0.5`, graine 101, référence : 0,3967 nm) :
 `elite_rounds=6,elite_stop_on_no_gain=false`, puis `elite_rounds=10,elite_stop_on_no_gain=false` ; puis, à 3 tours, `elite_rate_max_candidates=40` et
 `elite_rate_max_candidates=360`. Une surcharge à la fois, avec son étiquette. *Fini quand* : un tableau tours et budget → meilleur SEEL, durée, nombre de
 paquets de Rate du meilleur plan. Si les largeurs de fenêtre (`ELITE_RATE_WINDOWS`) ou le pas (`ELITE_RATE_STEP`) méritent un balayage, en faire des
 paramètres **inactifs par défaut** (chemin d'avant identique) avant de les mesurer. *Ne pas* : changer un défaut sans 👤.
 
-**A6 — [non gemini] Le modèle de Rate sans dérive de la source** (le sujet scientifique central ; **ne pas commencer sans la valeur de 👤**). *Pourquoi* : tous les SEEL
+**A6 — [Claude] Le modèle de Rate sans dérive de la source** (le sujet scientifique central ; **ne pas commencer sans la valeur de 👤**). *Pourquoi* : tous les SEEL
 des plans Rate supposent une vitesse constante pendant le dépôt (`certus/physics/certus_strat_growth.py`, « RATE MODE ») ; 👤 observe en salle ±1 à 2 %
 (§6, A25) et de bons plans en paquets alternés. Le modèle ne peut ni confirmer ni infirmer ce qui vient de la salle. *Faire* : (1) **demander à 👤** la
 dérive ou l'instabilité de la vitesse pendant un dépôt (relative, par couche ou par run, et comment elle a été observée) ; ne pas l'inventer ; (2) ajouter un
@@ -79,7 +79,7 @@ avant de committer ; (3) refaire `r75x0.5` (graine 101), le juge de paix et `r75
 et comparer la forme du meilleur plan (queue, paquets alternés, optique pur). *Fini quand* : le tableau, le rapport, le §6 mis à jour. *Ne pas* : activer par
 défaut ; conclure sur une seule graine.
 
-**A8 — [OK gemini] Dette technique** (§4 et §6) : un défaut par tâche, un commit par changement, jamais `ruff check --fix`, jamais agrandir `extend-ignore`.
+**A8 — [Gemini] Dette technique** (§4 et §6) : un défaut par tâche, un commit par changement, jamais `ruff check --fix`, jamais agrandir `extend-ignore`.
 - *D25, lint* : mesure officielle `python -m ruff check . --isolated --select "E,F,I,B,UP,RUF,PT,PERF" --ignore E501 --line-length 120 --target-version py314 --statistics`
   (1 416 violations le 2026-10-12 : F401 659, E402 555, RUF001 77, RUF003 59, RUF002 51, RUF100 10, RUF022 3, F811 2). Une règle ne quitte `extend-ignore`
   qu'à zéro violation, dans le commit qui met à jour la liste de `tests/oracle/test_lint_debt_ratchet.py`. Commencer par E402, module par module, avec les trois
@@ -92,7 +92,7 @@ défaut ; conclure sur une seule graine.
 - *D82* (logo du thème sombre) demande des yeux ; *D84* (écart au dernier bit au premier passage après un changement de clé du cache Numba) : relancer une fois avant de
   conclure à une régression ; *D68* (silicium lu à l'import) est optionnel.
 
-**A9 — [non gemini] Tenter le99c en une seule campagne avec injection et derniers raffinements Rate** (demande de 👤 du2026-10-16 ; à préparer, non exécuté).
+**A9 — [ChatGPT] Tenter le99c en une seule campagne avec injection et derniers raffinements Rate** (demande de 👤 du2026-10-16 ; à préparer, non exécuté).
 *Objectif* : chercher un plan déposable pour le passe-bande5cavités/99couches, en injectant des couches
 ou paquets Rate et en appliquant les derniers raffinements intégrés : recherche conjointe fenêtres/λ
 (`elite_rate_joint_candidates=480`) et post-raffinement final (`rate_post_refinement=True`, faisceau2,
@@ -111,7 +111,7 @@ et paramètres ; aucun défaut activé ni ancienne campagne relancée par cette 
 *État au 2026-10-18.* Protocole préparé dans `reports/STRAT_99c_A9_protocole_2026-10-17/` (chaîne `chain_A9.sh`, graines fraîches réservées avant toute mesure, SHA-256 de 428 sources) ;
 `chain_A9.sh` ne lance rien sans le GO écrit de 👤 (`GO_OWNER.txt`) et n'a jamais été lancé ; le `protocole_A9.md` qu'il cite n'est pas dans le dossier.
 
-**A10 — [OK gemini] Chercher à ±0,010 ou à ±0,005 : trancher par le calcul** (demande de 👤 du 2026-10-20 ; ≈ 4 h). *Pourquoi* : l'étage
+**A10 — [Gemini] Chercher à ±0,010 ou à ±0,005 : trancher par le calcul** (demande de 👤 du 2026-10-20 ; ≈ 4 h). *Pourquoi* : l'étage
 `strat_local_search` cherche à ±0,010 d'incertitude d'indice (`SEARCH_INDEX_CORRIDOR`, `certus/core/certus_strat_local_search.py`),
 sur une règle écrite d'avance qui a préféré ±0,010 sur 2 designs de 3 (`reports/STRAT_r75_leviers_bonne_mere_2026-10-20/bilan.md`,
 section 7 : arrêts à ±0,010 de 175 à 0 sur 75c, coût à ±0,005 de +1,0 %, −3,5 % et +11,4 %). Une graine, trois designs : ce

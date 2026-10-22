@@ -1,0 +1,158 @@
+{
+ "35c_s42": {
+  "report": {
+   "check_stops": [
+    0,
+    4
+   ],
+   "confirm_stops": [
+    0,
+    3
+   ],
+   "changes": 21,
+   "fallback_changes": 8
+  },
+  "base_check_start": {
+   "stops_by_level": [
+    0,
+    0,
+    0
+   ],
+   "p95_max": 0.0973755492208271
+  },
+  "base_check_final": {
+   "stops_by_level": [
+    0,
+    0,
+    4
+   ],
+   "p95_max": 0.0588283109855996
+  },
+  "base_confirm_start": {
+   "stops_by_level": [
+    0,
+    0,
+    0
+   ],
+   "p95_max": 0.09584350560191576
+  },
+  "base_confirm_fallback": {
+   "stops_by_level": [
+    0,
+    1,
+    2
+   ],
+   "p95_max": 0.08032874841961235
+  },
+  "floor_check_start": {
+   "stops_by_level": [
+    0,
+    0,
+    0
+   ],
+   "p95_max": 0.0973755492208271
+  },
+  "floor_check_final": {
+   "stops_by_level": [
+    0,
+    0,
+    4
+   ],
+   "p95_max": 0.0588283109855996
+  },
+  "floor_confirm_start": {
+   "stops_by_level": [
+    0,
+    0,
+    0
+   ],
+   "p95_max": 0.09584350560191576
+  },
+  "floor_confirm_fallback": {
+   "stops_by_level": [
+    0,
+    1,
+    2
+   ],
+   "p95_max": 0.08032874841961235
+  }
+ },
+ "r75x2_s202": {
+  "report": {
+   "check_stops": [
+    0,
+    7
+   ],
+   "confirm_stops": [
+    0,
+    1
+   ],
+   "changes": 51,
+   "fallback_changes": 42
+  },
+  "base_check_start": {
+   "stops_by_level": [
+    0,
+    0,
+    0
+   ],
+   "p95_max": 0.11605886586143699
+  },
+  "base_check_final": {
+   "stops_by_level": [
+    1,
+    1,
+    5
+   ],
+   "p95_max": 0.07935782156909868
+  },
+  "base_confirm_start": {
+   "stops_by_level": [
+    0,
+    0,
+    0
+   ],
+   "p95_max": 0.11424001651664584
+  },
+  "base_confirm_fallback": {
+   "stops_by_level": [
+    0,
+    0,
+    1
+   ],
+   "p95_max": 0.08021980866626835
+  },
+  "floor_check_start": {
+   "stops_by_level": [
+    0,
+    0,
+    0
+   ],
+   "p95_max": 0.11605886586143699
+  },
+  "floor_check_final": {
+   "stops_by_level": [
+    1,
+    1,
+    5
+   ],
+   "p95_max": 0.07935782156909868
+  },
+  "floor_confirm_start": {
+   "stops_by_level": [
+    0,
+    0,
+    0
+   ],
+   "p95_max": 0.11424001651664584
+  },
+  "floor_confirm_fallback": {
+   "stops_by_level": [
+    0,
+    0,
+    1
+   ],
+   "p95_max": 0.08021980866626835
+  }
+ }
+}

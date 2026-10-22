@@ -1,0 +1,78 @@
+"""Read the output of diag_path.py: SEEL per noise level along the stage's path, and per-layer thickness errors.
+
+python -X utf8 analyse_path.py REPO WORK OUT.json
+"""
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+import numpy as np
+
+REPO, WORK, OUT = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3])
+SEEDS = (902210221, 902210222)
+CRASH = 1e5  # far below CRASH_SENTINEL_MIN and far above any thickness, used only to mask crashed layers
+
+
+def z(name):
+    with np.load(WORK / "res_arrays" / f"{name}.npz") as f:
+        return {k: f[k] for k in f.files}
+
+
+def seel_levels(k, ic):
+    a = [z(f"k{k:02d}__{ic}__{s}") for s in SEEDS]
+    lv = [float(np.percentile(np.concatenate([x[f"rmse_{i}"] for x in a]), 95)) for i in range(3)]
+    st = [int(sum(x[f"crashed_{i}"].sum() for x in a)) for i in range(3)]
+    return [2 * v ** 0.5 for v in lv], st
+
+
+def main():
+    path = json.loads((WORK / "path.json").read_text(encoding="utf-8"))
+    changes = path["changes"]
+    nominal = np.asarray(json.loads((WORK / "res_nominal.json").read_text(encoding="utf-8")))
+    # control against the committed replay
+    ref = REPO / "reports" / "RELECTURE_gemini_2026-10-22" / "A10" / "r75x2_deep_s101" / "res_r75x2_arrays"
+    control = {}
+    for name in ("elite", "final"):
+        mine = z(f"control_{name}__0.005__20261028001")
+        with np.load(ref / f"{name}__0.005__20261028001.npz") as f:
+            control[name] = all(np.array_equal(mine[k], f[k]) for k in f.files)
+    rows = []
+    for k in range(len(changes) + 1):
+        s5, st5 = seel_levels(k, "0.005")
+        s10, st10 = seel_levels(k, "0.01")
+        rows.append(dict(k=k, change=changes[k - 1] if k else "start", seel_005=s5, stops_005=st5, seel_010=s10, stops_010=st10))
+    # per-layer thickness error at the low noise level, start vs final, +-0.005
+    per_layer = {}
+    for k, tag in ((0, "start"), (len(changes), "final")):
+        ths = []
+        for s in SEEDS:
+            a = z(f"k{k:02d}__0.005__{s}")
+            ths.append(a["thickness_0"][~a["crashed_0"]])
+        th = np.concatenate(ths)
+        err = th - nominal[np.newaxis, :]
+        per_layer[tag] = dict(rms=np.sqrt(np.mean(err ** 2, axis=0)).tolist(), bias=np.mean(err, axis=0).tolist(),
+                              p95_abs=np.percentile(np.abs(err), 95, axis=0).tolist())
+    rate_start = set(path["plans"][0]["rate_layers"])
+    rate_final = set(path["plans"][-1]["rate_layers"])
+    res = dict(control_bits_equal=control, rows=rows, per_layer=per_layer, nominal=nominal.tolist(),
+               rate_start=sorted(rate_start), rate_final=sorted(rate_final))
+    OUT.write_text(json.dumps(res, indent=1), encoding="utf-8")
+    print("control bit-equal to the committed replay:", control)
+    print(f"{'k':>3} {'change':<22} {'SEEL +-0.005 L0/L1/L2':<28} {'stops':<10} {'SEEL +-0.010 L0/L1/L2':<28} stops")
+    for r in rows:
+        print(f"{r['k']:>3} {r['change']:<22} {' '.join('%.4f' % v for v in r['seel_005']):<28} {str(r['stops_005']):<10} "
+              f"{' '.join('%.4f' % v for v in r['seel_010']):<28} {r['stops_010']}")
+    rs, rf = np.asarray(per_layer["start"]["rms"]), np.asarray(per_layer["final"]["rms"])
+    order = np.argsort(rf - rs)[::-1][:12]
+    print("layers whose RMS thickness error at noise 0.5x grows most (start -> final, nm), mode start/final:")
+    for i in order:
+        mode = lambda S: "Rate" if i in S else "opt"
+        print(f"  L{i} (index {i}): {rs[i]:.3f} -> {rf[i]:.3f}  bias {per_layer['start']['bias'][i]:+.3f} -> {per_layer['final']['bias'][i]:+.3f}"
+              f"  nominal {nominal[i]:.1f} nm  {mode(rate_start)}->{mode(rate_final)}")
+    print("sum of squared RMS over layers:", float((rs ** 2).sum()), "->", float((rf ** 2).sum()))
+
+
+if __name__ == "__main__":
+    main()

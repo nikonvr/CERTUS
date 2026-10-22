@@ -1,0 +1,121 @@
+"""Evaluate STRAT plans of a bench component (default r75x2) with STRAT's own scoring, many plans in one process.
+
+Same parameters as `scripts/probe_blocs_vs_plantage.py <comp> <mode> 0 0 2 0 <seed>`; the robustness task is called
+as `certus_strat_robustness._execute_robustness_tasks` calls it. Per-draw RMSE and crash flags are saved for paired
+comparisons. Usage:
+python -X utf8 r75_scan.py --repo REPO --jobs JOBS.json --out RESULTS.jsonl [--comp r75x2 --mode deep]
+JOBS.json: list of {"name", "plan": {strategy_id, origin, blocks[{start,end,wavelength}], rate_layers,
+witness_reset_layers, monochromator_resolution_nm}, "seed", "runs", "override": {}, "save": bool}
+"""
+from __future__ import annotations
+
+import argparse
+import copy
+import json
+import logging
+import os
+import sys
+import time
+from pathlib import Path
+
+ap = argparse.ArgumentParser()
+ap.add_argument("--repo", required=True)
+ap.add_argument("--jobs", required=True)
+ap.add_argument("--out", required=True)
+ap.add_argument("--comp", default="r75x2")
+ap.add_argument("--mode", default="deep")
+A = ap.parse_args()
+REPO, OUT = Path(A.repo).resolve(), Path(A.out).resolve()
+sys.path.insert(0, str(REPO))
+sys.path.insert(1, str(REPO / "scripts"))
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+
+def main():
+    import numpy as np
+    import bench_examples as Bx
+    import probe_blocs_vs_plantage as P
+    from CERTUS_STRAT import CertusStratApp
+    from _composant import charger_configuration
+    from certus.core.certus_strat_config import precompute_clues_and_matrices
+    from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+    from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+    import certus.core.certus_strat_robustness_task as task
+    from certus.utils.certus_exclusions import filter_params_for_gui
+    from certus_physics import CRASH_SENTINEL_MIN
+
+    cfg, n_layers = P.COMPOSANTS[A.comp]
+    Bx.qapp()
+    Bx.autoanswer_dialogs(True)
+    app = CertusStratApp()
+    charger_configuration(app, REPO / cfg)
+    if "execution_mode" in getattr(app, "widgets", {}):
+        app.widgets["execution_mode"].setCurrentText(A.mode)
+    base = app.collect_params()
+    base.update({"show_plots": False, "monochromator_resolution_nm": 2.0, "search_resolution": False,
+                 "noise_layer_offset": 0, "noise_total_layers": n_layers, "require_turning_point": 0,
+                 **P._leviers_rate(0), "execution_mode": A.mode})
+    logger = logging.getLogger("certus_strat")
+    logger.setLevel(logging.WARNING)
+    nominal = base.get("p_thick_nominal")
+    if nominal is None:  # as certus_strat_pipeline._prepare_block_strategy_phase_a
+        from certus.core.certus_strat_pipeline import get_refractive_index
+        l0 = float(base["l0"])
+        mult = [float(e) for e in base["stack_string"].split(",") if e.strip()]
+        nH, nL = get_refractive_index(base["nH_id"], l0), get_refractive_index(base["nL_id"], l0)
+        nominal = [(m * l0) / (4.0 * np.real(nH if i % 2 == 0 else nL)) for i, m in enumerate(mult)]
+        base["p_thick_nominal"] = nominal
+    nominal = list(nominal)
+    (OUT.parent / (OUT.stem + "_nominal.json")).write_text(json.dumps(nominal), encoding="utf-8")  # diag only
+    clues, _, _ = precompute_clues_and_matrices(base, nominal, logger)
+    optics = _prepare_robustness_nominal_optics(base, nominal, {"clues_at_wl": clues})
+    noise_levels = _resolve_robustness_noise_levels(base)
+    print("SETUP layers", len(nominal), "noise levels", noise_levels, "runs default", base.get("robustness_num_runs"), flush=True)
+
+    jobs = json.loads(Path(A.jobs).read_text(encoding="utf-8"))
+    arrays = OUT.parent / (OUT.stem + "_arrays")
+    with OUT.open("a", encoding="utf-8") as stream:
+        for job in jobs:
+            t0 = time.monotonic()
+            params = dict(base, robustness_seed=int(job["seed"]))
+            params.update(job.get("override", {}))
+            plan = copy.deepcopy(job["plan"])
+            _attach_slit_profiles([plan], nominal, params, logger)
+            levels = _resolve_robustness_noise_levels(params)
+            res = task._test_strategy_robustness_task(plan, 0, levels, int(job["runs"]), nominal, clues,
+                                                      filter_params_for_gui(params), *optics, {},
+                                                      compute_layer_profile=False)
+            rows, keep = [], {}
+            for i, lv in enumerate(res.get("results_per_noise") or []):
+                rmse = np.asarray(lv.get("rmse_all") or [], dtype=float)
+                th = np.asarray(lv.get("thicknesses_all") or [], dtype=float)
+                crashed = np.any(th > CRASH_SENTINEL_MIN, axis=1) if th.size else np.zeros(rmse.size, bool)
+                done = rmse[~crashed]
+                rows.append(dict(noise=float(lv.get("noise_level")), n=int(rmse.size), crashed=int(crashed.sum()),
+                                 rmse2_mean_done=float(np.mean(done ** 2)) if done.size else None,
+                                 rmse_p95=float(np.percentile(rmse, 95)) if rmse.size else None,
+                                 rmse_mean_done=float(done.mean()) if done.size else None,
+                                 rmse_p95_done=float(np.percentile(done, 95)) if done.size else None))
+                keep[f"rmse_{i}"] = rmse
+                keep[f"crashed_{i}"] = crashed
+                if job.get("save_thickness"):
+                    keep[f"thickness_{i}"] = th
+            score = float(res.get("robustness_score", float("inf")))
+            try:
+                from certus.core.certus_strat_robustness import _calculate_strategy_spectral_resolution as _res
+                res_lim = float(_res(plan, nominal, params)[0])
+            except Exception:
+                res_lim = None
+            rec = dict(name=job["name"], seed=job["seed"], runs=job["runs"], meta=job.get("meta", {}),
+                       robustness_score=score, seel_strat_nm=2.0 * score ** 0.5 if np.isfinite(score) and score > 0 else None,
+                       crash_rate=float(res.get("crash_rate", 1.0)), res_lim=res_lim, per_noise=rows, seconds=round(time.monotonic() - t0, 1))
+            stream.write(json.dumps(rec) + "\n")
+            stream.flush()
+            if job.get("save"):
+                arrays.mkdir(exist_ok=True)
+                np.savez_compressed(arrays / f"{job['name']}.npz", **keep)
+            print("JOB", job["name"], rec["robustness_score"], rec["crash_rate"], rec["seconds"], flush=True)
+
+
+if __name__ == "__main__":
+    main()

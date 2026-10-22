@@ -1,0 +1,97 @@
+"""Were the two refusals of the stage (35c seed 42, r75x2 seed 202) caused by the low-noise turning-point defect? (Claude, 2026-10-22)
+
+python -X utf8 diag_refus.py REPO WORK
+
+For each refused case: the start plan, the final plan and the fallback plan (the plan after `fallback_changes` changes) are rebuilt
+from the bench artefact with the stage's own `with_wavelength`, then evaluated as the stage judged them: at +-0.010, on its check
+seeds (start vs final) and its confirm seeds (start vs fallback), 1000 draws each. Once at the default floor, once with
+tp_hysteresis_floor = 0.00083 (the 1x hysteresis). Stops per noise level, to compare with the stage report (check_stops, confirm
+stops). The evaluation is the archived r75_scan, which follows the bench closely but not bit for bit.
+"""
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+import numpy as np
+
+REPO, WORK = Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve()
+sys.path.insert(0, str(REPO))
+from certus.core.certus_strat_local_search import with_wavelength  # noqa: E402
+
+CASES = {"35c_s42": ("A14", "blocs_vs_plantage_35c_deep_s042_etageA14.json", "35c", "deep"),
+         "r75x2_s202": ("A10", "blocs_vs_plantage_r75x2_deep_s202_etageA10.json", "r75x2", "deep")}
+SCAN = REPO / "reports" / "RELECTURE_gemini_2026-10-22" / "A10" / "r75x2_deep_s101" / "r75_scan.py.txt"
+FLOOR = 0.00083
+
+
+def plan_of(row):
+    return dict(strategy_id=row["id"], origin=row["origine"], blocks=row["blocs"], rate_layers=row["rate_layers"],
+                witness_reset_layers=row.get("witness_reset_layers") or [], monochromator_resolution_nm=row.get("resolution_nm") or 2.0)
+
+
+def apply(plan, change):
+    layer = int(change.split()[0][1:])
+    out = dict(plan)
+    if "optical@" in change:
+        out = with_wavelength(plan, layer, float(change.split("@")[1]))
+        out["rate_layers"] = sorted(set(plan["rate_layers"]) - {layer})
+    elif change.endswith(" Rate"):
+        out["rate_layers"] = sorted(set(plan["rate_layers"]) | {layer})
+    else:
+        out = with_wavelength(plan, layer, float(change.split("->")[1]))
+    return out
+
+
+def main():
+    WORK.mkdir(parents=True, exist_ok=True)
+    (WORK / "r75_scan.py").write_text(SCAN.read_text(encoding="utf-8"), encoding="utf-8")
+    res = {}
+    for case, (camp, art, comp, mode) in CASES.items():
+        d = json.loads((REPO / "reports" / f"STRAT_etage_{camp}_2026-10-21" / art).read_text(encoding="utf-8"))
+        rep = d["strat_local_search"]
+        start = next(r for r in d["strategies"] if r["id"] == rep["start_strategy_id"] and r["origine"] != "LOCAL_SEARCH")
+        path = [plan_of(start)]
+        for c in rep["changes"]:
+            path.append(apply(path[-1], c))
+        plans = {"start": path[0], "final": path[-1], "fallback": path[rep["fallback_changes"]]}
+        jobs = []
+        for variant, extra in (("base", {}), ("floor", {"tp_hysteresis_floor": FLOOR})):
+            for name, seeds in (("start", rep["check_seeds"] + rep["confirm_seeds"]), ("final", rep["check_seeds"]),
+                                ("fallback", rep["confirm_seeds"])):
+                for s in seeds:
+                    jobs.append(dict(name=f"{variant}_{name}__{s}", plan=plans[name], seed=s, runs=1000, save=True,
+                                     override={"index_corridor": 0.010, **extra}))
+        wd = WORK / case
+        wd.mkdir(exist_ok=True)
+        (wd / "jobs.json").write_text(json.dumps(jobs), encoding="utf-8")
+        out = wd / "res.jsonl"
+        if out.exists():
+            out.unlink()
+        with open(wd / "scan.log", "w", encoding="utf-8") as log:
+            r = subprocess.run([sys.executable, "-X", "utf8", str(WORK / "r75_scan.py"), "--repo", str(REPO), "--jobs", str(wd / "jobs.json"),
+                                "--out", str(out), "--comp", comp, "--mode", mode], cwd=wd, stdout=log, stderr=subprocess.STDOUT)
+        if r.returncode:
+            raise SystemExit(f"{case}: scan failed ({r.returncode})")
+        res[case] = dict(report=dict(check_stops=rep["check_stops"], confirm_stops=rep["confirm"]["stops"], changes=len(rep["changes"]),
+                                     fallback_changes=rep["fallback_changes"]))
+        for variant in ("base", "floor"):
+            for name, seeds, tag in (("start", rep["check_seeds"], "check"), ("final", rep["check_seeds"], "check"),
+                                     ("start", rep["confirm_seeds"], "confirm"), ("fallback", rep["confirm_seeds"], "confirm")):
+                arr = [dict(np.load(wd / "res_arrays" / f"{variant}_{name}__{s}.npz")) for s in seeds]
+                stops = [int(sum(a[f"crashed_{i}"].sum() for a in arr)) for i in range(3)]
+                p95 = max(float(np.percentile(np.concatenate([a[f"rmse_{i}"] for a in arr]), 95)) for i in range(3))
+                res[case][f"{variant}_{tag}_{name}"] = dict(stops_by_level=stops, p95_max=p95)
+        b, f = res[case], res[case]
+        print(f"{case}: stage report check stops {rep['check_stops']}, confirm stops {rep['confirm']['stops']}")
+        for variant in ("base", "floor"):
+            print(f"   {variant:<5} check: start {b[f'{variant}_check_start']['stops_by_level']} final {b[f'{variant}_check_final']['stops_by_level']}"
+                  f" | confirm: start {b[f'{variant}_confirm_start']['stops_by_level']} fallback {b[f'{variant}_confirm_fallback']['stops_by_level']}"
+                  f" | P95 max check start {b[f'{variant}_check_start']['p95_max']:.5f} final {b[f'{variant}_check_final']['p95_max']:.5f}")
+    (WORK / "diag_refus.json").write_text(json.dumps(res, indent=1), encoding="utf-8")
+
+
+if __name__ == "__main__":
+    main()

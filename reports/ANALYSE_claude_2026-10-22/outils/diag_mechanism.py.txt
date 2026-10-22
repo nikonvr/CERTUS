@@ -1,0 +1,68 @@
+"""Why does layer L63 of the r75x2 seed-101 final plan stop early at 0.5x noise only? Two counter-tests (Claude, 2026-10-22).
+
+python -X utf8 diag_mechanism.py REPO WORK
+
+Hypothesis: with tp_hysteresis_factor = 1.66 (cfg_x2.json), the turning-point hysteresis is 0.000415 T at 0.5x noise (the
+floor), 0.00083 at 1x, 0.00166 at 2x; the slit-bias ripple of L63 monitored at 680 nm is counted as a turning point at
+0.5x only. Counter-tests on the start (k00) and final (k34) plans of diag_path.py, +-0.005, the same two seeds:
+  A. tp_hysteresis_floor = 0.00083 (the 1x hysteresis at every level);
+  B. slit_bias_enabled = False.
+The hypothesis predicts that A and B both remove the 0.5x bias of L63. An override that did not reach the computation
+would give the baseline bits: checked.
+"""
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+import numpy as np
+
+REPO, WORK = Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve()
+BASE = WORK.parent / "diag_r75x2_s101"
+SEEDS = (902210221, 902210222)
+VARIANTS = {"A": {"tp_hysteresis_floor": 0.00083}, "B": {"slit_bias_enabled": False}}
+
+
+def main():
+    WORK.mkdir(parents=True, exist_ok=True)
+    plans = json.loads((BASE / "path.json").read_text(encoding="utf-8"))["plans"]
+    sel = {"k00": plans[0], "k34": plans[-1]}
+    jobs = [dict(name=f"{v}_{k}__0.005__{s}", plan=p, seed=s, runs=1000, save=True, save_thickness=True,
+                 override={"index_corridor": 0.005, **ov}) for v, ov in VARIANTS.items() for k, p in sel.items() for s in SEEDS]
+    (WORK / "jobs.json").write_text(json.dumps(jobs), encoding="utf-8")
+    (WORK / "r75_scan.py").write_text((BASE / "r75_scan.py").read_text(encoding="utf-8"), encoding="utf-8")
+    out = WORK / "res.jsonl"
+    if out.exists():
+        out.unlink()
+    with open(WORK / "scan.log", "w", encoding="utf-8") as log:
+        r = subprocess.run([sys.executable, "-X", "utf8", str(WORK / "r75_scan.py"), "--repo", str(REPO), "--jobs", str(WORK / "jobs.json"),
+                            "--out", str(out), "--comp", "r75x2", "--mode", "deep"], cwd=WORK, stdout=log, stderr=subprocess.STDOUT)
+    if r.returncode:
+        raise SystemExit(f"scan failed ({r.returncode})")
+    nominal = np.asarray(json.loads((BASE / "res_nominal.json").read_text(encoding="utf-8")))
+    res = {}
+    for v in ("base", *VARIANTS):
+        for k in ("k00", "k34"):
+            arr = [dict(np.load((BASE / "res_arrays" / f"{k}__0.005__{s}.npz") if v == "base" else (WORK / "res_arrays" / f"{v}_{k}__0.005__{s}.npz")))
+                   for s in SEEDS]
+            row = {}
+            for lv in range(3):
+                rm = np.concatenate([a[f"rmse_{lv}"] for a in arr])
+                cr = np.concatenate([a[f"crashed_{lv}"] for a in arr])
+                th = np.concatenate([a[f"thickness_{lv}"][~a[f"crashed_{lv}"]] for a in arr])
+                e63 = th[:, 63] - nominal[63]
+                row[lv] = dict(seel=2 * float(np.percentile(rm, 95)) ** 0.5, stops=int(cr.sum()), l63_bias=float(e63.mean()), l63_sd=float(e63.std()))
+            same = None
+            if v != "base":
+                ref = [dict(np.load(BASE / "res_arrays" / f"{k}__0.005__{s}.npz")) for s in SEEDS]
+                same = all(np.array_equal(a[f"rmse_{lv}"], b[f"rmse_{lv}"]) for a, b in zip(arr, ref) for lv in range(3))
+            res[f"{v}_{k}"] = dict(levels=row, bits_equal_to_base=same)
+            print(f"{v:<4} {k}: " + " | ".join(f"L{lv} SEEL {row[lv]['seel']:.4f} stops {row[lv]['stops']} L63 bias {row[lv]['l63_bias']:+.3f} sd {row[lv]['l63_sd']:.3f}"
+                                              for lv in range(3)) + (f" | bits equal to base: {same}" if same is not None else ""))
+    (WORK / "diag_mechanism.json").write_text(json.dumps(res, indent=1), encoding="utf-8")
+
+
+if __name__ == "__main__":
+    main()

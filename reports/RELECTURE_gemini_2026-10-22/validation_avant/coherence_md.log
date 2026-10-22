@@ -1,0 +1,65 @@
+================================================================================================
+COHERENCE DE 151 FICHIERS .md + 15 PAGES HTML
+================================================================================================
+
+=== A. LES CONSTANTES DU CODE, ET CE QUE LES DOCUMENTS EN DISENT ===
+  (la reference vient de la SOURCE : un document qui s'en ecarte a tort, meme seul)
+  🟢 RATE_MIN_LAYER                     code = 2 | aucun document ne le contredit
+  🟢 RATE_TURN_NM                       code = 0.125 | aucun document ne le contredit
+  🟢 RATE_MIN_LAYERS_PER_BLOCK          code = 3.0 | aucun document ne le contredit
+  🟢 RATE_MAX_VARIANTS_PER_STRATEGY     code = 40 | aucun document ne le contredit
+  🟢 RATE_SWING_MIN_DEFAULT             code = 0.025 | aucun document ne le contredit
+  🟢 PHOTOMETRIC_CURVATURE_AMP          code = 0.00375 | aucun document ne le contredit
+
+=== B. LES GRANDEURS PHYSIQUES : le meme fait, plusieurs valeurs ? ===
+  ·  SEEL du 48c                      aucune citation trouvee
+  ·  SEEL du 35c                      aucune citation trouvee
+  ·  SEEL du 75c                      aucune citation trouvee
+  ·  SEEL du 99c multi-temoins        aucune citation trouvee
+  ·  cible posee par le physicien     aucune citation trouvee
+  🟢 cadence machine                  valeur unique 4 Hz (6 citation(s))
+  🟢 pas d'echantillonnage machine    valeur unique 0,125 nm (10 citation(s))
+  🟢 amplitude du bruit de lecture    valeur unique 5e-4 (2 citation(s))
+  🟢 fente nominale                   valeur unique 2 nm (1 citation(s))
+  ·  objectif de rendement (👤)        aucune citation trouvee
+
+=== C. TOUT SYMBOLE DU CODE CITE `NOM = N` DANS UN .md ===
+  322 symboles numeriques dans certus/, 13 cites dans les .md.
+  🟢 8 conforme(s) au code · 0 en desaccord · 0 NON CONCLUANTE(S) (transition, liste, multiplicateur ou formule)
+
+=== D. LES PROFONDEURS PAR MODE, lues dans l'interface ===
+  🟢 triplets fast/premium/deep : 0 conforme(s), 0 en desaccord
+  🟢 0 conforme(s) · 0 en desaccord · 0 non concluante(s)
+
+=== E. LES COMMANDES DOCUMENTEES S'EXECUTENT-ELLES ? ===
+  🟢 aucun chemin d'interpreteur cite -- les commandes disent `python`, ce qui est la consigne
+  🔴 FATAL  script reports/STRAT_etage_defauts_2026-10-21/run_etage_panel.py INTROUVABLE -- 2 citation(s), ex. ETAT_actions.md:67
+  🔴 FATAL  script scratch/rate_fixed_replay_R0_suite.py INTROUVABLE -- 2 citation(s), ex. commands.md:33
+  🔴 FATAL  script scratch/rate_followup_controlled_20261016.py INTROUVABLE -- 1 citation(s), ex. STRAT_Rate_reprise_20261016.md:238
+  🔴 FATAL  script scratch/rate_native_pipeline_probe.py INTROUVABLE -- 2 citation(s), ex. commands.md:47
+  🔴 FATAL  script scratch/verify_rate_native_pipeline_trace.py INTROUVABLE -- 1 citation(s), ex. commands.md:26
+  🔴 87 script(s) cite(s) dans une commande, 5 chemin(s) mort(s)
+
+=== F. UN `fichier.py:N` CITE A COTE D'UN SYMBOLE POINTE-T-IL DESSUS ? ===
+  🟢 0 renvoi(s) confirme(s) · 0 qui pointent ailleurs · 0 sans symbole cite a cote (non verifiables)
+
+=== G. LES ENTREES NUMEROTEES DU §24 SONT-ELLES UNIQUES ? ===
+  🟢 0 entrees, 0 numeros distincts, aucun doublon
+
+=== I. UN RENVOI `§N` INTERNE POINTE-T-IL SUR LE SUJET QU'IL ANNONCE ? ===
+  ⚠️ L'outil NE JUGE PAS le sujet. Passe --detail pour voir le TITRE de chaque cible
+     et relire toi-meme les rapprochements -- c'est ainsi qu'on attrape un renvoi
+     qui existe mais parle d'autre chose, ce qu'aucun controle ne sait faire.
+  🟢 45 renvoi(s) interne(s) · 0 vers une section INEXISTANTE · 0 ambigu(s) (a nommer)
+
+=== H. CONTROLE NEGATIF -- l'outil sait-il seulement DETECTER ? ===
+  🟢 contradiction plantee DETECTEE (3 valeurs vues : ['0,001 nm', '0,172 nm', '0,999 nm']) -- l'outil mord
+
+================================================================================================
+  🔴 5 COMMANDE(S) MORTE(S) -- ce n'est PAS un point a instruire.
+     Un chemin qui n'existe pas ne se discute pas : la commande ne part pas,
+     et un agent neuf echoue a son premier geste sans savoir pourquoi.
+  0 point(s) a instruire.
+  ⚠️ Un signalement n'est PAS une erreur : c'est une phrase a LIRE. L'outil ne
+     comprend pas le francais, il rapproche un mot et un nombre.
+================================================================================================

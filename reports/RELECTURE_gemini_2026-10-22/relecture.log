@@ -1,0 +1,19 @@
+$ python -X utf8 <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A14\48c_premium_s42\r75_scan.py --repo <WORKSPACE> --jobs <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A14\48c_premium_s42\jobs_48c.json --out <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A14\48c_premium_s42\res_48c.jsonl --comp 48c --mode premium
+CHECKED A14/48c_premium_s42: 2 corridors replayed
+CHECKED A14/35c_deep_s42: 0 corridors replayed
+$ python -X utf8 <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A14\r75x1.5_deep_s77\r75_scan.py --repo <WORKSPACE> --jobs <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A14\r75x1.5_deep_s77\jobs_r75x1.5.json --out <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A14\r75x1.5_deep_s77\res_r75x1.5.jsonl --comp r75x1.5 --mode deep
+CHECKED A14/r75x1.5_deep_s77: 2 corridors replayed
+$ python -X utf8 <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A14\r75x1.75_deep_s77\r75_scan.py --repo <WORKSPACE> --jobs <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A14\r75x1.75_deep_s77\jobs_r75x1.75.json --out <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A14\r75x1.75_deep_s77\res_r75x1.75.jsonl --comp r75x1.75 --mode deep
+CHECKED A14/r75x1.75_deep_s77: 2 corridors replayed
+$ python -X utf8 <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A14\r75x2-2nm_deep_s77\r75_scan.py --repo <WORKSPACE> --jobs <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A14\r75x2-2nm_deep_s77\jobs_r75x2-2nm.json --out <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A14\r75x2-2nm_deep_s77\res_r75x2-2nm.jsonl --comp r75x2-2nm --mode deep
+CHECKED A14/r75x2-2nm_deep_s77: 2 corridors replayed
+$ python -X utf8 <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A14\75c_deep_s101\r75_scan.py --repo <WORKSPACE> --jobs <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A14\75c_deep_s101\jobs_75c.json --out <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A14\75c_deep_s101\res_75c.jsonl --comp 75c --mode deep
+CHECKED A14/75c_deep_s101: 2 corridors replayed
+$ python -X utf8 <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A10\75c_deep_s202\r75_scan.py --repo <WORKSPACE> --jobs <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A10\75c_deep_s202\jobs_75c.json --out <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A10\75c_deep_s202\res_75c.jsonl --comp 75c --mode deep
+CHECKED A10/75c_deep_s202: 2 corridors replayed
+$ python -X utf8 <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A10\r75x0.5_deep_s202\r75_scan.py --repo <WORKSPACE> --jobs <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A10\r75x0.5_deep_s202\jobs_r75x0.5.json --out <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A10\r75x0.5_deep_s202\res_r75x0.5.jsonl --comp r75x0.5 --mode deep
+CHECKED A10/r75x0.5_deep_s202: 2 corridors replayed
+$ python -X utf8 <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A10\r75x2_deep_s101\r75_scan.py --repo <WORKSPACE> --jobs <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A10\r75x2_deep_s101\jobs_r75x2.json --out <WORKSPACE>\reports\RELECTURE_gemini_2026-10-22\A10\r75x2_deep_s101\res_r75x2.jsonl --comp r75x2 --mode deep
+CHECKED A10/r75x2_deep_s101: 2 corridors replayed
+CHECKED A10/r75x2_deep_s202: 0 corridors replayed
+RELECTURE=GO (fixed plans; search populations not regenerated)

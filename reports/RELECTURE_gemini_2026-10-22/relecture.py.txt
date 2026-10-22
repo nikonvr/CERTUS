@@ -1,0 +1,81 @@
+"""Check all campaign artefacts and replay the fixed-plan judgements sequentially."""
+from __future__ import annotations
+
+import importlib.machinery
+import importlib.util
+import json
+import math
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+OUT = Path(__file__).resolve().parent
+RUNNER = ROOT / 'reports/STRAT_etage_defauts_2026-10-21/run_etage_panel.py.txt'
+loader = importlib.machinery.SourceFileLoader('panel_review', str(RUNNER))
+spec = importlib.util.spec_from_loader(loader.name, loader)
+panel = importlib.util.module_from_spec(spec)
+loader.exec_module(panel)
+
+
+def main():
+    review = {}
+    for campaign, cases in panel.CAMPAIGNS.items():
+        directory = ROOT / f'reports/STRAT_etage_{campaign}_2026-10-21'
+        recorded = json.loads((directory / 'cas.json').read_text(encoding='utf-8'))
+        expected = {f'{comp}_{mode}_s{seed}' for comp, mode, slit, seed in cases}
+        assert set(recorded) == expected, (campaign, set(recorded), expected)
+        for index, (comp, mode, slit, seed) in enumerate(cases):
+            key = f'{comp}_{mode}_s{seed}'
+            original = recorded[key]
+            artefact = directory / original['artefact']
+            data = json.loads(artefact.read_text(encoding='utf-8'))
+            config, provenance = data['config'], data['provenance']
+            assert config['strat_local_search'] is True, key
+            assert config['search_resolution'] == bool(slit), key
+            assert (data['composant'], data['mode'], data['seed']) == (comp, mode, seed), key
+            assert provenance['git_dirty'] is False, key
+            commit = provenance['git_commit']
+            changes = subprocess.check_output(
+                ['git', 'diff', '--name-only', commit, 'e774a120', '--', 'certus', 'scripts', 'tests'],
+                cwd=ROOT, text=True,
+            ).strip()
+            assert not changes, (key, changes)
+            work = OUT / campaign / key
+            work.mkdir(parents=True, exist_ok=True)
+            result_file = work / 'replay.json'
+            if result_file.is_file():
+                replay = json.loads(result_file.read_text(encoding='utf-8'))
+            else:
+                shutil.copy(panel.TOOLS / 'r75_scan.py.txt', work / 'r75_scan.py')
+                replay = panel.judge(ROOT, work, comp, mode, artefact, panel.JUDGE_SEED[campaign] + 1000 * index)
+                result_file.write_text(json.dumps(replay, indent=2) + '\n', encoding='utf-8')
+            if (work / 'r75_scan.py').is_file():
+                (work / 'r75_scan.py').rename(work / 'r75_scan.py.txt')
+            assert replay['verdict'] == original['verdict'], key
+            assert replay.get('stage') == original.get('stage'), key
+            comparison = {}
+            for corridor in ('0.005', '0.01'):
+                if corridor not in original:
+                    continue
+                old, new = original[corridor], replay[corridor]
+                assert old['stops'] == new['stops'], (key, corridor, old['stops'], new['stops'])
+                deltas = {name: new['seel'][name] - old['seel'][name] for name in ('elite', 'final')}
+                assert all(math.isclose(old['seel'][name], new['seel'][name], rel_tol=1e-10, abs_tol=1e-12)
+                           for name in ('elite', 'final')), (key, corridor, deltas)
+                assert math.isclose(old['rel'], new['rel'], rel_tol=1e-10, abs_tol=1e-12), (key, corridor, 'rel')
+                comparison[corridor] = {'seel_delta_nm': deltas, 'stops_identical': True,
+                                        'relative_rmse2_delta': new['rel'] - old['rel']}
+            review[f'{campaign}/{key}'] = {
+                'artefact': artefact.relative_to(ROOT).as_posix(), 'source_commit': commit,
+                'config_verified': True, 'same_scientific_sources': True,
+                'stage': replay.get('stage'), 'paired_replay': comparison,
+            }
+            (OUT / 'controle.json').write_text(json.dumps(review, indent=2) + '\n', encoding='utf-8')
+            print(f'CHECKED {campaign}/{key}: {len(comparison)} corridors replayed', flush=True)
+    print('RELECTURE=GO (fixed plans; search populations not regenerated)', flush=True)
+
+
+if __name__ == '__main__':
+    main()

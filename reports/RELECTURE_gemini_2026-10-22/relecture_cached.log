@@ -1,0 +1,11 @@
+CHECKED A14/48c_premium_s42: 2 corridors replayed
+CHECKED A14/35c_deep_s42: 0 corridors replayed
+CHECKED A14/r75x1.5_deep_s77: 2 corridors replayed
+CHECKED A14/r75x1.75_deep_s77: 2 corridors replayed
+CHECKED A14/r75x2-2nm_deep_s77: 2 corridors replayed
+CHECKED A14/75c_deep_s101: 2 corridors replayed
+CHECKED A10/75c_deep_s202: 2 corridors replayed
+CHECKED A10/r75x0.5_deep_s202: 2 corridors replayed
+CHECKED A10/r75x2_deep_s101: 2 corridors replayed
+CHECKED A10/r75x2_deep_s202: 0 corridors replayed
+RELECTURE=GO (fixed plans; search populations not regenerated)

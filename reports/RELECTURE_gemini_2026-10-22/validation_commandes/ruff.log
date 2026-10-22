@@ -1,0 +1,402 @@
+I001 [*] Import block is un-sorted or un-formatted
+  --> reports\RELECTURE_gemini_2026-10-22\A10\75c_deep_s202\r75_scan.py:35:5
+   |
+34 |   def main():
+35 | /     import numpy as np
+36 | |     import bench_examples as Bx
+37 | |     import probe_blocs_vs_plantage as P
+38 | |     from CERTUS_STRAT import CertusStratApp
+39 | |     from _composant import charger_configuration
+40 | |     from certus.core.certus_strat_config import precompute_clues_and_matrices
+41 | |     from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+42 | |     from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+43 | |     import certus.core.certus_strat_robustness_task as task
+44 | |     from certus.utils.certus_exclusions import filter_params_for_gui
+45 | |     from certus_physics import CRASH_SENTINEL_MIN
+   | |_________________________________________________^
+46 |
+47 |       cfg, n_layers = P.COMPOSANTS[A.comp]
+   |
+help: Organize imports
+   |
+34 | def main():
+35 +     import bench_examples as Bx
+36 |     import numpy as np
+   -     import bench_examples as Bx
+37 |     import probe_blocs_vs_plantage as P
+   -     from CERTUS_STRAT import CertusStratApp
+38 |     from _composant import charger_configuration
+39 +
+40 +     import certus.core.certus_strat_robustness_task as task
+41 |     from certus.core.certus_strat_config import precompute_clues_and_matrices
+42 |     from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+43 |     from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+   -     import certus.core.certus_strat_robustness_task as task
+44 |     from certus.utils.certus_exclusions import filter_params_for_gui
+45 |     from certus_physics import CRASH_SENTINEL_MIN
+46 +     from CERTUS_STRAT import CertusStratApp
+47 |
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> reports\RELECTURE_gemini_2026-10-22\A10\r75x0.5_deep_s202\r75_scan.py:35:5
+   |
+34 |   def main():
+35 | /     import numpy as np
+36 | |     import bench_examples as Bx
+37 | |     import probe_blocs_vs_plantage as P
+38 | |     from CERTUS_STRAT import CertusStratApp
+39 | |     from _composant import charger_configuration
+40 | |     from certus.core.certus_strat_config import precompute_clues_and_matrices
+41 | |     from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+42 | |     from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+43 | |     import certus.core.certus_strat_robustness_task as task
+44 | |     from certus.utils.certus_exclusions import filter_params_for_gui
+45 | |     from certus_physics import CRASH_SENTINEL_MIN
+   | |_________________________________________________^
+46 |
+47 |       cfg, n_layers = P.COMPOSANTS[A.comp]
+   |
+help: Organize imports
+   |
+34 | def main():
+35 +     import bench_examples as Bx
+36 |     import numpy as np
+   -     import bench_examples as Bx
+37 |     import probe_blocs_vs_plantage as P
+   -     from CERTUS_STRAT import CertusStratApp
+38 |     from _composant import charger_configuration
+39 +
+40 +     import certus.core.certus_strat_robustness_task as task
+41 |     from certus.core.certus_strat_config import precompute_clues_and_matrices
+42 |     from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+43 |     from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+   -     import certus.core.certus_strat_robustness_task as task
+44 |     from certus.utils.certus_exclusions import filter_params_for_gui
+45 |     from certus_physics import CRASH_SENTINEL_MIN
+46 +     from CERTUS_STRAT import CertusStratApp
+47 |
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> reports\RELECTURE_gemini_2026-10-22\A10\r75x2_deep_s101\r75_scan.py:35:5
+   |
+34 |   def main():
+35 | /     import numpy as np
+36 | |     import bench_examples as Bx
+37 | |     import probe_blocs_vs_plantage as P
+38 | |     from CERTUS_STRAT import CertusStratApp
+39 | |     from _composant import charger_configuration
+40 | |     from certus.core.certus_strat_config import precompute_clues_and_matrices
+41 | |     from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+42 | |     from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+43 | |     import certus.core.certus_strat_robustness_task as task
+44 | |     from certus.utils.certus_exclusions import filter_params_for_gui
+45 | |     from certus_physics import CRASH_SENTINEL_MIN
+   | |_________________________________________________^
+46 |
+47 |       cfg, n_layers = P.COMPOSANTS[A.comp]
+   |
+help: Organize imports
+   |
+34 | def main():
+35 +     import bench_examples as Bx
+36 |     import numpy as np
+   -     import bench_examples as Bx
+37 |     import probe_blocs_vs_plantage as P
+   -     from CERTUS_STRAT import CertusStratApp
+38 |     from _composant import charger_configuration
+39 +
+40 +     import certus.core.certus_strat_robustness_task as task
+41 |     from certus.core.certus_strat_config import precompute_clues_and_matrices
+42 |     from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+43 |     from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+   -     import certus.core.certus_strat_robustness_task as task
+44 |     from certus.utils.certus_exclusions import filter_params_for_gui
+45 |     from certus_physics import CRASH_SENTINEL_MIN
+46 +     from CERTUS_STRAT import CertusStratApp
+47 |
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> reports\RELECTURE_gemini_2026-10-22\A10\r75x2_deep_s202\r75_scan.py:35:5
+   |
+34 |   def main():
+35 | /     import numpy as np
+36 | |     import bench_examples as Bx
+37 | |     import probe_blocs_vs_plantage as P
+38 | |     from CERTUS_STRAT import CertusStratApp
+39 | |     from _composant import charger_configuration
+40 | |     from certus.core.certus_strat_config import precompute_clues_and_matrices
+41 | |     from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+42 | |     from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+43 | |     import certus.core.certus_strat_robustness_task as task
+44 | |     from certus.utils.certus_exclusions import filter_params_for_gui
+45 | |     from certus_physics import CRASH_SENTINEL_MIN
+   | |_________________________________________________^
+46 |
+47 |       cfg, n_layers = P.COMPOSANTS[A.comp]
+   |
+help: Organize imports
+   |
+34 | def main():
+35 +     import bench_examples as Bx
+36 |     import numpy as np
+   -     import bench_examples as Bx
+37 |     import probe_blocs_vs_plantage as P
+   -     from CERTUS_STRAT import CertusStratApp
+38 |     from _composant import charger_configuration
+39 +
+40 +     import certus.core.certus_strat_robustness_task as task
+41 |     from certus.core.certus_strat_config import precompute_clues_and_matrices
+42 |     from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+43 |     from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+   -     import certus.core.certus_strat_robustness_task as task
+44 |     from certus.utils.certus_exclusions import filter_params_for_gui
+45 |     from certus_physics import CRASH_SENTINEL_MIN
+46 +     from CERTUS_STRAT import CertusStratApp
+47 |
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> reports\RELECTURE_gemini_2026-10-22\A14\35c_deep_s42\r75_scan.py:35:5
+   |
+34 |   def main():
+35 | /     import numpy as np
+36 | |     import bench_examples as Bx
+37 | |     import probe_blocs_vs_plantage as P
+38 | |     from CERTUS_STRAT import CertusStratApp
+39 | |     from _composant import charger_configuration
+40 | |     from certus.core.certus_strat_config import precompute_clues_and_matrices
+41 | |     from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+42 | |     from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+43 | |     import certus.core.certus_strat_robustness_task as task
+44 | |     from certus.utils.certus_exclusions import filter_params_for_gui
+45 | |     from certus_physics import CRASH_SENTINEL_MIN
+   | |_________________________________________________^
+46 |
+47 |       cfg, n_layers = P.COMPOSANTS[A.comp]
+   |
+help: Organize imports
+   |
+34 | def main():
+35 +     import bench_examples as Bx
+36 |     import numpy as np
+   -     import bench_examples as Bx
+37 |     import probe_blocs_vs_plantage as P
+   -     from CERTUS_STRAT import CertusStratApp
+38 |     from _composant import charger_configuration
+39 +
+40 +     import certus.core.certus_strat_robustness_task as task
+41 |     from certus.core.certus_strat_config import precompute_clues_and_matrices
+42 |     from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+43 |     from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+   -     import certus.core.certus_strat_robustness_task as task
+44 |     from certus.utils.certus_exclusions import filter_params_for_gui
+45 |     from certus_physics import CRASH_SENTINEL_MIN
+46 +     from CERTUS_STRAT import CertusStratApp
+47 |
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> reports\RELECTURE_gemini_2026-10-22\A14\48c_premium_s42\r75_scan.py:35:5
+   |
+34 |   def main():
+35 | /     import numpy as np
+36 | |     import bench_examples as Bx
+37 | |     import probe_blocs_vs_plantage as P
+38 | |     from CERTUS_STRAT import CertusStratApp
+39 | |     from _composant import charger_configuration
+40 | |     from certus.core.certus_strat_config import precompute_clues_and_matrices
+41 | |     from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+42 | |     from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+43 | |     import certus.core.certus_strat_robustness_task as task
+44 | |     from certus.utils.certus_exclusions import filter_params_for_gui
+45 | |     from certus_physics import CRASH_SENTINEL_MIN
+   | |_________________________________________________^
+46 |
+47 |       cfg, n_layers = P.COMPOSANTS[A.comp]
+   |
+help: Organize imports
+   |
+34 | def main():
+35 +     import bench_examples as Bx
+36 |     import numpy as np
+   -     import bench_examples as Bx
+37 |     import probe_blocs_vs_plantage as P
+   -     from CERTUS_STRAT import CertusStratApp
+38 |     from _composant import charger_configuration
+39 +
+40 +     import certus.core.certus_strat_robustness_task as task
+41 |     from certus.core.certus_strat_config import precompute_clues_and_matrices
+42 |     from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+43 |     from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+   -     import certus.core.certus_strat_robustness_task as task
+44 |     from certus.utils.certus_exclusions import filter_params_for_gui
+45 |     from certus_physics import CRASH_SENTINEL_MIN
+46 +     from CERTUS_STRAT import CertusStratApp
+47 |
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> reports\RELECTURE_gemini_2026-10-22\A14\75c_deep_s101\r75_scan.py:35:5
+   |
+34 |   def main():
+35 | /     import numpy as np
+36 | |     import bench_examples as Bx
+37 | |     import probe_blocs_vs_plantage as P
+38 | |     from CERTUS_STRAT import CertusStratApp
+39 | |     from _composant import charger_configuration
+40 | |     from certus.core.certus_strat_config import precompute_clues_and_matrices
+41 | |     from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+42 | |     from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+43 | |     import certus.core.certus_strat_robustness_task as task
+44 | |     from certus.utils.certus_exclusions import filter_params_for_gui
+45 | |     from certus_physics import CRASH_SENTINEL_MIN
+   | |_________________________________________________^
+46 |
+47 |       cfg, n_layers = P.COMPOSANTS[A.comp]
+   |
+help: Organize imports
+   |
+34 | def main():
+35 +     import bench_examples as Bx
+36 |     import numpy as np
+   -     import bench_examples as Bx
+37 |     import probe_blocs_vs_plantage as P
+   -     from CERTUS_STRAT import CertusStratApp
+38 |     from _composant import charger_configuration
+39 +
+40 +     import certus.core.certus_strat_robustness_task as task
+41 |     from certus.core.certus_strat_config import precompute_clues_and_matrices
+42 |     from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+43 |     from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+   -     import certus.core.certus_strat_robustness_task as task
+44 |     from certus.utils.certus_exclusions import filter_params_for_gui
+45 |     from certus_physics import CRASH_SENTINEL_MIN
+46 +     from CERTUS_STRAT import CertusStratApp
+47 |
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> reports\RELECTURE_gemini_2026-10-22\A14\r75x1.5_deep_s77\r75_scan.py:35:5
+   |
+34 |   def main():
+35 | /     import numpy as np
+36 | |     import bench_examples as Bx
+37 | |     import probe_blocs_vs_plantage as P
+38 | |     from CERTUS_STRAT import CertusStratApp
+39 | |     from _composant import charger_configuration
+40 | |     from certus.core.certus_strat_config import precompute_clues_and_matrices
+41 | |     from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+42 | |     from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+43 | |     import certus.core.certus_strat_robustness_task as task
+44 | |     from certus.utils.certus_exclusions import filter_params_for_gui
+45 | |     from certus_physics import CRASH_SENTINEL_MIN
+   | |_________________________________________________^
+46 |
+47 |       cfg, n_layers = P.COMPOSANTS[A.comp]
+   |
+help: Organize imports
+   |
+34 | def main():
+35 +     import bench_examples as Bx
+36 |     import numpy as np
+   -     import bench_examples as Bx
+37 |     import probe_blocs_vs_plantage as P
+   -     from CERTUS_STRAT import CertusStratApp
+38 |     from _composant import charger_configuration
+39 +
+40 +     import certus.core.certus_strat_robustness_task as task
+41 |     from certus.core.certus_strat_config import precompute_clues_and_matrices
+42 |     from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+43 |     from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+   -     import certus.core.certus_strat_robustness_task as task
+44 |     from certus.utils.certus_exclusions import filter_params_for_gui
+45 |     from certus_physics import CRASH_SENTINEL_MIN
+46 +     from CERTUS_STRAT import CertusStratApp
+47 |
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> reports\RELECTURE_gemini_2026-10-22\A14\r75x1.75_deep_s77\r75_scan.py:35:5
+   |
+34 |   def main():
+35 | /     import numpy as np
+36 | |     import bench_examples as Bx
+37 | |     import probe_blocs_vs_plantage as P
+38 | |     from CERTUS_STRAT import CertusStratApp
+39 | |     from _composant import charger_configuration
+40 | |     from certus.core.certus_strat_config import precompute_clues_and_matrices
+41 | |     from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+42 | |     from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+43 | |     import certus.core.certus_strat_robustness_task as task
+44 | |     from certus.utils.certus_exclusions import filter_params_for_gui
+45 | |     from certus_physics import CRASH_SENTINEL_MIN
+   | |_________________________________________________^
+46 |
+47 |       cfg, n_layers = P.COMPOSANTS[A.comp]
+   |
+help: Organize imports
+   |
+34 | def main():
+35 +     import bench_examples as Bx
+36 |     import numpy as np
+   -     import bench_examples as Bx
+37 |     import probe_blocs_vs_plantage as P
+   -     from CERTUS_STRAT import CertusStratApp
+38 |     from _composant import charger_configuration
+39 +
+40 +     import certus.core.certus_strat_robustness_task as task
+41 |     from certus.core.certus_strat_config import precompute_clues_and_matrices
+42 |     from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+43 |     from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+   -     import certus.core.certus_strat_robustness_task as task
+44 |     from certus.utils.certus_exclusions import filter_params_for_gui
+45 |     from certus_physics import CRASH_SENTINEL_MIN
+46 +     from CERTUS_STRAT import CertusStratApp
+47 |
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> reports\RELECTURE_gemini_2026-10-22\A14\r75x2-2nm_deep_s77\r75_scan.py:35:5
+   |
+34 |   def main():
+35 | /     import numpy as np
+36 | |     import bench_examples as Bx
+37 | |     import probe_blocs_vs_plantage as P
+38 | |     from CERTUS_STRAT import CertusStratApp
+39 | |     from _composant import charger_configuration
+40 | |     from certus.core.certus_strat_config import precompute_clues_and_matrices
+41 | |     from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+42 | |     from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+43 | |     import certus.core.certus_strat_robustness_task as task
+44 | |     from certus.utils.certus_exclusions import filter_params_for_gui
+45 | |     from certus_physics import CRASH_SENTINEL_MIN
+   | |_________________________________________________^
+46 |
+47 |       cfg, n_layers = P.COMPOSANTS[A.comp]
+   |
+help: Organize imports
+   |
+34 | def main():
+35 +     import bench_examples as Bx
+36 |     import numpy as np
+   -     import bench_examples as Bx
+37 |     import probe_blocs_vs_plantage as P
+   -     from CERTUS_STRAT import CertusStratApp
+38 |     from _composant import charger_configuration
+39 +
+40 +     import certus.core.certus_strat_robustness_task as task
+41 |     from certus.core.certus_strat_config import precompute_clues_and_matrices
+42 |     from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+43 |     from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+   -     import certus.core.certus_strat_robustness_task as task
+44 |     from certus.utils.certus_exclusions import filter_params_for_gui
+45 |     from certus_physics import CRASH_SENTINEL_MIN
+46 +     from CERTUS_STRAT import CertusStratApp
+47 |
+   |
+
+Found 10 errors.
+[*] 10 fixable with the `--fix` option.

@@ -1,6 +1,6 @@
 """DESIGN bench: run the real workflow headless, then judge the result on a fixed grid.
 
-    python scripts/design_bench.py run  [--config FILE] [--label L] [--out FILE.jsonl] [--kw KEY=VALUE ...]
+    python scripts/design_bench.py run  [--config FILE] [--label L] [--out FILE.jsonl] [--kw KEY=VALUE ...] [--set NAME=VALUE ...]
     python scripts/design_bench.py eval FILE.json [FILE.json ...] [--out FILE.jsonl]
 
 `run` loads a design file, launches the global workflow (PGLOBAL, cleanup, healing, needle,
@@ -133,7 +133,9 @@ def load(path: Path):
     window_log = app.log
 
     def log_too(msg: str, lvl: str = "INFO") -> None:  # the workflow speaks only to the window's log panel
-        be.emit(f"LOG [{lvl}] {msg}")
+        ep = getattr(app, "ep_current", None)
+        state = f"rows={app.front_table.rowCount()} ep={len(ep) if ep is not None else None}"
+        be.emit(f"LOG [{lvl}] ({state}) {msg}")
         window_log(msg, lvl)
 
     app.log = log_too
@@ -179,7 +181,13 @@ def main() -> None:
     p.add_argument("--out", type=Path, default=None)
     p.add_argument("--kw", action="append", default=[], metavar="KEY=VALUE",
                    help="extra argument of run_optim('global', ...), e.g. memetic_children=300 (repeatable)")
+    p.add_argument("--set", dest="attrs", action="append", default=[], metavar="NAME=VALUE",
+                   help="window attribute set after loading, e.g. _polish_after_5nm_rule=true (repeatable)")
     args = p.parse_args()
+    window_attrs = {}
+    for item in args.attrs:
+        key, _, value = item.partition("=")
+        window_attrs[key] = json.loads(value)
     run_kwargs = {}
     for item in args.kw:
         key, _, value = item.partition("=")
@@ -200,6 +208,8 @@ def main() -> None:
         config = json.loads(args.config.read_text(encoding="utf-8"))
         count_evaluations()
         app = load(args.config)
+        for key, value in window_attrs.items():
+            setattr(app, key, value)
         t0 = time.perf_counter()
         app.run_optim("global", **run_kwargs)
         n_passes, quiet = wait_for_workflow(app)
@@ -210,6 +220,7 @@ def main() -> None:
                 "label": args.label,
                 "file": args.config.name,
                 "kwargs": run_kwargs,
+                "window_attrs": window_attrs,
                 "rmse_app": float(getattr(app, "_workflow_best_rmse", float("nan"))),
                 "table_layers": app.front_table.rowCount(),
                 **judge(app, config),

@@ -50,11 +50,15 @@ def run_local_search(
             rate_min_layer=RATE_MIN_LAYER,
         )
         evaluate = native_evaluator(search_params(params), nominal, clues, pre_calc_data.get("full_dynamics_grid", {}))
+        guard = bool(params.get("strat_local_search_guard", False))
+        evaluate_guard = native_evaluator(params, nominal, clues, pre_calc_data.get("full_dynamics_grid", {})) if guard else None
         plan, report = joint_local_search(start, evaluate, len(nominal), cfg, base_seed + SEARCH_SEED_OFFSET,
                                           tuple(base_seed + o for o in CHECK_SEED_OFFSETS), logger.info,
-                                          tuple(base_seed + o for o in CONFIRM_SEED_OFFSETS))
+                                          tuple(base_seed + o for o in CONFIRM_SEED_OFFSETS), evaluate_guard)
         report["start_strategy_id"] = start.get("strategy_id")
         report["search_index_corridor"] = search_params(params)["index_corridor"]
+        if guard:
+            report["guard_index_corridor"] = float(params.get("index_corridor", 0.0) or 0.0)
         if not report["accepted"]:
             return rows, report, ranker
         strategy = copy.deepcopy(plan)

@@ -219,3 +219,34 @@ def test_without_confirmation_seeds_a_refused_search_gives_the_winner_back() -> 
     plan, report = joint_local_search(start, evaluate, 6, _cfg(passes=1), 11, (101, 102))
     assert not report["accepted"]
     assert plan is start
+
+
+def _worse_away_from(start: dict):
+    """A configured-corridor evaluator under which every plan but `start` is ten times worse (r75x2 seed 101, 2026-10-22)."""
+    def evaluate(plan, seed, runs):
+        rng = np.random.default_rng(seed)
+        err = 1.0 if plan["blocks"] == start["blocks"] and plan["rate_layers"] == start["rate_layers"] else 10.0
+        return [(np.abs(err * (1.0 + 0.1 * rng.normal(0.0, 1.0, runs))), np.zeros(runs, dtype=bool)) for _ in range(3)]
+    return evaluate
+
+
+def test_the_guard_refuses_a_plan_worse_under_the_configured_corridor() -> None:
+    start = _plan()
+    plan, report = joint_local_search(start, _evaluator(), 6, _cfg(), 11, (101, 102), confirm_seeds=(201, 202),
+                                      evaluate_guard=_worse_away_from(start))
+    assert not report["accepted"]
+    assert plan is start
+    assert report["check_guard_p95"][1] > report["check_guard_p95"][0]
+
+
+def test_without_the_guard_the_report_is_unchanged() -> None:
+    report = joint_local_search(_plan(), _evaluator(), 6, _cfg(), 11, (101, 102))[1]
+    assert report["accepted"]
+    assert not any(key.startswith("check_guard") for key in report)
+
+
+def test_a_guard_that_agrees_keeps_the_same_plan() -> None:
+    plain, _ = joint_local_search(_plan(), _evaluator(), 6, _cfg(), 11, (101, 102))
+    guarded, report = joint_local_search(_plan(), _evaluator(), 6, _cfg(), 11, (101, 102), evaluate_guard=_evaluator())
+    assert report["accepted"]
+    assert guarded == plain

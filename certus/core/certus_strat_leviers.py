@@ -344,6 +344,17 @@ LEVIERS: tuple[Levier, ...] = (
         reserve="Cherche et controle sous une incertitude d'indice de +-0,010 (deux fois la nominale, decision du 2026-10-20 : les plans cherches a +-0,005 s'arretent a +-0,010). Une seule graine de banc ; cout environ 20 min de plus sur 16 coeurs (deux passes, 2 300 a 3 900 evaluations de 300 tirages). "
                 "Le plan n'est garde que s'il gagne sur deux graines fraiches de 1 000 tirages sans arret ajoute ; sinon le gagnant reste inchange.",
     ),
+    Levier(
+        cle="strat_local_search_guard",
+        libelle="Recherche locale : controle aussi au corridor d'indice configure",
+        defaut=False,
+        genre="bool",
+        statut=NON_MESURE,
+        mesure="Analyse du 2026-10-22 (reports/ANALYSE_claude_2026-10-22) : r75x2 graine 101, le plan accepte a +-0,010 "
+               "perdait 10,7 % de SEEL a +-0,005, invisible au controle.",
+        reserve="Exige en plus, sous le corridor configure, pas plus d'arrets et un P95 non superieur au depart ; "
+                "double les evaluations du controle. `false` retablit le chemin d'avant.",
+    ),
     # ---------------------------------------------------------------- RATE: the constants
     Levier(
         cle="RATE_MIN_LAYER",

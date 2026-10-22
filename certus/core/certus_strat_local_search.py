@@ -176,8 +176,15 @@ def joint_local_search(
     check_seeds: tuple[int, ...],
     log: Callable[[str], None] = lambda _msg: None,
     confirm_seeds: tuple[int, ...] = (),
+    evaluate_guard: Callable[[dict[str, Any], int, int], Evaluation] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Run the stage; return (plan, report). The plan is `start` itself when the check refuses the search."""
+    """Run the stage; return (plan, report). The plan is `start` itself when the check refuses the search.
+
+    `evaluate_guard` (`strat_local_search_guard`, off by default): the same evaluator under the CONFIGURED index
+    corridor, the one the winner is reported under. When given, every check and confirmation also requires, under it,
+    no more stops and a P95 score not above the start's. Measured 2026-10-22 (reports/ANALYSE_claude_2026-10-22): on
+    r75x2, bench seed 101, the plan accepted at +-0.010 was 10.7 % worse in SEEL at +-0.005, unseen by the check.
+    """
     current = copy.deepcopy(start)
     cur_ev = evaluate(current, search_seed, cfg.search_runs)
     kept: list[str] = []
@@ -205,9 +212,13 @@ def joint_local_search(
     if not kept:
         log("[LOCAL-SEARCH] no change kept: the winner is already a local optimum")
         return start, report
+    def guarded(plan: dict[str, Any], seeds: tuple[int, ...]) -> Evaluation | None:
+        return None if evaluate_guard is None else _concat([evaluate_guard(plan, s, cfg.check_runs) for s in seeds])
+
     ref = _concat([evaluate(start, s, cfg.check_runs) for s in check_seeds])
     new = _concat([evaluate(current, s, cfg.check_runs) for s in check_seeds])
-    ok, verdict = _judge(ref, new, cfg)
+    ref_g = guarded(start, check_seeds)
+    ok, verdict = _judge(ref, new, cfg, ref_g, guarded(current, check_seeds))
     report.update(verdict)
     report["accepted"] = ok
     log(f"[LOCAL-SEARCH] check on {len(check_seeds)} fresh seeds: dRMSE2 {100 * verdict['check_relative_gain']:+.1f} % "
@@ -221,7 +232,8 @@ def joint_local_search(
     picks = sorted({round(i * (len(history) - 1) / (MAX_FALLBACK_PLANS - 1)) for i in range(MAX_FALLBACK_PLANS)} - {len(history) - 1})
     best_k: tuple[float, int] | None = None
     for k in picks:
-        ok_k, v_k = _judge(ref, _concat([evaluate(history[k], s, cfg.check_runs) for s in check_seeds]), cfg)
+        ok_k, v_k = _judge(ref, _concat([evaluate(history[k], s, cfg.check_runs) for s in check_seeds]), cfg,
+                           ref_g, guarded(history[k], check_seeds))
         if ok_k and (best_k is None or v_k["check_relative_gain"] < best_k[0]):
             best_k = (v_k["check_relative_gain"], k)
     report["fallback_tried"] = len(picks)
@@ -230,7 +242,8 @@ def joint_local_search(
         return start, report
     k = best_k[1]
     ref_c = _concat([evaluate(start, s, cfg.check_runs) for s in confirm_seeds])
-    ok_c, v_c = _judge(ref_c, _concat([evaluate(history[k], s, cfg.check_runs) for s in confirm_seeds]), cfg)
+    ok_c, v_c = _judge(ref_c, _concat([evaluate(history[k], s, cfg.check_runs) for s in confirm_seeds]), cfg,
+                       guarded(start, confirm_seeds), guarded(history[k], confirm_seeds))
     report.update(fallback_changes=k + 1, confirm_seeds=list(confirm_seeds),
                   confirm={key.replace("check_", ""): val for key, val in v_c.items()}, accepted=ok_c)
     log(f"[LOCAL-SEARCH] fallback: the plan after {k + 1} of {len(history)} changes, check dRMSE2 {100 * best_k[0]:+.1f} %; "
@@ -239,14 +252,20 @@ def joint_local_search(
     return (history[k], report) if ok_c else (start, report)
 
 
-def _judge(ref: Evaluation, new: Evaluation, cfg: LocalSearchConfig) -> tuple[bool, dict[str, Any]]:
-    """The check rule: no more stops, a paired gain beyond two standard errors, a P95 score not above the reference."""
+def _judge(ref: Evaluation, new: Evaluation, cfg: LocalSearchConfig,
+           ref_g: Evaluation | None = None, new_g: Evaluation | None = None) -> tuple[bool, dict[str, Any]]:
+    """The check rule: no more stops, a paired gain beyond two standard errors, a P95 score not above the reference;
+    with the guard evaluations, also no more stops and no higher P95 score under the configured corridor."""
     d, se = paired_delta(ref, new, cfg.nominal_level)
     base = float(np.mean(ref[cfg.nominal_level][0][~ref[cfg.nominal_level][1]] ** 2))
     verdict = {"check_relative_gain": d / base if base > 0 else float("nan"),
                "check_relative_se": se / base if base > 0 else float("nan"),
                "check_stops": (stops(ref), stops(new)), "check_p95": (p95_score(ref), p95_score(new))}
-    return bool(stops(new) <= stops(ref) and d < -2.0 * se and p95_score(new) <= p95_score(ref)), verdict
+    ok = bool(stops(new) <= stops(ref) and d < -2.0 * se and p95_score(new) <= p95_score(ref))
+    if ref_g is not None and new_g is not None:
+        verdict.update(check_guard_stops=(stops(ref_g), stops(new_g)), check_guard_p95=(p95_score(ref_g), p95_score(new_g)))
+        ok = ok and stops(new_g) <= stops(ref_g) and p95_score(new_g) <= p95_score(ref_g)
+    return ok, verdict
 
 
 def nominal_level_index(params: dict[str, Any]) -> int:

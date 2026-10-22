@@ -263,8 +263,38 @@ def refine(p: Problem, ep, mats: str, rounds: int, sigma: float, rng, log) -> di
     return {"ep": ep, "mats": mats, "rmse": float(np.sqrt(c)), "history": trace[:: max(1, len(trace) // 40)]}
 
 
+def depth_child(p: Problem, a, b, mats: str, rng):
+    """Child that is parent a below an optical depth z and parent b above it (same alternation, same length).
+
+    z is drawn in the middle 60 % of the thinner parent. The cut layers k (in a) and m (in b) must hold
+    the same material: m is moved by one when needed. The two halves meet inside one layer of that
+    material. The length N + (k - m) is brought back to N by removing the thinnest adjacent pair or
+    by appending pairs of zero layers on top; both keep the alternation.
+    """
+    import numpy as np
+
+    n = len(mats)
+    q = np.array([4.0 * p.n4[m] / p.l0 for m in mats])
+    ca, cb = np.cumsum(a * q), np.cumsum(b * q)
+    z = rng.uniform(0.2, 0.8) * min(ca[-1], cb[-1])
+    k = int(min(np.searchsorted(ca, z), n - 1))
+    m = int(min(np.searchsorted(cb, z), n - 1))
+    if (k - m) % 2:
+        m = m + 1 if m + 1 < n else m - 1
+    below_k = (z - (ca[k - 1] if k else 0.0)) / q[k]
+    above_m = max(0.0, (cb[m] - z) / q[m])
+    child = [*a[:k], max(0.0, below_k) + above_m, *b[m + 1:]]
+    while len(child) > n:
+        # Strict alternation: layer j has the material, hence the weight, of layer j % 2.
+        i = int(np.argmin([child[j] * q[j % 2] + child[j + 1] * q[(j + 1) % 2] for j in range(len(child) - 1)]))
+        del child[i:i + 2]
+    while len(child) < n:
+        child += [0.0, 0.0]
+    return np.array(child[:n])
+
+
 def memetic(p: Problem, n_layers: int, pop_size: int, children: int, rng, first: str, log, seeds=(), seed_mats="",
-            child_iter: int = 0) -> dict:
+            child_iter: int = 0, crossover: str = "index") -> dict:
     """Population of polished designs; a child takes a block of layers from each parent, then is polished.
 
     Same layer count and alternation for everyone, so any cut point gives a valid stack. The child
@@ -286,9 +316,12 @@ def memetic(p: Problem, n_layers: int, pop_size: int, children: int, rng, first:
     for g in range(children):
         i, j = rng.choice(len(pop), 2, replace=False)
         a, b = pop[i][0], pop[j][0]
-        lo, hi = sorted(rng.choice(np.arange(1, n_layers), 2, replace=False))
-        child = a.copy()
-        child[lo:hi] = b[lo:hi]
+        if crossover == "depth":
+            child = depth_child(p, a, b, mats, rng)
+        else:
+            lo, hi = sorted(rng.choice(np.arange(1, n_layers), 2, replace=False))
+            child = a.copy()
+            child[lo:hi] = b[lo:hi]
         child *= 1.0 + 0.02 * rng.standard_normal(n_layers)
         worst = int(np.argmax([m[1] for m in pop]))
         if child_iter:
@@ -322,6 +355,8 @@ def main() -> None:
     ap.add_argument("--rounds", type=int, default=200)
     ap.add_argument("--pop", type=int, default=30)
     ap.add_argument("--child-iter", type=int, default=0, help="memetic: short polish of each child before the full one")
+    ap.add_argument("--crossover", choices=["index", "depth"], default="index",
+                    help="memetic: cut both parents at the same layer index, or at the same optical depth")
     ap.add_argument("--qw-max", type=float, default=1.2, help="random starts: upper QWOT of each layer")
     ap.add_argument("--optical", action="store_true", help="polish in optical thickness n4*d")
     ap.add_argument("--qwot-max", type=float, default=None, help="ceiling on the total optical thickness (QWOT)")
@@ -354,7 +389,7 @@ def main() -> None:
             start = db.load(args.start_file)
             seeds = [np.asarray(start.ep_current, dtype=float)]
             seed_mats = "".join(layer.mat for layer in start._get_front_stack())
-        res = memetic(p, args.layers, args.pop, args.rounds, rng, args.first, be.emit, seeds, seed_mats, args.child_iter)
+        res = memetic(p, args.layers, args.pop, args.rounds, rng, args.first, be.emit, seeds, seed_mats, args.child_iter, args.crossover)
     elif args.mode == "refine":
         start = db.load(args.start_file)
         res = refine(p, np.asarray(start.ep_current, dtype=float), "".join(layer.mat for layer in start._get_front_stack()),
@@ -375,7 +410,7 @@ def main() -> None:
         "rmse_search": res["rmse"],
         "layers": len(res["mats"]), "materials": res["mats"], "total_nm": float(ep.sum()),
         "thinnest_nm": float(ep.min()), "total_qwot": float(sum(p.qwot(ep, res["mats"]))),
-        "qw_max": args.qw_max, "optical": args.optical, "qwot_max": args.qwot_max, "child_iter": args.child_iter,
+        "qw_max": args.qw_max, "optical": args.optical, "qwot_max": args.qwot_max, "child_iter": args.child_iter, "crossover": args.crossover,
         "pop": args.pop, "rounds": args.rounds, "evals": p.evals, "run_s": round(time.perf_counter() - t0, 1),
         **{k: res[k] for k in ("spread", "history") if k in res},
         "ep": [round(float(x), 4) for x in ep],

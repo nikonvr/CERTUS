@@ -1,4 +1,4 @@
-"""Final joint (mode, wavelength) local search on the STRAT winner (`strat_local_search`, off by default).
+"""Final joint (mode, wavelength) local search on the STRAT winner (`strat_local_search`, on by default since 2026-10-20).
 
 The algorithm and its measurement live in `certus/core/certus_strat_local_search.py`; this module only gives it the
 worker's shared clues and puts the refined plan, scored like every other row, at the head of the final ranking.

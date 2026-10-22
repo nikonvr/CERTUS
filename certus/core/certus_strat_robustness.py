@@ -840,7 +840,7 @@ def run_final_simulation_block(
         rate_rescue=expand_variants, id_namespace_n_blocks=strategy_id_context(opti_results)["strategy_id_namespace_n_blocks"],
     )
 
-    # Ablation profiles diagnose the best candidates without influencing their rank.
+    # 🔴 Ablation profiles come AFTER the ranking, never before: a DIAGNOSTIC must never influence the order.
     # Owner, 2026-08-12:
     # "for each of the 20 best strategies, rank the influence of each defect
     # source. It will let the user better understand where the problems come from."

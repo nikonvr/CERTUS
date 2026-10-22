@@ -789,7 +789,7 @@ def _apply_elite_refinement_if_enabled(
         f"{float(ctx.params.get('scan_wl_step', 0.0)):g} nm"
     )
     total_elite_added = 0
-    # Moves visit parents in order until the budget is full. Optional round-robin
+    # 🔑 Moves visit parents in order until the budget is full (📏 `_select_elite_optical_parents`). Round-robin
     # gives each parent a turn, with moves shuffled by (seed, round, parent rank).
     round_robin = bool(ctx.params.get("elite_round_robin", False))
     base_seed = _resolve_robustness_base_seed(ctx.params)

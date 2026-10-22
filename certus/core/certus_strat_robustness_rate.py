@@ -90,7 +90,15 @@ def _select_elite_optical_parents(
     logger: logging.Logger | None = None,
     optical_pool: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
-    """Reserve optical parents first; zero keeps the historical slice."""
+    """Reserve optical parents first; zero keeps the historical slice.
+
+    🔑 WHICH PARENTS GET EXPLORED. ELITE tries the moves parent after parent until `elite_max_candidates` (120) are kept,
+    and a parent of K blocks has up to 4K - 2 of them: 📏 with ten near-duplicate parents of 11 blocks, the first four
+    fill the budget (38, 40, 40 and 2 candidates), with 15 blocks the first three (56, 56, 8). Reserved parents go first,
+    so they spend the budget first. 📏 A4, 2026-10-22 (reports/ANALYSE_claude_2026-10-22), default stop model, 48c seed 42
+    and r75x0.5 seed 101: every parent the quota placed crashed (>= 42 %), no pure optical plan reached the population,
+    and ELITE kept 6 to 23 % fewer candidates; at 4 the r75x0.5 winner was 2.7 % worse on fresh draws.
+    """
     parents = strategies_results[:parent_count]
     if minimum_optical <= 0:
         return parents

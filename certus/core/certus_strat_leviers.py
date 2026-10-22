@@ -263,8 +263,10 @@ LEVIERS: tuple[Levier, ...] = (
         libelle="ELITE : nombre minimal de parents optiques purs",
         defaut=0,
         genre="int",
-        statut=NON_MESURE,
-        mesure="A4 : reserve des parents sans couche Rate avant le filtre de score fini, puis les transmet a ELITE.",
+        statut=RESERVE,
+        mesure="A4 (2026-10-22, reports/ANALYSE_claude_2026-10-22), modele d'arret par defaut, 48c graine 42 et r75x0.5 graine 101 : "
+               "aucun plan optique pur obtenu, parents du quota tous en plantage (>= 42 %), 6 a 23 % de candidats ELITE en moins ; "
+               "a 4, gagnant r75x0.5 moins bon de 2,7 % sur tirages neufs.",
         reserve="0 conserve le chemin historique. Les parents reserves passent en tete ; quota borne par "
                 "les parents optiques disponibles. Le total depasse elite_parent_top_k si le quota l'exige.",
     ),

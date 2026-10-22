@@ -72,6 +72,9 @@ calc_spectrum_front = calc_spectrum_front_wrapper
 calc_spectrum_full = calc_spectrum_full_wrapper
 calc_spectrum_full_exact = calc_spectrum_full_exact_wrapper
 
+QWOT_EXCESS_PENALTY = 1e-2  # memetic stage: cost per squared QWOT above memetic_qwot_max (costs are ~1e-6 to 1e-9)
+
+
 class OptimWorker(QObject):
     """PGLOBAL Optimization Worker"""
 
@@ -213,6 +216,7 @@ class OptimWorker(QObject):
         ``memetic_absent_below_nm`` (default 5) are evaluated and returned as absent. Every layer is
         bounded below by ``memetic_floor_nm`` (default 5 nm, the final rule; 0 lets layers vanish):
         on the 50/50 splitter the workflow then ends at RMSE 0.000332 instead of 0.000951.
+        ``memetic_qwot_max`` caps the total optical thickness of the variable layers (penalty).
         """
         from certus.core.certus_design_memetic import run_memetic, widen_upper_bounds
 
@@ -229,8 +233,19 @@ class OptimWorker(QObject):
         # evaluated as absent (0 nm), so that the designs found survive that rule unchanged.
         min_d = max(float(CFG.MIN_THICKNESS), float(self.cfg.get('memetic_absent_below_nm', 5.0)))
 
+        # Optional ceiling on the total optical thickness of the variable layers (QWOT at l0, n4 convention, as
+        # DESIGN counts QWOT): quadratic penalty on the excess, with its gradient. None: no ceiling.
+        qwot_max = self.cfg.get('memetic_qwot_max')
+        q_per_nm = 1.0 / qwot_nm
+
         def cost_and_grad(x):
-            return gradient_func(np.where(x < min_d, 0.0, x))
+            c, g = gradient_func(np.where(x < min_d, 0.0, x))
+            if qwot_max is not None:
+                excess = float(q_per_nm @ x) - float(qwot_max)
+                if excess > 0.0:
+                    c = c + QWOT_EXCESS_PENALTY * excess * excess
+                    g = np.asarray(g, dtype=np.float64) + 2.0 * QWOT_EXCESS_PENALTY * excess * q_per_nm
+            return c, g
 
         result = run_memetic(cost_and_grad, wide, x0=x0_start, population=population, children=children,
                              seed=self.cfg.get('memetic_seed'), screen_maxiter=int(self.cfg.get('memetic_screen_maxiter', 0)),

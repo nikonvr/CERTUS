@@ -64,6 +64,11 @@ def run_local_search(
         strategy = copy.deepcopy(plan)
         strategy.update(origin="LOCAL_SEARCH", origin_details=f"LOCAL_SEARCH(parent={start.get('strategy_id')})",
                         n_blocks=len(strategy["blocks"]))
+        fresh_id = bool(params.get("strat_local_search_fresh_id", False))
+        if fresh_id:
+            from certus.core.certus_strat_ranking import next_refinement_strategy_id
+            strategy.update(strategy_id=next_refinement_strategy_id(rows, len(strategy["blocks"])),
+                            parent_strategy_id=start.get("strategy_id"))
         context = {key: pre_calc_data[key] for key in ("p_thick_nominal", "nominal_matrix_cache", "all_wls")}
         context["clues_at_wl"] = clues
         scoring_params = {**params, "ablation_profile": False, "strat_local_search": False}
@@ -72,7 +77,21 @@ def run_local_search(
     refined = scored["all_strategies_results"][0]
 
     def refined_first(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        others = [r for r in results if r is not refined]
-        return [refined, *ranker(others)]
+        return rank_refined_first(refined, results, ranker, check_ids=fresh_id)
 
     return [*rows, refined], report, refined_first
+
+
+def rank_refined_first(refined: dict[str, Any], results: list[dict[str, Any]], ranker: Ranker,
+                       check_ids: bool = False) -> list[dict[str, Any]]:
+    """The refined plan first, the others in the ranker's order.
+
+    The ranker checks the ids of the others only. With `check_ids` (`strat_local_search_fresh_id`, off by default) the
+    whole list goes through `validate_unique_strategy_ids`: without a fresh id the refined row carries its parent's id
+    (8 accepted benches of 8, reports/ANALYSE_claude_2026-10-22), which that check exists to withhold.
+    """
+    ordered = [refined, *ranker([r for r in results if r is not refined])]
+    if check_ids:
+        from certus.core.certus_strat_ranking import validate_unique_strategy_ids
+        validate_unique_strategy_ids(ordered)
+    return ordered

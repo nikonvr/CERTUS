@@ -355,6 +355,16 @@ LEVIERS: tuple[Levier, ...] = (
         reserve="Exige en plus, sous le corridor configure, pas plus d'arrets et un P95 non superieur au depart ; "
                 "double les evaluations du controle. `false` retablit le chemin d'avant.",
     ),
+    Levier(
+        cle="strat_local_search_fresh_id",
+        libelle="Recherche locale : identifiant neuf pour le plan affine",
+        defaut=False,
+        genre="bool",
+        statut=NON_MESURE,
+        mesure="Analyse du 2026-10-22 : sans lui, la ligne LOCAL_SEARCH garde l'identifiant de son parent (8 bancs acceptes sur 8).",
+        reserve="Change l'identifiant exporte du plan affine (le parent est garde dans `parent_strategy_id`) et controle "
+                "l'unicite sur toute la liste. `false` retablit le chemin d'avant.",
+    ),
     # ---------------------------------------------------------------- RATE: the constants
     Levier(
         cle="RATE_MIN_LAYER",

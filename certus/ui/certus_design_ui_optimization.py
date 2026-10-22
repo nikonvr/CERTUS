@@ -372,11 +372,23 @@ class OptimizationManager:
         )
 
     def _restore_smart_decimation_best_overall(self) -> bool:
-        """Find and restore the absolute best champion by RMSE across Pareto history."""
+        """Find and restore the absolute best champion by RMSE across Pareto history.
+
+        With the window's `_pareto_champion_respects_5nm`, a record free of layers under 5 nm is preferred
+        when one exists: the final 5 nm rule removes such layers without re-optimizing, and a restored
+        champion with a 4.2 nm layer fell from RMSE 0.000165 to 0.0239 on the 50/50 splitter
+        (reports/DESIGN_bs5050_2026-10-22/journal.md). Off by default.
+        """
+        records = list(self.ui.pareto_history.items())
+        if getattr(self.ui, "_pareto_champion_respects_5nm", False):
+            compliant = [(n, rec) for n, rec in records
+                         if rec.get("ep_rmse") is not None and not np.any(np.asarray(rec["ep_rmse"]) < 5.0)]
+            if compliant:
+                records = compliant
         best_overall_rmse = float("inf")
         best_overall_rec = None
         best_overall_n = None
-        for n, rec in self.ui.pareto_history.items():
+        for n, rec in records:
             if rec.get("best_rmse", float("inf")) < best_overall_rmse:
                 best_overall_rmse = rec["best_rmse"]
                 best_overall_rec = rec

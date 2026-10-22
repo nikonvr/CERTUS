@@ -47,7 +47,7 @@ MODULES: dict[str, tuple[str, str]] = {
     "CERTUS_INDEX": ("certus.ui.certus_index_ui", "CertusIndexApp"),
     "CERTUS_INDEX_SPLINE": ("certus.ui.certus_index_spline_ui", "CertusIndexSplineApp"),
     "CERTUS_FIELD": ("certus.ui.certus_field_ui", "CertusFieldApp"),
-    "CERTUS_SMOOTHER": ("certus.utils.certus_curve_smoother", "CurveSmootherGUI"),
+    "CERTUS_SMOOTHER": ("certus.ui.certus_curve_smoother", "CurveSmootherGUI"),
     "CERTUS_SUBSTRATE_INDEX": ("certus.ui.certus_substrate_ui", "SubstrateIndexGUI"),
     "CERTUS_METAL_SINGLE": ("CERTUS_METAL_SINGLE", "CertusMetalSingleApp"),
     "CERTUS_METAL_BILAYER": ("CERTUS_METAL_BILAYER", "CertusMetalBilayerApp"),

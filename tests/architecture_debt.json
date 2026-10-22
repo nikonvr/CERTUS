@@ -14,9 +14,7 @@
     "certus.spline.certus_index_spline_rendering -> certus.ui.certus_ui",
     "certus.spline.certus_index_spline_settings -> certus.ui.certus_ui",
     "certus.spline.certus_index_spline_smart_init -> certus.ui.certus_smart_init_curve_editor",
-    "certus.spline.certus_index_spline_smart_init -> certus.ui.certus_ui",
-    "certus.utils.certus_curve_smoother -> certus.ui.certus_measurement_excel_ui",
-    "certus.utils.certus_curve_smoother -> certus.ui.certus_ui"
+    "certus.spline.certus_index_spline_smart_init -> certus.ui.certus_ui"
   ],
   "cycles": [
     [

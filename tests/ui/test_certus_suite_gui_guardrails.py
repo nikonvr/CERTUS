@@ -20,7 +20,7 @@ APPS_REGISTRY = [
     ("INDEX", "certus.ui.certus_index_ui", "CertusIndexApp"),
     ("INDEX_SPLINE", "certus.ui.certus_index_spline_ui", "CertusIndexSplineApp"),
     ("FIELD", "certus.ui.certus_field_ui", "CertusFieldApp"),
-    ("SMOOTHER", "certus.utils.certus_curve_smoother", "CurveSmootherGUI"),
+    ("SMOOTHER", "certus.ui.certus_curve_smoother", "CurveSmootherGUI"),
     ("SUBSTRATE_INDEX", "certus.ui.certus_substrate_ui", "SubstrateIndexGUI"),
     ("METAL_SINGLE", "CERTUS_METAL_SINGLE", "CertusMetalSingleApp"),
     ("METAL_BILAYER", "CERTUS_METAL_BILAYER", "CertusMetalBilayerApp"),
@@ -165,7 +165,7 @@ def test_curve_smoother_save_file_guardrail(qapp, tmp_path, monkeypatch):
     import pandas as pd
     from PyQt6.QtWidgets import QFileDialog, QMessageBox
 
-    from certus.utils.certus_curve_smoother import CurveSmootherGUI
+    from certus.ui.certus_curve_smoother import CurveSmootherGUI
 
     smoother = CurveSmootherGUI()
 

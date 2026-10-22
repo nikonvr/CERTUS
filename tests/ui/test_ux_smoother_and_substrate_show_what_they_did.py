@@ -21,7 +21,7 @@ import pytest
 
 @pytest.fixture
 def smoother(qapp):
-    from certus.utils.certus_curve_smoother import CurveSmootherGUI
+    from certus.ui.certus_curve_smoother import CurveSmootherGUI
 
     win = CurveSmootherGUI()
     x = np.linspace(400.0, 800.0, 200)

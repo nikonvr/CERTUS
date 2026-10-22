@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import pytest
 
-MODULE = "certus.utils.certus_curve_smoother"
+MODULE = "certus.ui.certus_curve_smoother"
 
 
 @pytest.mark.parametrize(

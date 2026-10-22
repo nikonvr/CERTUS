@@ -68,6 +68,20 @@ def test_the_live_title_names_the_loaded_configuration(design_app) -> None:
     assert "[JSON-design-example]" in design_app.spectrum_plot.plotItem.titleLabel.text
 
 
+def test_the_live_title_survives_a_configuration_without_a_source_file(design_app) -> None:
+    # load_config sets _last_config_file to None until _post_load_config records the file;
+    # Path(None) raised TypeError at every intermediate spectrum (bench run, 2026-10-22).
+    design_app._last_config_file = None
+
+    design_app.plot_manager._update_optim_live_plot_title(
+        {"ep": np.asarray(design_app.ep_current, dtype=float)}, True, 0.01, 5, False
+    )
+
+    title = design_app.spectrum_plot.plotItem.titleLabel.text
+    assert title.startswith("Optimizing")
+    assert "RMSE:  0.010000" in title
+
+
 def test_the_live_profile_keeps_the_back_coating(design_app, monkeypatch) -> None:
     drawn = []
     monkeypatch.setattr(design_app, "_plot_profile", lambda ep, stack, ep_back, stack_back: drawn.append(ep_back))

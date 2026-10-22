@@ -1021,7 +1021,7 @@ class PlotManager:
         n_layers_disp = len(data["ep"]) if "ep" in data else 0
 
         try:
-            src_name = Path(getattr(self.ui, "_last_config_file", "")).stem
+            src_name = Path(getattr(self.ui, "_last_config_file", "") or "").stem
 
             title_prefix = f"[{src_name}] " if src_name else ""
 

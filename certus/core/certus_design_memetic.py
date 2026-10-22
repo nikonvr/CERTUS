@@ -46,11 +46,13 @@ def run_memetic(
     local_maxiter: int = 3000,
     stop_event: Event | None = None,
     on_improve: Callable[[SimpleNamespace], None] | None = None,
+    init_bounds: np.ndarray | None = None,
 ) -> MemeticResult:
     """Run the memetic search inside ``bounds`` (one (low, high) row per variable layer).
 
     ``x0``, when given, joins the initial population (polished); the others are drawn uniformly
-    inside the bounds. ``screen_maxiter`` > 0 polishes each child briefly first and gives the full
+    inside ``init_bounds`` (default: the bounds), then polished inside the bounds. Drawing inside
+    wide bounds starts from designs far thicker than useful ones. ``screen_maxiter`` > 0 polishes each child briefly first and gives the full
     polish only to a child that already beats the worst member. ``on_improve`` receives an object
     with ``x``, ``y`` and ``generation`` each time the best cost improves.
     """
@@ -58,6 +60,8 @@ def run_memetic(
     hi_b = np.asarray(bounds, dtype=np.float64)[:, 1]
     dim = len(lo_b)
     rng = np.random.default_rng(seed)
+    init = np.asarray(init_bounds if init_bounds is not None else bounds, dtype=np.float64)
+    init_lo, init_hi = np.maximum(init[:, 0], lo_b), np.minimum(init[:, 1], hi_b)
     calls = {"n": 0}
 
     def f(x: np.ndarray) -> tuple[float, np.ndarray]:
@@ -86,7 +90,7 @@ def run_memetic(
         pop.append(polish(np.asarray(x0, dtype=np.float64), local_maxiter))
         record(*pop[-1], 0)
     while len(pop) < max(2, population) and not stopped():
-        pop.append(polish(rng.uniform(lo_b, hi_b), local_maxiter))
+        pop.append(polish(rng.uniform(init_lo, init_hi), local_maxiter))
         record(*pop[-1], 0)
 
     for gen in range(1, children + 1):

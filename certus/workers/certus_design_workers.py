@@ -216,11 +216,11 @@ class OptimWorker(QObject):
         qwot_nm = np.array([float(l0) / (4.0 * float(mats[stack[int(i)].mat].n4)) for i in var_idx])
         wide = widen_upper_bounds(bounds, qwot_nm, float(self.cfg.get('memetic_layer_qwot_max', 3.0)))
         population = int(self.cfg.get('memetic_population', 30))
-        logging.info(f'[OPTIM] Memetic global stage: population={population}, children={children}, dim={len(var_idx)}')
+        logging.getLogger('CERTUS').info(f'[OPTIM] Memetic global stage: population={population}, children={children}, dim={len(var_idx)}')
         result = run_memetic(gradient_func, wide, x0=x0_start, population=population, children=children,
                              seed=self.cfg.get('memetic_seed'), screen_maxiter=int(self.cfg.get('memetic_screen_maxiter', 0)),
-                             stop_event=self._stop_event, on_improve=callback)
-        logging.info(f'[OPTIM] Memetic global stage done: best cost={result.y:.6e}, cost calls={result.evaluations}')
+                             stop_event=self._stop_event, on_improve=callback, init_bounds=bounds)
+        logging.getLogger('CERTUS').info(f'[OPTIM] Memetic global stage done: best cost={result.y:.6e}, cost calls={result.evaluations}')
         return result
 
     def run(self) -> None:

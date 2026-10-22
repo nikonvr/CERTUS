@@ -37,7 +37,7 @@ régression (`tests/unit/test_the_architecture_debt_only_shrinks.py` ne tourne p
 3. `rate_rescue_hard` : inactif, mesuré sans gain (35 plans déposables sur 410) — le garder ou le retirer.
 4. Le Rate et l'optique pure (§5, A4 de `ETAT_actions.md`) ; D71 (2) ; l'information D69 (changement de définition d'un indicateur).
 5. Toute poussée (`git push`), toute fusion de la PR #9, toute modification de la vitrine.
-6. Le seuil des points tournants à bas bruit (`tp_hysteresis_floor`) ; armer `strat_local_search_guard` et `strat_local_search_fresh_id`, codés inactifs (rapport ci-dessus, §8).
+6. Le seuil des points tournants à bas bruit (`tp_hysteresis_floor`) ; armer `strat_local_search_guard` (critère tenu sur les dix cas : [bilan](../reports/STRAT_garde_2026-10-22/bilan.md)) et `strat_local_search_fresh_id`, codés inactifs.
 
 ## 1. Où en sont les programmes
 

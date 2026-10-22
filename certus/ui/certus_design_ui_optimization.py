@@ -172,7 +172,9 @@ class OptimizationManager:
             self.ui.orchestrator.schedule_smart_pareto_decimation()
             return
 
-        self._apply_5nm_minimum()  # Hard rule: no layer < 5nm in final design
+        removed = self._apply_5nm_minimum()  # Hard rule: no layer < 5nm in final design
+        if self._heal_after_5nm_rule(removed):
+            return
 
         # Set export flag BEFORE scheduling eval (eval callback checks this flag)
         if get_export_config():
@@ -561,12 +563,28 @@ class OptimizationManager:
 
         return {r for r, layer in enumerate(self.ui._get_front_stack()) if not layer.var}
 
-    def _apply_5nm_minimum(self) -> None:
+    def _heal_after_5nm_rule(self, removed: int) -> bool:
+        """Re-optimize once (healing, then local polish) after the 5 nm rule removed layers; True if started.
+
+        Inactive unless the window's `_polish_after_5nm_rule` is True. The rule removes thin layers
+        without re-optimizing: on the 50/50 splitter 400-1200 nm it took a 34-layer design from RMSE
+        0.000161 to 0.001035 by removing a single layer (reports/DESIGN_bs5050_2026-10-22/journal.md).
+        The workflow comes back to its finalisation afterwards, where the rule applies again.
+        """
+        if not removed or not getattr(self.ui, "_polish_after_5nm_rule", False):
+            return False
+        if getattr(self.ui, "_healed_after_5nm_rule", False):
+            return False
+        self.ui._healed_after_5nm_rule = True
+        self.ui.log(f"[5nm rule] Re-optimizing after removing {removed} layers (healing, then local polish)", "INFO")
+        return bool(self.ui.orchestrator._handle_healing_workflow(removed))
+
+    def _apply_5nm_minimum(self) -> int:
         """Enforce hard minimum layer thickness of 5nm on the current design.
 
         Removes all layers < 5nm except those the operator fixed, merges adjacent identical materials,
 
-        and logs any changes. Called at every workflow exit point.
+        and logs any changes. Called at every workflow exit point. Returns the number of layers removed.
 
         This rule takes priority over all other optimisation considerations.
 
@@ -575,7 +593,7 @@ class OptimizationManager:
         ep = self.ui.ep_current
 
         if ep is None or len(ep) == 0:
-            return
+            return 0
 
         MIN_FINAL_THICKNESS = 5.0  # nm - hard manufacturing limit
 
@@ -592,7 +610,7 @@ class OptimizationManager:
             )
 
         if not thin_layers:
-            return  # Nothing to do
+            return 0  # Nothing to do
 
         self.ui.log(
             f"[5nm rule] Removing {len(thin_layers)} layers < {MIN_FINAL_THICKNESS}nm before finalisation",
@@ -621,6 +639,7 @@ class OptimizationManager:
         # Reset _workflow_best_rmse because the topology changed and the old RMSE is no longer valid.
         self.ui._workflow_best_rmse = float("inf")
         # Pareto update is deferred to `_on_eval_finished` which will recalculate the true RMSE.
+        return len(thin_layers)
 
     def _save_table_state(self) -> list:
         """Save front_table state (material + QWOT + var) for checkpoint."""
@@ -729,7 +748,10 @@ class OptimizationManager:
 
             self.ui._use_exact_ep = True
 
-        self._apply_5nm_minimum()  # Hard rule before closing
+        removed = self._apply_5nm_minimum()  # Hard rule before closing
+        if self._heal_after_5nm_rule(removed):
+            self.ui._is_internal_restart = False
+            return
 
         if get_export_config():
             self.ui._export_pending = True  # Set BEFORE schedule_eval

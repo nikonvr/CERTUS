@@ -715,6 +715,7 @@ class CoreManager:
         self.ui._workflow_stopped = False
 
         self.ui._decimation_done = False
+        self.ui._healed_after_5nm_rule = False  # one re-optimization after the 5 nm rule per run
 
         self.ui._export_pending = False
 

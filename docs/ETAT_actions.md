@@ -79,7 +79,7 @@ registre `certus_strat_leviers.py`, un test qui prouve le chemin à 0 identique 
 
 A4 livré le 2026-10-22 : levier à 0 par défaut, code validé en série et C1 tenu, [six bancs](../reports/STRAT_A4_parents_optiques_2026-10-22/bilan.md). Réanalyse Claude : A4 sans effet au modèle d'arrêt par défaut, A14/A10 non conformes au critère sur un cas ; place d'A8b et d'A9 : [rapport](../reports/ANALYSE_claude_2026-10-22/bilan.md) §8.
 
-**A8b — Imports montants (D26)** : 20 arêtes (§4) ; descendre un symbole dans `certus/domain/` ou `certus/core/`. *Livrable* : un commit par arête,
+**A8b — Imports montants (D26)** : 20 → 14 arêtes le 2026-10-23 (Claude, `claude/2026-10-22`, quatre commits). Les 14 restantes viennent de modules qui mêlent calcul et Qt (`certus_metal_common`, applications `metal`, mixins de corridor, rendu et exécution `spline`) : ni un symbole à descendre ni un module à monter dans `certus.ui` (CLAUDE.md §8) ; les séparer est un chantier que 👤 décide. Méthode d'origine : descendre un symbole dans `certus/domain/` ou `certus/core/`. *Livrable* : un commit par arête,
 `python scripts\metrics.py --dette tests\architecture_debt.json` après chaque dette payée (il ne fait que rétrécir), validation complète.
 
 **A9 — 99 couches en une campagne** (demande de 👤 du 2026-10-16). Protocole prêt : `reports/STRAT_99c_A9_protocole_2026-10-17/` (`chain_A9.sh`,

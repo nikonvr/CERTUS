@@ -209,7 +209,8 @@ class OptimWorker(QObject):
 
         Its bounds are those of the global stage, each upper bound raised to ``memetic_layer_qwot_max``
         quarter waves (default 3): the global stage caps a layer at 1.2 QWOT, which excludes the best
-        known designs of the 50/50 splitter (layers of 1.6 to 1.9 QWOT).
+        known designs of the 50/50 splitter (layers of 1.6 to 1.9 QWOT). Layers under
+        ``memetic_absent_below_nm`` (default 5) are evaluated and returned as absent.
         """
         from certus.core.certus_design_memetic import run_memetic, widen_upper_bounds
 
@@ -217,16 +218,18 @@ class OptimWorker(QObject):
         wide = widen_upper_bounds(bounds, qwot_nm, float(self.cfg.get('memetic_layer_qwot_max', 3.0)))
         population = int(self.cfg.get('memetic_population', 30))
         logging.getLogger('CERTUS').info(f'[OPTIM] Memetic global stage: population={population}, children={children}, dim={len(var_idx)}')
-        min_d = float(CFG.MIN_THICKNESS)
+        # A layer under MIN_THICKNESS costs 1e30 in the shared gradient: that cliff stops L-BFGS-B line
+        # searches. Below `memetic_absent_below_nm` (default 5 nm, the final rule of the workflow) a layer is
+        # evaluated as absent (0 nm), so that the designs found survive that rule unchanged.
+        min_d = max(float(CFG.MIN_THICKNESS), float(self.cfg.get('memetic_absent_below_nm', 5.0)))
 
         def cost_and_grad(x):
-            # A layer under MIN_THICKNESS costs 1e30 in the shared gradient: that cliff stops L-BFGS-B
-            # line searches. Such a layer is evaluated as absent (0 nm), which is continuous.
             return gradient_func(np.where(x < min_d, 0.0, x))
 
         result = run_memetic(cost_and_grad, wide, x0=x0_start, population=population, children=children,
                              seed=self.cfg.get('memetic_seed'), screen_maxiter=int(self.cfg.get('memetic_screen_maxiter', 0)),
                              stop_event=self._stop_event, on_improve=callback, init_bounds=bounds)
+        result.x = np.where(result.x < min_d, 0.0, result.x)
         logging.getLogger('CERTUS').info(f'[OPTIM] Memetic global stage done: best cost={result.y:.6e}, cost calls={result.evaluations}')
         return result
 

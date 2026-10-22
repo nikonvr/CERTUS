@@ -358,6 +358,12 @@ class ExportManager:
         ):
             return
 
+        # A best evaluation of another layer count (layers removed since, e.g. by the 5 nm rule) is another
+        # design: writing its thicknesses into this table would leave the two out of step.
+        best_ep = self.ui._best_eval_result.get("ep") if isinstance(self.ui._best_eval_result, dict) else None
+        if best_ep is not None and np.asarray(best_ep).size != self.ui.front_table.rowCount():
+            return
+
         self.ui.last_result = copy_optimization_result(self.ui._best_eval_result)
 
         try:

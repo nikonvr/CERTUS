@@ -204,6 +204,25 @@ class OptimWorker(QObject):
         kwargs.pop('self')
         return self.design_strat._prepare_pglobal_inputs(self, **kwargs)
 
+    def _run_memetic_global(self, *, bounds, x0_start, var_idx, stack, mats, l0, children, gradient_func, callback) -> Any:
+        """Global stage by the memetic search (``memetic_children`` > 0); returns an object with ``x`` and ``y``.
+
+        Its bounds are those of the global stage, each upper bound raised to ``memetic_layer_qwot_max``
+        quarter waves (default 3): the global stage caps a layer at 1.2 QWOT, which excludes the best
+        known designs of the 50/50 splitter (layers of 1.6 to 1.9 QWOT).
+        """
+        from certus.core.certus_design_memetic import run_memetic, widen_upper_bounds
+
+        qwot_nm = np.array([float(l0) / (4.0 * float(mats[stack[int(i)].mat].n4)) for i in var_idx])
+        wide = widen_upper_bounds(bounds, qwot_nm, float(self.cfg.get('memetic_layer_qwot_max', 3.0)))
+        population = int(self.cfg.get('memetic_population', 30))
+        logging.info(f'[OPTIM] Memetic global stage: population={population}, children={children}, dim={len(var_idx)}')
+        result = run_memetic(gradient_func, wide, x0=x0_start, population=population, children=children,
+                             seed=self.cfg.get('memetic_seed'), screen_maxiter=int(self.cfg.get('memetic_screen_maxiter', 0)),
+                             stop_event=self._stop_event, on_improve=callback)
+        logging.info(f'[OPTIM] Memetic global stage done: best cost={result.y:.6e}, cost calls={result.evaluations}')
+        return result
+
     def run(self) -> None:
         """
 
@@ -300,7 +319,11 @@ class OptimWorker(QObject):
             x0_start, objective_wrapper, callback, compute_oblique_error, compute_oblique_error_and_grad_analytic = self._prepare_optimizer_entry(ep0=ep0, var_idx=var_idx, mode=mode, gradient_func_to_use=gradient_func_to_use)
             optimizer, opt_start_time = self._run_pglobal_setup(mode, max_iter_run, dim, objective_wrapper, bounds, pg_conf, x0_start, gradient_func_to_use)
             pglobal_progress = build_progress_callback(self.signals.progress_snapshot.emit, "DESIGN", "PGLOBAL")
-            best_sample_overall = run_pglobal_restart_loop(mode=mode, optimizer=optimizer, objective_wrapper=objective_wrapper, bounds=bounds, pg_conf=pg_conf, gradient_func_to_use=gradient_func_to_use, max_iter_run=max_iter_run, callback=callback, opt_start_time=opt_start_time, stop_event=self._stop_event, progress_emit=pglobal_progress, cfg=self.cfg, callback_counter_getter=lambda: self._callback_counter, set_optimizer=lambda opt: setattr(self, '_optimizer', opt))
+            memetic_children = int(self.cfg.get('memetic_children', 0) or 0)
+            if mode == 'global' and memetic_children > 0 and not oblique_mode:
+                best_sample_overall = self._run_memetic_global(bounds=bounds, x0_start=x0_start, var_idx=var_idx, stack=stack, mats=mats, l0=l0, children=memetic_children, gradient_func=gradient_func_to_use, callback=callback)
+            else:
+                best_sample_overall = run_pglobal_restart_loop(mode=mode, optimizer=optimizer, objective_wrapper=objective_wrapper, bounds=bounds, pg_conf=pg_conf, gradient_func_to_use=gradient_func_to_use, max_iter_run=max_iter_run, callback=callback, opt_start_time=opt_start_time, stop_event=self._stop_event, progress_emit=pglobal_progress, cfg=self.cfg, callback_counter_getter=lambda: self._callback_counter, set_optimizer=lambda opt: setattr(self, '_optimizer', opt))
             if self._emit_best_if_stopped():
                 return
             if best_sample_overall:

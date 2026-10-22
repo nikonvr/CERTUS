@@ -217,7 +217,14 @@ class OptimWorker(QObject):
         wide = widen_upper_bounds(bounds, qwot_nm, float(self.cfg.get('memetic_layer_qwot_max', 3.0)))
         population = int(self.cfg.get('memetic_population', 30))
         logging.getLogger('CERTUS').info(f'[OPTIM] Memetic global stage: population={population}, children={children}, dim={len(var_idx)}')
-        result = run_memetic(gradient_func, wide, x0=x0_start, population=population, children=children,
+        min_d = float(CFG.MIN_THICKNESS)
+
+        def cost_and_grad(x):
+            # A layer under MIN_THICKNESS costs 1e30 in the shared gradient: that cliff stops L-BFGS-B
+            # line searches. Such a layer is evaluated as absent (0 nm), which is continuous.
+            return gradient_func(np.where(x < min_d, 0.0, x))
+
+        result = run_memetic(cost_and_grad, wide, x0=x0_start, population=population, children=children,
                              seed=self.cfg.get('memetic_seed'), screen_maxiter=int(self.cfg.get('memetic_screen_maxiter', 0)),
                              stop_event=self._stop_event, on_improve=callback, init_bounds=bounds)
         logging.getLogger('CERTUS').info(f'[OPTIM] Memetic global stage done: best cost={result.y:.6e}, cost calls={result.evaluations}')

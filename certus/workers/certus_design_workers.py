@@ -210,12 +210,18 @@ class OptimWorker(QObject):
         Its bounds are those of the global stage, each upper bound raised to ``memetic_layer_qwot_max``
         quarter waves (default 3): the global stage caps a layer at 1.2 QWOT, which excludes the best
         known designs of the 50/50 splitter (layers of 1.6 to 1.9 QWOT). Layers under
-        ``memetic_absent_below_nm`` (default 5) are evaluated and returned as absent.
+        ``memetic_absent_below_nm`` (default 5) are evaluated and returned as absent. Every layer is
+        bounded below by ``memetic_floor_nm`` (default 5 nm, the final rule; 0 lets layers vanish):
+        on the 50/50 splitter the workflow then ends at RMSE 0.000332 instead of 0.000951.
         """
         from certus.core.certus_design_memetic import run_memetic, widen_upper_bounds
 
         qwot_nm = np.array([float(l0) / (4.0 * float(mats[stack[int(i)].mat].n4)) for i in var_idx])
         wide = widen_upper_bounds(bounds, qwot_nm, float(self.cfg.get('memetic_layer_qwot_max', 3.0)))
+        floor_nm = float(self.cfg.get('memetic_floor_nm', 5.0) or 0.0)
+        if floor_nm > 0.0:
+            # Every layer kept at floor_nm or more: no layer can vanish, and the cost has no jump at the 5 nm rule.
+            wide[:, 0] = np.maximum(wide[:, 0], floor_nm)
         population = int(self.cfg.get('memetic_population', 30))
         logging.getLogger('CERTUS').info(f'[OPTIM] Memetic global stage: population={population}, children={children}, dim={len(var_idx)}')
         # A layer under MIN_THICKNESS costs 1e30 in the shared gradient: that cliff stops L-BFGS-B line

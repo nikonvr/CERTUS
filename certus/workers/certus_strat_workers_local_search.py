@@ -15,6 +15,7 @@ from certus.core.certus_strat_local_search import (
     CONFIRM_SEED_OFFSETS,
     SEARCH_SEED_OFFSET,
     LocalSearchConfig,
+    guard_is_armed,
     joint_local_search,
     native_evaluator,
     nominal_level_index,
@@ -50,7 +51,7 @@ def run_local_search(
             rate_min_layer=RATE_MIN_LAYER,
         )
         evaluate = native_evaluator(search_params(params), nominal, clues, pre_calc_data.get("full_dynamics_grid", {}))
-        guard = bool(params.get("strat_local_search_guard", False))
+        guard = guard_is_armed(params)
         evaluate_guard = native_evaluator(params, nominal, clues, pre_calc_data.get("full_dynamics_grid", {})) if guard else None
         plan, report = joint_local_search(start, evaluate, len(nominal), cfg, base_seed + SEARCH_SEED_OFFSET,
                                           tuple(base_seed + o for o in CHECK_SEED_OFFSETS), logger.info,

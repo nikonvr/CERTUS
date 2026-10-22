@@ -45,6 +45,11 @@ def is_armed(params: dict[str, Any]) -> bool:
     return bool(params.get("strat_local_search", True))
 
 
+def guard_is_armed(params: dict[str, Any]) -> bool:
+    """Whether the check also judges under the configured corridor. On by default (owner, 2026-10-22, after ten benches)."""
+    return bool(params.get("strat_local_search_guard", True))
+
+
 #: Seeds of the stage, offsets of `robustness_seed`: disjoint from the ranking seed, so the stage neither reuses nor
 #: biases the draws the winner was ranked on.
 SEARCH_SEED_OFFSET: int = 7_000_003
@@ -180,7 +185,7 @@ def joint_local_search(
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Run the stage; return (plan, report). The plan is `start` itself when the check refuses the search.
 
-    `evaluate_guard` (`strat_local_search_guard`, off by default): the same evaluator under the CONFIGURED index
+    `evaluate_guard` (`strat_local_search_guard`, on by default since 2026-10-22, owner decision after ten benches): the same evaluator under the CONFIGURED index
     corridor, the one the winner is reported under. When given, every check and confirmation also requires, under it,
     no more stops and a P95 score not above the start's. Measured 2026-10-22 (reports/ANALYSE_claude_2026-10-22): on
     r75x2, bench seed 101, the plan accepted at +-0.010 was 10.7 % worse in SEEL at +-0.005, unseen by the check.

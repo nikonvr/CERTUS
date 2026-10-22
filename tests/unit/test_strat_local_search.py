@@ -250,3 +250,10 @@ def test_a_guard_that_agrees_keeps_the_same_plan() -> None:
     guarded, report = joint_local_search(_plan(), _evaluator(), 6, _cfg(), 11, (101, 102), evaluate_guard=_evaluator())
     assert report["accepted"]
     assert guarded == plain
+
+
+def test_the_guard_is_on_by_default_and_can_be_turned_off() -> None:
+    from certus.core.certus_strat_local_search import guard_is_armed
+
+    assert guard_is_armed({})
+    assert not guard_is_armed({"strat_local_search_guard": False})

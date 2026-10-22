@@ -349,13 +349,14 @@ LEVIERS: tuple[Levier, ...] = (
     Levier(
         cle="strat_local_search_guard",
         libelle="Recherche locale : controle aussi au corridor d'indice configure",
-        defaut=False,
+        defaut=True,
         genre="bool",
-        statut=NON_MESURE,
+        statut=RESERVE,
         mesure="Analyse du 2026-10-22 (reports/ANALYSE_claude_2026-10-22) : r75x2 graine 101, le plan accepte a +-0,010 "
-               "perdait 10,7 % de SEEL a +-0,005, invisible au controle.",
+               "perdait 10,7 % de SEEL a +-0,005, invisible au controle. Armee sur les dix bancs A14/A10 (reports/STRAT_garde_2026-10-22) : ce cas passe a -11,1 %, "
+               "les neuf autres sont inchanges.",
         reserve="Exige en plus, sous le corridor configure, pas plus d'arrets et un P95 non superieur au depart ; "
-                "double les evaluations du controle. `false` retablit le chemin d'avant.",
+                "double les evaluations du controle. Une graine de banc par cas. `false` retablit le chemin d'avant.",
     ),
     Levier(
         cle="strat_local_search_fresh_id",

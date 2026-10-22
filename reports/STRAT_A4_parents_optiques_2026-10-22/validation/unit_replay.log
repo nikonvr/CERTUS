@@ -1,0 +1,11 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_ test_every_name_that_a_part_defines_is_the_same_object_in_the_facade[certus_strat_robustness_rate] _
+tests\unit\test_the_robustness_split_keeps_every_name_and_the_cycle_where_it_was.py:94: in test_every_name_that_a_part_defines_is_the_same_object_in_the_facade
+    assert hasattr(facade, name), f"{FACADE}.{name} is gone (defined in {part})"
+E   AssertionError: certus.core.certus_strat_robustness._select_elite_optical_parents is gone (defined in certus_strat_robustness_rate)
+E   assert False
+E    +  where False = hasattr(<module 'certus.core.certus_strat_robustness' from 'C:\\Users\\Fabien\\.codex\\worktrees\\certus-chatgpt-2026-10-22\\certus0310\\certus\\core\\certus_strat_robustness.py'>, '_select_elite_optical_parents')
+=========================== short test summary info ===========================
+FAILED tests/unit/test_the_robustness_split_keeps_every_name_and_the_cycle_where_it_was.py::test_every_name_that_a_part_defines_is_the_same_object_in_the_facade[certus_strat_robustness_rate]
+1 failed in 2.30s

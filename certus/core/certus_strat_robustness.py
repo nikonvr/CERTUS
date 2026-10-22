@@ -116,6 +116,7 @@ from certus.core.certus_strat_robustness_rate import (
     _rescue_variants,
     _rescue_with_rate,
     _scaled,
+    _select_elite_optical_parents,
     _variant_id,
     _wl_de_la_couche,
 )

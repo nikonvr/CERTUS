@@ -51,6 +51,35 @@ RATE_SWING_MIN_DEFAULT: float = 0.025
 RATE_MIN_LAYER: int = 2
 
 
+def _select_elite_optical_parents(
+    strategies_results: list[dict[str, Any]],
+    parent_count: int,
+    minimum_optical: int = 0,
+    logger: logging.Logger | None = None,
+) -> list[dict[str, Any]]:
+    """Reserve finite, depositable optical parents first; zero keeps the historical slice."""
+    parents = strategies_results[:parent_count]
+    if minimum_optical <= 0:
+        return parents
+    optical = [
+        item for item in strategies_results
+        if not item["strategy"].get("rate_layers")
+        and not item.get("crash_eliminated", False)
+        and np.isfinite(float(item.get("robustness_score", float("inf"))))
+    ]
+    reserved = optical[:minimum_optical]
+    reserved_ids = {id(item) for item in reserved}
+    # Optical parents go first: the per-parent traversal can exhaust the move budget.
+    remaining = max(len(parents), len(reserved)) - len(reserved)
+    parents = reserved + [item for item in strategies_results if id(item) not in reserved_ids][:remaining]
+    if logger is not None:
+        logger.info(
+            f"[ELITE-OPTICAL-PARENTS] requested={minimum_optical} available={len(optical)} "
+            f"selected={len(reserved)} total={len(parents)}"
+        )
+    return parents
+
+
 def _wl_de_la_couche(strategy: dict[str, Any], layer: int) -> float | None:
     """The wavelength the strategy monitors for this layer, or None outside any block."""
     for blk in strategy.get("blocks") or []:

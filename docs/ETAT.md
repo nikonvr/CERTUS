@@ -9,6 +9,8 @@
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
+**En cours (2026-10-22)** : relecture Gemini A14/A10 puis A4 et A8b sur `chatgpt/2026-10-22`, sans poussée.
+
 > Tenir cette section à jour avec le travail (« en cours » au début, mesure et commit à la fin). Le reste se lit à la
 > demande : actions et protocole du Rate dans [`ETAT_actions.md`](ETAT_actions.md) ; acquis, corrections et reprises
 > antérieures dans [`ETAT_acquis.md`](ETAT_acquis.md) ; preuves dans `reports/` (le `bilan.md` d'un dossier) ;

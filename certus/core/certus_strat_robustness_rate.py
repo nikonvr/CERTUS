@@ -3,6 +3,7 @@
 import itertools
 import logging
 import time
+from collections.abc import Callable
 from typing import Any
 
 import numpy as np
@@ -51,22 +52,52 @@ RATE_SWING_MIN_DEFAULT: float = 0.025
 RATE_MIN_LAYER: int = 2
 
 
+def _evaluate_with_optical_parent_pool(
+    execute_fn: Callable[..., list[dict[str, Any]]],
+    filter_fn: Callable[..., list[dict[str, Any]]],
+    refine: bool,
+    **task: Any,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]] | None]:
+    """Evaluate once, reserving active optical parents before the normal output gate."""
+    minimum = max(0, int(task["params"].get("elite_optical_parents", 0))) if refine else 0
+    if not minimum:
+        return execute_fn(**task), None
+    raw = execute_fn(**task, keep_gated=True)
+    pool = _reserve_elite_optical_parent_pool(raw, minimum, task["logger"])
+    return filter_fn(raw, logger=task["logger"]), pool
+
+
+def _reserve_elite_optical_parent_pool(
+    strategies_results: list[dict[str, Any]],
+    minimum_optical: int,
+    logger: logging.Logger,
+) -> list[dict[str, Any]]:
+    """Keep optical mutation parents before the finite-score gate removes them."""
+    optical = [item for item in strategies_results if not item["strategy"].get("rate_layers")]
+    optical.sort(key=lambda item: (float(item.get("crash_rate", 1.0)), _worst_finite_rmse(item)))
+    reserved = optical[:minimum_optical]
+    logger.info(
+        f"[ELITE-OPTICAL-POOL] available={len(optical)} reserved={len(reserved)} "
+        f"gated={sum(not np.isfinite(float(item.get('robustness_score', np.inf))) for item in reserved)}"
+    )
+    return reserved
+
+
 def _select_elite_optical_parents(
     strategies_results: list[dict[str, Any]],
     parent_count: int,
     minimum_optical: int = 0,
     logger: logging.Logger | None = None,
+    optical_pool: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
-    """Reserve finite, depositable optical parents first; zero keeps the historical slice."""
+    """Reserve optical parents first; zero keeps the historical slice."""
     parents = strategies_results[:parent_count]
     if minimum_optical <= 0:
         return parents
-    optical = [
-        item for item in strategies_results
-        if not item["strategy"].get("rate_layers")
-        and not item.get("crash_eliminated", False)
-        and np.isfinite(float(item.get("robustness_score", float("inf"))))
-    ]
+    optical = [item for item in strategies_results if not item["strategy"].get("rate_layers")]
+    optical_ids = {id(item) for item in optical}
+    optical.extend(item for item in optical_pool or []
+                   if id(item) not in optical_ids and not item["strategy"].get("rate_layers"))
     reserved = optical[:minimum_optical]
     reserved_ids = {id(item) for item in reserved}
     # Optical parents go first: the per-parent traversal can exhaust the move budget.

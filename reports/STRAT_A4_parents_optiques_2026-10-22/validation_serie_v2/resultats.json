@@ -1,0 +1,66 @@
+{
+  "head": "38acac0dcfdd4ca9631f9a05500536710ef012ed",
+  "modified_source_sha256": {
+    "certus/core/certus_strat_config.py": "86bae820bb95368c4d5d7f540f24a21bb1092add8908bee135454f18c3080af3",
+    "certus/core/certus_strat_consensus.py": "35a76a302f17ce505be395ea2c2010ada3829f7009f2826d24b4b7c1ba6d4ef3",
+    "certus/core/certus_strat_leviers.py": "06b368401e3248d85f3e63b99a61063030c1149f9dca1600cdb18ceb09f83887",
+    "certus/core/certus_strat_robustness.py": "ee4ba767ab37bf301c631f6d060cc9db1f6a894b1a9f0d43abcc511b6f50d070",
+    "certus/core/certus_strat_robustness_rate.py": "81acf25a6998ab42809a1c9c980eb35f9bbed46bf2ae13b73c08f02aa52b72d9",
+    "tests/unit/test_strat_elite_optical_parents.py": "ae2850842a78283a1d37817b3f5d442932ef5bf4e1497f909ea72b4401830c61"
+  },
+  "stages": {
+    "ruff": {
+      "returncode": 0,
+      "seconds": 0.5004805999924429,
+      "counts": {}
+    },
+    "oracle": {
+      "returncode": 0,
+      "seconds": 60.03580769999826,
+      "counts": {
+        "passed": 1148
+      }
+    },
+    "unit": {
+      "returncode": 0,
+      "seconds": 1600.605212800001,
+      "counts": {
+        "passed": 5610,
+        "skipped": 7,
+        "xfailed": 1
+      }
+    },
+    "ui": {
+      "returncode": 0,
+      "seconds": 1452.5059490999993,
+      "counts": {
+        "passed": 1324,
+        "skipped": 12,
+        "xfailed": 2
+      }
+    },
+    "rest": {
+      "returncode": 0,
+      "seconds": 612.7217916000081,
+      "counts": {
+        "passed": 359,
+        "warning": 19
+      }
+    },
+    "coherence_md": {
+      "returncode": 0,
+      "seconds": 10.310257499993895,
+      "counts": {}
+    },
+    "check_claude_md": {
+      "returncode": 0,
+      "seconds": 0.10069380000641104,
+      "counts": {}
+    },
+    "check_docs": {
+      "returncode": 0,
+      "seconds": 10.484043999997084,
+      "counts": {}
+    }
+  }
+}

@@ -264,7 +264,7 @@ LEVIERS: tuple[Levier, ...] = (
         defaut=0,
         genre="int",
         statut=NON_MESURE,
-        mesure="A4 : reserve les meilleurs parents sans couche Rate, finis et non elimines pour plantage.",
+        mesure="A4 : reserve des parents sans couche Rate avant le filtre de score fini, puis les transmet a ELITE.",
         reserve="0 conserve le chemin historique. Les parents reserves passent en tete ; quota borne par "
                 "les parents optiques disponibles. Le total depasse elite_parent_top_k si le quota l'exige.",
     ),

@@ -99,6 +99,7 @@ from certus.core.certus_strat_robustness_rate import (
     _balanced_elite_rate_moves,
     _elite_rate_candidates,
     _elite_rate_moves,
+    _evaluate_with_optical_parent_pool,
     _expand_with_rate_variants,
     _first_crash_layer,
     _first_crash_profile,
@@ -115,6 +116,7 @@ from certus.core.certus_strat_robustness_rate import (
     _rescue_cuts,
     _rescue_variants,
     _rescue_with_rate,
+    _reserve_elite_optical_parent_pool,
     _scaled,
     _select_elite_optical_parents,
     _variant_id,
@@ -830,21 +832,20 @@ def run_final_simulation_block(
 
     n_layers_matrix_precomp = _precompute_layer_index_matrix(nH_arr, nL_arr, num_layers)
 
-    strategies_results = _execute_robustness_tasks(
+    strategies_results, optical_pool = _evaluate_with_optical_parent_pool(
+        _execute_robustness_tasks, _filter_finite_robustness_scores, refine,
         all_strategies=all_strategies, noise_levels=noise_levels, num_runs=num_runs, p_thick_nominal=p_thick_nominal,
         clues_at_wl=clues_at_wl, params_safe=params_safe, wl_arr=wl_arr, nH_arr=nH_arr, nL_arr=nL_arr, nSub_arr=nSub_arr, T_nom=T_nom,
         full_dyn_grid=full_dyn_grid, params=params, logger=logger, n_layers_matrix_precomp=n_layers_matrix_precomp,
         rate_rescue=expand_variants, id_namespace_n_blocks=strategy_id_context(opti_results)["strategy_id_namespace_n_blocks"],
     )
 
-    # ---- ABLATION PROFILE on the best ones, 👤 2026-08-12 -------------------
-    #
+    # Ablation profiles diagnose the best candidates without influencing their rank.
+    # Owner, 2026-08-12:
     # "for each of the 20 best strategies, rank the influence of each defect
     # source. It will let the user better understand where the problems come from."
-    #
-    # 🔴 AFTER the ranking, never before: it is a DIAGNOSTIC, it must not be able to
-    # influence the order. And only on the best ones -- profiling 400 strategies would
-    # cost four times the run to explain candidates nobody will deposit.
+    # Profiling all 400 strategies would cost four times the run.
+    # The reserved optical parent pool stays separate from these ranked candidates.
     if bool(params.get("ablation_profile", True)) and strategies_results:
         top = sorted(strategies_results,
                      key=lambda r: float(r.get("robustness_score", 1e18)))[:ABLATION_TOP_K]
@@ -1029,6 +1030,7 @@ def run_final_simulation_block(
         T_nom=T_nom,
         full_dyn_grid=full_dyn_grid,
         n_layers_matrix_precomp=n_layers_matrix_precomp,
+        elite_optical_parent_pool=optical_pool,
         **strategy_id_context(opti_results),
     )
 

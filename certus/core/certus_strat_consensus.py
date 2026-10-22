@@ -801,7 +801,7 @@ def _apply_elite_refinement_if_enabled(
     for elite_round in range(1, elite_rounds + 1):
         parents = _select_elite_optical_parents(
             strategies_results, _elite_parent_count(strategies_results, elite_parent_top_k),
-            int(ctx.params.get("elite_optical_parents", 0)), ctx.logger,
+            int(ctx.params.get("elite_optical_parents", 0)), ctx.logger, ctx.elite_optical_parent_pool,
         )
         parent_count = len(parents)
         nominal_target_pair = _resolve_elite_nominal_and_target_threshold(

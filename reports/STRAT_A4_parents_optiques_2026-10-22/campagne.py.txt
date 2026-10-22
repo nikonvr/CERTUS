@@ -49,7 +49,7 @@ def main():
                 assert results[key]['commit'] == head, (key, 'source commit changed')
                 print(f'SKIPPED {key}', flush=True)
                 continue
-            tag = f'A4parentsM{minimum}'
+            tag = f'A4parentsv2M{minimum}'
             overrides = f'elite_optical_parents={minimum},strat_local_search=true'
             env = dict(os.environ, CERTUS_BENCH_TIMEOUT_S='38400', CERTUS_PROBE_OVERRIDES=overrides,
                        CERTUS_PROBE_TAG=tag)

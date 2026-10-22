@@ -1,0 +1,18 @@
+warning: in the working copy of 'tests/unit/test_strat_elite_optical_parents.py', LF will be replaced by CRLF the next time Git touches it
+START ruff
+DONE ruff: {'returncode': 0, 'seconds': 0.5004805999924429, 'counts': {}}
+START oracle
+DONE oracle: {'returncode': 0, 'seconds': 60.03580769999826, 'counts': {'passed': 1148}}
+START unit
+DONE unit: {'returncode': 0, 'seconds': 1600.605212800001, 'counts': {'passed': 5610, 'skipped': 7, 'xfailed': 1}}
+START ui
+DONE ui: {'returncode': 0, 'seconds': 1452.5059490999993, 'counts': {'passed': 1324, 'skipped': 12, 'xfailed': 2}}
+START rest
+DONE rest: {'returncode': 0, 'seconds': 612.7217916000081, 'counts': {'passed': 359, 'warning': 19}}
+START coherence_md
+DONE coherence_md: {'returncode': 0, 'seconds': 10.310257499993895, 'counts': {}}
+START check_claude_md
+DONE check_claude_md: {'returncode': 0, 'seconds': 0.10069380000641104, 'counts': {}}
+START check_docs
+DONE check_docs: {'returncode': 0, 'seconds': 10.484043999997084, 'counts': {}}
+VALIDATION_SERIE=GO

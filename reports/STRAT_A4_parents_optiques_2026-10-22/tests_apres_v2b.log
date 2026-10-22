@@ -1,0 +1,12 @@
+........................................................................ [ 72%]
+.........................F
+================================== FAILURES ===================================
+________ test_a_reduced_offender_lowers_its_ceiling[fonctions_longues] ________
+tests\unit\test_the_architecture_debt_only_shrinks.py:153: in test_a_reduced_offender_lowers_its_ceiling
+    assert not lowered, (
+E   AssertionError: `fonctions_longues` went down: write the new ceilings in the same commit, so the gain stays (python scripts/metrics.py --dette tests/architecture_debt.json): {'certus/core/certus_strat_robustness.py::run_final_simulation_block': '323 -> 320'}
+E   assert not {'certus/core/certus_strat_robustness.py::run_final_simulation_block': '323 -> 320'}
+=========================== short test summary info ===========================
+FAILED tests/unit/test_the_architecture_debt_only_shrinks.py::test_a_reduced_offender_lowers_its_ceiling[fonctions_longues]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 97 passed in 12.37s

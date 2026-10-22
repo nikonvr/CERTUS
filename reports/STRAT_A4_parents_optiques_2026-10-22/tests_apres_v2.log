@@ -1,0 +1,12 @@
+........................................................................ [ 72%]
+...................F
+================================== FAILURES ===================================
+________________ test_no_offender_has_grown[fonctions_longues] ________________
+tests\unit\test_the_architecture_debt_only_shrinks.py:137: in test_no_offender_has_grown
+    assert not grown, f"`{section}` grew, in {CEILINGS[section]}: {grown}"
+E   AssertionError: `fonctions_longues` grew, in lines (a function over 300 lines: extract named pieces, as the plan does): {'certus/core/certus_strat_robustness.py::run_final_simulation_block': '323 -> 330'}
+E   assert not {'certus/core/certus_strat_robustness.py::run_final_simulation_block': '323 -> 330'}
+=========================== short test summary info ===========================
+FAILED tests/unit/test_the_architecture_debt_only_shrinks.py::test_no_offender_has_grown[fonctions_longues]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 91 passed in 12.61s

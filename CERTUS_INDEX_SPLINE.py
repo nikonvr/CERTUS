@@ -26,10 +26,10 @@ import certus.spline.certus_index_spline_corridors as certus_index_spline_corrid
 import certus.spline.certus_index_spline_smart_init as certus_index_spline_smart_init
 import certus.ui.certus_index_spline_ui as certus_index_spline_ui
 from certus.core.certus_core import CertusFacadeModule, setup_module_logging
-from certus.ui.certus_ui import init_certus_app, open_command_line_file
 
 # Preserve SplineReport exports (for external tools or back-compat)
-from certus.utils.certus_spline_report import SplineReportBuilder, SplineReportContext  # noqa: F401
+from certus.spline.certus_spline_report import SplineReportBuilder, SplineReportContext  # noqa: F401
+from certus.ui.certus_ui import init_certus_app, open_command_line_file
 
 # Configure the facade to wrap and expose all underlying symbols
 sys.modules[__name__] = CertusFacadeModule(__name__, [

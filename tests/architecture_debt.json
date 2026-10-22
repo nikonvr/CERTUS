@@ -16,10 +16,7 @@
     "certus.spline.certus_index_spline_smart_init -> certus.ui.certus_smart_init_curve_editor",
     "certus.spline.certus_index_spline_smart_init -> certus.ui.certus_ui",
     "certus.utils.certus_curve_smoother -> certus.ui.certus_measurement_excel_ui",
-    "certus.utils.certus_curve_smoother -> certus.ui.certus_ui",
-    "certus.utils.certus_spline_report -> certus.spline.certus_index_spline_core",
-    "certus.utils.certus_spline_report -> certus.spline.spline_objective",
-    "certus.utils.certus_spline_report -> certus.spline.spline_profile_corridors"
+    "certus.utils.certus_curve_smoother -> certus.ui.certus_ui"
   ],
   "cycles": [
     [

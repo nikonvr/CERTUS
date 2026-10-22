@@ -62,7 +62,7 @@ _CORE_MODULES = [
     "certus.spline.spline_pipeline",
     "certus.workers.certus_re_workers",
     "certus.spline.spline_profile_corridors",
-    "certus.utils.certus_spline_report",
+    "certus.spline.certus_spline_report",
     "certus.spline.spline_objective",
     "certus.spline.certus_index_spline_core",
     "certus.utils.certus_index_utils",
@@ -103,7 +103,7 @@ def test_gui_module_syntax(module_name: str) -> None:
 
 def test_spline_report_context_fields() -> None:
     """SplineReportContext dataclass must have all expected fields."""
-    from certus.utils.certus_spline_report import SplineReportContext
+    from certus.spline.certus_spline_report import SplineReportContext
 
     expected = {
         "result",
@@ -123,7 +123,7 @@ def test_spline_report_builder_has_build_report() -> None:
     """SplineReportBuilder must expose build_report(auto=bool)."""
     import inspect
 
-    from certus.utils.certus_spline_report import SplineReportBuilder
+    from certus.spline.certus_spline_report import SplineReportBuilder
 
     sig = inspect.signature(SplineReportBuilder.build_report)
     params = list(sig.parameters.keys())
@@ -133,7 +133,7 @@ def test_spline_report_builder_has_build_report() -> None:
 
 def test_spline_report_builder_no_result_returns_silently(caplog) -> None:
     """build_report(auto=True) with result=None should return without error."""
-    from certus.utils.certus_spline_report import SplineReportBuilder, SplineReportContext
+    from certus.spline.certus_spline_report import SplineReportBuilder, SplineReportContext
 
     ctx = SplineReportContext(
         result=None,
@@ -155,7 +155,7 @@ def test_spline_report_builder_uses_ctx_spectrum_path() -> None:
     """build_report must use self.ctx.spectrum_path (not self._last_spectrum_path)."""
     import inspect
 
-    from certus.utils.certus_spline_report import SplineReportBuilder
+    from certus.spline.certus_spline_report import SplineReportBuilder
 
     source = inspect.getsource(SplineReportBuilder.build_report)
     # The bug was: getattr(self, "_last_spectrum_path", ...)
@@ -167,10 +167,10 @@ def test_spline_report_builder_uses_ctx_spectrum_path() -> None:
 
 
 def test_spline_report_required_symbols_importable() -> None:
-    """All symbols used by build_report must be importable from certus.utils.certus_spline_report."""
+    """All symbols used by build_report must be importable from certus.spline.certus_spline_report."""
     # K_MAX_LIMIT must be available in the module scope
-    import certus.utils.certus_spline_report as mod
-    from certus.utils.certus_spline_report import (
+    import certus.spline.certus_spline_report as mod
+    from certus.spline.certus_spline_report import (
         SplineReportBuilder,
         SplineReportContext,
         _get_script_dir,
@@ -192,7 +192,7 @@ def test_spline_report_required_symbols_importable() -> None:
 
 def test_mergesort_order_lambda() -> None:
     """_mergesort_order_lambda must return stable sort indices."""
-    from certus.utils.certus_spline_report import _mergesort_order_lambda
+    from certus.spline.certus_spline_report import _mergesort_order_lambda
 
     lam = np.array([500.0, 300.0, 700.0, 300.0])
     order = _mergesort_order_lambda(lam)
@@ -204,7 +204,7 @@ def test_mergesort_order_lambda() -> None:
 
 def test_mergesort_order_lambda_empty() -> None:
     """_mergesort_order_lambda with empty array returns empty indices."""
-    from certus.utils.certus_spline_report import _mergesort_order_lambda
+    from certus.spline.certus_spline_report import _mergesort_order_lambda
 
     order = _mergesort_order_lambda(np.array([]))
     assert order.size == 0

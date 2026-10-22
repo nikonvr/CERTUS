@@ -45,7 +45,7 @@ campagne bien spécifiés ; **Claude** : conception, piège de reproductibilité
 `strat_local_search` est actif par défaut (+ 20 min par banc) : le dire dans chaque rapport. Outils de jugement :
 `reports/STRAT_r75_leviers_bonne_mere_2026-10-20/outils/`.
 
-**Enchaînement** : Gemini, puis ChatGPT, puis Claude. Gemini travaille sur `gemini/<date>` et finit par `reports/RELAIS_gemini_<date>.md` ; ChatGPT part de cette branche (`chatgpt/<date>`), la relit d'abord (commandes rejouées, `config` des artefacts, tests) puis fait ses actions et finit par `reports/RELAIS_chatgpt_<date>.md` ; Claude relit les deux branches, interprète et propose la fusion à 👤. Un relais tient en une page : branche, tête, verdict de `python scriptsalidate_parallel.py`, ce qui est fait, ce qui a échoué, questions ouvertes, première commande de l'IA suivante. Celle-ci vérifie, elle ne croit pas.
+**Enchaînement** : Gemini, puis ChatGPT, puis Claude. Gemini travaille sur `gemini/<date>` et finit par `reports/RELAIS_gemini_<date>.md` ; ChatGPT part de cette branche (`chatgpt/<date>`), la relit d'abord (commandes rejouées, `config` des artefacts, tests) puis fait ses actions et finit par `reports/RELAIS_chatgpt_<date>.md` ; Claude relit les deux branches, interprète et propose la fusion à 👤. Un relais tient en une page : branche, tête, verdict de `python scripts\validate_parallel.py`, ce qui est fait, ce qui a échoué, questions ouvertes, première commande de l'IA suivante. Celle-ci vérifie, elle ne croit pas.
 
 ### Gemini
 
@@ -76,6 +76,8 @@ sont passés de 487 à 50 depuis le secours Rate (`reports/STRAT_modele_d_arret_
 registre `certus_strat_leviers.py`, un test qui prouve le chemin à 0 identique au bit (modèle : `tests/unit/test_strat_elite_rate_moves.py`),
 `python scripts\c1_diff.py HEAD` = « C1 TENU », puis `reports/STRAT_A4_parents_optiques_<date>/bilan.md` : M = 0, 2, 4 au juge de paix (graine 42) et
 à `r75x0.5` (graine 101), meilleur SEEL global, meilleur SEEL optique pur, nombre de déposables optiques purs. *Ne pas* : l'armer par défaut.
+
+A4 livré le 2026-10-22 : levier à 0 par défaut, code validé en série et C1 tenu, [six bancs](../reports/STRAT_A4_parents_optiques_2026-10-22/bilan.md). 👤 demande à Claude de refaire l'analyse Gemini/GPT ; [relais](../reports/RELAIS_chatgpt_2026-10-22.md). A8b non entamé, différé pour cette passation.
 
 **A8b — Imports montants (D26)** : 20 arêtes (§4) ; descendre un symbole dans `certus/domain/` ou `certus/core/`. *Livrable* : un commit par arête,
 `python scripts\metrics.py --dette tests\architecture_debt.json` après chaque dette payée (il ne fait que rétrécir), validation complète.

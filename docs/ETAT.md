@@ -5,11 +5,11 @@
 > [`CLAUDE.md`](../CLAUDE.md). Il se tient **en place** : un fait change, on corrige sa ligne,
 > on ne raconte pas la correction (`git log` s'en charge). Toute mesure porte sa date.
 > Le détail et l'historique sont dans `git`, sans autorité (CLAUDE.md, en-tête).
-> Mis à jour le 2026-10-21.
+> Mis à jour le 2026-10-22.
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
-**En cours (2026-10-22)** : relecture Gemini A14/A10 puis A4 et A8b sur `chatgpt/2026-10-22`, sans poussée.
+**Passation à Claude (2026-10-22)** : relecture Gemini A14/A10 et six bancs A4 terminés sur `chatgpt/2026-10-22`, sans poussée. 👤 demande une réanalyse indépendante des résultats Gemini/GPT ; A8b est différé. Sources et commandes : [relais](../reports/RELAIS_chatgpt_2026-10-22.md).
 
 > Tenir cette section à jour avec le travail (« en cours » au début, mesure et commit à la fin). Le reste se lit à la
 > demande : actions et protocole du Rate dans [`ETAT_actions.md`](ETAT_actions.md) ; acquis, corrections et reprises
@@ -20,13 +20,13 @@
 
 **Bonne Mère (2026-10-19).** Meilleur plan mesuré et chemin vers l'optimum : [`studies/bonne_mere/README.md`](../studies/bonne_mere/README.md) (21 couches Rate, SEEL P95 0,446 nm au bruit 0,05, 0 arrêt). Dérive de la source non modélisée. Défaut ouvert de STRAT : l'hystérésis du comptage des points tournants suit le bruit ; à bruit faible, la fente fabrique des extrema ([phase 1](../reports/BONNE_MERE_phase1_budget_SuperChamp76_2026-10-19/bilan.md)).
 
-**STRAT sur r75 (2026-10-20).** `strat_local_search` (recherche locale appariée du mode et de la λ, cherchée à ±0,010 d'indice) est actif par défaut et `tp_hysteresis_floor` vaut 0,000415, sur décision de 👤 ; banc deep, graine 77 : 0,2515 → 0,2080, 0,4363 → 0,3561, 0,5441 → 0,5032 nm ([rapport](../reports/STRAT_r75_leviers_bonne_mere_2026-10-20/bilan.md)). Validation complète au paragraphe suivant ; A10 à lancer.
+**STRAT sur r75 (2026-10-20).** `strat_local_search` (recherche locale appariée du mode et de la λ, cherchée à ±0,010 d'indice) est actif par défaut et `tp_hysteresis_floor` vaut 0,000415, sur décision de 👤 ; banc deep, graine 77 : 0,2515 → 0,2080, 0,4363 → 0,3561, 0,5441 → 0,5032 nm ([rapport](../reports/STRAT_r75_leviers_bonne_mere_2026-10-20/bilan.md)). A14/A10 mesurés ; réanalyse par Claude à faire (relais §0).
 
 **Branches locales en attente** (ni poussées, ni validées) : `claude/alg02-prune-evaluator-0d2a8d` (`46261901`,
 correctif de D107) et `claude/dreamy-burnell-85397a` (`cc3fe134`, fenêtre admissible 48c) ; reprendre par
 `git worktree add`. Dossier : 580 Mo pour une limite de 1 Go (2026-10-18).
 
-**Dernière validation complète** (2026-10-21, suites successives de CLAUDE.md §2, correctif de transmission A3 sur `58ff57c5`) : 8 425 réussis, 19 ignorés, 3 échecs attendus, aucun échec inattendu ; sorties, test rouge/vert et limite documentaire dans le [`bilan`](../reports/ACTIONS_autonomes_2026-10-20/bilan.md).
+**Dernière validation complète** (2026-10-22, huit commandes successives de CLAUDE.md §2, code A4 `b399b842`) : 8 441 réussis, 19 ignorés, 3 échecs attendus, aucun échec inattendu ; C1 tenu, empreintes du code et sorties dans le [contrôle v2](../reports/STRAT_A4_parents_optiques_2026-10-22/controle_v2.md).
 
 **Avant de committer du code** : la validation de CLAUDE.md §2 en entier ; un sous-ensemble a déjà laissé passer une
 régression (`tests/unit/test_the_architecture_debt_only_shrinks.py` ne tourne pas avec les tests voisins).

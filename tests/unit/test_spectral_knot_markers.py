@@ -103,10 +103,10 @@ def test_plot_result_adds_large_t_knot_markers(monkeypatch) -> None:
             }
         )
 
-    monkeypatch.setattr("certus.spline.certus_index_spline_execution._plot_spectrum_raw_scatter", _fake_scatter, raising=False)
+    monkeypatch.setattr("certus.ui.certus_index_spline_execution._plot_spectrum_raw_scatter", _fake_scatter, raising=False)
     monkeypatch.setattr("CERTUS_INDEX_SPLINE.pg.TextItem", _FakeTextItem, raising=False)
     monkeypatch.setattr("certus.spline.certus_index_spline_corridors.pg.TextItem", _FakeTextItem, raising=False)
-    monkeypatch.setattr("certus.spline.certus_index_spline_execution.pg.TextItem", _FakeTextItem, raising=False)
+    monkeypatch.setattr("certus.ui.certus_index_spline_execution.pg.TextItem", _FakeTextItem, raising=False)
 
     plot_t = _PlotWidget()
     plot_n = _PlotWidget()

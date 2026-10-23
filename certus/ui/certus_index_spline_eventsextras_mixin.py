@@ -16,7 +16,6 @@ from certus.spline.certus_index_spline_core import (
     ensure_lam_nm_array,
     log_index_spline_d_trace,
 )
-from certus.spline.certus_index_spline_execution import _plot_spectrum_raw_scatter
 from certus.spline.spline_profile_corridors import _fit_local_quadratic_rmse_profile
 from certus.ui.certus_index_spline_common import (
     _QS_SPLINE_APP,
@@ -31,6 +30,7 @@ from certus.ui.certus_index_spline_common import (
     _worker_curve_minimum_deep_refit,
     logger,
 )
+from certus.ui.certus_index_spline_execution import _plot_spectrum_raw_scatter
 from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
 from certus.ui.certus_ui import (
     CertusScientificPlot,

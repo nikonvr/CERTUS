@@ -19,7 +19,7 @@ MODULES_TO_CHECK = [
     "certus.core.certus_re_objectives",
     "certus.core.certus_strat_config",
     "certus.spline.certus_index_spline_corridor_worker",  # was certus_index_spline_corridors until S5.3: its worker mixin moved
-    "certus.spline.certus_index_spline_execution",
+    "certus.ui.certus_index_spline_execution",
     "certus.spline.certus_index_spline_settings",
     "certus.ui.certus_index_spline_manualmesh_mixin",
     "certus.workers.certus_design_workers_needle_strat",

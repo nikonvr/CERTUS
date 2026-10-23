@@ -34,6 +34,10 @@ import pyqtgraph as pg
 from certus.core.certus_core import (
     create_module_environment,
 )
+from certus.ui.certus_index_spline_execution import (
+    _CorridorExportMixin,
+    _RunMixin,
+)
 from certus.ui.certus_ui import (
     CertusTheme,
 )
@@ -131,10 +135,6 @@ from certus.spline.certus_index_spline_corridors import (
 )
 from certus.spline.certus_index_spline_excel_export import (
     _ExcelExportMixin,
-)
-from certus.spline.certus_index_spline_execution import (
-    _CorridorExportMixin,
-    _RunMixin,
 )
 from certus.spline.certus_index_spline_rendering import (
     _PlotMixin,

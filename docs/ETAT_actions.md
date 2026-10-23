@@ -48,10 +48,6 @@ de normalisation d'indice (`reports/STRAT_A3_C2_assemblage_2026-10-21/`). *Livra
 graines réservées) ; il ne lance rien sans `GO_OWNER.txt` écrit par 👤. *Livrable* : sur plusieurs graines, plans déposables, plantages, SEEL de
 consensus des plans figés, confirmation indépendante et coût, dans le dossier du protocole. *Ne pas* : lancer sans le GO.
 
-**A12 — Guider la recherche locale par la sensibilité à l'indice.** Concentrer les candidats de `strat_local_search` sur les couches qui
-transmettent le plus l'erreur d'indice ; essayer des mouvements de deux ou trois couches voisines. *Livrable* : une option inactive par défaut,
-mesurée contre l'étage actuel sur les trois 75 couches × deux graines, règle écrite avant la mesure, rapport.
-
 **A13 — Rendre `strat_local_search` rapide en production** (👤 : « un code ultra performant »). 96 % du temps est dans deux noyaux
 compilés ([profil](../reports/STRAT_A13_profil_2026-10-23/bilan.md)). Présélection des candidats codée, inactive : 75/3 et 150/5 refusées par
 leurs règles ([bilan](../reports/STRAT_A13_preselection_2026-10-23/bilan.md)). *Reste* : accélérer un noyau (prouvé au bit par `c1_diff`).

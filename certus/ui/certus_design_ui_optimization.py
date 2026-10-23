@@ -283,9 +283,32 @@ class OptimizationManager:
 
         return False
 
+    def _ot_floor(self) -> float | None:
+        """The file's `min_layer_ot_nm` when it is a positive number, else None (the 5 nm rule)."""
+        ot = getattr(self.ui, "_min_layer_ot_nm", None)
+        return float(ot) if isinstance(ot, (int, float)) and not isinstance(ot, bool) and ot > 0 else None
+
+    def _min_layer_thickness(self, materials: list[str]) -> np.ndarray:
+        """Least final thickness (nm) of each layer: 5 nm, or the file's `min_layer_ot_nm` divided by n4.
+
+        `min_layer_ot_nm` (optional, owner's request of 2026-10-23) states the floor as an optical thickness,
+        n4 * d, with n4 the index at 400 nm that DESIGN uses for QWOT. Without it every layer keeps 5 nm.
+        """
+        ot = self._ot_floor()
+        if ot is None:
+            return np.full(len(materials), 5.0)
+        mats = self.ui._get_materials()
+        return np.array([float(ot) / float(mats[m].n4) for m in materials])
+
+    def _current_min_layer_thickness(self, n: int) -> np.ndarray:
+        """Least final thickness of each row of the front table (n rows expected)."""
+        names = [layer.mat for layer in self.ui._get_front_stack()]
+        return self._min_layer_thickness(names) if len(names) == n else np.full(n, 5.0)
+
     def _select_smart_decimation_remove_index(self, ep: np.ndarray) -> int:
-        """Pick layer index to remove, prioritizing sub-5nm layers."""
-        sub5nm = [i for i, d in enumerate(ep) if d < 5.0]
+        """Pick layer index to remove, prioritizing layers under their least final thickness."""
+        floor = self._current_min_layer_thickness(len(ep))
+        sub5nm = [i for i, d in enumerate(ep) if d < floor[i]]
         if sub5nm:
             # Prefer removing a sub-5nm layer over the generic thinnest
             return sub5nm[int(np.argmin([ep[i] for i in sub5nm]))]
@@ -333,7 +356,7 @@ class OptimizationManager:
     def _record_smart_decimation_candidate(self, current_n: int, rmse_after: float) -> None:
         """Record current design into Pareto and emit step log."""
         ep = self.ui.ep_current
-        has_sub5nm = (ep is not None) and np.any(np.asarray(ep) < 5.0)
+        has_sub5nm = (ep is not None) and np.any(np.asarray(ep) < self._current_min_layer_thickness(len(ep)))
 
         # _update_pareto_record already enforces strictly-better updates.
         self.ui._update_pareto_record(self.ui.ep_current, rmse_after)
@@ -384,7 +407,8 @@ class OptimizationManager:
         records = list(self.ui.pareto_history.items())
         if getattr(self.ui, "_pareto_champion_respects_5nm", True):
             compliant = [(n, rec) for n, rec in records
-                         if rec.get("ep_rmse") is not None and not np.any(np.asarray(rec["ep_rmse"]) < 5.0)]
+                         if rec.get("ep_rmse") is not None and not np.any(
+                             np.asarray(rec["ep_rmse"]) < self._record_min_layer_thickness(rec))]
             if compliant:
                 records = compliant
         best_overall_rmse = float("inf")
@@ -577,6 +601,14 @@ class OptimizationManager:
 
         return {r for r, layer in enumerate(self.ui._get_front_stack()) if not layer.var}
 
+    def _record_min_layer_thickness(self, rec: dict) -> np.ndarray:
+        """Least final thickness of each layer of a Pareto record (5 nm when its table is not usable)."""
+        table, ep = rec.get("table_rmse") or [], rec.get("ep_rmse")
+        n = len(ep) if ep is not None else 0
+        if len(table) != n:
+            return np.full(n, 5.0)
+        return self._min_layer_thickness([row["mat"] for row in table])
+
     def _restart_from_best(self) -> bool:
         """Start the workflow again from its final design while it improves; True if a new round started.
 
@@ -647,13 +679,15 @@ class OptimizationManager:
         if ep is None or len(ep) == 0:
             return 0
 
-        MIN_FINAL_THICKNESS = 5.0  # nm - hard manufacturing limit
+        # 5 nm - hard manufacturing limit; per layer when the file states `min_layer_ot_nm`.
+        floor = self._current_min_layer_thickness(len(ep))
+        MIN_FINAL_THICKNESS = 5.0 if self._ot_floor() is None else f"OT {self._ot_floor()} "
 
         fixed = self._fixed_rows()
 
-        thin_layers = [r for r, d in enumerate(ep) if d < MIN_FINAL_THICKNESS and r not in fixed]
+        thin_layers = [r for r, d in enumerate(ep) if d < floor[r] and r not in fixed]
 
-        kept_fixed = [r for r, d in enumerate(ep) if d < MIN_FINAL_THICKNESS and r in fixed]
+        kept_fixed = [r for r, d in enumerate(ep) if d < floor[r] and r in fixed]
 
         if kept_fixed:
             self.ui.log(

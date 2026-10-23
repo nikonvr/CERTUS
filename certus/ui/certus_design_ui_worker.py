@@ -511,6 +511,7 @@ class WorkerManager:
                 "memetic_children": int(getattr(self.ui, "_memetic_children", 1000)),
                 "memetic_population": int(getattr(self.ui, "_memetic_population", 30)),
                 "memetic_qwot_max": getattr(self.ui, "_max_total_qwot", None),  # the file's max_total_qwot
+                "memetic_min_ot_nm": getattr(self.ui, "_min_layer_ot_nm", None),  # the file's min_layer_ot_nm
                 "calc_oblique_func": (calc_spectrum_oblique_vectorized if self.ui.oblique_mode else None),
                 "run_id": getattr(self.ui, "_workflow_run_id", None),
                 "run_context": getattr(self.ui, "_workflow_run_ctx", None),

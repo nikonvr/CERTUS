@@ -222,16 +222,22 @@ class OptimWorker(QObject):
 
         qwot_nm = np.array([float(l0) / (4.0 * float(mats[stack[int(i)].mat].n4)) for i in var_idx])
         wide = widen_upper_bounds(bounds, qwot_nm, float(self.cfg.get('memetic_layer_qwot_max', 3.0)))
-        floor_nm = float(self.cfg.get('memetic_floor_nm', 5.0) or 0.0)
-        if floor_nm > 0.0:
-            # Every layer kept at floor_nm or more: no layer can vanish, and the cost has no jump at the 5 nm rule.
-            wide[:, 0] = np.maximum(wide[:, 0], floor_nm)
+        ot_min = self.cfg.get('memetic_min_ot_nm')
+        if ot_min:
+            # The file states the floor as an optical thickness n4 * d (min_layer_ot_nm): one floor per material.
+            floor_nm = np.array([float(ot_min) / float(mats[stack[int(i)].mat].n4) for i in var_idx])
+        else:
+            floor_nm = np.full(len(var_idx), float(self.cfg.get('memetic_floor_nm', 5.0) or 0.0))
+        # Every layer kept at its floor or more: no layer can vanish, and the cost has no jump at the final rule.
+        wide[:, 0] = np.maximum(wide[:, 0], floor_nm)
         population = int(self.cfg.get('memetic_population', 30))
         logging.getLogger('CERTUS').info(f'[OPTIM] Memetic global stage: population={population}, children={children}, dim={len(var_idx)}')
         # A layer under MIN_THICKNESS costs 1e30 in the shared gradient: that cliff stops L-BFGS-B line
         # searches. Below `memetic_absent_below_nm` (default 5 nm, the final rule of the workflow) a layer is
         # evaluated as absent (0 nm), so that the designs found survive that rule unchanged.
-        min_d = max(float(CFG.MIN_THICKNESS), float(self.cfg.get('memetic_absent_below_nm', 5.0)))
+        # With an optical-thickness floor the per-layer floors replace that 5 nm threshold.
+        absent_below = float(CFG.MIN_THICKNESS) if ot_min else float(self.cfg.get('memetic_absent_below_nm', 5.0))
+        min_d = max(float(CFG.MIN_THICKNESS), absent_below)
 
         # Optional ceiling on the total optical thickness of the variable layers (QWOT at l0, n4 convention, as
         # DESIGN counts QWOT): quadratic penalty on the excess, with its gradient. None: no ceiling.

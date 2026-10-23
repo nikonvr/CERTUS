@@ -56,3 +56,27 @@ def test_a_file_without_limits_keeps_the_former_ones(qapp, tmp_path) -> None:
     assert app.orchestrator._layer_ceiling() == CFG.MAX_LAYERS
     assert app.orchestrator._room_for_a_needle(CFG.MAX_LAYERS - 1)
 
+
+def test_an_optical_thickness_floor_gives_each_material_its_least_thickness(qapp, tmp_path) -> None:
+    app = _load(tmp_path, min_layer_ot_nm=5)
+
+    floor = app.optimization_manager._min_layer_thickness(["H", "L"])
+
+    assert app._min_layer_ot_nm == 5.0
+    assert floor[0] == pytest.approx(5.0 / 2.35)
+    assert floor[1] == pytest.approx(5.0 / 1.46)
+
+
+@pytest.mark.parametrize(("ot", "rows_left"), [(None, 24), (5, 26)])
+def test_the_final_rule_keeps_a_4nm_high_index_layer_only_under_an_optical_floor(qapp, tmp_path, ot, rows_left) -> None:
+    import numpy as np
+
+    from certus_physics import init_thickness
+
+    app = _load(tmp_path, **({"min_layer_ot_nm": ot} if ot else {}))
+    app.front_table.cellWidget(4, 1).setValue(4.0 * 4 * 2.35 / 500.0)  # an H layer of 4 nm (QWOT with n4)
+    app.ep_current = np.asarray(init_thickness(app._get_front_stack(), app.l0_spin.value(), app._get_materials()))
+
+    app._apply_5nm_minimum()
+
+    assert app.front_table.rowCount() == rows_left  # without the floor: removed, its two L neighbours merged

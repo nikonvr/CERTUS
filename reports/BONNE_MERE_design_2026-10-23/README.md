@@ -1,5 +1,9 @@
 # Bonne Mère : design réoptimisé avec les leviers de la campagne DESIGN (2026-10-23)
 
+**Design retenu par 👤 (2026-10-23) : [`best_design_needle_swap_90_nominal.json`](best_design_needle_swap_90_nominal.json)**,
+90 couches sur silice, sans précoat (couches 1 et 2 : 99,6 et 84,8 nm), plus fine 7,35 nm ; nominal 1,5495 pp, 1,8024 pp
+sous erreurs d'épaisseur de 0,4 nm à 2σ ; vérifié par l'oracle. Son histoire est ci-dessous.
+
 Optique de l'étude (restaurée de `studies/bonne_mere/archives` par `dossier_final/outils/restaurer_archive.py`) : H800
 Nb₂O₅ / SiO₂, face arrière incohérente, cible retenue de 601 points ; elle redonne exactement le plancher de référence
 1,4590693866 pp du design retenu (96 couches, saphir). Script : [`reoptimize.py`](reoptimize.py) ; lignes brutes

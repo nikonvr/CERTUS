@@ -37,8 +37,10 @@ CAMPAIGNS = {
     "A14": [("48c", "premium", 1, 42), ("35c", "deep", 0, 42), ("r75x1.5", "deep", 0, 77), ("r75x1.75", "deep", 0, 77),
             ("r75x2-2nm", "deep", 0, 77), ("75c", "deep", 0, 101)],
     "A10": [("75c", "deep", 0, 202), ("r75x0.5", "deep", 0, 202), ("r75x2", "deep", 0, 101), ("r75x2", "deep", 0, 202)],
+    # r75x2, the reference component, on two more bench seeds (owner, 2026-10-23): 77 (first measured on a modified tree) and 303 (new)
+    "R75X2": [("r75x2", "deep", 0, 77), ("r75x2", "deep", 0, 303)],
 }
-JUDGE_SEED = {"A14": 20261025001, "A10": 20261026001}
+JUDGE_SEED = {"A14": 20261025001, "A10": 20261026001, "R75X2": 20261031001}
 
 
 def sh(cmd, cwd, env=None, log=None):

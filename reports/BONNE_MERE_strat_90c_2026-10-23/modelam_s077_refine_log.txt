@@ -1,0 +1,7 @@
+== bm90 s077_refine: index corridor 0.01, start 61 Rate, search stops 0
+   pass 1: 11 changes so far, Rate 62, search stops 0, mean RMSE2 4.5775e-05, 3288 evaluations, 2011 s
+   pass 2: 18 changes so far, Rate 61, search stops 0, mean RMSE2 4.4382e-05, 6612 evaluations, 4052 s
+   frozen: 18 changes [(1, 0, 'lambda 512->572'), (1, 2, 'lambda 644->684'), (1, 6, 'lambda 710->720'), (1, 20, 'Rate'), (1, 22, 'Rate'), (1, 32, 'Rate'), (1, 36, 'optical@590'), (1, 43, 'optical@450'), (1, 54, 'optical@540'), (1, 62, 'lambda 550->580'), (1, 78, 'Rate'), (2, 0, 'lambda 572->592'), (2, 5, 'lambda 705->695'), (2, 18, 'optical@560'), (2, 22, 'optical@490'), (2, 32, 'optical@560'), (2, 34, 'Rate'), (2, 72, 'Rate')]
+   conf: dRMSE2 -8.8 % (SE 0.3 %), stops 0 -> 0, SEEL_strat 0.2105 -> 0.2051 nm
+   hold: dRMSE2 -8.8 % (SE 0.3 %), stops 0 -> 0, SEEL_strat 0.2099 -> 0.2046 nm
+done

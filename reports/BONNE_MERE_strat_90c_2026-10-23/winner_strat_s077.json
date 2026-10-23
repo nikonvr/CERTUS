@@ -1,0 +1,521 @@
+{
+ "strategy_id": 909050817,
+ "origin": "LOCAL_SEARCH",
+ "blocks": [
+  {
+   "start": 0,
+   "end": 1,
+   "wavelength": 512.0
+  },
+  {
+   "start": 1,
+   "end": 2,
+   "wavelength": 431.0
+  },
+  {
+   "start": 2,
+   "end": 3,
+   "wavelength": 644.0
+  },
+  {
+   "start": 3,
+   "end": 4,
+   "wavelength": 645.0
+  },
+  {
+   "start": 4,
+   "end": 5,
+   "wavelength": 843.0
+  },
+  {
+   "start": 5,
+   "end": 6,
+   "wavelength": 705.0
+  },
+  {
+   "start": 6,
+   "end": 7,
+   "wavelength": 710.0
+  },
+  {
+   "start": 7,
+   "end": 8,
+   "wavelength": 740.0
+  },
+  {
+   "start": 8,
+   "end": 9,
+   "wavelength": 700.0
+  },
+  {
+   "start": 9,
+   "end": 10,
+   "wavelength": 606.0
+  },
+  {
+   "start": 10,
+   "end": 11,
+   "wavelength": 611.0
+  },
+  {
+   "start": 11,
+   "end": 12,
+   "wavelength": 624.0
+  },
+  {
+   "start": 12,
+   "end": 13,
+   "wavelength": 459.0
+  },
+  {
+   "start": 13,
+   "end": 14,
+   "wavelength": 440.0
+  },
+  {
+   "start": 14,
+   "end": 15,
+   "wavelength": 486.0
+  },
+  {
+   "start": 15,
+   "end": 16,
+   "wavelength": 438.0
+  },
+  {
+   "start": 16,
+   "end": 17,
+   "wavelength": 460.0
+  },
+  {
+   "start": 17,
+   "end": 18,
+   "wavelength": 550.0
+  },
+  {
+   "start": 18,
+   "end": 19,
+   "wavelength": 562.0
+  },
+  {
+   "start": 19,
+   "end": 20,
+   "wavelength": 618.0
+  },
+  {
+   "start": 20,
+   "end": 21,
+   "wavelength": 900.0
+  },
+  {
+   "start": 21,
+   "end": 22,
+   "wavelength": 539.0
+  },
+  {
+   "start": 22,
+   "end": 23,
+   "wavelength": 620.0
+  },
+  {
+   "start": 23,
+   "end": 24,
+   "wavelength": 522.0
+  },
+  {
+   "start": 24,
+   "end": 25,
+   "wavelength": 570.0
+  },
+  {
+   "start": 25,
+   "end": 26,
+   "wavelength": 493.0
+  },
+  {
+   "start": 26,
+   "end": 27,
+   "wavelength": 452.0
+  },
+  {
+   "start": 27,
+   "end": 28,
+   "wavelength": 518.0
+  },
+  {
+   "start": 28,
+   "end": 29,
+   "wavelength": 681.0
+  },
+  {
+   "start": 29,
+   "end": 30,
+   "wavelength": 579.0
+  },
+  {
+   "start": 30,
+   "end": 31,
+   "wavelength": 526.0
+  },
+  {
+   "start": 31,
+   "end": 32,
+   "wavelength": 456.0
+  },
+  {
+   "start": 32,
+   "end": 33,
+   "wavelength": 560.0
+  },
+  {
+   "start": 33,
+   "end": 34,
+   "wavelength": 580.0
+  },
+  {
+   "start": 34,
+   "end": 35,
+   "wavelength": 560.0
+  },
+  {
+   "start": 35,
+   "end": 36,
+   "wavelength": 600.0
+  },
+  {
+   "start": 36,
+   "end": 37,
+   "wavelength": 431.0
+  },
+  {
+   "start": 37,
+   "end": 38,
+   "wavelength": 437.0
+  },
+  {
+   "start": 38,
+   "end": 39,
+   "wavelength": 500.0
+  },
+  {
+   "start": 39,
+   "end": 40,
+   "wavelength": 454.0
+  },
+  {
+   "start": 40,
+   "end": 41,
+   "wavelength": 447.0
+  },
+  {
+   "start": 41,
+   "end": 42,
+   "wavelength": 522.0
+  },
+  {
+   "start": 42,
+   "end": 43,
+   "wavelength": 460.0
+  },
+  {
+   "start": 43,
+   "end": 44,
+   "wavelength": 668.0
+  },
+  {
+   "start": 44,
+   "end": 45,
+   "wavelength": 450.0
+  },
+  {
+   "start": 45,
+   "end": 46,
+   "wavelength": 694.0
+  },
+  {
+   "start": 46,
+   "end": 47,
+   "wavelength": 437.0
+  },
+  {
+   "start": 47,
+   "end": 48,
+   "wavelength": 463.0
+  },
+  {
+   "start": 48,
+   "end": 49,
+   "wavelength": 434.0
+  },
+  {
+   "start": 49,
+   "end": 50,
+   "wavelength": 441.0
+  },
+  {
+   "start": 50,
+   "end": 51,
+   "wavelength": 434.0
+  },
+  {
+   "start": 51,
+   "end": 52,
+   "wavelength": 470.0
+  },
+  {
+   "start": 52,
+   "end": 53,
+   "wavelength": 525.0
+  },
+  {
+   "start": 53,
+   "end": 54,
+   "wavelength": 554.0
+  },
+  {
+   "start": 54,
+   "end": 55,
+   "wavelength": 470.0
+  },
+  {
+   "start": 55,
+   "end": 56,
+   "wavelength": 539.0
+  },
+  {
+   "start": 56,
+   "end": 57,
+   "wavelength": 510.0
+  },
+  {
+   "start": 57,
+   "end": 58,
+   "wavelength": 544.0
+  },
+  {
+   "start": 58,
+   "end": 59,
+   "wavelength": 540.0
+  },
+  {
+   "start": 59,
+   "end": 60,
+   "wavelength": 706.0
+  },
+  {
+   "start": 60,
+   "end": 61,
+   "wavelength": 595.0
+  },
+  {
+   "start": 61,
+   "end": 62,
+   "wavelength": 706.0
+  },
+  {
+   "start": 62,
+   "end": 63,
+   "wavelength": 550.0
+  },
+  {
+   "start": 63,
+   "end": 64,
+   "wavelength": 706.0
+  },
+  {
+   "start": 64,
+   "end": 65,
+   "wavelength": 510.0
+  },
+  {
+   "start": 65,
+   "end": 66,
+   "wavelength": 715.0
+  },
+  {
+   "start": 66,
+   "end": 67,
+   "wavelength": 715.0
+  },
+  {
+   "start": 67,
+   "end": 68,
+   "wavelength": 789.0
+  },
+  {
+   "start": 68,
+   "end": 69,
+   "wavelength": 548.0
+  },
+  {
+   "start": 69,
+   "end": 70,
+   "wavelength": 706.0
+  },
+  {
+   "start": 70,
+   "end": 71,
+   "wavelength": 550.0
+  },
+  {
+   "start": 71,
+   "end": 72,
+   "wavelength": 530.0
+  },
+  {
+   "start": 72,
+   "end": 73,
+   "wavelength": 530.0
+  },
+  {
+   "start": 73,
+   "end": 74,
+   "wavelength": 706.0
+  },
+  {
+   "start": 74,
+   "end": 75,
+   "wavelength": 561.0
+  },
+  {
+   "start": 75,
+   "end": 76,
+   "wavelength": 490.0
+  },
+  {
+   "start": 76,
+   "end": 77,
+   "wavelength": 458.0
+  },
+  {
+   "start": 77,
+   "end": 78,
+   "wavelength": 788.0
+  },
+  {
+   "start": 78,
+   "end": 79,
+   "wavelength": 530.0
+  },
+  {
+   "start": 79,
+   "end": 80,
+   "wavelength": 706.0
+  },
+  {
+   "start": 80,
+   "end": 81,
+   "wavelength": 491.0
+  },
+  {
+   "start": 81,
+   "end": 82,
+   "wavelength": 515.0
+  },
+  {
+   "start": 82,
+   "end": 83,
+   "wavelength": 706.0
+  },
+  {
+   "start": 83,
+   "end": 84,
+   "wavelength": 706.0
+  },
+  {
+   "start": 84,
+   "end": 85,
+   "wavelength": 550.0
+  },
+  {
+   "start": 85,
+   "end": 86,
+   "wavelength": 788.0
+  },
+  {
+   "start": 86,
+   "end": 87,
+   "wavelength": 560.0
+  },
+  {
+   "start": 87,
+   "end": 88,
+   "wavelength": 479.0
+  },
+  {
+   "start": 88,
+   "end": 89,
+   "wavelength": 649.0
+  },
+  {
+   "start": 89,
+   "end": 90,
+   "wavelength": 492.0
+  }
+ ],
+ "rate_layers": [
+  3,
+  4,
+  12,
+  13,
+  15,
+  18,
+  19,
+  21,
+  23,
+  25,
+  26,
+  27,
+  28,
+  29,
+  30,
+  31,
+  36,
+  37,
+  39,
+  40,
+  41,
+  42,
+  43,
+  45,
+  46,
+  47,
+  48,
+  49,
+  50,
+  51,
+  52,
+  53,
+  54,
+  55,
+  57,
+  59,
+  60,
+  61,
+  63,
+  65,
+  66,
+  67,
+  68,
+  69,
+  71,
+  73,
+  74,
+  75,
+  76,
+  77,
+  79,
+  80,
+  81,
+  82,
+  83,
+  84,
+  85,
+  86,
+  87,
+  88,
+  89
+ ],
+ "witness_reset_layers": [],
+ "monochromator_resolution_nm": 2.0
+}

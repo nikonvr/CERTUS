@@ -2,8 +2,9 @@
 
 `certus/core/certus_design_memetic.py` recombines polished designs by blocks of layers. On the 50/50
 splitter 400-1200 nm it reached RMSE 1.7e-4 where the PGLOBAL workflow reached 1.8e-3 to 4.2e-3
-(reports/DESIGN_bs5050_2026-10-22/journal.md). OptimWorker takes it only when the configuration
-holds ``memetic_children`` > 0; the window passes it through ``run_optim("global", memetic_children=N)``.
+(reports/DESIGN_bs5050_2026-10-22/journal.md). OptimWorker takes it when the configuration holds
+``memetic_children`` > 0; since 2026-10-23 the window asks for 1000 children by default (owner's decision),
+and ``memetic_children=0`` (or the window's ``_memetic_children = 0``) brings back PGLOBAL.
 """
 
 from __future__ import annotations
@@ -91,8 +92,8 @@ def _window_global_cfg(qapp, monkeypatch, **kwargs) -> dict:
     return cfg
 
 
-@pytest.mark.parametrize(("kwargs", "stage"), [({}, "pglobal"), ({"memetic_children": 3}, "memetic")])
-def test_the_global_stage_is_pglobal_unless_memetic_children_is_set(qapp, monkeypatch, kwargs, stage) -> None:
+@pytest.mark.parametrize(("kwargs", "stage"), [({}, "memetic"), ({"memetic_children": 0}, "pglobal")])
+def test_the_global_stage_is_memetic_unless_memetic_children_is_zero(qapp, monkeypatch, kwargs, stage) -> None:
     import certus.workers.certus_design_workers as workers
 
     cfg = _window_global_cfg(qapp, monkeypatch, **kwargs)

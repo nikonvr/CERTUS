@@ -16,7 +16,7 @@
 
 **Actions en cours (2026-10-21).** A6 retirée, A7 et premier correctif A8 terminés. Le défaut de transmission découvert par le premier banc A3 est corrigé et entièrement validé ; nouveau protocole et reprise des mesures à suivre. État, preuves et prochaine action : [`bilan`](../reports/ACTIONS_autonomes_2026-10-20/bilan.md).
 
-**DESIGN, séparatrice 50/50 (2026-10-23).** Étape mémétique optionnelle, inactive par défaut : RMSE 0,00017 (médiane) contre 0,0018–0,0042 ; réglage, défauts et décisions dans le [`bilan`](../reports/DESIGN_bs5050_2026-10-22/bilan.md).
+**DESIGN, séparatrice 50/50 (2026-10-23).** Étape mémétique active par défaut (décision de 👤) : RMSE 0,00017 (médiane) contre 0,0018–0,0042 avec PGLOBAL ; réglage, défauts et décisions dans le [`bilan`](../reports/DESIGN_bs5050_2026-10-22/bilan.md).
 
 **Bonne Mère (2026-10-19).** Meilleur plan mesuré et chemin vers l'optimum : [`studies/bonne_mere/README.md`](../studies/bonne_mere/README.md) (21 couches Rate, SEEL P95 0,446 nm au bruit 0,05, 0 arrêt). Dérive de la source non modélisée. Défaut ouvert de STRAT : l'hystérésis du comptage des points tournants suit le bruit ; à bruit faible, la fente fabrique des extrema ([phase 1](../reports/BONNE_MERE_phase1_budget_SuperChamp76_2026-10-19/bilan.md)).
 
@@ -116,6 +116,7 @@ Le nouveau 99 couches en une seule campagne relève d'A9 ; aucun ancien score ne
 | `tp_hysteresis_factor` | 1,66 en usage. Cible 1,00, mesurée à k = 8 et N = 800 : à remesurer avant de l'appliquer, les configurations tournant à k = 1. |
 | `phase_a_level_margin_factor` | 1,66 ; 3,33 à évaluer |
 | `index_corridor` | 0,005 en indice absolu, actif |
+| DESIGN, étape globale (2026-10-23) | mémétique, 1000 enfants, population 30 (`_memetic_children = 0` : PGLOBAL) ; champion Pareto sans couche < 5 nm, actif ([bilan](../reports/DESIGN_bs5050_2026-10-22/bilan.md)) |
 | `photometric_curvature_amp` | **0,00375**, actif |
 | `affine_scale_amp`, `affine_offset_amp` | 0,05 et 0,02 |
 | `allow_rate` | vrai — « le cas général » |

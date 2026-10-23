@@ -1,4 +1,6 @@
-"""DESIGN restores a Pareto champion free of layers under 5 nm when `_pareto_champion_respects_5nm` is set.
+"""DESIGN restores a Pareto champion free of layers under 5 nm, unless `_pareto_champion_respects_5nm` is False.
+
+On by default since 2026-10-23 (owner's decision).
 
 Smart Pareto decimation restores the best record it saw, then the final 5 nm rule removes the thin
 layers of that record without re-optimizing: a champion with a 4.2 nm layer fell from RMSE 0.000165
@@ -22,8 +24,8 @@ def _window_ends_with_the_test(qapp, monkeypatch):
     yield from qt_lifecycle(qapp, monkeypatch, "DESIGN Pareto champion", main_windows_only=True)
 
 
-@pytest.mark.parametrize(("option", "rows"), [(False, 26), (True, 24)])
-def test_the_restored_champion_is_free_of_sub_5nm_layers_only_when_asked(qapp, option, rows) -> None:
+@pytest.mark.parametrize(("option", "rows"), [(False, 26), (True, 24), (None, 24)])
+def test_the_restored_champion_is_free_of_sub_5nm_layers_unless_turned_off(qapp, option, rows) -> None:
     from certus.ui.certus_design_ui import CertusDesignApp
 
     app = CertusDesignApp()
@@ -35,7 +37,8 @@ def test_the_restored_champion_is_free_of_sub_5nm_layers_only_when_asked(qapp, o
     app.front_table.removeRow(24)
     compliant = {"best_rmse": 0.000187, "table_rmse": app._save_table_state(), "ep_rmse": np.full(24, 60.0)}
     app.pareto_history = {26: better_with_a_thin_layer, 24: compliant}
-    app._pareto_champion_respects_5nm = option
+    if option is not None:  # None: the window's default
+        app._pareto_champion_respects_5nm = option
 
     assert app.optimization_manager._restore_smart_decimation_best_overall()
 

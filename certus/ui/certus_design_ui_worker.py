@@ -506,6 +506,10 @@ class WorkerManager:
                 "ep_back": (self.ui.ep_back_current if self.ui.ep_back_current is not None else []),
                 "stack_back": self.ui._get_back_stack(),
                 "max_clusters": g_max_clusters,
+                # Memetic global stage by default (owner's decision, 2026-10-23): 1000 children, population 30.
+                # The window's `_memetic_children = 0` brings back PGLOBAL. Oblique mode always uses PGLOBAL.
+                "memetic_children": int(getattr(self.ui, "_memetic_children", 1000)),
+                "memetic_population": int(getattr(self.ui, "_memetic_population", 30)),
                 "calc_oblique_func": (calc_spectrum_oblique_vectorized if self.ui.oblique_mode else None),
                 "run_id": getattr(self.ui, "_workflow_run_id", None),
                 "run_context": getattr(self.ui, "_workflow_run_ctx", None),

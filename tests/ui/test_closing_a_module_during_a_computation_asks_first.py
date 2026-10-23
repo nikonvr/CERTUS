@@ -43,7 +43,7 @@ WINDOWS = [
     ("certus.ui.certus_index_ui", "CertusIndexApp", "_thread"),
     ("certus.ui.certus_index_spline_ui", "CertusIndexSplineApp", "_worker"),
     ("CERTUS_RE", "CertusREApp", "_re_worker"),
-    ("certus.metal.certus_metal_single_app", "CertusMetalSingleApp", "optimization_thread"),
+    ("certus.ui.certus_metal_single_gui", "CertusMetalSingleApp", "optimization_thread"),
     ("certus.ui.certus_metal_bilayer_gui", "CertusMetalBilayerApp", "optimization_thread"),
     ("certus.ui.certus_design_ui", "CertusDesignApp", "optim_thread"),
 ]

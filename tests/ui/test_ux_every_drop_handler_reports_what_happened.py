@@ -55,7 +55,7 @@ def _re(qapp):
 
 
 def _metal_single(qapp):
-    from certus.metal.certus_metal_single_app import CertusMetalSingleApp
+    from certus.ui.certus_metal_single_gui import CertusMetalSingleApp
 
     return CertusMetalSingleApp()
 

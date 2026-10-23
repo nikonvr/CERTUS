@@ -1,8 +1,6 @@
 {
   "_commentaire": "La dette d'architecture, mesuree par scripts/metrics.py. aretes_montantes : les imports de niveau module d'une couche basse vers une couche plus haute (COUCHES), module a module. cycles : les cycles d'imports a l'execution (hors `if TYPE_CHECKING:`). fonctions_longues, fonctions_complexes, fichiers_longs : ce qui depasse 300 lignes, une complexite de 60, 1 500 lignes, avec sa mesure. fonctions_non_annotees : les fonctions de certus/domain, physics et core (les paquets que mypy parcourt) dont un argument de position ou le retour n'a pas d'annotation. Le registre ne fait que retrecir : un nouvel element, ou une mesure qui monte, fait echouer tests/unit/test_the_architecture_debt_only_shrinks.py ; une dette payee, ou une mesure qui baisse, doit y etre corrigee dans le meme commit (python scripts/metrics.py --dette tests/architecture_debt.json).",
   "aretes_montantes": [
-    "certus.metal.certus_metal_single_app -> certus.ui.certus_overview_tab",
-    "certus.metal.certus_metal_single_app -> certus.ui.certus_ui",
     "certus.spline.certus_index_spline_corridor_ui -> certus.ui.certus_manual_sigma_knot_dialog",
     "certus.spline.certus_index_spline_corridor_ui -> certus.ui.certus_plot",
     "certus.spline.certus_index_spline_corridor_ui -> certus.ui.certus_ui",
@@ -78,7 +76,6 @@
   "fichiers_longs": {
     "certus/core/certus_index_objectives.py": 1933,
     "certus/core/certus_substrate_index.py": 1945,
-    "certus/metal/certus_metal_single_app.py": 2044,
     "certus/physics/certus_strat_growth.py": 1825,
     "certus/physics/gradient_analytic.py": 1802,
     "certus/spline/certus_corridor_exploration.py": 1615,
@@ -87,6 +84,7 @@
     "certus/spline/certus_index_spline_rendering.py": 1967,
     "certus/spline/spline_workers.py": 1997,
     "certus/ui/certus_metal_base_app.py": 1809,
+    "certus/ui/certus_metal_single_gui.py": 1502,
     "certus/ui/certus_re_excel_mixin.py": 2223,
     "certus/ui/certus_re_layout_mixin.py": 1750,
     "certus/ui/certus_strat_ui_state.py": 1722,

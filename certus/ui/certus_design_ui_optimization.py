@@ -470,9 +470,12 @@ class OptimizationManager:
             "_smart_decimation_polish_pass",
             "_smart_decimation_healing",
         )
-        for attr in attrs:
-            if hasattr(self, attr):
-                delattr(self, attr)
+        # The decimation keeps its state on the window (the orchestrator reads `_smart_decimation_step` there);
+        # clearing only the manager left the session open, and later optimizations were taken for its steps.
+        for owner in (self.ui, self):
+            for attr in attrs:
+                if attr in getattr(owner, "__dict__", {}):
+                    delattr(owner, attr)
 
     def _log_smart_decimation_completion(self, total_steps: int, start_n: int, end_n: int) -> None:
         """Log Smart Pareto Decimation completion summary."""

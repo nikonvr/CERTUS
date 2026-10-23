@@ -523,6 +523,13 @@ class WorkerManager:
 
         self.ui._initialize_run_optim_progress_state(cfg, keep_history)
 
+        floor_at_end = bool(getattr(self.ui, "_floor_at_end", False) is True)
+        if getattr(self.ui, "_layer_floor_active", None) is not None:
+            cfg["layer_floor_nm"] = list(self.ui._layer_floor_active)  # floor_at_end: the final stage is bounded
+        elif floor_at_end and mode == "global":
+            cfg["memetic_floor_nm"] = 0.0  # floor_at_end: the layers are free until the end of the workflow
+            cfg["memetic_absent_below_nm"] = 0.0
+
         if kwargs:
             cfg.update(kwargs)
 

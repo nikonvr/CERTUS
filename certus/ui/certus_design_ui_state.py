@@ -203,7 +203,7 @@ class StateManager:
             },
         }
         for key, attr in (("max_layers", "_max_layers_cap"), ("max_total_qwot", "_max_total_qwot"),
-                          ("min_layer_ot_nm", "_min_layer_ot_nm")):
+                          ("min_layer_ot_nm", "_min_layer_ot_nm"), ("floor_at_end", "_floor_at_end")):
             if getattr(self.ui, attr, None):
                 cfg["optimization"][key] = getattr(self.ui, attr)
 
@@ -353,6 +353,8 @@ class StateManager:
         self.ui._max_total_qwot = float(opt["max_total_qwot"]) if opt.get("max_total_qwot") else None
         # Least optical thickness n4 * d of a final layer, in nm; without it every final layer keeps 5 nm.
         self.ui._min_layer_ot_nm = float(opt["min_layer_ot_nm"]) if opt.get("min_layer_ot_nm") else None
+        # Apply the thickness floor only at the end of the workflow (owner's practice); off unless the file asks.
+        self.ui._floor_at_end = bool(opt.get("floor_at_end", False))
 
     def config_load_problems(self, c: dict) -> list[str]:
         """What `c` names that this window cannot reproduce (D88): loading it would compute with something else.

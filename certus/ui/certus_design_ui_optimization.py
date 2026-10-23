@@ -172,6 +172,8 @@ class OptimizationManager:
             self.ui.orchestrator.schedule_smart_pareto_decimation()
             return
 
+        if self._apply_floor_at_end():
+            return
         removed = self._apply_5nm_minimum()  # Hard rule: no layer < 5nm in final design
         if self._heal_after_5nm_rule(removed):
             return
@@ -405,7 +407,8 @@ class OptimizationManager:
         2026-10-23 (owner's decision); the window's `_pareto_champion_respects_5nm = False` turns it off.
         """
         records = list(self.ui.pareto_history.items())
-        if getattr(self.ui, "_pareto_champion_respects_5nm", True):
+        # With floor_at_end the floor comes after the champion: the best free design is kept.
+        if getattr(self.ui, "_pareto_champion_respects_5nm", True) and getattr(self.ui, "_floor_at_end", False) is not True:
             compliant = [(n, rec) for n, rec in records
                          if rec.get("ep_rmse") is not None and not np.any(
                              np.asarray(rec["ep_rmse"]) < self._record_min_layer_thickness(rec))]
@@ -608,6 +611,32 @@ class OptimizationManager:
         if len(table) != n:
             return np.full(n, 5.0)
         return self._min_layer_thickness([row["mat"] for row in table])
+
+    def _apply_floor_at_end(self) -> bool:
+        """With the window's `floor_at_end`, bring thin layers up to their floor and re-optimize; True if started.
+
+        Owner's practice (2026-10-23): let the design progress freely and apply the thickness floor at the very
+        end. Every layer under its least final thickness (5 nm, or min_layer_ot_nm / n4) is raised to it, then
+        the healing stage and its local polish run with those floors as lower bounds (`layer_floor_nm`, kept on
+        the window until the next run), so that no layer goes back under them. Once per run.
+        """
+        if getattr(self.ui, "_floor_at_end", False) is not True or getattr(self.ui, "_layer_floor_active", None) is not None:
+            return False
+        ep = np.asarray(self.ui.ep_current, dtype=float) if self.ui.ep_current is not None else np.zeros(0)
+        floor = self._current_min_layer_thickness(len(ep))
+        fixed = self._fixed_rows()
+        raise_rows = [r for r in range(len(ep)) if 0.0 < ep[r] < floor[r] and r not in fixed]
+        self.ui._layer_floor_active = [float(f) if r not in fixed else 0.0 for r, f in enumerate(floor)]
+        if not raise_rows:
+            return False
+        ep[raise_rows] = floor[raise_rows]
+        self.ui._update_qwot_from_ep(ep)
+        self.ui._update_thickness_display()
+        self.ui.ep_current = ep.copy()
+        self.ui._use_exact_ep = True
+        self.ui._workflow_best_rmse = float("inf")
+        self.ui.log(f"[FLOOR] {len(raise_rows)} layers raised to their floor; healing with the floor as lower bound", "INFO")
+        return bool(self.ui.orchestrator._handle_healing_workflow(len(raise_rows)))
 
     def _restart_from_best(self) -> bool:
         """Start the workflow again from its final design while it improves; True if a new round started.

@@ -720,6 +720,7 @@ class CoreManager:
             self.ui._restart_rounds = 0
             self.ui._restart_best = None
         self.ui._restarting = False
+        self.ui._layer_floor_active = None  # floor_at_end: every run starts free
 
         self.ui._export_pending = False
 

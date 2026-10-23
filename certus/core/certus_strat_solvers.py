@@ -239,6 +239,8 @@ def generate_excel_report(
                             "Constraint Violated": "YES" if violated else "NO",
                             "Nominal RMSE": nominal_rmse,
                             "Robustness Score": res["robustness_score"],
+                            # A11: only when the run computed it
+                            **({"Index share %": 100.0 * float(res["index_share"])} if res.get("index_share") is not None else {}),
                         }
                     )
 

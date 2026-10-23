@@ -359,6 +359,16 @@ LEVIERS: tuple[Levier, ...] = (
                 "double les evaluations du controle. Une graine de banc par cas. `false` retablit le chemin d'avant.",
     ),
     Levier(
+        cle="strat_index_share_top_k",
+        libelle="Part d'indice : calculee pour les K meilleures strategies (0 = non calculee)",
+        defaut=0,
+        genre="int",
+        statut=NON_MESURE,
+        mesure="A11 (2026-10-23) : 1 - RMSE2(corridor nul) / RMSE2(corridor configure), meme plan, memes tirages, bruit nominal ; "
+               "colonne Index share % du tableau et des exports.",
+        reserve="Coute deux evaluations de robustness_num_runs tirages par strategie ; ne change ni le classement ni les plans.",
+    ),
+    Levier(
         cle="strat_local_search_presel_runs",
         libelle="Recherche locale : nombre de tirages de la preselection des candidats (0 = sans preselection)",
         defaut=0,

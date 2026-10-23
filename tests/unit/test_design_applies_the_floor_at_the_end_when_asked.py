@@ -44,3 +44,35 @@ def test_the_thin_layers_are_raised_and_healed_only_with_the_option(qapp, monkey
     else:
         assert healed == []
         assert app.ep_current[3] == 1.5
+
+
+def test_the_floors_follow_the_rows_of_the_current_stack(qapp, monkeypatch) -> None:
+    from PyQt6.QtCore import QObject
+
+    import certus.ui.certus_design_ui_worker as ui_worker
+    from certus.ui.certus_design_ui import CertusDesignApp
+    from certus.workers.certus_base_workers import WorkerSignals
+
+    captured = []
+
+    class Recorder(QObject):
+        def __init__(self, cfg) -> None:
+            super().__init__()
+            captured.append(dict(cfg))
+            self.signals = WorkerSignals()
+
+        def run(self) -> None:
+            pass
+
+    monkeypatch.setattr(ui_worker, "OptimWorker", Recorder)
+    app = CertusDesignApp()
+    app.load_config(str(EXAMPLE))
+    app._layer_floor_active = [5.0] * 3  # recorded for another stack: the floors must follow the current one
+
+    app.run_optim("local", keep_history=True)
+    app.optim_thread.quit()
+    app.optim_thread.wait(5000)
+
+    [cfg] = captured
+    assert len(cfg["layer_floor_nm"]) == len(cfg["stack"]) == app.front_table.rowCount()
+    assert all(f == pytest.approx(5.0) for f in cfg["layer_floor_nm"])

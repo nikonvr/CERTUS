@@ -28,9 +28,9 @@ Données : `runs.jsonl` (workflow), `probe.jsonl` (sonde), `eval_examples.jsonl`
 | 4 | départs plus épais, descente en n4·d | `multistart`, `--optical --qw-max 1.6` | `multistart --layers 34 --starts 200 --optical --qw-max 1.6 --seed 2 --qwot-max 30` | 0,000634 | 34 · 25,9 QWOT | 432 k | pas mieux que le levier 1 (une seule graine) |
 | 5 | **mémétique** : population de 30 designs polis (le meilleur à 34 c. + 29 départs aléatoires, une seule alternance pour tous) ; un enfant = parent A dont un bloc de couches [lo, hi) est pris dans le parent B, épaisseurs × (1 + 0,02·N(0,1)), poli ; il remplace le pire s'il le bat et n'est pas un doublon | `design_probe.py::memetic` | `memetic --layers 34 --from best_ms34.json --pop 30 --rounds 300 --seed 3 --qwot-max 30` | **0,0001676** (oracle 0,0001676, écart max 0,10 %) | 32 réelles (une H à 0 nm sépare deux L) · 25,6 QWOT | 778 k | vérifié, **meilleur** ; encore en progrès à la fin |
 
-## Dans la fenêtre (DESIGN réel), départ 34 couches QWOT, `allow_growth` faux
+## Dans la fenêtre (DESIGN réel), départ 34 couches QWOT
 
-Fichier `config_34_layers.json` (l'exemple, 34 lignes HL à 1 QWOT, `allow_growth` faux pour rester ≤ 34 couches).
+Fichier `config_34_layers.json` (l'exemple, 34 lignes HL à 1 QWOT ; son `"allow_growth": false` n'a **jamais été appliqué** : la fenêtre ignorait le bloc `optim` des fichiers jusqu'à `a813fa64`, et tous ces runs ont tourné avec la croissance de la fenêtre, active, et ses n100/grappes par défaut ; ils sont restés à 34 couches au plus).
 Commande : `design_bench.py run --config config_34_layers.json --kw memetic_children=300 --kw memetic_population=30 …`.
 « étape » = coût du mémétique seul (grille de la fenêtre, 140 points) ; « final » = fin du workflow, grille fixe.
 
@@ -55,7 +55,7 @@ Commande : `design_bench.py run --config config_34_layers.json --kw memetic_chil
 | restart1–3 | redémarrage du workflow depuis son meilleur design (fichier `--save-design`, il entre dans la population comme x0) | — | 0,000189 → 0,000149 → 0,0001479 → 0,0001479 | 34 · 26,6 · 5,0 nm | un seul gain puis plancher : le 3ᵉ tour rend le même design ; tout ce qui a été essayé finit vers 1,5e-4 avec ces contraintes |
 
 Réglage du record (DESIGN, fenêtre) : `run_optim("global", memetic_children=1000, memetic_population=30,
-memetic_qwot_max=30)`, fenêtre `_pareto_champion_respects_5nm = True`, départ 34 lignes QWOT, `allow_growth` faux.
+memetic_qwot_max=30)`, fenêtre `_pareto_champion_respects_5nm = True`, départ 34 lignes QWOT (croissance active, voir plus haut).
 
 Balayage du nombre de couches dans la fenêtre (réglage du record, un run par N de départ, 10 à 35) :
 `window_sweep/run_window_sweep.sh`, résultats `window_sweep/window_sweep.jsonl`, designs `window_sweep/best_N.json`,

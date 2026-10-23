@@ -1,0 +1,233 @@
+{
+  "version": "CERTUS_SUITE_26_05",
+  "l0": 500.0,
+  "materials": {
+    "H": {
+      "n4": 2.35,
+      "n7": 2.3,
+      "preset": "TiO2 (H)"
+    },
+    "L": {
+      "n4": 1.46,
+      "n7": 1.46,
+      "preset": "SiO2 (L)"
+    },
+    "A": {
+      "n4": 2.05,
+      "n7": 2.0,
+      "preset": "Custom"
+    },
+    "B": {
+      "n4": 1.75,
+      "n7": 1.73,
+      "preset": "Custom"
+    },
+    "C": {
+      "n4": 1.6,
+      "n7": 1.58,
+      "preset": "Custom"
+    },
+    "Substrate": {
+      "n4": 1.52,
+      "n7": 1.51,
+      "preset": "N-BK7 (Sub)"
+    }
+  },
+  "front": [
+    {
+      "mat": "H",
+      "qw": 0.095199,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.816261,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.312554,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.636985,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.643086,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.265578,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 2.806492,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.100935,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.304229,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.348614,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.330064,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 2.76764,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.386646,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.382112,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 2.386109,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.368775,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.707963,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.897911,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.094,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.06686,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.096591,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.992698,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.011427,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.900308,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.211455,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.39528,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.804473,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.119757,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.257545,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.499642,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.094,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.0584,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.810981,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.983143,
+      "var": true
+    }
+  ],
+  "back_en": false,
+  "back_coat": false,
+  "back": [],
+  "targets": [
+    {
+      "on": true,
+      "lmin": 400.0,
+      "lmax": 1200.0,
+      "tmin": 0.5,
+      "tmax": 0.5,
+      "w": 1.0
+    }
+  ],
+  "oblique_mode": false,
+  "optim": {
+    "points_per_target": 108,
+    "n100": 15000,
+    "max_clusters": 100,
+    "max_iter": 100,
+    "mc_n": 1000,
+    "mc_sigma": 0.1,
+    "pre_polish": true,
+    "allow_growth": false,
+    "auto_scale_y": true
+  }
+}

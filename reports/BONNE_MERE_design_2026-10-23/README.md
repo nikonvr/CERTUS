@@ -47,7 +47,9 @@ d'entraînement d'une autre graine, gradient exact, sans plancher par décision 
 (0,27 nm) retirée et couches 15 et 17 fusionnées par 👤 (`start_96_layer16_removed.json`, 1,7821 pp) ; puis 45 min de
 sauts de bassin gardés sur la moyenne d'entraînement (1474 sauts) et polissage robuste : `best_design_robust_opt_96_hops.json`,
 96 couches, nominal 1,5054 pp, **1,7697 pp** sous erreurs (95 % sous 1,955 pp) ; vérifié par l'oracle (écart de T 1e-14).
-Sa couche 90 (SiO₂) est à 0,000 nm. Polissage robuste seul, sans sauts : 1,7833 → 1,7798 pp.
+Sa couche 90 (SiO₂) est à 0,000 nm : retirée par 👤, couches 89 et 91 fusionnées (523,3 nm), **94 couches**
+`best_design_94_layer90_removed.json` : nominal identique, 1,7698 pp sous erreurs (95 % sous 1,960 pp), plus fine 5,47 nm, vérifié
+par l'oracle. Polissage robuste seul, sans sauts : 1,7833 → 1,7798 pp.
 
 Commande : `python reports/BONNE_MERE_design_2026-10-23/reoptimize.py --study STUDY --max-layers 110 --budget-min 45
 --substrate-id 0 --tag _silica_cached` (8 fils). La stratégie de dépôt STRAT n'est pas refaite pour ce design.

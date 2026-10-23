@@ -57,10 +57,10 @@ un rapport sur les trois 75 couches.
 transmettent le plus l'erreur d'indice ; essayer des mouvements de deux ou trois couches voisines. *Livrable* : une option inactive par défaut,
 mesurée contre l'étage actuel sur les trois 75 couches × deux graines, règle écrite avant la mesure, rapport.
 
-**A13 — Rendre `strat_local_search` rapide en production** (👤 : « un code ultra performant »). L'étage coûte 2 300 à 3 900 évaluations de
-300 tirages, environ 20 min par calcul. *Livrable* : un profil (`cProfile`) d'une évaluation qui sépare noyau compilé et préparation Python ; les
-gains qui gardent les bits (préparation hors boucle, réutilisation des tableaux) prouvés identiques par un test ; les gains qui changent la
-recherche (présélection à moins de tirages) mesurés contre l'étage actuel avec une règle écrite d'avance ; un rapport avec la durée avant/après.
+**A13 — Rendre `strat_local_search` rapide en production** (👤 : « un code ultra performant »). Profil du 2026-10-23
+([bilan](../reports/STRAT_A13_profil_2026-10-23/bilan.md)) : 96 % du temps dans `compute_batch_rmse` et `simulate_stack_robustness_batch`,
+3,5 % de préparation Python. *Reste* : choisir entre accélérer un noyau (prouvé au bit par `c1_diff`) et une présélection à moins de
+tirages (mesurée contre l'étage actuel, règle écrite d'avance).
 
 **A5 — ELITE : six et dix tours, budgets 40 et 360** (≈ 4 h). Référence : `r75x0.5` deep graine 101, 3 tours, arrêt actif, budget 120,
 SEEL 0,3967 nm (branche `codex/actions-prudentes-2026-10-20`, `reports/STRAT_A5_tours_budgets_2026-10-21/`). *Faire* : quatre bancs, un à la fois,

@@ -76,6 +76,7 @@ from certus.core.certus_strat_robustness_noise import (
     _resolution_noise_factor,
     _resolve_robustness_noise_levels,
     _signal_noise_stream_seed,
+    corridor_monitor_span,
 )
 from certus.core.certus_strat_robustness_rate import (
     ELITE_RATE_FILL_MAX,

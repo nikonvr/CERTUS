@@ -26,6 +26,7 @@ from certus.core.certus_strat_robustness_noise import (
     _index_stream_seed,
     _resolution_noise_factor,
     _signal_noise_stream_seed,
+    corridor_monitor_span,
 )
 from certus.core.certus_strat_robustness_slit import _strategy_resolution
 from certus.core.certus_strat_robustness_wrappers import _IdxWrapper
@@ -440,7 +441,7 @@ def _test_strategy_robustness_task(
         # growth batch and the scoring kernel. 12.3, decided 2026-08-10: the envelope
         # of the spectral grid and the monitoring wavelengths.
         corridor_lo, corridor_hi = corridor_wl_range(
-            wl_arr.astype(np.float64), layer_wavelengths
+            wl_arr.astype(np.float64), corridor_monitor_span(params, layer_wavelengths)
         )
 
         # 👤 Rate layers are a property OF THE STRATEGY, chosen deliberately (14-8),

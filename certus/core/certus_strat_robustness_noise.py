@@ -164,3 +164,17 @@ def _index_stream_seed(base_seed: int, noise_idx: int) -> int:
     """Seed of the index uncertainty stream (T5)."""
     mixed = int(base_seed) * 2_654_435_761 + int(noise_idx) * 850_507 + 0x3F1B_79C5
     return mixed % (2**53)
+
+
+def corridor_monitor_span(params: dict[str, Any], layer_wavelengths: np.ndarray) -> np.ndarray:
+    """The monitoring wavelengths the index-corridor normalisation encloses with the spectral grid (`corridor_wl_range`).
+
+    By default the plan's own: two plans of one run whose wavelengths leave the spectral grid differently then see two
+    realisations of the index error at the same wavelength, and slices of a multi-witness design grown apart see others again,
+    which is why the 99-layer assembly of A3 was refused (reports/STRAT_A3_C2_assemblage_2026-10-21). With
+    `index_corridor_fixed_domain` (off by default, A3, owner 2026-10-23): the whole scan range, the same for every plan of a
+    component, so the realisation is a function of (seed, draw) alone (C2).
+    """
+    if not bool(params.get("index_corridor_fixed_domain", False)):
+        return layer_wavelengths
+    return np.asarray([float(params["scan_wl_min"]), float(params["scan_wl_max"])], dtype=np.float64)

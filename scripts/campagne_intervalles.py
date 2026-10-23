@@ -152,6 +152,7 @@ def mesurer(a: int, b: int, mode: str = "fast", cache_dir: Path | None = None,
             "monochromator_resolution_nm": 2.0, "search_resolution": False,
             "noise_layer_offset": a, "noise_total_layers": N_LAYERS,
             "execution_mode": mode,
+            **({"index_corridor_fixed_domain": True} if DOMAINE_FIXE else {}),
         }
         _c = app.collect_params
         vus = {"n": 0}
@@ -179,6 +180,7 @@ def mesurer(a: int, b: int, mode: str = "fast", cache_dir: Path | None = None,
         ok = [s for s in strats if float(s.get("crash_rate", 1.0)) < CRASH_TOL]
         ok.sort(key=lambda s: float(s.get("robustness_score", 1e18)))
         row.update({
+            "index_corridor_fixed_domain": DOMAINE_FIXE,
             "n_strats": len(strats), "n_deposables": len(ok),
             "crash_min": round(min(taux) * 100, 2),
             "crash_retenue": round(float(strats[0].get("crash_rate", 1.0)) * 100, 2),
@@ -197,11 +199,18 @@ def mesurer(a: int, b: int, mode: str = "fast", cache_dir: Path | None = None,
     return row
 
 
+#: A3: set by --domaine-fixe; every slice then grows with `index_corridor_fixed_domain`.
+DOMAINE_FIXE = False
+
+
 def _epaisseurs(strat: dict) -> np.ndarray | None:
     per = strat.get("results_per_noise") or []
     if not per:
         return None
-    ch = min(per, key=lambda r: abs(float(r.get("noise_level", 1.0)) - 1.0))
+    # 🔴 A3 (2026-10-23): `noise_level` is ABSOLUTE (0.025 / 0.05 / 0.1 for the factors 0.5x / 1x / 2x of
+    # `trigger_tolerance` 0.05), so "the level nearest 1.0" took 2x, while the assembler reads the index stream of
+    # level 1. The nominal level is the middle one of the three, the stream the assembler asks for.
+    ch = sorted(per, key=lambda r: float(r.get("noise_level", 0.0)))[len(per) // 2]
     th = ch.get("thicknesses_all")
     return np.asarray(th, dtype=np.float64) if th else None
 
@@ -305,9 +314,16 @@ def main() -> int:
                          f"(suffixe _sNNN) et n'ecrase jamais le cache de reference. Sert au "
                          f"controle du piege 1 : ce qui ne varie pas avec la graine designe "
                          f"l'algorithme, pas le phenomene")
+    ap.add_argument("--domaine-fixe", action="store_true",
+                    help="A3 : erreur d'indice normalisee sur toute la plage de balayage (index_corridor_fixed_domain), "
+                         "la meme pour toutes les tranches ; ecrit dans son propre cache (suffixe _c2)")
     args = ap.parse_args()
 
+    global DOMAINE_FIXE
+    DOMAINE_FIXE = bool(args.domaine_fixe)
     cache_dir = get_cache(args.mode)
+    if DOMAINE_FIXE:
+        cache_dir = cache_dir.with_name(cache_dir.name + "_c2")
     cache_dir.mkdir(parents=True, exist_ok=True)
     if args.etat or not args.vague:
         return etat(cache_dir, args.graine)

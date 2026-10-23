@@ -109,16 +109,22 @@ def main() -> int:
                     help=f"graine de robustesse a classer (défaut: {SEED}). Le cache peut porter "
                          f"plusieurs graines cote a cote ; on n'assemble JAMAIS des tranches "
                          f"venant de graines differentes")
+    ap.add_argument("--domaine-fixe", action="store_true",
+                    help="A3 : tranches mesurees avec index_corridor_fixed_domain ; meme domaine d'indice que leur croissance "
+                         "(cache _c2)")
     args = ap.parse_args()
 
     cache_dir = Path(args.cache_dir) if args.cache_dir else (ROOT / "reports" / ("intervalles_99c" if args.mode == "fast" else f"intervalles_99c_{args.mode}"))
+    if args.domaine_fixe and not args.cache_dir:
+        cache_dir = cache_dir.with_name(cache_dir.name + "_c2")
     delta = 0.030 if args.mode == "premium" else 0.051
 
     import bench_examples as Bx
 
     from certus.core.certus_strat_robustness import _index_stream_seed
+    from certus.core.certus_strat_robustness_noise import corridor_monitor_span
     from certus.physics.certus_opt_tmm import arange_inclusive
-    from certus.physics.certus_strat_batch import compute_batch_rmse
+    from certus.physics.certus_strat_batch import compute_batch_rmse, corridor_wl_range
     from certus.physics.certus_tmm_hl import calculate_RT_vectorized_real_HL
     from certus.utils.certus_strat_service import (
         get_refractive_clues_vectorized,
@@ -156,6 +162,14 @@ def main() -> int:
     # juste tant qu'une seule graine existait dans le cache.
     seed_idx = _index_stream_seed(args.graine, 1)
     corr = float(prm.get("index_corridor", 0.0) or 0.0)
+    # 🔴 A3 (2026-10-23): the normalisation domain of the index error must be the one the slices grew with. Without
+    # --domaine-fixe it is the spectral band alone, which no slice used (each took the envelope with its own monitoring
+    # wavelengths): that assembly is not C2 and is refused. With it, the slices and this scoring share the whole scan range.
+    if args.domaine_fixe:
+        dom_lo, dom_hi = corridor_wl_range(wl.astype(np.float64),
+                                           corridor_monitor_span({**prm, "index_corridor_fixed_domain": True}, np.empty(0)))
+    else:
+        dom_lo, dom_hi = float(wl[0]), float(wl[-1])
 
     cache = charger(cache_dir, args.graine)
     print(f"{len(cache)} intervalles deposables en cache ({cache_dir.name}), graine {args.graine}.\n")
@@ -184,7 +198,7 @@ def main() -> int:
 
         rmse = compute_batch_rmse(th, wl.astype(np.float64), vide, vide,
                                   nS.astype(np.complex128), T_nom, mat, None,
-                                  corr, seed_idx, float(wl[0]), float(wl[-1]))
+                                  corr, seed_idx, dom_lo, dom_hi)
         p95 = float(np.percentile(rmse, 95))
         res.append({
             "parts": ps, "n_temoins": len(ps),

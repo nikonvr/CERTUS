@@ -1,45 +1,43 @@
 # DESIGN plus performant — séparatrice 50/50 400–1200 nm (2026-10-22/23)
 
 Contraintes de 👤 : H/L seulement, indices inchangés, ≤ 34 couches, ≤ 30 QWOT. RMSE de T sur grille fixe de 0,5 nm,
-recoupé par l'oracle indépendant. Détail de chaque levier, commandes et défauts : [`journal.md`](journal.md).
+recoupé par l'oracle indépendant. Leviers, commandes et mesures : [`journal.md`](journal.md).
+
+## Résultats
 
 | | RMSE (grille fixe) | couches · QWOT | temps |
 |---|---|---|---|
-| DESIGN par défaut (PGLOBAL), 3 runs | 0,0018 – 0,0042 | 21 – 27 · ~19 | 1,5 – 2,5 min |
-| **DESIGN, réglage mémétique**, 3 runs | **0,000147 – 0,000215** (médiane 0,000172) | 34 · 25,8–26,8, couches ≥ 5 nm | 7 – 9 min |
-| sonde hors fenêtre (sans plancher de 5 nm) | 0,000168 | 32 · 25,6 | ~1 h |
+| DESIGN avant la campagne (PGLOBAL) | 0,0018 – 0,0042 | 21 – 27 · ~19 | 1,5 – 2,5 min |
+| DESIGN par défaut, `JSON-design-example.json` tel quel | **0,000135** – 0,000165 | 32 – 34 · 26,2 – 26,6, couches ≥ 5 nm | 21 – 48 min (8 fils) |
+| DESIGN, problème de Tikhonravov et al. 1996 (34 couches) | **8,6e-5** contre 1,77e-4 pour leur design | 34 · 26,4 contre 31,4 | 47 min |
 
-**Réglage** : `run_optim("global", memetic_children=1000, memetic_population=30, memetic_qwot_max=30)` et, sur la
-fenêtre, `_pareto_champion_respects_5nm = True` ; départ 34 lignes QWOT (croissance active : le `allow_growth` faux du fichier n'était pas lu, voir `a813fa64`). Depuis le 2026-10-23, sur
-décision de 👤, le mémétique (1000 enfants, population 30) et le champion conforme sont actifs par défaut ; le plafond de
-QWOT reste à fixer par design.
+- Face à la littérature : MF 8,53e-3 contre 1,2767e-2 publié, écart max 0,024 % contre 0,193 % ;
+  [`tikhonravov/README.md`](tikhonravov/README.md), courbe RMSE = f(couches) dans `tikhonravov/curve/`.
+- Tolérance : sous des erreurs d'épaisseur de 0,1 % + 0,2 nm à 2σ, le RMSE moyen est d'environ 0,003 (± 0,0015) quel
+  que soit le nombre de couches : ces designs sont limités par la fabrication, pas par l'optimiseur
+  ([`final_runs/rmse_vs_layers.png`](final_runs/rmse_vs_layers.png)).
+- Plancher : mémétique, relances et sonde finissent tous vers 1,5e-4 à 34 couches et 30 QWOT.
 
-**Esquisse RMSE / couches** (10 à 35 couches de départ, un run DESIGN chacune, réglage mémétique) :
-[`sweep/best_by_layers.png`](sweep/best_by_layers.png), tableau [`sweep/best_by_layers.csv`](sweep/best_by_layers.csv).
-DESIGN passe sous 1e-3 dès 22 couches réelles ; la dispersion d'un run à l'autre est de ±20 % ou plus.
+## Réglage par défaut (décisions de 👤 du 2026-10-23)
 
-**Plancher** : redémarrer depuis le meilleur design donne un gain puis plus rien (0,000189 → 0,000149 → 0,000148 ×2) ;
-mémétique, sonde, redémarrages et répétitions finissent tous vers 1,5e-4 à 34 couches et 30 QWOT. Leviers essayés sans
-gain : grille plus dense, mouvement de paires, encombrement, 3000 enfants (détail au journal).
+Étape globale mémétique, 1000 enfants, population 30 (`certus/core/certus_design_memetic.py`) ; champion Pareto sans
+couche < 5 nm ; relances depuis le meilleur design tant qu'il gagne plus de 1 % (5 au plus). Le fichier de design peut
+fixer `max_layers` (rempli avant le global, peut dépasser 100), `max_total_qwot`, `min_layer_ot_nm`, `floor_at_end`.
+`_memetic_children = 0` sur la fenêtre rend PGLOBAL ; le mode oblique garde PGLOBAL.
 
-**Défauts de DESIGN trouvés** : bornes globales à 1,2 QWOT par couche ; règle finale des 5 nm sans réoptimisation ;
-champion Pareto qui ignore cette règle (option corrigée) ; export qui écrivait un autre design dans le tableau (corrigé,
-`76349415`).
+## Défauts de DESIGN trouvés
 
-**Décisions de 👤** : mémétique et champion conforme activés par défaut (2026-10-23) ; reste la réoptimisation
-après la règle des 5 nm (`_polish_after_5nm_rule`, défaite aujourd'hui par la restauration du champion).
+| défaut | état |
+|---|---|
+| l'export écrivait un meilleur résultat d'une autre structure dans le tableau | corrigé (`76349415`) |
+| le bloc `optim` des fichiers d'exemple était ignoré | corrigé (`a813fa64`) |
+| la session de décimation Pareto ne se refermait jamais | corrigé (`08f7e7e6`) |
+| la règle finale des 5 nm retire des couches sans réoptimiser | contourné par le champion conforme et le plancher du mémétique |
+| l'étape globale PGLOBAL borne chaque couche à 1,2 QWOT | inchangé ; le mémétique monte à 3 QWOT |
+| `floor_at_end` (plancher en toute fin) : des couches fines réapparaissent après les aiguilles | ouvert, option inactive |
 
-**Validation** (CLAUDE.md §2, `validate_parallel.py`, `34febabe` + ETAT) : ruff, oracle 1149, unit 5608, ui 1324, reste 319,
-performance 40 réussis ; un seul échec réel, la taille de la section 0 d'ETAT.md (corrigée, test vert ensuite) ;
-`coherence_md` échoue sur une commande morte antérieure (`ETAT_actions.md:67`, script STRAT absent).
+## Ce qui attend
 
-**Face à la littérature** : sur le problème exact de Tikhonravov et al. (1996, indices 1,45/2,35 constants, 34 couches),
-DESIGN obtient MF 8,53e-3 contre 1,2767e-2 publié, RMSE 8,6e-5 contre 1,8e-4 sur grille fixe, avec 26,4 QWOT contre
-31,4 et aucune couche sous 5 nm ([`tikhonravov/README.md`](tikhonravov/README.md)).
-
-**Convergence seule depuis l'exemple** (`final_runs/`, réglage par défaut du 2026-10-23, 8 fils) : le fichier tel quel
-(`max_layers` 34, `max_total_qwot` 30) rend 0,000951 avec 26 couches tant que rien ne remplit le tableau ; avec le
-remplissage jusqu'à `max_layers` (`2e1a5975`), **0,000135** (34 couches, 26,6 QWOT, ≥ 5 nm, relances 0,000177 → 0,000159 →
-0,000135, 48 min). Avec `min_layer_ot_nm` 5 : 0,000166 (30 couches). Graphe RMSE = f(couches) des deux runs, barres
-±2σ pour 0,1 % + 0,2 nm à 2σ : `final_runs/rmse_vs_layers.png` ; sous ces erreurs le RMSE moyen est d'environ 0,003
-(±0,0015) quel que soit le nombre de couches, et le plancher OT n'apporte rien de mesurable.
+- `floor_at_end` à rendre fonctionnel dans le workflow, puis à mesurer contre le plancher tout du long.
+- Optimiser le RMSE attendu sous erreurs d'épaisseur plutôt que le RMSE nominal (piste, non lancée).
+- Écart non expliqué entre le RMSE de la fenêtre et celui de la grille fixe, même à 420 points par cible.

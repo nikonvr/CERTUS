@@ -2,8 +2,8 @@
 
 Cas : `example/example_design/JSON-design-example.json`, T = 0,5 sur 400–1200 nm, incidence normale, face avant seule,
 H (TiO₂, n4 2,35 / n7 2,30) et L (SiO₂ 1,46) sur BK7, indices de Cauchy de la fenêtre.
-Contraintes de 👤 : H et L seulement, indices inchangés, **34 couches au plus**, première couche libre, pas d'épaisseur
-minimale imposée. Objectif : RMSE bien sous 1e-3.
+Contraintes de 👤 : H et L seulement, indices inchangés, ≤ 34 couches, ≤ 30 QWOT, première couche libre. Objectif :
+RMSE bien sous 1e-3. Synthèse et état : [`bilan.md`](bilan.md).
 
 **Mesure commune.** RMSE pondéré de T sur une grille fixe de 0,5 nm (1601 points), noyau certus, recoupé par l'oracle
 `tests/oracle/tmm_reference.py` (`oracle_max_dT` ~1e-14). Outils :
@@ -12,7 +12,7 @@ minimale imposée. Objectif : RMSE bien sous 1e-3.
   (les noyaux du worker DESIGN), sur la grille fixe ; `--save` écrit un fichier relu par `design_bench.py eval`.
 - Convention QWOT ↔ nm de DESIGN : **n4** (indice à 400 nm), pas n(λ₀) ; la sonde l'applique (aller-retour exact à 6e-13).
 
-Données : `runs.jsonl` (workflow), `probe.jsonl` (sonde), `eval_examples.jsonl`, `best_*.json` (designs).
+Données : `best_*.json` (designs) ; les lignes brutes `*.jsonl` et les journaux `*.log` restent locaux (ignorés par git).
 
 ## Leviers
 
@@ -62,20 +62,28 @@ Balayage du nombre de couches dans la fenêtre (réglage du record, un run par N
 esquisse `sweep/best_by_layers.png` (`sweep/plot_sweep.py`). Sous 1e-3 dès 22 couches réelles (0,00064) ; 26 c. 0,00029 ;
 le run N = 34 de ce balayage fait 0,000414 (le record 0,000147 vient d'une autre graine).
 
-Défauts de DESIGN trouvés : bornes globales à 1,2 QWOT/couche (excluent les meilleurs designs, couches L de 1,6–1,9 QWOT) ;
-règle finale des 5 nm sans réoptimisation ; champion Pareto qui ignore cette règle ; export qui écrivait un autre design dans le tableau ; grille de Tikhonravov uniforme en λ (≈3 points par frange à 400 nm).
-
-Options ajoutées depuis (même fichier) : `--first H|L|random` (défaut `random`, tiré à chaque départ), `--qw-max`
-(borne haute des départs en QWOT), `--optical` (descente en n4·d, `Problem.polish`), `--qwot-max` (plafond d'épaisseur
-optique totale, pénalité quadratique `QWOT_PENALTY` = 1e-2 sur l'excès, avec gradient ; le RMSE rapporté est recalculé
-sans pénalité), `--min-nm` (borne basse de chaque couche, non utilisée), modes `refine` et `memetic`.
+Options de la sonde : docstring de `scripts/design_probe.py`. Défauts trouvés : tableau de [`bilan.md`](bilan.md) ; la grille
+de Tikhonravov est uniforme en λ (≈ 3 points par frange à 400 nm), sans effet mesuré à 420 points.
 
 ## Constats
 
-- Le workflow ne vise pas 26 couches sur ce fichier : avec `allow_growth`, la cible devient `MAX_LAYERS` = 100 et rien
-  n'est élagué ; la croissance s'arrête sur stagnation des aiguilles.
-- Un run a fini avec 15 couches au tableau et 17 épaisseurs dans `ep_current` (à reproduire).
+- Avant `max_layers`, avec `allow_growth`, la cible devenait `MAX_LAYERS` = 100 et rien n'était élagué ; la croissance
+  s'arrêtait sur stagnation des aiguilles.
+- Les fins désaccordées (tableau et épaisseurs de longueurs différentes) venaient de l'export (`76349415`).
 - Paysage très accidenté : à 32 couches, 1 départ sur 200 atteint 6e-4 ; 10ᵉ centile 1,7e-3, médiane 5,5e-3.
 - Épaisseur optique totale (QWOT à 500 nm, convention n4) et RMSE : workflow r2 18,7 → 0,0021 ; seed-A 19,3 → 0,0014 ;
   sonde 26 c. 22,5 → 0,0012 ; 32 c. 24,6 → 0,00061 ; 34 c. 24,7 → 0,00048. Plafond de 👤 pour ce cas : 30 QWOT.
 - Les fichiers « optimized », « ultra-optimized », « target-achieved » contiennent l'empilement QWOT de départ.
+
+## 2026-10-23, matin : défauts, convergence seule, plancher en fin
+
+| levier / défaut | implantation (commit) | mesure | statut |
+|---|---|---|---|
+| bloc `optim` des fichiers d'exemple ignoré (la fenêtre lisait `optimization`) | repli sur `optim` (a813fa64) | l'exemple demandait n100 15000 et 100 grappes, la fenêtre tournait à 6000 et 40 | corrigé |
+| limites du fichier `max_layers`, `max_total_qwot` | lecture et plafonds (a5844c4d) | seules, l'exemple reste à 26 couches : 0,000951 | — |
+| remplissage jusqu'à `max_layers` avant le global | `WorkerManager._fill_to_max_layers` (2e1a5975) | exemple tel quel : **0,000135** (relances 0,000177 → 0,000159 → 0,000135) ; après le correctif de décimation : 0,000165 | **convergence seule** |
+| relance automatique | `_restart_from_best`, 5 tours au plus, arrêt si gain < 1 % (867bd7e7) | voir ci-dessus | actif |
+| état de la décimation Pareto jamais effacé (effacé sur le gestionnaire, lu sur la fenêtre) | correctif 08f7e7e6 | une guérison lancée après la décimation restaurait le champion par-dessus : 0,000256 → 0,0166 | corrigé |
+| plancher en fin (`floor_at_end`, pratique de 👤) | 6f0f51bb, planchers suivant l'empilement 2028fea7 | dans le workflow : 0,0151, 0,035, 0,051 (des couches fines restent après les aiguilles et la règle les retire) | **non fonctionnel dans le workflow** |
+| plancher en fin, mesure directe (sonde) | design libre 0,000168 → couches < 5 nm portées à 5 nm → polissage borné à 5 nm | 0,000192, contre 0,000135–0,000165 avec le plancher tout du long | un seul design ; polissage local seulement |
+| plancher OT 5 nm (`min_layer_ot_nm`) | f10318b2 | exemple : 0,000166 (30 couches) ; barres ±2σ identiques au plancher physique | sans gain mesurable |

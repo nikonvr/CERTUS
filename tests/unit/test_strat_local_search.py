@@ -276,3 +276,39 @@ def test_preselection_finds_the_same_wavelengths_with_fewer_full_evaluations() -
     for k, best in BEST.items():
         assert abs(wavelength_of(pre_plan, k) - best) <= 10.0, (k, wavelength_of(pre_plan, k))
     assert wavelength_of(pre_plan, 3) != 600.0  # a candidate that stops is never kept, pre-selection or not
+
+
+def test_the_index_guided_pass_is_off_by_default_and_reads_its_settings() -> None:
+    from certus.core.certus_strat_local_search import index_guided_settings
+
+    assert index_guided_settings({}) == (0, 3)
+    assert index_guided_settings({"strat_local_search_index_guided_layers": 8, "strat_local_search_index_guided_group": 2}) == (8, 2)
+    report = joint_local_search(_plan(), _evaluator(), 6, _cfg(), 11, (101, 102))[1]
+    assert not any(key.startswith("index_guided") for key in report)
+
+
+def test_group_candidates_shift_together_go_to_rate_together_and_come_back_together() -> None:
+    from certus.core.certus_strat_local_search import group_candidates
+
+    optical = {"blocks": [{"start": 0, "end": 6, "wavelength": 560.0}], "rate_layers": []}
+    labels = [label for label, _plan in group_candidates(optical, [2, 3], _cfg())]
+    assert "L2-L3 +10nm" in labels
+    assert "L2-L3 Rate" in labels
+    shifted = dict(group_candidates(optical, [2, 3], _cfg()))["L2-L3 +10nm"]
+    assert wavelength_of(shifted, 2) == wavelength_of(shifted, 3) == 570.0
+    assert wavelength_of(shifted, 1) == 560.0
+    in_rate = {"blocks": [{"start": 0, "end": 6, "wavelength": 560.0}], "rate_layers": [2, 3, 4]}
+    back = dict(group_candidates(in_rate, [2, 3, 4], _cfg()))
+    assert all(k.startswith("L2-L4 optical@") for k in back)
+    assert next(iter(back.values()))["rate_layers"] == []
+    assert list(group_candidates({"blocks": optical["blocks"], "rate_layers": [3]}, [2, 3], _cfg())) == []  # mixed group: no move
+
+
+def test_the_index_guided_pass_spends_more_evaluations_and_still_adds_no_stop() -> None:
+    plain = joint_local_search(_plan(), _evaluator(), 6, _cfg(), 11, (101, 102))[1]
+    plan, guided = joint_local_search(_plan(), _evaluator(), 6, _cfg(index_guided_layers=2, index_guided_group=3), 11, (101, 102),
+                                      layer_sensitivity=lambda _p: np.arange(6, dtype=float))
+    assert guided["index_guided_layers"] == 2
+    assert guided["index_guided_group"] == 3
+    assert guided["evaluations"] > plain["evaluations"]
+    assert stops(_evaluator()(plan, 5, 50)) == 0

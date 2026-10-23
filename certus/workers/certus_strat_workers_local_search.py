@@ -16,6 +16,8 @@ from certus.core.certus_strat_local_search import (
     SEARCH_SEED_OFFSET,
     LocalSearchConfig,
     guard_is_armed,
+    index_guided_settings,
+    index_sensitivity_by_layer,
     joint_local_search,
     native_evaluator,
     nominal_level_index,
@@ -52,13 +54,22 @@ def run_local_search(
             rate_min_layer=RATE_MIN_LAYER,
             presel_runs=presel_settings(params)[0],
             presel_keep=presel_settings(params)[1],
+            index_guided_layers=index_guided_settings(params)[0],
+            index_guided_group=index_guided_settings(params)[1],
         )
         evaluate = native_evaluator(search_params(params), nominal, clues, pre_calc_data.get("full_dynamics_grid", {}))
         guard = guard_is_armed(params)
         evaluate_guard = native_evaluator(params, nominal, clues, pre_calc_data.get("full_dynamics_grid", {})) if guard else None
+        sensitivity = None
+        if cfg.index_guided_layers > 0:
+            grid_dyn = pre_calc_data.get("full_dynamics_grid", {})
+            sensitivity = index_sensitivity_by_layer(
+                native_evaluator(search_params(params), nominal, clues, grid_dyn, thickness=True),
+                native_evaluator({**search_params(params), "index_corridor": 0.0}, nominal, clues, grid_dyn, thickness=True),
+                nominal, base_seed + SEARCH_SEED_OFFSET, cfg.search_runs, cfg.nominal_level)
         plan, report = joint_local_search(start, evaluate, len(nominal), cfg, base_seed + SEARCH_SEED_OFFSET,
                                           tuple(base_seed + o for o in CHECK_SEED_OFFSETS), logger.info,
-                                          tuple(base_seed + o for o in CONFIRM_SEED_OFFSETS), evaluate_guard)
+                                          tuple(base_seed + o for o in CONFIRM_SEED_OFFSETS), evaluate_guard, sensitivity)
         report["start_strategy_id"] = start.get("strategy_id")
         report["search_index_corridor"] = search_params(params)["index_corridor"]
         if guard:

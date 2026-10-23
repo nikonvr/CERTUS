@@ -369,6 +369,25 @@ LEVIERS: tuple[Levier, ...] = (
         reserve="Coute deux evaluations de robustness_num_runs tirages par strategie ; ne change ni le classement ni les plans.",
     ),
     Levier(
+        cle="strat_local_search_index_guided_layers",
+        libelle="Recherche locale : passe guidee par l'indice, nombre de couches les plus sensibles (0 = sans)",
+        defaut=0,
+        genre="int",
+        statut=NON_MESURE,
+        mesure="A12 (2026-10-23) : groupes de couches voisines deplaces ensemble a partir des couches qui transmettent le plus "
+               "l'erreur d'indice (A11) ; mesure contre l'etage actuel a venir.",
+        reserve="Ajoute des evaluations a l'etage ; meme regle d'acceptation que les mouvements d'une couche. 0 retablit le chemin d'avant.",
+    ),
+    Levier(
+        cle="strat_local_search_index_guided_group",
+        libelle="Recherche locale : taille maximale des groupes de la passe guidee (0 = 3)",
+        defaut=0,
+        genre="int",
+        statut=NON_MESURE,
+        mesure="Sans effet tant que strat_local_search_index_guided_layers vaut 0 ; 0 veut dire des paires et des triplets (A12).",
+        reserve="Plus il est grand, plus la passe coute d'evaluations.",
+    ),
+    Levier(
         cle="strat_local_search_presel_runs",
         libelle="Recherche locale : nombre de tirages de la preselection des candidats (0 = sans preselection)",
         defaut=0,

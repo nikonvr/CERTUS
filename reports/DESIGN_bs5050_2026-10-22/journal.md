@@ -1,0 +1,80 @@
+# DESIGN, séparatrice 50/50 400–1200 nm — journal des leviers
+
+Cas : `example/example_design/JSON-design-example.json`, T = 0,5 sur 400–1200 nm, incidence normale, face avant seule,
+H (TiO₂, n4 2,35 / n7 2,30) et L (SiO₂ 1,46) sur BK7, indices de Cauchy de la fenêtre.
+Contraintes de 👤 : H et L seulement, indices inchangés, **34 couches au plus**, première couche libre, pas d'épaisseur
+minimale imposée. Objectif : RMSE bien sous 1e-3.
+
+**Mesure commune.** RMSE pondéré de T sur une grille fixe de 0,5 nm (1601 points), noyau certus, recoupé par l'oracle
+`tests/oracle/tmm_reference.py` (`oracle_max_dT` ~1e-14). Outils :
+- `scripts/design_bench.py` : `run` lance le vrai workflow de la fenêtre ; `eval` juge un fichier de design.
+- `scripts/design_probe.py` : optimise hors fenêtre avec `cost_numba_fast` et `compute_gradient_all_layers_analytic`
+  (les noyaux du worker DESIGN), sur la grille fixe ; `--save` écrit un fichier relu par `design_bench.py eval`.
+- Convention QWOT ↔ nm de DESIGN : **n4** (indice à 400 nm), pas n(λ₀) ; la sonde l'applique (aller-retour exact à 6e-13).
+
+Données : `runs.jsonl` (workflow), `probe.jsonl` (sonde), `eval_examples.jsonl`, `best_*.json` (designs).
+
+## Leviers
+
+| # | levier | implantation | commande | RMSE | couches | évals | statut |
+|---|---|---|---|---|---|---|---|
+| 0 | workflow DESIGN actuel (PGLOBAL → cleanup → healing → aiguilles, `allow_growth`) | fenêtre, inchangée | `design_bench.py run` ×3 (+1 run de `bench_examples`) | 0,0018 – 0,0042 | 21 – 27 | ~900 k | référence |
+| — | ancien design `seed-A` | fichier d'exemple | `design_bench.py eval` | 0,001432 | 20 | — | candidat |
+| 1 | départs multiples : N couches alternées, épaisseurs uniformes 0,05–1,2 QWOT, L-BFGS-B (bornes 0–400 nm, ftol 1e-15) sur la grille fixe | `design_probe.py::multistart` | `multistart --layers 26 --starts 200 --seed 1` (H au substrat) | 0,001173 | 25 | 226 k | — |
+| 1 | idem | idem | `multistart --layers 32 --starts 200 --seed 1` (H au substrat) | 0,000612 (oracle 0,0006125) | 32 · 24,6 QWOT | 406 k | vérifié |
+| 1 | idem | idem | `multistart --layers 34 --starts 200 --seed 1` (H au substrat) | **0,000479** (oracle 0,0004787, écart max 0,22 %) | 34 · 24,7 QWOT | 468 k | vérifié, meilleur |
+| 2 | aiguilles : couche de 1 nm essayée tous les 2 nm dans chaque couche, des deux matériaux, + une au sommet ; la meilleure est gardée, polie, couches < 1 nm retirées ; arrêt après 5 insertions sans gain | `design_probe.py::needle`, `best_insertion` | `needle --layers 34 --from JSON-design-seed-A.json` | 0,001172 | 20 · 19,5 QWOT | 2 k | échec : aucune insertion n'aide ; le seul gain vient du repolissage de seed-A sur la grille fixe (0,001432 → 0,001172) |
+| 3 | refine : 200 tours alternant saut de bassin (épaisseurs × (1 + 0,05·N(0,1)), polissage) et échange à nombre fixe (retirer la plus fine, réinsérer la meilleure aiguille de 1 nm, polir) ; toute amélioration gardée | `design_probe.py::refine` | `refine --from best_ms34.json --rounds 200 --qwot-max 30` | 0,0003545 (oracle idem) | 33 non nulles · 25,4 QWOT | 385 k | gain ×1,35 sur le départ |
+| 4 | départs plus épais, descente en n4·d | `multistart`, `--optical --qw-max 1.6` | `multistart --layers 34 --starts 200 --optical --qw-max 1.6 --seed 2 --qwot-max 30` | 0,000634 | 34 · 25,9 QWOT | 432 k | pas mieux que le levier 1 (une seule graine) |
+| 5 | **mémétique** : population de 30 designs polis (le meilleur à 34 c. + 29 départs aléatoires, une seule alternance pour tous) ; un enfant = parent A dont un bloc de couches [lo, hi) est pris dans le parent B, épaisseurs × (1 + 0,02·N(0,1)), poli ; il remplace le pire s'il le bat et n'est pas un doublon | `design_probe.py::memetic` | `memetic --layers 34 --from best_ms34.json --pop 30 --rounds 300 --seed 3 --qwot-max 30` | **0,0001676** (oracle 0,0001676, écart max 0,10 %) | 32 réelles (une H à 0 nm sépare deux L) · 25,6 QWOT | 778 k | vérifié, **meilleur** ; encore en progrès à la fin |
+
+## Dans la fenêtre (DESIGN réel), départ 34 couches QWOT, `allow_growth` faux
+
+Fichier `config_34_layers.json` (l'exemple, 34 lignes HL à 1 QWOT, `allow_growth` faux pour rester ≤ 34 couches).
+Commande : `design_bench.py run --config config_34_layers.json --kw memetic_children=300 --kw memetic_population=30 …`.
+« étape » = coût du mémétique seul (grille de la fenêtre, 140 points) ; « final » = fin du workflow, grille fixe.
+
+| run | changement (commit) | étape (RMSE) | final RMSE | couches · QWOT · plus fine | constat |
+|---|---|---|---|---|---|
+| win34_memetic300 | `run_optim(..., memetic_children=300)` (2626373a) | non tracée | 0,00373 | 32 · 30,9 · 10,9 nm | journal sur le logger racine, invisible |
+| _b | journaux sur le logger `CERTUS` | 0,0125 | 0,00294 | 29 | population tirée dans les bornes élargies (3 QWOT/couche) : ~50 QWOT |
+| _init | population tirée dans les bornes globales, polie dans les larges (05d6cff7) | 0,0031 | 0,00154 | 31 · 26,1 · 5,6 nm | polissages courts (~45 appels) |
+| _snap | couche < `MIN_THICKNESS` évaluée absente : plus de falaise 1e30 (a3610e03) | **0,00039** | ruiné | — | le workflow atteint 0,000161 (34 c.) puis la règle des 5 nm retire 1 couche sans réoptimiser → 0,001035 ; un autre run : 0,000429 → 0,033 |
+| _heal | option `_polish_after_5nm_rule` (093a758f) | — | 0,0049 | 30 | le champion Pareto (avec couches fines) est restauré après la guérison ; fin désaccordée 30 lignes / 32 épaisseurs |
+| — | export : ne remet pas un meilleur résultat d'une autre structure (76349415) | | | | cause des fins désaccordées (aussi le run de référence n° 3) |
+| _abs5 | couche < 5 nm évaluée et rendue absente (9c1e8d2d) | 0,0034 | **0,000951** (fenêtre 0,000995) | 32 · 24,1 · 5,2 nm | **DESIGN sous 1e-3**, 82 s, conforme à la règle des 5 nm ; le saut à 5 nm raccourcit les polissages |
+| _floor5 | borne basse de 5 nm sur chaque couche, `memetic_floor_nm` (45406cde, défaut 5 dans le chemin mémétique) | **0,000303** | **0,000332** (oracle idem, écart max 0,135 %) | 34 · 25,7 · 5,0 nm | coût lisse, polissages complets ; 21 min, 814 k appels |
+| m1000_floor5 | 1000 enfants au lieu de 300 | 0,000097 | 0,000155 | 34 · **31,9** · 5,0 nm | hors plafond de 👤 (30 QWOT) ; la grille de la fenêtre (140 pts) sous-estime le RMSE (9,7e-5 contre 1,55e-4) |
+| m1000_q30 | plafond `memetic_qwot_max=30` (7a51fdb0) | 0,000165 | 0,0239 | 30 · 26,7 | la décimation Pareto restaure un champion à couche de 4,2 nm, la règle des 5 nm le ruine |
+| m1000_q30_champ5 | option `_pareto_champion_respects_5nm` (81353857) | 0,000133 | **0,000147** (écart max 0,072 %) | 34 · **26,8** · 5,0 nm | **record DESIGN conforme à toutes les contraintes**, 7,3 min |
+| rec_r2, rec_r3 | répétitions du record (graine libre) | — | 0,000215 ; 0,000172 | 34 · 25,8 | **médiane du record sur 3 runs : 0,000172**, dispersion ±20 % |
+| margin30 | marge de Tikhonravov 30 au lieu de 10 (420 points) | 0,000137 | 0,000203 | 34 · 25,8 | pas de gain ; retiré du code ; l'écart fenêtre/grille fixe demeure (question ouverte) |
+| pair03 ×3 | mouvement de paires (retirer la paire la plus fine, réinsérer une paire dans une couche), taux 0,3 | — | 0,000140 ; 0,000176 ; 0,000207 | 34 | médiane 0,000176 : pas de gain ; retiré du code |
+| m3000 | 3000 enfants | 0,00030 | 0,000399 | 34 · 29,6 | pire : l'étape elle-même finit plus haut (9,0e-8) ; le sort de la population compte plus que sa durée (coût de l'étape de 0,94e-8 à 9e-8 selon la graine) |
+| crowd2 ×3 | remplacement par encombrement : un enfant à moins de 2 nm d'écart moyen d'un membre ne peut remplacer que ce membre | 2,5–2,8e-8 (coût) | 0,000237 ; 0,000189 ; 0,000204 | 34 | médiane 0,000204 : pas de gain (étape moins dispersée, pas plus basse) ; retiré du code |
+
+Réglage du record (DESIGN, fenêtre) : `run_optim("global", memetic_children=1000, memetic_population=30,
+memetic_qwot_max=30)`, fenêtre `_pareto_champion_respects_5nm = True`, départ 34 lignes QWOT, `allow_growth` faux.
+
+Balayage du nombre de couches dans la fenêtre (réglage du record, un run par N de départ, 10 à 35) :
+`window_sweep/run_window_sweep.sh`, résultats `window_sweep/window_sweep.jsonl`, designs `window_sweep/best_N.json`,
+esquisse `sweep/best_by_layers.png` (`sweep/plot_sweep.py`). Sous 1e-3 dès 22 couches réelles (0,00064) ; 26 c. 0,00029 ;
+le run N = 34 de ce balayage fait 0,000414 (le record 0,000147 vient d'une autre graine).
+
+Défauts de DESIGN trouvés : bornes globales à 1,2 QWOT/couche (excluent les meilleurs designs, couches L de 1,6–1,9 QWOT) ;
+règle finale des 5 nm sans réoptimisation ; champion Pareto qui ignore cette règle ; export qui écrivait un autre design dans le tableau ; grille de Tikhonravov uniforme en λ (≈3 points par frange à 400 nm).
+
+Options ajoutées depuis (même fichier) : `--first H|L|random` (défaut `random`, tiré à chaque départ), `--qw-max`
+(borne haute des départs en QWOT), `--optical` (descente en n4·d, `Problem.polish`), `--qwot-max` (plafond d'épaisseur
+optique totale, pénalité quadratique `QWOT_PENALTY` = 1e-2 sur l'excès, avec gradient ; le RMSE rapporté est recalculé
+sans pénalité), `--min-nm` (borne basse de chaque couche, non utilisée), modes `refine` et `memetic`.
+
+## Constats
+
+- Le workflow ne vise pas 26 couches sur ce fichier : avec `allow_growth`, la cible devient `MAX_LAYERS` = 100 et rien
+  n'est élagué ; la croissance s'arrête sur stagnation des aiguilles.
+- Un run a fini avec 15 couches au tableau et 17 épaisseurs dans `ep_current` (à reproduire).
+- Paysage très accidenté : à 32 couches, 1 départ sur 200 atteint 6e-4 ; 10ᵉ centile 1,7e-3, médiane 5,5e-3.
+- Épaisseur optique totale (QWOT à 500 nm, convention n4) et RMSE : workflow r2 18,7 → 0,0021 ; seed-A 19,3 → 0,0014 ;
+  sonde 26 c. 22,5 → 0,0012 ; 32 c. 24,6 → 0,00061 ; 34 c. 24,7 → 0,00048. Plafond de 👤 pour ce cas : 30 QWOT.
+- Les fichiers « optimized », « ultra-optimized », « target-achieved » contiennent l'empilement QWOT de départ.

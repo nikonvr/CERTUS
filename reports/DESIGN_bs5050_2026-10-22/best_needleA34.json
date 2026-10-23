@@ -1,0 +1,163 @@
+{
+  "version": "CERTUS_SUITE_26_05",
+  "l0": 500.0,
+  "materials": {
+    "H": {
+      "n4": 2.35,
+      "n7": 2.3,
+      "preset": "TiO2 (H)"
+    },
+    "L": {
+      "n4": 1.46,
+      "n7": 1.46,
+      "preset": "SiO2 (L)"
+    },
+    "A": {
+      "n4": 2.05,
+      "n7": 2.0,
+      "preset": "Custom"
+    },
+    "B": {
+      "n4": 1.75,
+      "n7": 1.73,
+      "preset": "Custom"
+    },
+    "C": {
+      "n4": 1.6,
+      "n7": 1.58,
+      "preset": "Custom"
+    },
+    "Substrate": {
+      "n4": 1.52,
+      "n7": 1.51,
+      "preset": "N-BK7 (Sub)"
+    }
+  },
+  "front": [
+    {
+      "mat": "H",
+      "qw": 0.206532,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.829817,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.568837,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.432549,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.200487,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.345799,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.026942,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.596251,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.155577,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.80133,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.168702,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.143818,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.516989,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.779907,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.843199,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.657285,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 2.030775,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.483549,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.765743,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.953402,
+      "var": true
+    }
+  ],
+  "back_en": false,
+  "back_coat": false,
+  "back": [],
+  "targets": [
+    {
+      "on": true,
+      "lmin": 400.0,
+      "lmax": 1200.0,
+      "tmin": 0.5,
+      "tmax": 0.5,
+      "w": 1.0
+    }
+  ],
+  "oblique_mode": false,
+  "optim": {
+    "points_per_target": 108,
+    "n100": 15000,
+    "max_clusters": 100,
+    "max_iter": 100,
+    "mc_n": 1000,
+    "mc_sigma": 0.1,
+    "pre_polish": true,
+    "allow_growth": true,
+    "auto_scale_y": true
+  }
+}

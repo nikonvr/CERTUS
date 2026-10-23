@@ -16,6 +16,10 @@ fenêtre, `_pareto_champion_respects_5nm = True` ; départ 34 lignes QWOT, `allo
 [`sweep/best_by_layers.png`](sweep/best_by_layers.png), tableau [`sweep/best_by_layers.csv`](sweep/best_by_layers.csv).
 DESIGN passe sous 1e-3 dès 22 couches réelles ; la dispersion d'un run à l'autre est de ±20 % ou plus.
 
+**Plancher** : redémarrer depuis le meilleur design donne un gain puis plus rien (0,000189 → 0,000149 → 0,000148 ×2) ;
+mémétique, sonde, redémarrages et répétitions finissent tous vers 1,5e-4 à 34 couches et 30 QWOT. Leviers essayés sans
+gain : grille plus dense, mouvement de paires, encombrement, 3000 enfants (détail au journal).
+
 **Défauts de DESIGN trouvés** : bornes globales à 1,2 QWOT par couche ; règle finale des 5 nm sans réoptimisation ;
 champion Pareto qui ignore cette règle (option corrigée) ; export qui écrivait un autre design dans le tableau (corrigé,
 `76349415`).

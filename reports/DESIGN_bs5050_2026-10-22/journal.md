@@ -52,6 +52,7 @@ Commande : `design_bench.py run --config config_34_layers.json --kw memetic_chil
 | pair03 ×3 | mouvement de paires (retirer la paire la plus fine, réinsérer une paire dans une couche), taux 0,3 | — | 0,000140 ; 0,000176 ; 0,000207 | 34 | médiane 0,000176 : pas de gain ; retiré du code |
 | m3000 | 3000 enfants | 0,00030 | 0,000399 | 34 · 29,6 | pire : l'étape elle-même finit plus haut (9,0e-8) ; le sort de la population compte plus que sa durée (coût de l'étape de 0,94e-8 à 9e-8 selon la graine) |
 | crowd2 ×3 | remplacement par encombrement : un enfant à moins de 2 nm d'écart moyen d'un membre ne peut remplacer que ce membre | 2,5–2,8e-8 (coût) | 0,000237 ; 0,000189 ; 0,000204 | 34 | médiane 0,000204 : pas de gain (étape moins dispersée, pas plus basse) ; retiré du code |
+| restart1–3 | redémarrage du workflow depuis son meilleur design (fichier `--save-design`, il entre dans la population comme x0) | — | 0,000189 → 0,000149 → 0,0001479 → 0,0001479 | 34 · 26,6 · 5,0 nm | un seul gain puis plancher : le 3ᵉ tour rend le même design ; tout ce qui a été essayé finit vers 1,5e-4 avec ces contraintes |
 
 Réglage du record (DESIGN, fenêtre) : `run_optim("global", memetic_children=1000, memetic_population=30,
 memetic_qwot_max=30)`, fenêtre `_pareto_champion_respects_5nm = True`, départ 34 lignes QWOT, `allow_growth` faux.

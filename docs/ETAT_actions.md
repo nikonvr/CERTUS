@@ -43,24 +43,25 @@ python scripts\resumer_artefact_sonde.py reports\blocs_vs_plantage_r75x0.5_deep_
 l'assemblage des douze intervalles du 99 couches est écarté : croissance et notation n'y voient ni le même indice de bruit ni les mêmes domaines
 de normalisation d'indice (`reports/STRAT_A3_C2_assemblage_2026-10-21/`). *Livrable* : un protocole qui garantit C2, prouvé par un test qui
 échoue sur l'assemblage écarté, puis le repère dans la table §2 avec son rapport.
-**A8b — Imports montants (D26)** : 12 arêtes restent (`python scripts\metrics.py`), toutes de `certus.metal` ou `certus.spline` vers
-`certus.ui`, dans des modules qui mêlent calcul et Qt. *Faire* : un module à la fois, monter la partie Qt dans `certus/ui/` et laisser le calcul en
-dessous (jamais d'algorithme dans `certus.ui`, CLAUDE.md §8), sans créer d'arête (les applications importent par `certus.ui.certus_ui`).
-*Livrable* : un commit par module, `python scripts\metrics.py --dette tests\architecture_debt.json` (il ne fait que rétrécir), validation complète.
+
 **A9 — 99 couches en une campagne** (demande de 👤 du 2026-10-16). Protocole prêt : `reports/STRAT_99c_A9_protocole_2026-10-17/` (`chain_A9.sh`,
 graines réservées) ; il ne lance rien sans `GO_OWNER.txt` écrit par 👤. *Livrable* : sur plusieurs graines, plans déposables, plantages, SEEL de
 consensus des plans figés, confirmation indépendante et coût, dans le dossier du protocole. *Ne pas* : lancer sans le GO.
+
 **A11 — Afficher la sensibilité de chaque stratégie à l'erreur d'indice.** *Pourquoi* : le but de STRAT est une stratégie peu sensible à l'indice
 (👤) ; la part d'indice se mesure (même plan, mêmes tirages, corridor actif puis nul : `outils/index_share.py.txt`). *Livrable* : un paramètre
 inactif par défaut qui la calcule pour les K premières stratégies, une colonne dans les résultats et l'export Excel, un test, `c1_diff` tenu, et
 un rapport sur les trois 75 couches.
+
 **A12 — Guider la recherche locale par la sensibilité à l'indice.** Concentrer les candidats de `strat_local_search` sur les couches qui
 transmettent le plus l'erreur d'indice ; essayer des mouvements de deux ou trois couches voisines. *Livrable* : une option inactive par défaut,
 mesurée contre l'étage actuel sur les trois 75 couches × deux graines, règle écrite avant la mesure, rapport.
+
 **A13 — Rendre `strat_local_search` rapide en production** (👤 : « un code ultra performant »). L'étage coûte 2 300 à 3 900 évaluations de
 300 tirages, environ 20 min par calcul. *Livrable* : un profil (`cProfile`) d'une évaluation qui sépare noyau compilé et préparation Python ; les
 gains qui gardent les bits (préparation hors boucle, réutilisation des tableaux) prouvés identiques par un test ; les gains qui changent la
 recherche (présélection à moins de tirages) mesurés contre l'étage actuel avec une règle écrite d'avance ; un rapport avec la durée avant/après.
+
 **A5 — ELITE : six et dix tours, budgets 40 et 360** (≈ 4 h). Référence : `r75x0.5` deep graine 101, 3 tours, arrêt actif, budget 120,
 SEEL 0,3967 nm (branche `codex/actions-prudentes-2026-10-20`, `reports/STRAT_A5_tours_budgets_2026-10-21/`). *Faire* : quatre bancs, un à la fois,
 `strat_local_search=false` dans chaque surcharge pour isoler ELITE : `elite_rounds=6,elite_stop_on_no_gain=false` ; `elite_rounds=10,elite_stop_on_no_gain=false` ;
@@ -68,10 +69,12 @@ SEEL 0,3967 nm (branche `codex/actions-prudentes-2026-10-20`, `reports/STRAT_A5_
 `reports/STRAT_A5_tours_budgets_suite_<date>/bilan.md`, un tableau de cinq lignes (surcharge, SEEL du meilleur plan, durée, paquets Rate du meilleur
 plan, commit) et les cinq artefacts ; chaque ligne cite la valeur lue dans `config` de son artefact. *Fini quand* : les cinq lignes existent.
 *Ne pas* : changer un défaut, conclure (l'interprétation revient à Claude).
+
 **A8a — Dette de lint E402, module par module** (une heure par module). *Faire* : mesure officielle
 `python -m ruff check . --isolated --select E402 --line-length 120 --target-version py314 --statistics` ; pour un module, déplacer les imports
 en tête sans rien changer d'autre, photos avant/après (`scripts/lint_ns_snapshot.py`). *Livrable* : un commit par module, message avec le nombre
 E402 avant/après et la ligne `VALIDATION=GO` de `python scripts\validate_parallel.py`. *Fini quand* : E402 baisse et la validation passe.
 *Ne pas* : `ruff check --fix`, agrandir `extend-ignore`, lancer `scripts\metrics.py --dette` pour faire passer un test.
+
 **A15 — Reporter cinq observations du contre-audit ARGON** (`reports/ARGON_contre_audit_2026-10-16/pass02.json` : grille oblique non densifiée,
 bornes et arrêt ignorés au raffinement final) dans `UXargon.md` et `designargon.md`, chacune vérifiée par un test avant correction.

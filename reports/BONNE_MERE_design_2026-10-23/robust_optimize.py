@@ -116,6 +116,10 @@ def main() -> None:
             value = training_mean(trial)
             if value < best_value:
                 best_ep, best_value = trial, value
+                running = dict(start)
+                running.update({"n_layers": len(trial), "thickness_nm": [float(x) for x in trial], "hop": hop,
+                                "training_mean_rmse_pp": value})
+                (HERE / f"running_best{args.tag}.json").write_text(json.dumps(running, indent=2), encoding="utf-8")
             write(f"hop {hop} training mean {value:.6f} pp nominal {100 * np.sqrt(nominal_cost_grad(trial)[0]):.6f} pp "
                   f"best {best_value:.6f} pp t={(time.monotonic() - t0) / 60:.1f} min")
         ep0 = best_ep

@@ -51,7 +51,11 @@ Sa couche 90 (SiO₂) est à 0,000 nm : retirée par 👤, couches 89 et 91 fusi
 `best_design_94_layer90_removed.json` : nominal identique, 1,7698 pp sous erreurs (95 % sous 1,960 pp), plus fine 5,47 nm, vérifié
 par l'oracle. Ses deux couches les plus fines (72 : 5,47 nm, 42 : 6,50 nm) retirées par 👤, voisines fusionnées : 90 couches,
 3,84 pp sans polissage ; polissage robuste (400 itérations) : `best_design_robust_opt_90.json`, nominal 1,5723 pp, **1,8184 pp**
-sous erreurs (95 % sous 1,987 pp), plus fine 7,92 nm, vérifié par l'oracle. Polissage robuste seul, sans sauts : 1,7833 → 1,7798 pp.
+sous erreurs (95 % sous 1,987 pp), plus fine 7,92 nm, vérifié par l'oracle. Changement de bassin à 90 couches constantes
+([`needle_swap.py`](needle_swap.py) : aiguille puis retrait d'une couche fine, ou l'inverse, jugé sur le RMSE nominal ; couches 1
+et 2 sans aiguille et ≥ 25 nm, demande de 👤 ; arrêté par 👤 après 9 essais) : `best_design_needle_swap_90_nominal.json`,
+nominal **1,5495 pp**, 1,8024 pp sous erreurs (95 % sous 1,983 pp), plus fine 7,35 nm, premières couches 99,6 · 84,8 nm,
+vérifié par l'oracle. Un premier essai retirait aussitôt l'aiguille qu'il venait d'insérer (mouvement nul) : corrigé. Polissage robuste seul, sans sauts : 1,7833 → 1,7798 pp.
 
 Commande : `python reports/BONNE_MERE_design_2026-10-23/reoptimize.py --study STUDY --max-layers 110 --budget-min 45
 --substrate-id 0 --tag _silica_cached` (8 fils). La stratégie de dépôt STRAT n'est pas refaite pour ce design.

@@ -2,7 +2,8 @@
 
 Leur problème : séparatrice T = 0,5 sur 400–1200 nm, n_L = 1,45, n_H = 2,35 constants, verre 1,52, air ; leur design :
 34 couches, 31,39 QWOT à 500 nm, couche la plus fine 3,78 nm, MF publié 1,2767e-2 (MF = 100 × RMSE sur 80 points, éq. 3).
-Leur design n'est pas versionné ici (dépôt public) : il se reconstruit depuis l'article (formule sous la fig. 3).
+Problème et design publié (avec l'autorisation des auteurs) : `example/example_design/JSON-design-reference-tikhonravov-1996.json`
+et `JSON-design-reference-tikhonravov-1996-published-design.json` (RMSE 1,765e-4 sur 1601 points, chargé dans DESIGN).
 
 Juge commun : `judge_like_the_article.py` (oracle indépendant, même code pour les deux designs).
 

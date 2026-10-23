@@ -1,0 +1,220 @@
+{
+  "source": "Tikhonravov, Trubetskov, DeBell, Appl. Opt. 35, 5493 (1996), fig. 4: 50/50 beam splitter 400-1200 nm, nL 1.45, nH 2.35, glass 1.52; the published 34-layer design (QWOT at 500 nm), published with the authors' permission.",
+  "version": "CERTUS_SUITE_26_05",
+  "l0": 500.0,
+  "materials": {
+    "H": {
+      "n4": 2.35,
+      "n7": 2.35,
+      "preset": "Custom"
+    },
+    "L": {
+      "n4": 1.45,
+      "n7": 1.45,
+      "preset": "Custom"
+    },
+    "Substrate": {
+      "n4": 1.52,
+      "n7": 1.52,
+      "preset": "Custom"
+    }
+  },
+  "front": [
+    {
+      "mat": "H",
+      "qw": 0.0711,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.8142,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.2413,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.7928,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.4858,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.5604,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.8002,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.4178,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.7959,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.5991,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.3728,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 2.9718,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.3797,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.4021,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 2.9052,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.312,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.6005,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.5519,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.648,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.323,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 2.6713,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.4777,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.3422,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 2.0391,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.4654,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.3096,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 2.505,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.964,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.5068,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.1436,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.2897,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.4506,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.7634,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.4154,
+      "var": true
+    }
+  ],
+  "back_en": false,
+  "back_coat": false,
+  "back": [],
+  "targets": [
+    {
+      "on": true,
+      "lmin": 400.0,
+      "lmax": 1200.0,
+      "tmin": 0.5,
+      "tmax": 0.5,
+      "w": 1.0
+    }
+  ],
+  "oblique_mode": false,
+  "optim": {
+    "points_per_target": 108,
+    "n100": 15000,
+    "max_clusters": 100,
+    "max_iter": 100,
+    "mc_n": 1000,
+    "mc_sigma": 0.1,
+    "pre_polish": true,
+    "allow_growth": true,
+    "auto_scale_y": true,
+    "max_layers": 34
+  }
+}

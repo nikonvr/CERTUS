@@ -42,5 +42,12 @@ Comparaison appariée : les deux designs à 102 couches sont à égalité (+0,00
 sans précoat est plus mauvais de 0,070 ± 0,006 pp. Sous erreurs, l'écart nominal de 0,024 pp entre les deux 102 couches
 disparaît ; le classement suit le nominal à l'intérieur de chaque run.
 
+Optimisation directe du RMSE moyen sous erreurs ([`robust_optimize.py`](robust_optimize.py) : moyenne sur 128 tirages
+d'entraînement d'une autre graine, gradient exact, sans plancher par décision de 👤). Couche 16 du design à 98 couches
+(0,27 nm) retirée et couches 15 et 17 fusionnées par 👤 (`start_96_layer16_removed.json`, 1,7821 pp) ; puis 45 min de
+sauts de bassin gardés sur la moyenne d'entraînement (1474 sauts) et polissage robuste : `best_design_robust_opt_96_hops.json`,
+96 couches, nominal 1,5054 pp, **1,7697 pp** sous erreurs (95 % sous 1,955 pp) ; vérifié par l'oracle (écart de T 1e-14).
+Sa couche 90 (SiO₂) est à 0,000 nm. Polissage robuste seul, sans sauts : 1,7833 → 1,7798 pp.
+
 Commande : `python reports/BONNE_MERE_design_2026-10-23/reoptimize.py --study STUDY --max-layers 110 --budget-min 45
 --substrate-id 0 --tag _silica_cached` (8 fils). La stratégie de dépôt STRAT n'est pas refaite pour ce design.

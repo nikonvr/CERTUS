@@ -175,6 +175,8 @@ class OptimizationManager:
         removed = self._apply_5nm_minimum()  # Hard rule: no layer < 5nm in final design
         if self._heal_after_5nm_rule(removed):
             return
+        if self._restart_from_best():
+            return
 
         # Set export flag BEFORE scheduling eval (eval callback checks this flag)
         if get_export_config():
@@ -574,6 +576,44 @@ class OptimizationManager:
         """Rows of the front table whose thickness the operator fixed (`var` off): no automatic cleanup removes them."""
 
         return {r for r, layer in enumerate(self.ui._get_front_stack()) if not layer.var}
+
+    def _restart_from_best(self) -> bool:
+        """Start the workflow again from its final design while it improves; True if a new round started.
+
+        One run of the memetic workflow ends between RMSE 0.000147 and 0.0004 on the 50/50 splitter; restarting
+        from the result went 0.000189 -> 0.000149 -> 0.000148 -> 0.000148 (reports/DESIGN_bs5050_2026-10-22).
+        A new round starts when the design beats the best of the earlier rounds by more than 1 %, up to the
+        window's `_auto_restarts` rounds (default 5, owner's decision of 2026-10-23; 0 turns it off). When the
+        rounds stop, the best design of all rounds is put back if the last one is worse.
+        """
+        max_rounds = int(getattr(self.ui, "_auto_restarts", 5) or 0)
+        rmse = getattr(self.ui, "_workflow_best_rmse", float("inf"))
+        if max_rounds <= 0 or not np.isfinite(rmse):
+            return False
+        best = getattr(self.ui, "_restart_best", None)
+        rounds = int(getattr(self.ui, "_restart_rounds", 0))
+        improved = best is None or rmse < best[0] * (1.0 - 0.01)
+        if best is None or rmse < best[0]:
+            self.ui._restart_best = (float(rmse), self._save_table_state(), np.asarray(self.ui.ep_current, dtype=float).copy())
+        if improved and rounds < max_rounds:
+            self.ui._restart_rounds = rounds + 1
+            self.ui.log(f"[RESTART] Round {rounds + 1}/{max_rounds} from the design at RMSE {rmse:.6f}", "INFO")
+            self.ui._restarting = True
+            self.ui.orchestrator._schedule_task(50, lambda: self.ui.run_optim("global"))
+            return True
+        best_rmse, table, ep = self.ui._restart_best
+        if rmse > best_rmse:
+            # Same order as _revert_to_checkpoint: table, QWOT from the exact thicknesses, display, then ep_current.
+            self._restore_table_state(table)
+            self.ui._update_qwot_from_ep(ep)
+            self.ui._update_thickness_display()
+            self.ui.ep_current = ep.copy()
+            self.ui._use_exact_ep = True
+            self.ui._workflow_best_rmse = best_rmse
+            self.ui.log(f"[RESTART] Keeping the best round: RMSE {best_rmse:.6f} (last round {rmse:.6f})", "INFO")
+        else:
+            self.ui.log(f"[RESTART] Stopped after {rounds} round(s): RMSE {rmse:.6f}", "INFO")
+        return False
 
     def _heal_after_5nm_rule(self, removed: int) -> bool:
         """Re-optimize once (healing, then local polish) after the 5 nm rule removed layers; True if started.

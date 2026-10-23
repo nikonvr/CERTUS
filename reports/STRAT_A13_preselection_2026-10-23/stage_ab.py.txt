@@ -1,6 +1,6 @@
 """A13: the local-search stage with and without pre-selection, offline, on the start plan of an A14/A10 bench. (Claude, 2026-10-23)
 
-python -X utf8 stage_ab.py REPO CASE OUT.json
+python -X utf8 stage_ab.py REPO CASE OUT.json [PRESEL_RUNS PRESEL_KEEP [PREVIOUS.json]]
 
 CASE is one of CASES below. Set-up as the archived r75_scan (component configuration, `deep` or `premium`), robustness seed = the
 bench seed, so the stage uses the bench's search, check and confirm seeds. The start plan is the plan the bench's stage started
@@ -19,6 +19,9 @@ import time
 from pathlib import Path
 
 REPO, CASE, OUT = Path(sys.argv[1]).resolve(), sys.argv[2], Path(sys.argv[3])
+PRESEL = (int(sys.argv[4]), int(sys.argv[5])) if len(sys.argv) > 5 else (75, 3)
+#: a previous result of the same case: its deterministic 'current' arm is reused instead of being run again
+PREVIOUS = Path(sys.argv[6]) if len(sys.argv) > 6 and Path(sys.argv[6]).is_file() else None
 sys.path.insert(0, str(REPO))
 sys.path.insert(1, str(REPO / "scripts"))
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -86,7 +89,12 @@ def main():
                  confirm=tuple(bench_seed + o for o in CONFIRM_SEED_OFFSETS))
     evaluate(start, seeds["search"], 50)  # warm-up (Numba)
     arms = {}
-    for arm, (runs, keep) in (("current", (0, 3)), ("presel", (75, 3))):
+    if PREVIOUS is not None:
+        prev = json.loads(PREVIOUS.read_text(encoding="utf-8"))["arms"]["current"]
+        arms["current"] = dict(seconds=prev["seconds"], plan=prev["plan"], report=prev["report"])
+    for arm, (runs, keep) in (("current", (0, 3)), ("presel", PRESEL)):
+        if arm in arms:
+            continue
         cfg = LocalSearchConfig(grid=grid, nominal_level=nominal_level_index(base), allow_rate=bool(base.get("allow_rate", True)),
                                 rate_min_layer=RATE_MIN_LAYER, presel_runs=runs, presel_keep=keep)
         t0 = time.perf_counter()
@@ -111,7 +119,7 @@ def main():
                                ci95=[float(np.percentile(ratio, 2.5)), float(np.percentile(ratio, 97.5))])
         print(f"{CASE} +-{ic}: SEEL start {seel['start']:.4f} current {seel['current']:.4f} presel {seel['presel']:.4f} "
               f"({100 * judged[str(ic)]['presel_vs_current']:+.1f} %) stops {stops}", flush=True)
-    OUT.write_text(json.dumps(dict(case=CASE, seeds=seeds, judge_seeds=judge_seeds,
+    OUT.write_text(json.dumps(dict(case=CASE, presel=PRESEL, current_reused=PREVIOUS is not None, seeds=seeds, judge_seeds=judge_seeds,
                                    arms={a: dict(seconds=v["seconds"], report=v["report"], plan=v["plan"]) for a, v in arms.items()},
                                    judged=judged), indent=1, default=float), encoding="utf-8")
 

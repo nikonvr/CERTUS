@@ -125,6 +125,19 @@ def judge(app, config: dict) -> dict:
     }
 
 
+def rmse_vs_layers(app) -> list[dict]:
+    """The points and bars of the window's "RMSE vs layers" tab (Pareto records, +/- 2 sigma bands)."""
+    import numpy as np
+
+    app.plot_manager._refresh_pareto_table()
+    x, y = app.rmse_layers_points.getData()
+    if x is None or len(x) == 0:
+        return []
+    opts = app.rmse_layers_bars.opts
+    return [{"layers": int(n), "rmse": float(r), "mean": float(m), "two_sigma": float(t)}
+            for n, r, m, t in zip(x, y, np.asarray(opts["y"]), np.asarray(opts["top"]), strict=True)]
+
+
 def save_design(app, config: dict, path: Path) -> None:
     """Write the window's final stack into a copy of the configuration (QWOT with n4, as DESIGN does)."""
     import numpy as np
@@ -157,7 +170,7 @@ def load(path: Path):
     return app
 
 
-def wait_for_workflow(app) -> tuple[int, float]:
+def wait_for_workflow(app, max_s: float = 3600.0) -> tuple[int, float]:
     """Wait until the optimization thread has been quiet for 20 s after at least one pass."""
     from PyQt6.QtCore import QEventLoop, QTimer
 
@@ -174,7 +187,7 @@ def wait_for_workflow(app) -> tuple[int, float]:
         except RuntimeError:
             running = False
         passes["quiet"] = 0.0 if running else passes["quiet"] + tick_ms / 1000.0
-        if (passes["quiet"] >= 20.0 and passes["n"] > 0) or passes["elapsed"] >= 3600.0:
+        if (passes["quiet"] >= 20.0 and passes["n"] > 0) or passes["elapsed"] >= max_s:
             loop.quit()
 
     timer = QTimer()
@@ -194,6 +207,7 @@ def main() -> None:
     p.add_argument("--out", type=Path, default=None)
     p.add_argument("--kw", action="append", default=[], metavar="KEY=VALUE",
                    help="extra argument of run_optim('global', ...), e.g. memetic_children=300 (repeatable)")
+    p.add_argument("--max-s", type=float, default=3600.0, help="run: longest wait for the workflow, in seconds")
     p.add_argument("--save-design", type=Path, default=None,
                    help="run: write the final design of the window as a DESIGN file (QWOT with n4)")
     p.add_argument("--set", dest="attrs", action="append", default=[], metavar="NAME=VALUE",
@@ -227,7 +241,7 @@ def main() -> None:
             setattr(app, key, value)
         t0 = time.perf_counter()
         app.run_optim("global", **run_kwargs)
-        n_passes, quiet = wait_for_workflow(app)
+        n_passes, quiet = wait_for_workflow(app, args.max_s)
         run_s = time.perf_counter() - t0 - quiet
         rows.append(
             {
@@ -243,9 +257,10 @@ def main() -> None:
                 "cost_evals": COUNTS["cost"],
                 "grad_evals": COUNTS["grad"],
                 "run_s": round(run_s, 1),
-                "timeout": run_s >= 3600.0 - 1.0,
+                "timeout": run_s >= args.max_s - 1.0,
             }
         )
+        rows[-1]["rmse_vs_layers"] = rmse_vs_layers(app)
         if args.save_design:
             save_design(app, config, args.save_design)
 

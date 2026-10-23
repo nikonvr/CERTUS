@@ -21,10 +21,10 @@ from certus.spline.certus_index_spline_core import (
     prepare_exp_TR_for_fit,
     substrate_id_from_name,
 )
-from certus.spline.certus_index_spline_settings import _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN
 from certus.spline.spline_objective import _spline_objective_lam_mask
 from certus.spline.spline_visual_utils import snap_spline_visual_dict as _snap_spline_visual_dict
 from certus.ui.certus_index_spline_managers_ui import Step4MeshOptimizerBuilder
+from certus.ui.certus_index_spline_settings import _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN
 from certus.ui.certus_index_spline_state_ui import SmartInitPayload
 from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
 from certus.ui.certus_ui import (

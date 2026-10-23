@@ -16,7 +16,7 @@ la moins nuisible quand aucune n'aide), sauts de bassin autour du meilleur desig
 
 Silice : polissage libre 1,4643 pp (96 couches) ; croissance + plancher en fin 1,4592–1,4595 pp à 98–102 couches ; au-delà
 de 102 couches le plancher coûte plus que les couches n'apportent (1,4635 pp à 110). Sans plancher, 110 couches donnent
-1,4585 pp : ajouter des couches ne gagne que quelques millièmes de pp, le design est à son plancher.
+1,4585 pp : ajouter des couches ne gagne que quelques millièmes de pp ; le gain vient des sauts de bassin (ci-dessous).
 
 Meilleur design (silice) : croissance jusqu'à 102 couches puis 747 sauts de bassin (épaisseurs × (1 + 0,03 N(0,1)),
 polissage libre, plancher de 5 nm en fin) en 45 min sur 8 fils ; le gain vient des sauts (1,4592 → 1,4344 pp). Vérifié

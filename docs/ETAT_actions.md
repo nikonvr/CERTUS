@@ -48,11 +48,6 @@ de normalisation d'indice (`reports/STRAT_A3_C2_assemblage_2026-10-21/`). *Livra
 graines réservées) ; il ne lance rien sans `GO_OWNER.txt` écrit par 👤. *Livrable* : sur plusieurs graines, plans déposables, plantages, SEEL de
 consensus des plans figés, confirmation indépendante et coût, dans le dossier du protocole. *Ne pas* : lancer sans le GO.
 
-**A11 — Afficher la sensibilité de chaque stratégie à l'erreur d'indice.** *Pourquoi* : le but de STRAT est une stratégie peu sensible à l'indice
-(👤) ; la part d'indice se mesure (même plan, mêmes tirages, corridor actif puis nul : `outils/index_share.py.txt`). *Livrable* : un paramètre
-inactif par défaut qui la calcule pour les K premières stratégies, une colonne dans les résultats et l'export Excel, un test, `c1_diff` tenu, et
-un rapport sur les trois 75 couches.
-
 **A12 — Guider la recherche locale par la sensibilité à l'indice.** Concentrer les candidats de `strat_local_search` sur les couches qui
 transmettent le plus l'erreur d'indice ; essayer des mouvements de deux ou trois couches voisines. *Livrable* : une option inactive par défaut,
 mesurée contre l'étage actuel sur les trois 75 couches × deux graines, règle écrite avant la mesure, rapport.

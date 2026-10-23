@@ -125,6 +125,19 @@ def judge(app, config: dict) -> dict:
     }
 
 
+def save_design(app, config: dict, path: Path) -> None:
+    """Write the window's final stack into a copy of the configuration (QWOT with n4, as DESIGN does)."""
+    import numpy as np
+
+    mats = app._get_materials()
+    l0 = float(config.get("l0", 500.0))
+    ep = np.asarray(app.ep_current, dtype=float)
+    out = dict(config)
+    out["front"] = [{"mat": layer.mat, "qw": round(4.0 * float(mats[layer.mat].n4) * float(d) / l0, 6), "var": True}
+                    for layer, d in zip(app._get_front_stack(), ep, strict=True)]
+    path.write_text(json.dumps(out, indent=2), encoding="utf-8")
+
+
 def load(path: Path):
     from CERTUS_DESIGN import CertusDesignApp
 
@@ -181,6 +194,8 @@ def main() -> None:
     p.add_argument("--out", type=Path, default=None)
     p.add_argument("--kw", action="append", default=[], metavar="KEY=VALUE",
                    help="extra argument of run_optim('global', ...), e.g. memetic_children=300 (repeatable)")
+    p.add_argument("--save-design", type=Path, default=None,
+                   help="run: write the final design of the window as a DESIGN file (QWOT with n4)")
     p.add_argument("--set", dest="attrs", action="append", default=[], metavar="NAME=VALUE",
                    help="window attribute set after loading, e.g. _polish_after_5nm_rule=true (repeatable)")
     args = p.parse_args()
@@ -231,6 +246,8 @@ def main() -> None:
                 "timeout": run_s >= 3600.0 - 1.0,
             }
         )
+        if args.save_design:
+            save_design(app, config, args.save_design)
 
     for row in rows:
         line = json.dumps(row)

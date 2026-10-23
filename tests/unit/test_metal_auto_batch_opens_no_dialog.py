@@ -29,7 +29,7 @@ def dialogs(monkeypatch):
 
 @pytest.mark.parametrize(("module_name", "class_name"), [
     ("certus.metal.certus_metal_single_app", "CertusMetalSingleApp"),
-    ("certus.metal.certus_metal_bilayer_app", "CertusMetalBilayerApp"),
+    ("certus.ui.certus_metal_bilayer_gui", "CertusMetalBilayerApp"),
 ])
 def test_loading_a_configuration_in_auto_batch_opens_no_dialog(qapp, dialogs, module_name, class_name) -> None:
     import importlib

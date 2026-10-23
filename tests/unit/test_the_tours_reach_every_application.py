@@ -30,7 +30,7 @@ APPLICATIONS = [
     ("certus.ui.certus_index_spline_ui", "CertusIndexSplineApp"),
     ("certus.ui.certus_strat_ui", "CertusStratApp"),
     ("CERTUS_RE", "CertusREApp"),
-    ("certus.metal.certus_metal_bilayer_app", "CertusMetalBilayerApp"),
+    ("certus.ui.certus_metal_bilayer_gui", "CertusMetalBilayerApp"),
 ]
 
 

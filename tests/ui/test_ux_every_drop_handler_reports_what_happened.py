@@ -61,7 +61,7 @@ def _metal_single(qapp):
 
 
 def _metal_bilayer(qapp):
-    from certus.metal.certus_metal_bilayer_app import CertusMetalBilayerApp
+    from certus.ui.certus_metal_bilayer_gui import CertusMetalBilayerApp
 
     return CertusMetalBilayerApp()
 

@@ -265,6 +265,16 @@ class WorkerManager:
 
         return g_max_feval, g_n100, g_max_iter, g_max_clusters
 
+    def _apply_floor_at_end_settings(self, cfg: dict, mode: str) -> None:
+        """With the file's floor_at_end: free layers until the end, then floors that follow the current stack."""
+        if getattr(self.ui, "_layer_floor_active", None) is not None:
+            # The final stage is bounded; the floors follow the current stack (needles may add layers).
+            rows = len(cfg.get("stack") or [])
+            cfg["layer_floor_nm"] = [float(f) for f in self.ui.optimization_manager._current_min_layer_thickness(rows)]
+        elif getattr(self.ui, "_floor_at_end", False) is True and mode == "global":
+            cfg["memetic_floor_nm"] = 0.0  # the layers are free until the end of the workflow
+            cfg["memetic_absent_below_nm"] = 0.0
+
     def _fill_to_max_layers(self) -> None:
         """With the file's `max_layers` and growth allowed, add rows up to that ceiling before a global run.
 
@@ -558,14 +568,7 @@ class WorkerManager:
 
         self.ui._initialize_run_optim_progress_state(cfg, keep_history)
 
-        floor_at_end = bool(getattr(self.ui, "_floor_at_end", False) is True)
-        if getattr(self.ui, "_layer_floor_active", None) is not None:
-            # floor_at_end: the final stage is bounded; the floors follow the current stack (needles may add layers).
-            rows = len(cfg.get("stack") or [])
-            cfg["layer_floor_nm"] = [float(f) for f in self.ui.optimization_manager._current_min_layer_thickness(rows)]
-        elif floor_at_end and mode == "global":
-            cfg["memetic_floor_nm"] = 0.0  # floor_at_end: the layers are free until the end of the workflow
-            cfg["memetic_absent_below_nm"] = 0.0
+        self._apply_floor_at_end_settings(cfg, mode)
 
         if kwargs:
             cfg.update(kwargs)

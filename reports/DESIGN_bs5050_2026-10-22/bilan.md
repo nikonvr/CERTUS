@@ -36,3 +36,10 @@ performance 40 réussis ; un seul échec réel, la taille de la section 0 d'ETAT
 **Face à la littérature** : sur le problème exact de Tikhonravov et al. (1996, indices 1,45/2,35 constants, 34 couches),
 DESIGN obtient MF 8,53e-3 contre 1,2767e-2 publié, RMSE 8,6e-5 contre 1,8e-4 sur grille fixe, avec 26,4 QWOT contre
 31,4 et aucune couche sous 5 nm ([`tikhonravov/README.md`](tikhonravov/README.md)).
+
+**Convergence seule depuis l'exemple** (`final_runs/`, réglage par défaut du 2026-10-23, 8 fils) : le fichier tel quel
+(`max_layers` 34, `max_total_qwot` 30) rend 0,000951 avec 26 couches tant que rien ne remplit le tableau ; avec le
+remplissage jusqu'à `max_layers` (`2e1a5975`), **0,000135** (34 couches, 26,6 QWOT, ≥ 5 nm, relances 0,000177 → 0,000159 →
+0,000135, 48 min). Avec `min_layer_ot_nm` 5 : 0,000166 (30 couches). Graphe RMSE = f(couches) des deux runs, barres
+±2σ pour 0,1 % + 0,2 nm à 2σ : `final_runs/rmse_vs_layers.png` ; sous ces erreurs le RMSE moyen est d'environ 0,003
+(±0,0015) quel que soit le nombre de couches, et le plancher OT n'apporte rien de mesurable.

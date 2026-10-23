@@ -9,11 +9,11 @@ from PyQt6.QtWidgets import QCheckBox, QDoubleSpinBox, QHBoxLayout, QLabel, QSpi
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.spline.certus_corridor_utils import enforce_min_k_corridor_half_width
-from certus.spline.certus_index_spline_corridor_common import (
+from certus.ui.certus_index_spline_corridor_common import (
     _CORRIDOR_K_TAB_MIN_HALF_WIDTH,
     _apply_fixed_log_k_axis,
 )
-from certus.spline.certus_index_spline_corridor_ui import (
+from certus.ui.certus_index_spline_corridor_ui import (
     CertusTheme,
     EnhancedProgressWidget,
     create_styled_button,

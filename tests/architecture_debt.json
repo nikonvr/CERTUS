@@ -1,10 +1,6 @@
 {
   "_commentaire": "La dette d'architecture, mesuree par scripts/metrics.py. aretes_montantes : les imports de niveau module d'une couche basse vers une couche plus haute (COUCHES), module a module. cycles : les cycles d'imports a l'execution (hors `if TYPE_CHECKING:`). fonctions_longues, fonctions_complexes, fichiers_longs : ce qui depasse 300 lignes, une complexite de 60, 1 500 lignes, avec sa mesure. fonctions_non_annotees : les fonctions de certus/domain, physics et core (les paquets que mypy parcourt) dont un argument de position ou le retour n'a pas d'annotation. Le registre ne fait que retrecir : un nouvel element, ou une mesure qui monte, fait echouer tests/unit/test_the_architecture_debt_only_shrinks.py ; une dette payee, ou une mesure qui baisse, doit y etre corrigee dans le meme commit (python scripts/metrics.py --dette tests/architecture_debt.json).",
-  "aretes_montantes": [
-    "certus.spline.certus_index_spline_corridor_ui -> certus.ui.certus_manual_sigma_knot_dialog",
-    "certus.spline.certus_index_spline_corridor_ui -> certus.ui.certus_plot",
-    "certus.spline.certus_index_spline_corridor_ui -> certus.ui.certus_ui"
-  ],
+  "aretes_montantes": [],
   "cycles": [
     [
       "certus.core.certus_strat_config",
@@ -60,9 +56,9 @@
     "certus/spline/certus_corridor_exploration.py::compute_bootstrap_corridors_by_d": 74,
     "certus/spline/certus_corridor_exploration.py::compute_regular_grid_rmse_profile": 96,
     "certus/spline/certus_corridor_fitter.py::_fit_nodes_at_fixed_d": 83,
-    "certus/spline/certus_index_spline_corridor_worker.py::_CorridorWorkerMixin._finish_corridor_rmse_d_grid_worker_done": 72,
     "certus/spline/spline_pipeline_mesh_clean.py::worker_spline_auto_clean_knots": 98,
     "certus/spline/spline_workers.py::_run_free_knot_stage": 66,
+    "certus/ui/certus_index_spline_corridor_worker.py::_CorridorWorkerMixin._finish_corridor_rmse_d_grid_worker_done": 72,
     "certus/ui/certus_index_spline_manualmesh_mixin.py::CertusIndexSplineManualMeshMixin._open_manual_extra_knots_dialog": 75,
     "certus/ui/certus_index_spline_mixins_ui.py::_MeshOptimizationMixin._build_opt_config": 76,
     "certus/ui/certus_re_excel_mixin.py::CertusREExcelMixin.load_reverse_engineering_from_path": 67

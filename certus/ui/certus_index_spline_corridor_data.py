@@ -15,9 +15,9 @@ from certus.spline.certus_index_spline_core import (
     ensure_lam_nm_array,
     substrate_id_from_name,
 )
-from certus.spline.certus_index_spline_corridor_ui import CertusScientificPlot, ManualSigmaKnotDialog
 from certus.spline.spline_objective import spectral_mse_rmse_masked_from_nk
 from certus.spline.spline_pipeline import _sync_theoretical_tr_from_nk_dict
+from certus.ui.certus_index_spline_corridor_ui import CertusScientificPlot, ManualSigmaKnotDialog
 from certus.utils.certus_index_utils import _get_substrate_n_array_spline
 
 

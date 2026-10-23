@@ -14,7 +14,7 @@ from certus.spline.certus_corridor_utils import (
     _expand_corridor_envelope_with_reported_nk,
     enforce_min_k_corridor_half_width,
 )
-from certus.spline.certus_index_spline_corridor_ui import CertusTheme
+from certus.ui.certus_index_spline_corridor_ui import CertusTheme
 
 
 class _CorridorGenMixin:

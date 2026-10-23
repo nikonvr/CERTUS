@@ -48,7 +48,7 @@ from unittest.mock import MagicMock
 
 import numpy as np
 
-import certus.spline.certus_index_spline_corridor_worker as corridor_worker
+import certus.ui.certus_index_spline_corridor_worker as corridor_worker
 import CERTUS_INDEX_SPLINE as spline_gui
 from CERTUS_INDEX_SPLINE import CertusIndexSplineApp
 

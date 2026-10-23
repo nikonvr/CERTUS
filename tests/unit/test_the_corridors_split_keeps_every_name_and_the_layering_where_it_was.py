@@ -8,8 +8,8 @@ a leaf, and the imports of the interface layer (`certus.ui`) to ONE module, the 
   facade, and the window class takes the three mixins from it);
 * the window still has every method it had, and the moved ones are the functions of their new mixin (the code surface of the class was
   compared before and after with a checksum of each bytecode: 720 attributes, none different);
-* only the gateway imports `certus.ui` at module level: the layering debt (a lower layer importing a higher one, tests/architecture_debt.json)
-  counts MODULE edges, and five parts importing the interface would have counted five times what one module did;
+* only the gateway imports the rest of the interface layer at module level. The whole group moved from `certus.spline` to `certus.ui` on
+  2026-10-23 (A8b): its widgets were the three upward edges of tests/architecture_debt.json, and the group has no fitting algorithm;
 * no part is a long file any more.
 """
 
@@ -22,8 +22,9 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-SPLINE = ROOT / "certus" / "spline"
-FACADE = "certus.spline.certus_index_spline_corridors"
+SPLINE = ROOT / "certus" / "ui"  # where the corridor group lives since A8b (2026-10-23)
+GROUP_PREFIX = "certus.ui.certus_index_spline_corridor"
+FACADE = "certus.ui.certus_index_spline_corridors"
 #: The parts of the split, by name (a glob would also take `certus_index_spline_corridor_contract.py`, which is older and not one of them).
 PARTS = [
     "certus_index_spline_corridor_common",
@@ -53,12 +54,12 @@ def test_the_split_has_its_six_parts_and_the_facade_re_exports_the_classes_they_
     facade_text = (SPLINE / "certus_index_spline_corridors.py").read_text(encoding="utf-8-sig")
     for part in PARTS:
         if part not in ("certus_index_spline_corridor_tab", GATEWAY):
-            assert f"certus.spline.{part} import" in facade_text, part
+            assert f"certus.ui.{part} import" in facade_text, part
 
 
 @pytest.mark.parametrize("part", [p for p in PARTS if p != GATEWAY])
 def test_every_name_that_a_part_defines_is_the_same_object_in_the_facade(part):
-    module = importlib.import_module(f"certus.spline.{part}")
+    module = importlib.import_module(f"certus.ui.{part}")
     facade = importlib.import_module(FACADE)
     defined = top_level_names(SPLINE / f"{part}.py")
     assert defined, f"{part} defines nothing"
@@ -70,8 +71,8 @@ def test_every_name_that_a_part_defines_is_the_same_object_in_the_facade(part):
 
 
 def test_the_worker_mixin_inherits_the_tab_mixin_and_the_window_has_every_method():
-    from certus.spline.certus_index_spline_corridor_tab import _CorridorTabMixin
-    from certus.spline.certus_index_spline_corridor_worker import _CorridorWorkerMixin
+    from certus.ui.certus_index_spline_corridor_tab import _CorridorTabMixin
+    from certus.ui.certus_index_spline_corridor_worker import _CorridorWorkerMixin
     from certus.ui.certus_index_spline_ui import CertusIndexSplineApp
 
     assert _CorridorTabMixin in _CorridorWorkerMixin.__mro__
@@ -95,8 +96,9 @@ def test_only_the_gateway_imports_the_interface_layer_at_module_level(part):
     ui = [
         (node.module, node.lineno)
         for node in tree.body
-        if isinstance(node, ast.ImportFrom) and (node.module or "").startswith("certus.ui.")
-    ] + [(a.name, node.lineno) for node in tree.body if isinstance(node, ast.Import) for a in node.names if a.name.startswith("certus.ui.")]
+        if isinstance(node, ast.ImportFrom) and (node.module or "").startswith("certus.ui.") and not (node.module or "").startswith(GROUP_PREFIX)
+    ] + [(a.name, node.lineno) for node in tree.body if isinstance(node, ast.Import) for a in node.names
+         if a.name.startswith("certus.ui.") and not a.name.startswith(GROUP_PREFIX)]
     if part == GATEWAY:
         assert len(ui) == 3, f"the gateway carries the three upward edges the module had: {ui}"
     else:
@@ -105,7 +107,8 @@ def test_only_the_gateway_imports_the_interface_layer_at_module_level(part):
 
 def test_the_facade_imports_nothing_of_the_interface_layer_either():
     tree = ast.parse((SPLINE / "certus_index_spline_corridors.py").read_text(encoding="utf-8-sig"))
-    ui = [node.module for node in tree.body if isinstance(node, ast.ImportFrom) and (node.module or "").startswith("certus.ui.")]
+    ui = [node.module for node in tree.body if isinstance(node, ast.ImportFrom) and (node.module or "").startswith("certus.ui.")
+          and not (node.module or "").startswith(GROUP_PREFIX)]
     assert not ui, ui
 
 

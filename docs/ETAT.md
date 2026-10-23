@@ -9,24 +9,23 @@
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
-**Réanalyse Claude (2026-10-22)**, sans poussée : l'étage ne tient pas son critère sur `r75x2` graine 101, par le défaut ouvert du seuil des points tournants à bas bruit ; A4 sans effet. Décisions et suite (A8b, A9) : [rapport](../reports/ANALYSE_claude_2026-10-22/bilan.md) §8.
-
-> Tenir cette section à jour avec le travail (« en cours » au début, mesure et commit à la fin). Le reste se lit à la
-> demande : actions et protocole du Rate dans [`ETAT_actions.md`](ETAT_actions.md) ; acquis, corrections et reprises
-> antérieures dans [`ETAT_acquis.md`](ETAT_acquis.md) ; preuves dans `reports/` (le `bilan.md` d'un dossier) ;
+> Tenir cette section à jour avec le travail : l'état présent seulement, l'historique est dans `git log` et `reports/`. Le reste se lit à la
+> demande : actions ouvertes et protocole de mesure dans [`ETAT_actions.md`](ETAT_actions.md) ; acquis et corrections dans
+> [`ETAT_acquis.md`](ETAT_acquis.md) ; preuves dans `reports/` (le `bilan.md` d'un dossier) ;
 > registre des audits, un constat par ligne : [`AUDITS.md`](AUDITS.md) (`grep -n "ALG-02" docs/AUDITS.md`).
 
-**Actions en cours (2026-10-21).** A6 retirée, A7 et premier correctif A8 terminés. Le défaut de transmission découvert par le premier banc A3 est corrigé et entièrement validé ; nouveau protocole et reprise des mesures à suivre. État, preuves et prochaine action : [`bilan`](../reports/ACTIONS_autonomes_2026-10-20/bilan.md).
+**Branche de travail** : `claude/2026-10-22` (worktree `~/.codex/worktrees/certus-chatgpt-2026-10-22/certus0310`), ni poussée ni fusionnée.
 
-**Bonne Mère (2026-10-19).** Meilleur plan mesuré et chemin vers l'optimum : [`studies/bonne_mere/README.md`](../studies/bonne_mere/README.md) (21 couches Rate, SEEL P95 0,446 nm au bruit 0,05, 0 arrêt). Dérive de la source non modélisée. Défaut ouvert de STRAT : l'hystérésis du comptage des points tournants suit le bruit ; à bruit faible, la fente fabrique des extrema ([phase 1](../reports/BONNE_MERE_phase1_budget_SuperChamp76_2026-10-19/bilan.md)).
-
-**STRAT sur r75 (2026-10-20).** `strat_local_search` (recherche locale appariée du mode et de la λ, cherchée à ±0,010 d'indice) est actif par défaut et `tp_hysteresis_floor` vaut 0,000415, sur décision de 👤 ; banc deep, graine 77 : 0,2515 → 0,2080, 0,4363 → 0,3561, 0,5441 → 0,5032 nm ([rapport](../reports/STRAT_r75_leviers_bonne_mere_2026-10-20/bilan.md)). A14/A10 réanalysés (rapport ci-dessus).
+**STRAT par défaut.** `strat_local_search` (recherche locale appariée du mode et de la λ) cherche et contrôle à ±0,010 d'indice, avec une garde au
+corridor configuré ([bilan](../reports/STRAT_garde_2026-10-22/bilan.md)) ; `tp_hysteresis_floor` vaut 0,000415. Défaut ouvert : le seuil des points
+tournants suit le bruit ; à 0,5× il passe sous l'ondulation du biais de fente et fabrique de faux points tournants ([analyse](../reports/ANALYSE_claude_2026-10-22/bilan.md)).
+Meilleur plan Bonne Mère : [`studies/bonne_mere/README.md`](../studies/bonne_mere/README.md) (dérive de la source non modélisée).
 
 **Branches locales en attente** (ni poussées, ni validées) : `claude/alg02-prune-evaluator-0d2a8d` (`46261901`,
 correctif de D107) et `claude/dreamy-burnell-85397a` (`cc3fe134`, fenêtre admissible 48c) ; reprendre par
 `git worktree add`. Dossier : 580 Mo pour une limite de 1 Go (2026-10-18).
 
-**Dernière validation complète** (2026-10-22, huit commandes successives de CLAUDE.md §2, code A4 `b399b842`) : 8 441 réussis, 19 ignorés, 3 échecs attendus, aucun échec inattendu ; C1 tenu, empreintes du code et sorties dans le [contrôle v2](../reports/STRAT_A4_parents_optiques_2026-10-22/controle_v2.md).
+**Dernière validation complète** (2026-10-23, `e13ed459`) : `python scripts\validate_parallel.py` GO, C1 tenu (9 092 tableaux).
 
 **Avant de committer du code** : la validation de CLAUDE.md §2 en entier ; un sous-ensemble a déjà laissé passer une
 régression (`tests/unit/test_the_architecture_debt_only_shrinks.py` ne tourne pas avec les tests voisins).
@@ -35,9 +34,9 @@ régression (`tests/unit/test_the_architecture_debt_only_shrinks.py` ne tourne p
 1. D98 : l'attente sans fin (défaut) ou l'arrêt tardif (`oms_arming=1`) — chiffres au §3 et dans `reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`.
 2. `elite_rate_moves` : garder actif (défaut actuel) ou le désarmer (`False`, ou `git revert 978b8f04`) — les mesures de A2 sont résumées dans `ETAT_acquis.md` (« Acquis du Rate »).
 3. `rate_rescue_hard` : inactif, mesuré sans gain (35 plans déposables sur 410) — le garder ou le retirer.
-4. Le Rate et l'optique pure (§5, A4 de `ETAT_actions.md`) ; D71 (2) ; l'information D69 (changement de définition d'un indicateur).
+4. Le Rate et l'optique pure (§5) ; D71 (2) ; l'information D69 (changement de définition d'un indicateur).
 5. Toute poussée (`git push`), toute fusion de la PR #9, toute modification de la vitrine.
-6. Le seuil des points tournants à bas bruit (`tp_hysteresis_floor`) ; armer `strat_local_search_fresh_id`, codé inactif. `strat_local_search_guard` est armé par défaut depuis le 2026-10-23 (👤 ; critère tenu sur les dix cas : [bilan](../reports/STRAT_garde_2026-10-22/bilan.md)).
+6. Le seuil des points tournants à bas bruit (`tp_hysteresis_floor`) ; armer `strat_local_search_fresh_id` (inactif).
 
 ## 1. Où en sont les programmes
 

@@ -1,6 +1,6 @@
-# CERTUS — acquis du Rate, corrections qui invalident des mesures, reprises antérieures
+# CERTUS — acquis du Rate et corrections qui invalident des mesures
 
-> Extrait de la section 0 de [`ETAT.md`](ETAT.md) le 2026-10-18, pour que la reprise tienne en peu de lignes. Ce contenu **fait autorité** ;
+> Ce contenu **fait autorité** ;
 > `ETAT.md` n'en garde qu'un renvoi. **Un fait, un seul endroit** : corrige ici, ne recopie pas ailleurs, mets un lien.
 > Les `§N` nus sont les sections de `ETAT.md`. Les actions A3 à A9 et le protocole de mesure sont dans [`ETAT_actions.md`](ETAT_actions.md).
 
@@ -44,52 +44,6 @@ synthèse du 2026-10-14 : [`STRAT_Rate_bilan_2026-10-14.md`](../reports/STRAT_Ra
 - D106 (`6fcdd56a`) : les enfants d'ELITE étaient notés sans biais de fente. À `r75x2` sans rampes (graine 101, ancien modèle d'arrêt, sans secours Rate) : 706 déposables sur 6 042
   stratégies sans la correction, 0 sur 4 821 avec ; sans rampes, `r75x2` n'est pas fabricable en optique pure. Au juge de paix, le meilleur SEEL passe de 0,1776 à 0,1927 nm (+8,5 %) :
   les repères d'avant la correction sont optimistes d'autant.
-
-**Reprise du 2026-10-17.** 👤 valide les trois statuts du registre des leviers Rate (`rate_layer_sets` RESERVE, `rate_tail_keep_optical`
-NON_MESURE, `rate_rescue_hard` RESERVE ; `0c7c1e2e`, liste d'attente vide), puis demande d'essayer le 99c avec les dernières évolutions du Rate sur
-un seul verre témoin. Quatre mesures exploratoires (`premium`, consensus 41/42/43, graines de recherche 42 et 101, hors protocole de campagne) :
-chiffres au §2, bilan dans [`bilan.md`](../reports/STRAT_99c_rate_elargi_2026-10-16/bilan.md). Le gain du profil élargi vient surtout de l'élargissement
-de la recherche, pas du raffinement final (−0,89 % à la graine 42, aucun à la 101) ; il n'est confirmé sur aucun groupe frais et suppose un Rate sans
-dérive de vitesse. Isolation des leviers (budget 240 seul, puis budget 240 et six tours), graines 42 et 101 : protocoles et bilan dans
-`reports/STRAT_99c_isolation_leviers_2026-10-17/` et `reports/STRAT_99c_isolation_leviers_graine101_2026-10-17/`. À la graine 42, sur le score de
-consensus, le budget 240 seul porte 62 % de l'écart entre les défauts et le profil élargi avant raffinement, les six tours 7 % (sous le bruit de 4,2 %),
-les 480 voisins conjoints 31 % : une graine, un chemin de décomposition, C2 en partie sous charge étrangère. La chaîne de la graine 101 s'est terminée
-ou a été interrompue le 2026-10-17 à 05:38 UTC (`MESURES_TERMINEES.txt`) ; son dossier n'a pas de `bilan.md` : lire `chain.log` avant d'en tirer un chiffre.
-Contre-audit de `designargon.md` et `UXargon.md` ([rapport](../reports/ARGON_contre_audit_Claude_2026-10-17.md)) : cinq défauts d'intégrité confirmés par
-un test rouge puis corrigés, un commit chacun (`868db8c9`, `8c6d951b`, `bdcae9ed`, `c25937b3`, `7f3edea8`) ; ALG-02, non corrigé, est D107 (§4).
-Branche publiée à `7f3edea8` le 2026-10-17 sur l'accord de 👤.
-
-**Reprise du 2026-10-16.** Après le bilan clos, 👤 demande une passation, « push et commit all », puis un ménage drastique sous 1 Go : archives
-locales et dépôt Git léger, 2 242 JSON volumineux conservés en archives avec empreintes SHA hors CERTUS, caches retirés. Publication faite après
-confirmation explicite de 👤 vers `https://github.com/nikonvr/CERTUS.git`, branche `claude/ecstatic-newton-3grmls` (`be3af69e` vérifié sur le distant),
-sans réécriture d'historique. [Ménage, emplacement des archives et restauration ciblée](../reports/STRAT_Rate_publication_2026-10-16/README.md) ;
-[diagnostic précis, commandes et limites](../reports/STRAT_Rate_reprise_20261016.md) ; [autorisation, périmètre et plafonds](../reports/STRAT_Rate_followup_2026-10-16/authorization_and_plan.json).
-Le programme borné R0–R6 est clos et son ancien suivi est PAUSED. **TODO de 👤 :** tenter le 99c en une seule campagne avec injection de Rate et les
-derniers raffinements (A9, dans `ETAT_actions.md`).
-
-**Revue de HEAD du 2026-10-16.** Le groupe « reste » de CLAUDE.md §2 exige `pytest-benchmark` (11 benchmarks de noyaux) ; le projet ne le déclare
-nulle part (D110). Dette : les trois interrupteurs Rate lus par la recherche sont au registre des leviers (liste d'attente de
-`tests/unit/test_strat_leviers.py` vide) ; les textes `mesure` de `elite_rate_joint_candidates` et `rate_post_refinement` datent d'avant R5/R6 et
-attendent la décision de 👤.
-
-**Contre-audits ARGON** (`UXargon.md`, `designargon.md`, preuves dans `reports/ARGON_contre_audit_2026-10-16/`). Le premier contre-audit a corrigé et
-qualifié les deux audits par niveau de preuve : 22 démarrages GUI hors écran, 0 cas fautif selon le harnais ; 20 observations ciblées vérifiées,
-0 erreur de sonde ; corps extraits et décorateurs Numba retirés, donc aucune validation complète/JIT ni performance démontrée ([preuves, limites et
-empreintes](../reports/ARGON_contre_audit_2026-10-16/evidence.json), [reproduction](../reports/ARGON_contre_audit_2026-10-16/probe.py.txt)). Le second,
-interrompu le 2026-10-17 quand 👤 a ouvert le sujet « bonne mere », a conservé [cinq observations supplémentaires](../reports/ARGON_contre_audit_2026-10-16/pass02.json)
-(grille oblique non densifiée, bornes et arrêt ignorés au raffinement final), pas encore reportées dans les audits. Défauts prioritaires des audits :
-snapshot DESIGN et filtre final 5 nm supprimant des couches fixes (corrigé, `bdcae9ed`), précision lambda SMOOTHER, coûts Needle et évaluateur d'élagage
-(celui-ci : D107) ; progression RE incompatible, puis grille oblique à valider en worker. Descriptions fautives retirées : métrique de tri prise pour des états
-vides, accès JSON SPLINE absent, aide/F1 absents, solveur maison, `jac` absent et paramètres/formule PGLOBAL inexacts. Trois contrôles documentaires à 0 ;
-[contrôles complémentaires](../reports/ARGON_contre_audit_2026-10-16/documentation_checks.json).
-
-**Reprises du 2026-10-18.** Audit complet ([rapport](../reports/AUDIT_SUITE_CERTUS_2026-10-18.md), constats C01–C19, plan
-A1–A22) : crash de Numba C18 (appelant en série en cache d'un noyau parallèle en cache : code 139), parade `cache=False` sur `calc_spectrum_front`, `calc_spectrum_full` et `compute_batch_rmse`, C1 tenu au bit. Ménage de `reports/` : 215 entrées retirées, restaurables par `git log --diff-filter=D --name-only -- reports/<nom>`
-puis `git checkout <commit>^ -- reports/<nom>`. Deuxième passe ([rapport](../reports/AUDIT_SUITE_CERTUS_2e_passe_2026-10-18.md)) :
-constats C20–C32 (D113 gradient hérité faux pour des couches absorbantes, D114 entrées invalides, D115 mutations qui survivent),
-plan A23–A35.
-
-**Dernière validation complète, comptes** : voir le [`bilan du 2026-10-20`](../reports/ACTIONS_autonomes_2026-10-20/bilan.md#validation-initiale), avec les sorties mesurées et la limite de reproductibilité documentaire.
 
 **En vigueur au 2026-10-13** (ne pas le remettre en cause sans mesure) : D96, D97 et D98 (attente sans fin) ; `rate_rescue` ;
 `rate_by_swing` ; ELITE déplace les couches Rate de ses parents (`elite_rate_moves`) ; ses enfants portent le biais de fente

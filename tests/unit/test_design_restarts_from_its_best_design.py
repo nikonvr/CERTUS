@@ -36,6 +36,7 @@ def design_app(qapp, monkeypatch):
 def _finish_round(app, rmse: float, thickness: float) -> bool:
     app.ep_current = np.full(app.front_table.rowCount(), thickness)
     app._workflow_best_rmse = rmse
+    app.optimization_manager._true_rmse = lambda table, ep: rmse  # the RMSE the round reaches, measured on its design
     return app.optimization_manager._restart_from_best()
 
 

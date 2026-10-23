@@ -5,6 +5,7 @@ from typing import Any
 
 import numpy as np
 
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.core.certus_design_worker_utils import (
     optim_post_optim_time_budget_seconds,
     optim_qwot_values_from_ep_stack,
@@ -418,8 +419,12 @@ class OptimizationManager:
         best_overall_rec = None
         best_overall_n = None
         for n, rec in records:
-            if rec.get("best_rmse", float("inf")) < best_overall_rmse:
-                best_overall_rmse = rec["best_rmse"]
+            # A record may carry the RMSE of another design (the workflow's best when it was written): judge it
+            # again on its own thicknesses when DESIGN can (normal incidence, no back side).
+            value = self._true_rmse(rec.get("table_rmse"), rec.get("ep_rmse"))
+            value = rec.get("best_rmse", float("inf")) if value is None else value
+            if value < best_overall_rmse:
+                best_overall_rmse = value
                 best_overall_rec = rec
                 best_overall_n = n
 
@@ -607,6 +612,32 @@ class OptimizationManager:
 
         return {r for r, layer in enumerate(self.ui._get_front_stack()) if not layer.var}
 
+    def _true_rmse(self, table: list | None, ep) -> float | None:
+        """RMSE of the design (table rows, thicknesses) on the window's grid, or None when it cannot be judged here.
+
+        The workflow's `_workflow_best_rmse` and the Pareto records may hold the RMSE of another design: a record
+        written after a decimation step paired a 29-layer design with the 30-layer RMSE (0.000127 for a design at
+        0.0029 on the problem of Tikhonravov et al.), and the export then named it after the wrong value. Normal
+        incidence without back side only (certus/core/certus_design_tolerance.py::design_cost_function).
+        """
+        if ep is None or not table or len(table) != len(ep) or getattr(self.ui, "oblique_mode", False):
+            return None
+        if getattr(self.ui, "back_check", None) is not None and self.ui.back_check.isChecked():
+            return None
+        try:
+            from certus.core.certus_design_tolerance import design_cost_function
+            from certus_physics import Layer
+
+            tgts = [t for t in self.ui._get_tgts() if t.valid()]
+            wls = np.asarray(self.ui._get_optim_wls(), dtype=np.float64)
+            if not tgts or len(wls) == 0:
+                return None
+            stack = [Layer(row["mat"], row["qw"], row["var"]) for row in table]
+            cost = design_cost_function(self.ui._get_materials(), stack, wls, tgts)
+            return float(np.sqrt(max(cost(np.asarray(ep, dtype=float)), 0.0)))
+        except (*NUMERICAL_FAULT_EXCEPTIONS, KeyError, TypeError, AttributeError, StopIteration):
+            return None
+
     def _record_min_layer_thickness(self, rec: dict) -> np.ndarray:
         """Least final thickness of each layer of a Pareto record (5 nm when its table is not usable)."""
         table, ep = rec.get("table_rmse") or [], rec.get("ep_rmse")
@@ -651,7 +682,8 @@ class OptimizationManager:
         rounds stop, the best design of all rounds is put back if the last one is worse.
         """
         max_rounds = int(getattr(self.ui, "_auto_restarts", 5) or 0)
-        rmse = getattr(self.ui, "_workflow_best_rmse", float("inf"))
+        rmse = self._true_rmse(self._save_table_state(), self.ui.ep_current)
+        rmse = getattr(self.ui, "_workflow_best_rmse", float("inf")) if rmse is None else rmse
         if max_rounds <= 0 or not np.isfinite(rmse):
             return False
         best = getattr(self.ui, "_restart_best", None)

@@ -44,3 +44,23 @@ def test_the_restored_champion_is_free_of_sub_5nm_layers_unless_turned_off(qapp,
 
     assert app.front_table.rowCount() == rows
     assert len(app.ep_current) == rows
+
+
+def test_the_champion_is_chosen_on_the_rmse_of_its_own_design(qapp) -> None:
+    """A record written with another design's RMSE (0.000127 for a 29-layer design at 0.0029) is judged again."""
+    from certus.ui.certus_design_ui import CertusDesignApp
+
+    app = CertusDesignApp()
+    app.load_config(str(EXAMPLE))
+    rows = app.front_table.rowCount()
+    stale = {"best_rmse": 1e-4, "table_rmse": app._save_table_state(), "ep_rmse": np.full(rows, 60.0)}
+    app.front_table.removeRow(rows - 1)
+    app.front_table.removeRow(rows - 2)
+    honest = {"best_rmse": 2e-4, "table_rmse": app._save_table_state(), "ep_rmse": np.full(rows - 2, 60.0)}
+    app.pareto_history = {rows: stale, rows - 2: honest}
+    truth = {rows: 3e-3, rows - 2: 2e-4}  # what each design measures on its own thicknesses
+    app.optimization_manager._true_rmse = lambda table, ep: truth[len(ep)]
+
+    assert app.optimization_manager._restore_smart_decimation_best_overall()
+
+    assert app.front_table.rowCount() == rows - 2

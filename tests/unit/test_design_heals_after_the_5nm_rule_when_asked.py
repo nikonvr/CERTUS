@@ -35,6 +35,7 @@ def test_the_finalisation_heals_after_the_5nm_rule_only_when_asked(qapp, monkeyp
     app.ep_current = np.asarray(init_thickness(app._get_front_stack(), app.l0_spin.value(), app._get_materials()))
     app._decimation_done = True  # straight to the rule
     app._polish_after_5nm_rule = option
+    app._auto_restarts = 0  # the automatic restart is not under test here
     app._export_pending = False
     monkeypatch.setattr("certus.ui.certus_design_ui_optimization.get_export_config", lambda: True)
     calls = []

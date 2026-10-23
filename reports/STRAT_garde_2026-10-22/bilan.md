@@ -17,4 +17,20 @@ ajouté, gain sur la majorité, tenue à ±0,010) est tenu sur les dix cas.** Co
 plan jugé, négligeable devant la recherche. Limites : une graine de banc par cas ; le seuil des points tournants à bas
 bruit (cause du cas corrigé) n'est pas changé.
 
-Décision de 👤 : armer `strat_local_search_guard` par défaut (changement de défaut, C1 rompu volontairement pour l'étage).
+## r75x2, composant étalon, sur quatre graines de banc (2026-10-23)
+
+Graines 77 et 303 ajoutées ([tables](../STRAT_garde_R75X2_2026-10-23/bilan.md), campagne `R75X2` du même lanceur, graines de jugement
+20261031001 et suivantes). Avec la garde :
+
+| graine | statut | ±0,005 : SEEL ELITE → final | arrêts | ±0,010 : SEEL ELITE → final | arrêts |
+|---|---|---|---|---|---|
+| 77 | accepté | 0,5414 → 0,4693 nm (−13,3 %) | 3 → 0 | 0,7198 → 0,5858 nm (−18,6 %) | 259 → 20 |
+| 101 | repli | 0,5383 → 0,4787 nm (−11,1 %) | 0 → 0 | 0,6854 → 0,6256 nm (−8,7 %) | 0 → 0 |
+| 202 | refusé | — (plan ELITE inchangé) | — | — | — |
+| 303 | repli | 0,5642 → 0,5096 nm (−9,7 %) | 38 → 0 | 1,0837 → 0,5964 nm (−45 %)* | 1 406 → 1 |
+
+\* ELITE non déposable à ±0,010 : 15 % d'arrêts à chacun des trois niveaux de bruit (pas le défaut du seuil à bas bruit). Les arrêts de
+l'ELITE de la graine 77 se répartissent aussi sur les trois niveaux, sous 5 % chacun. Critère écrit tenu sur les quatre graines : gain de 10
+à 13 % de SEEL à ±0,005 sur trois, neutre sur la quatrième. Une graine de jugement par banc, trois fois 1 000 tirages.
+
+`strat_local_search_guard` est armé par défaut depuis le 2026-10-23, sur décision de 👤 (changement de défaut voulu pour l'étage).

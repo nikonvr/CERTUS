@@ -88,6 +88,15 @@ code du 2026-10-19, audit d'arrêt OMS du 2026-10-10 : rapports datés dans `rep
 | ALG-09/10/11 | Sobol/clustering à profiler ; extinction contre consolidation ; Needle analytique, corridors, GD/GDD, couleur | `PGlobalOptimizer` … | piste |
 | ALG-12 | Pénalité `min_d` : coût, coût avec gradient et gradient disent trois choses (`MIN_THICKNESS` = 0,01 nm) | `certus_design_core`, `cost_numba_fast` | latent |
 | ALG-13 | Polissage final : 12 gradients après la demande d'arrêt (R05) | `OptimWorker.run` | à reproduire |
+| ALG-14 | Scan Needle avec face arrière sans cache : toute la pile recalculée par position | `needle_scan_cached_backside` (remplace `_run_needle_fallback_scan`) | corrigé ; ×14 à ×39, même aiguille ; suivi au banc `needle_scan_backside` |
+| ALG-15 | L'export écrivait dans le tableau un meilleur résultat d'une autre structure | `ExportManager._sync_export_result_with_best_eval` | corrigé `76349415` |
+| ALG-16 | Le bloc `optim` des fichiers d'exemple était ignoré au chargement | `StateManager._apply_config` | corrigé `a813fa64` |
+| ALG-17 | La session de décimation Pareto ne se refermait jamais | `_clear_smart_decimation_state` | corrigé `08f7e7e6` |
+| ALG-18 | Champion et relances jugés sur le RMSE d'un autre design (export « 0,00013 » pour 0,0029) | `_restore_smart_decimation_best_overall`, `_restart_from_best` | corrigé `0f11743f` ; tenue des enregistrements Pareto à revoir |
+| ALG-19 | La règle finale des 5 nm retire des couches sans réoptimiser | `_apply_5nm_minimum` | ouvert ; contourné (champion conforme, plancher du mémétique) |
+| ALG-20 | L'étape globale PGLOBAL borne chaque couche à 1,2 QWOT | `optim_bounds_thickness_global` | ouvert ; le mémétique monte à 3 QWOT |
+| ALG-21 | `floor_at_end` : des couches fines réapparaissent après les aiguilles | `_apply_floor_at_end` | ouvert, option inactive |
+| ALG-22 | RMSE de la fenêtre sous celui de la grille fixe, même à 420 points par cible | `_calculate_tikhonravov_points` | à reproduire |
 | C20 | Gradient hérité faux sur couches absorbantes (D113) | `compute_gradient_all_layers_analytic` | ouvert |
 | C06/C07 | Nœud NaN → `n = k = 0` (D108) ; épaisseur négative acceptée (D109) | `get_nk_from_spline`, `calculate_RT_vectorized_real` | ouvert |
 | C21/C22 | Entrées invalides (NaN, k < 0, n = 0) rendues en fini plausible (D114) | noyaux `fastmath`, `certus_inputs` | ouvert ; politique k < 0 à trancher |

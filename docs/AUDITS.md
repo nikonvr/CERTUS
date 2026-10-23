@@ -97,6 +97,12 @@ code du 2026-10-19, audit d'arrêt OMS du 2026-10-10 : rapports datés dans `rep
 | ALG-20 | L'étape globale PGLOBAL borne chaque couche à 1,2 QWOT | `optim_bounds_thickness_global` | ouvert ; le mémétique monte à 3 QWOT |
 | ALG-21 | `floor_at_end` : des couches fines réapparaissent après les aiguilles | `_apply_floor_at_end` | ouvert, option inactive |
 | ALG-22 | RMSE de la fenêtre sous celui de la grille fixe, même à 420 points par cible | `_calculate_tikhonravov_points` | à reproduire |
+| ALG-23 | Enfants du mémétique polis un à un, chaque évaluation n'occupant que ~140 longueurs d'onde sur 8 fils | `run_memetic` | piste ; polissages concurrents (noyaux `nogil`), ×4–×6 estimé, à chronométrer à qualité égale |
+| ALG-24 | Chaque relance refait 1000 enfants depuis un design déjà très bon | `_restart_from_best` | piste ; 300 enfants aux tours suivants, ×2–×3 estimé, qualité à vérifier |
+| ALG-25 | Incidence normale avec face arrière évaluée par la machinerie oblique à 0° (0,21 s par évaluation sur Bonne Mère) | `compute_oblique_backside_bundle_analytic` | piste ; chemin normal dédié, gain à mesurer |
+| ALG-26 | Scan Needle oblique (s, p) sans cache : toute la pile recalculée par position | `_run_needle_fallback_scan` | piste ; même cache qu'ALG-14, ×10–×40 estimé |
+| ALG-27 | Criblage des enfants par polissage court (`memetic_screen_maxiter`, 0 par défaut) jamais mesuré | `run_memetic` | piste ; ×2 estimé, risque sur la qualité |
+| ALG-28 | Trois appelants recompilés à chaque démarrage (parade C18, `cache=False`) | `calc_spectrum_front`, `calc_spectrum_full`, `compute_batch_rmse` | piste ; quelques secondes par lancement |
 | C20 | Gradient hérité faux sur couches absorbantes (D113) | `compute_gradient_all_layers_analytic` | ouvert |
 | C06/C07 | Nœud NaN → `n = k = 0` (D108) ; épaisseur négative acceptée (D109) | `get_nk_from_spline`, `calculate_RT_vectorized_real` | ouvert |
 | C21/C22 | Entrées invalides (NaN, k < 0, n = 0) rendues en fini plausible (D114) | noyaux `fastmath`, `certus_inputs` | ouvert ; politique k < 0 à trancher |

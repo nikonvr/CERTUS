@@ -57,14 +57,12 @@ from certus.metal.certus_metal_common import (
     DEFAULT_TOL,
     DEFAULT_UPDATING,
     DEFAULT_WORKERS,
-    MetalBaseApp,
     MetalOptimizationWorker,
     build_metal_startup_log_lines,
     build_metal_target_data,
     elevate_spline_knots,
     normalize_metal_progress_payload,
     setup_beam_analysis_thread,
-    setup_common_metal_plots,
     teardown_beam_thread,
 )
 from certus.metal.pglobal_adapter import run_pglobal_optimization
@@ -74,8 +72,10 @@ from certus.ui.certus_ui import (
     CertusScientificPlot,
     CertusTheme,
     FlashyCard,
+    MetalBaseApp,
     create_info_icon,
     get_export_config,
+    setup_common_metal_plots,
     show_toast,
 )
 from certus.utils.certus_data import OPENPYXL_AVAILABLE

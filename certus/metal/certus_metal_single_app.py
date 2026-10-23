@@ -51,7 +51,6 @@ from certus.metal.certus_metal_common import (
     DEFAULT_TOL,
     DEFAULT_UPDATING,
     DEFAULT_WORKERS,
-    MetalBaseApp,
     MetalOptimizationWorker,
     build_metal_progress_status_text,
     build_metal_startup_log_lines,
@@ -59,7 +58,6 @@ from certus.metal.certus_metal_common import (
     elevate_spline_knots,
     normalize_metal_progress_payload,
     setup_beam_analysis_thread,
-    setup_common_metal_plots,
     teardown_beam_thread,
 )
 from certus.metal.certus_metal_single_physics import (
@@ -77,8 +75,10 @@ from certus.ui.certus_ui import (
     CertusScientificPlot,
     CertusTheme,
     FlashyCard,
+    MetalBaseApp,
     get_export_config,
     open_data_file_and_read,
+    setup_common_metal_plots,
     show_toast,
 )
 from certus.utils.certus_data import (

@@ -1,0 +1,1809 @@
+"""METAL: the Qt base application and the shared plot set-up of the two METAL apps (moved out of
+certus.metal.certus_metal_common, A8b / D26: the computation stays below the interface layer)."""
+
+import functools
+import logging
+import os
+import traceback
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+import pyqtgraph as pg
+import scipy.optimize
+from PyQt6.QtCore import QEvent, QObject, Qt, QThread, QTimer, pyqtSignal, pyqtSlot
+from PyQt6.QtWidgets import (
+    QComboBox,
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QPushButton,
+    QScrollArea,
+    QSplitter,
+    QStatusBar,
+    QStyle,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
+)
+
+from certus.core.certus_core import (
+    NUMERICAL_FAULT_EXCEPTIONS,
+    get_resource_path,
+)
+from certus.core.certus_metrology import ValidationStatus
+from certus.metal.certus_metal_defaults import (
+    DEFAULT_EM_MAX,
+    DEFAULT_EM_MIN,
+    DEFAULT_EXCEL_FILENAME,
+    DEFAULT_MAXITER,
+    DEFAULT_MIN_KNOT_DISTANCE,
+    DEFAULT_MUTATION_MAX,
+    DEFAULT_MUTATION_MIN,
+    DEFAULT_NK_MAX,
+    DEFAULT_NK_MIN,
+    DEFAULT_NUM_KNOTS,
+    DEFAULT_POPSIZE,
+    DEFAULT_RECOMBINATION,
+    DEFAULT_TOL,
+    DEFAULT_UPDATING,
+    DEFAULT_WORKERS,
+)
+from certus.ui.certus_plot import CertusScientificPlot
+from certus.ui.certus_ui import (
+    DATA_FILES_FILTER_EXTENDED,
+    CertusActionBar,
+    CertusBaseApp,
+    CertusCard,
+    CertusLogPanel,
+    CertusStatusPill,
+    CertusTheme,
+    CertusThemeToggle,
+    DetachedPlotWindow,
+    EnhancedProgressWidget,
+    apply_certus_theme,
+    clone_plot_widget,
+    confirm_stop_with_timeout,
+    create_header_logo_widget,
+    create_styled_button,
+    enable_file_drop,
+    format_count_kmg,
+    get_export_config,
+    install_standard_shortcuts,
+    open_data_file_and_read,
+    open_documentation,
+    open_dropped_file,
+    show_toast,
+    stop_worker_and_thread,
+)
+from certus.utils.certus_data import (
+    ReportSection,
+    build_standard_report,
+    read_data_file_robust,
+)
+from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
+from certus.utils.certus_services import IndexFitRequest, IndexFitService
+from certus.utils.certus_ux import OBJ, build_premium_overrides
+
+
+def setup_common_metal_plots(app) -> None:
+    """Create the common METAL `n & k` tab widgets and wiring."""
+
+    app.clues_plot = CertusScientificPlot(
+        app,
+        "Optimized Metal Optical Constants (n, k)",
+        "Refractive Index (n)",
+        "Wavelength (nm)",
+    )
+
+    app.p1 = app.clues_plot.getPlotItem()
+
+    app.p2 = pg.ViewBox()
+
+    app.p1.showAxis("right")
+
+    app.p1.scene().addItem(app.p2)
+
+    app.p1.getAxis("right").linkToView(app.p2)
+
+    app.p2.setXLink(app.p1)
+
+    app.p1.getAxis("left").setLabel(
+        "Refractive Index (n)",
+        color=CertusTheme.CHART_PRIMARY,
+    )
+
+    app.p1.getAxis("right").setLabel(
+        "Extinction Coefficient (k)",
+        color=CertusTheme.CHART_DANGER,
+    )
+
+    app.n_curve = pg.PlotCurveItem(pen=pg.mkPen(CertusTheme.CHART_PRIMARY, width=2))
+
+    app.k_curve = pg.PlotCurveItem(pen=pg.mkPen(CertusTheme.CHART_DANGER, width=2, style=Qt.PenStyle.DashLine))
+
+    app.p1.addItem(app.n_curve)
+
+    app.p2.addItem(app.k_curve)
+
+    def _sync_p2_geometry(*_args) -> None:
+        try:
+            if app.p1 is None or app.p2 is None or app.p1.vb is None:
+                return
+            scene_rect = app.p1.vb.sceneBoundingRect()
+            if scene_rect.isValid() and scene_rect.width() > 0 and scene_rect.height() > 0:
+                app.p2.setGeometry(scene_rect)
+        except NUMERICAL_FAULT_EXCEPTIONS:
+            return
+
+    app.p1.vb.sigResized.connect(_sync_p2_geometry)
+
+    app.tabs.addTab(app.clues_plot, "n, k")
+
+
+class MetalBaseApp(CertusBaseApp):
+    """Base Class for Metal Characterization Apps (Single & Bilayer).
+
+    Provides shared UI layout, file loading, and export logic."""
+
+    # Module ID for help (override in subclass)
+
+    MODULE_ID = "METAL"
+
+    def _uninstall_all_skeletons(self) -> None:
+        """Uninstall all skeleton overlays from plots."""
+        try:
+            from certus.ui.certus_ui import remove_skeleton_loader
+            for plot_attr in ["mse_plot", "reflectance_plot", "diel_plot"]:
+                p = getattr(self, plot_attr, None)
+                if p:
+                    remove_skeleton_loader(p)
+        except Exception as e:
+            logging.getLogger("CERTUS").debug("Failsafe removing skeleton loaders: %s", e)
+
+    def __init__(self, app_name="CERTUS-METAL", app_title="Metal Characterization") -> None:
+
+        super().__init__()
+
+        self.APP_NAME = app_name
+
+        self.APP_TITLE = app_title
+
+        # Shared State
+
+        self.target_data = None
+
+        self.mse_data = {"iterations": [], "errors": []}
+
+        self.rmse_history = []
+
+        self._last_target_file = None
+
+        # Setup Logger
+
+        self._setup_logger(self.APP_NAME)
+
+        # Apply Theme (Shared styles)
+
+        self._apply_theme()
+
+        # Build UI
+
+        self.setup_ui()
+
+        # Finalize
+
+        self._finalize_init()
+
+        # Initialize detached plots tracking
+
+        self.detached_plot_windows = {}
+
+    def _load_defaults(self) -> None:
+        """Load default values for METAL applications"""
+
+        # Reset file selection
+
+        self.target_data = None
+
+        self._last_target_file = None
+
+        # Reset optimization data
+
+        self.mse_data = {"iterations": [], "errors": []}
+
+        self.rmse_history = []
+
+        self.beam_stats = None
+
+        # Reset UI elements
+
+        if hasattr(self, "btn_load"):
+            # Reset file selection display
+
+            pass  # File button doesn't show filename
+
+        # Reset parameter fields to defaults
+
+        if hasattr(self, "widgets"):
+            # Common metal defaults
+
+            default_params = {"eM_min": "5.0", "eM_max": "50.0", "eL_nominal": "100.0", "eL_variation": "20.0"}
+
+            for param, default_value in default_params.items():
+                if param in self.widgets:
+                    self.widgets[param].setText(default_value)
+
+    def _create_labeled_input(self, label_text, widget, tooltip_text=None) -> Any:
+        """Creates a horizontal layout with Label [Info] Widget (Shared)"""
+
+        layout = QHBoxLayout()
+
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        layout.setSpacing(10)
+
+        lbl = QLabel(label_text)
+
+        if tooltip_text:
+            lbl.setToolTip(tooltip_text)
+
+            widget.setToolTip(tooltip_text)
+
+        layout.addWidget(lbl)
+
+        if tooltip_text:
+            # Simple info icon
+
+            info_btn = QPushButton("?")
+
+            info_btn.setFixedSize(16, 16)
+
+            info_btn.setToolTip(tooltip_text)
+
+            info_btn.setStyleSheet(
+                f"border-radius: 8px; background: {CertusTheme.SECONDARY}; color: {CertusTheme.SECONDARY_LABEL}; font-weight: bold; border: none;"
+            )
+
+            layout.addWidget(info_btn)
+
+        layout.addStretch()
+
+        layout.addWidget(widget)
+
+        return layout
+
+    def update_lambda_filters(self) -> None:
+        """Updates wavelength filters (Shared)"""
+
+        if self.target_data is not None:
+            # handle both dict (SINGLE) and array (BILAYER potentially)
+
+            # MetalBaseApp.load_target_file stores numpy array in self.target_data usually?
+
+            # Wait, SINGLE stores dict {'lambda':..., 'R':...}
+
+            # BILAYER stores numpy array via on_file_loaded hook?
+
+            # Let's verify SINGLE vs BILAYER storage.
+
+            # SINGLE: self.target_data = {'lambda': wls, 'R': ...}
+
+            # BILAYER: self.target_data is stored as numpy array in base, but maybe overwritten?
+
+            # Let's check BILAYER again.
+
+            # BILAYER on_file_loaded: (data) -> assigns to self.target_data['lambda']? No.
+
+            # Standardization required.
+
+            # SINGLE uses dict. BILAYER uses?
+
+            # Logic needs to handle both or standardize.
+
+            # For now, safe check:
+
+            l_data = None
+
+            if isinstance(self.target_data, dict) and "lambda" in self.target_data:
+                l_data = self.target_data["lambda"]
+
+            elif isinstance(self.target_data, np.ndarray) and len(self.target_data.shape) > 1:
+                l_data = self.target_data[:, 0]
+
+            if l_data is not None:
+                min_l = l_data.min()
+
+                max_l = l_data.max()
+
+                if "lmin_filter" in self.widgets:
+                    self.widgets["lmin_filter"].setText(f"{min_l:.1f}")
+
+                if "lmax_filter" in self.widgets:
+                    self.widgets["lmax_filter"].setText(f"{max_l:.1f}")
+
+    def _get_param_bounds(self, name) -> tuple:
+        """Gets parameter bounds (Shared)"""
+
+        # Assumes self.widgets[name_min] and self.widgets[name_max] exist
+
+        p_min = float(self.widgets[f"{name}_min"].text())
+
+        p_max = float(self.widgets[f"{name}_max"].text())
+
+        if p_min == p_max:
+            p_max += 1e-9
+
+        return (p_min, p_max)
+
+    def detach_current_plot(self) -> None:
+        """Detaches current plot (Shared)"""
+
+        current_widget = self.tabs.currentWidget()
+
+        if current_widget is None:
+            return
+
+        current_index = self.tabs.currentIndex()
+
+        plot_name = f"plot_{current_index}"
+
+        plot_title = self.tabs.tabText(current_index)
+
+        if plot_name in self.detached_plot_windows:
+            if self.detached_plot_windows[plot_name].isVisible():
+                self.detached_plot_windows[plot_name].raise_()
+
+                return
+
+        try:
+            # Shared helper for cloning
+
+            detached_plot_copy = clone_plot_widget(current_widget, title_override=plot_title)
+
+            if detached_plot_copy is None:
+                return  # Or log error
+
+            detached_window = DetachedPlotWindow(detached_plot_copy, parent=self, title=plot_title)
+
+            detached_window.closed_signal.connect(functools.partial(self.reattach_plot, plot_name))
+
+            self.detached_plot_windows[plot_name] = detached_window
+
+            detached_window.show()
+
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
+            self.logger.error(f"Error creating detached window: {e}", exc_info=True)
+
+    def reattach_plot(self, plot_name: str) -> None:
+        """Reattaches detached plot (Shared)"""
+
+        if plot_name in self.detached_plot_windows:
+            detached_window = self.detached_plot_windows[plot_name]
+
+            detached_window.deleteLater()
+
+            del self.detached_plot_windows[plot_name]
+
+    def _apply_theme(self) -> None:
+        """Applies Certus theme with shared overrides"""
+
+        plots = [
+            getattr(self, "reflectance_plot", None),
+            getattr(self, "mse_plot", None),
+            getattr(self, "diel_plot", None),
+            getattr(self, "clues_plot", None),
+        ]
+
+        # Filter None
+
+        plots = [p for p in plots if p is not None]
+
+        apply_certus_theme(
+            self,
+            plots=plots,
+            overrides=f"""
+            {build_premium_overrides()}
+            """,
+        )
+
+        # Update extra widgets if they exist
+
+        if hasattr(self, "progress_widget"):
+            self.progress_widget.style().unpolish(self.progress_widget)
+
+            self.progress_widget.style().polish(self.progress_widget)
+
+    def setup_ui(self) -> None:
+        """Builds a premium METAL layout with clear workflow hierarchy."""
+
+        self.main_splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.main_split = self.main_splitter
+        self.setCentralWidget(self.main_splitter)
+
+        # === LEFT PANEL: Workflow / Controls ===
+        left_panel_widget = QWidget()
+        left_panel_widget.setMinimumWidth(340)
+        left_panel_outer = QVBoxLayout(left_panel_widget)
+        left_panel_outer.setContentsMargins(0, 0, 0, 0)
+        left_panel_outer.setSpacing(0)
+
+        self._create_header(left_panel_outer)
+
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(QScrollArea.Shape.NoFrame)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        left_panel_outer.addWidget(scroll_area, 1)
+
+        left_panel = QWidget()
+        scroll_area.setWidget(left_panel)
+        left_layout = QVBoxLayout(left_panel)
+        left_layout.setContentsMargins(0, 0, 4, 0)
+        left_layout.setSpacing(10)
+
+        workflow_card = CertusCard("Workflow")
+        workflow_hint = QLabel("1 Load data  →  2 Configure model  →  3 Run analysis  →  4 Review & export")
+        workflow_hint.setWordWrap(True)
+        workflow_hint.setStyleSheet(CertusTheme.get_hint_text_style())
+        workflow_card.body.addWidget(workflow_hint)
+        left_layout.addWidget(workflow_card)
+
+        self.params_widget = QWidget()
+        self.params_layout = QGridLayout(self.params_widget)
+        self.params_layout.setContentsMargins(0, 0, 0, 0)
+        self.params_layout.setHorizontalSpacing(10)
+        self.params_layout.setVerticalSpacing(10)
+        self._setup_parameter_grid(self.params_layout)
+        self._install_parameter_grid_reflow()
+
+        params_card = CertusCard("Parameters")
+        params_card.body.setContentsMargins(10, 8, 10, 10)
+        params_card.body.addWidget(self.params_widget)
+        left_layout.addWidget(params_card)
+        left_layout.addStretch()
+
+        actions_card = CertusCard("Actions")
+        actions_card.body.setContentsMargins(10, 8, 10, 10)
+        actions_layout = QVBoxLayout()
+        actions_layout.setContentsMargins(0, 0, 0, 0)
+        self._create_action_buttons(actions_layout)
+        actions_card.body.addLayout(actions_layout)
+        left_panel_outer.addWidget(actions_card, 0)
+
+        self.main_splitter.addWidget(left_panel_widget)
+
+        # === RIGHT PANEL: Results / Plots ===
+        self.right_splitter = QSplitter(Qt.Orientation.Vertical)
+
+        plot_container = QWidget()
+        plot_layout = QVBoxLayout(plot_container)
+        plot_layout.setContentsMargins(0, 0, 0, 0)
+        plot_layout.setSpacing(12)
+
+        plot_header = QWidget()
+        plot_header.setStyleSheet(f"background: {CertusTheme.SURFACE}; border-bottom: 1px solid {CertusTheme.BORDER};")
+        ph_layout = QHBoxLayout(plot_header)
+        ph_layout.setContentsMargins(6, 2, 6, 2)
+        detach_btn = create_styled_button("⬡  Detach Plot", "secondary")
+        detach_btn.setFixedHeight(24)
+        detach_btn.setToolTip("Detach the current plot tab into a separate floating window.")
+        detach_btn.clicked.connect(self.detach_current_plot)
+        ph_layout.addWidget(detach_btn)
+        ph_layout.addStretch()
+        plot_layout.addWidget(plot_header)
+
+        self.tabs = QTabWidget()
+        self.tabs.setDocumentMode(True)
+        self.tabs.setTabPosition(QTabWidget.TabPosition.North)
+        self._setup_plots()
+        plot_layout.addWidget(self.tabs)
+
+        self.right_splitter.addWidget(plot_container)
+
+        self.log_panel = CertusLogPanel(title="LOGS", visible=True, height=120, parent=self)
+        self._log_panel = self.log_panel
+        self.log_container = self.log_panel
+        self.log_text = self.log_panel.log_text
+        self.right_splitter.addWidget(self.log_panel)
+
+        self.right_splitter.setSizes([900, 0])
+        self.right_splitter.setCollapsible(0, False)
+        self.main_splitter.addWidget(self.right_splitter)
+        # NO stretch factor here, deliberately: pinning the left panel makes it
+        # claim its full minimumSizeHint (442-453 px) at 1366x768, which costs
+        # 3 points of plot area. Measured 2026-09-04 against tests/ui/ux_baseline_1366.json.
+        self.main_splitter.setSizes([440, 1080])
+
+        self._create_status_bar()
+
+        install_standard_shortcuts(
+            self,
+            save=getattr(self, "save_config", None),
+            load=getattr(self, "load_config", None),
+            run=getattr(self, "start_optimization", None),
+            stop=getattr(self, "stop_optimization", None),
+            help=lambda: open_documentation(getattr(self, "MODULE_ID", "CERTUS_METAL")),
+            toggle_logs=lambda: self.btn_details.setChecked(not self.btn_details.isChecked()),
+        )
+
+        def _on_data_drop(paths) -> None:
+            if paths and hasattr(self, "load_target_file"):
+                open_dropped_file(self, paths[0], self.load_target_file)
+
+        enable_file_drop(self, _on_data_drop, extensions=("csv", "xlsx", "xls", "txt"))
+
+    def _get_log_widget(self) -> Any:
+        """Override to return the log text widget."""
+
+        return getattr(self, "log_text", None)
+
+    def _create_header(self, layout) -> None:
+        """Shared header with Logo & Help using standardized widget"""
+
+        # Pass self.APP_TITLE as subtitle if desired, or a generic one
+
+        header = create_header_logo_widget(
+            title_text=self.APP_NAME.replace("CERTUS_", "").replace("_", " "),
+            subtitle_text=self.APP_TITLE,
+            module_name=self.MODULE_ID,
+        )
+
+        self.btn_theme = CertusThemeToggle(header)
+
+        header.layout().addWidget(self.btn_theme)
+
+        layout.addWidget(header)
+
+    def _setup_parameter_grid(self, layout) -> None:
+        """Override to add param groups"""
+
+        pass
+
+    def _install_parameter_grid_reflow(self) -> None:
+        """Stack the parameter cards in one column when the panel is too narrow.
+
+        The grid is built two cards wide (Physical | Material, Output | Live).
+        That fits the 554 px panel of a 1920 px window and does NOT fit the
+        384 px it gets at 1366x768. Measured 2026-09-04 at that size: the grid
+        demanded 469 px, so 143 px of METAL_SINGLE and 24 px of METAL_BILAYER
+        sat outside the viewport - and since the scroll area sets
+        ScrollBarAlwaysOff, nothing on screen said the content was there.
+
+        Re-adding the same widgets in one column costs vertical space, which the
+        panel already scrolls, and costs nothing horizontally.
+        """
+        # BILAYER nests its own QGridLayout inside params_layout via addLayout,
+        # so the cards are not direct children of params_layout. Take whichever
+        # grid actually holds them.
+        grid = self._find_parameter_grid(self.params_layout)
+        self._param_grid = grid
+        items = []
+        if grid is not None:
+            for i in range(grid.count()):
+                widget = grid.itemAt(i).widget()
+                if widget is not None:
+                    row, col, row_span, col_span = grid.getItemPosition(i)
+                    items.append((widget, row, col, row_span, col_span))
+        self._param_grid_items = items
+        self._param_grid_columns = 2
+        self._param_grid_two_col_min = 0
+        self._param_grid_reflowing = False
+        self.params_widget.installEventFilter(self)
+
+    @staticmethod
+    def _find_parameter_grid(layout, _depth: int = 0):
+        """The QGridLayout holding the parameter cards, however it was nested.
+
+        SINGLE adds the cards straight into params_layout. BILAYER builds its own
+        QGridLayout, wraps it in a bare QWidget and adds THAT, so the grid is a
+        child widget's layout rather than a sub-layout - searching only
+        sub-layouts found nothing and the reflow stayed inert.
+        """
+        from PyQt6.QtWidgets import QGridLayout
+
+        if layout is None or _depth > 4:
+            return None
+        if isinstance(layout, QGridLayout) and sum(
+            1 for i in range(layout.count()) if layout.itemAt(i).widget() is not None
+        ) >= 2:
+            return layout
+        for i in range(layout.count()):
+            item = layout.itemAt(i)
+            found = MetalBaseApp._find_parameter_grid(item.layout(), _depth + 1)
+            if found is not None:
+                return found
+            widget = item.widget()
+            if widget is not None:
+                found = MetalBaseApp._find_parameter_grid(widget.layout(), _depth + 1)
+                if found is not None:
+                    return found
+        return None
+
+    def _parameter_panel_overflow(self) -> int:
+        """How many pixels of the panel sit outside its viewport, if any."""
+        from PyQt6.QtWidgets import QScrollArea
+
+        node = self.params_widget.parentWidget()
+        while node is not None:
+            if isinstance(node, QScrollArea):
+                bar = node.horizontalScrollBar()
+                return int(bar.maximum()) if bar is not None else 0
+            node = node.parentWidget()
+        return 0
+
+    def _parameter_panel_viewport_width(self) -> int:
+        """Width the cards actually get, i.e. the scroll area's viewport."""
+        from PyQt6.QtWidgets import QScrollArea
+
+        node = self.params_widget.parentWidget()
+        while node is not None:
+            if isinstance(node, QScrollArea):
+                return node.viewport().width()
+            node = node.parentWidget()
+        return self.params_widget.width()
+
+    def eventFilter(self, obj, event) -> bool:
+        """Reflow the parameter grid when its own width changes."""
+        if obj is getattr(self, "params_widget", None) and event.type() == QEvent.Type.Resize:
+            self._reflow_parameter_grid()
+        return super().eventFilter(obj, event)
+
+    def _reflow_parameter_grid(self) -> None:
+        items = getattr(self, "_param_grid_items", None)
+        if not items or self._param_grid_reflowing:
+            return
+
+        # Remember what two columns actually demand; it is only observable while
+        # the grid IS in two columns.
+        grid = self._param_grid
+        if grid is None:
+            return
+
+        # Drive this from the overflow the panel ACTUALLY has, not from the
+        # grid's own minimum: on BILAYER the grid asks 350 px inside a 384 px
+        # viewport - it "fits" - while the card margins around it push the panel
+        # 24 px past the edge. The scrollbar's maximum is the only figure that
+        # accounts for every margin between the cards and the viewport.
+        viewport = self._parameter_panel_viewport_width()
+        overflow = self._parameter_panel_overflow()
+        if self._param_grid_columns == 2:
+            if overflow > 0:
+                # Remember the width at which two columns stopped fitting, so the
+                # way back is a measurement rather than a guessed threshold.
+                self._param_grid_two_col_min = viewport + overflow
+                wanted = 1
+            else:
+                wanted = 2
+        else:
+            needed = self._param_grid_two_col_min
+            wanted = 2 if (needed > 0 and viewport >= needed) else 1
+        if wanted == self._param_grid_columns:
+            return
+
+        self._param_grid_reflowing = True
+        try:
+            while grid.count():
+                grid.takeAt(0)
+            if wanted == 2:
+                for widget, row, col, row_span, col_span in items:
+                    grid.addWidget(widget, row, col, row_span, col_span)
+                grid.setColumnStretch(0, 1)
+                grid.setColumnStretch(1, 1)
+            else:
+                for index, (widget, *_position) in enumerate(items):
+                    grid.addWidget(widget, index, 0, 1, 1)
+                grid.setColumnStretch(0, 1)
+                grid.setColumnStretch(1, 0)
+            self._param_grid_columns = wanted
+        finally:
+            self._param_grid_reflowing = False
+
+    def _setup_plots(self) -> None:
+        """Override to add tabs"""
+
+        pass
+
+    def _create_action_buttons(self, layout) -> None:
+        """Start/Stop/Details"""
+
+        container = QVBoxLayout()
+
+        r1 = QHBoxLayout()
+
+        self.btn_run = QPushButton("▶  Run")
+        self.btn_run.setObjectName(OBJ.PRIMARY_BUTTON)
+        self.btn_run.setCursor(Qt.CursorShape.PointingHandCursor)
+
+        self.btn_run.setFixedHeight(40)
+
+        self.btn_run.setToolTip("Run the optimization pipeline to extract the metal optical constants.")
+
+        self.btn_run.clicked.connect(self.start_optimization)  # Subclass must implement start_optimization
+
+        r1.addWidget(self.btn_run)
+
+        self.btn_stop = QPushButton("■  Halt")
+        self.btn_stop.setObjectName(OBJ.DANGER_BUTTON)
+        self.btn_stop.setCursor(Qt.CursorShape.PointingHandCursor)
+
+        self.btn_stop.setFixedHeight(40)
+
+        self.btn_stop.setEnabled(False)
+
+        self.btn_stop.setToolTip("Halt the running optimization and keep the best result found so far.")
+
+        self.btn_stop.clicked.connect(self.stop_optimization)
+
+        r1.addWidget(self.btn_stop)
+
+        container.addLayout(r1)
+
+        # Beam Analysis Button (Subclasses enable it)
+
+        try:
+            self.btn_beam = QPushButton("Beam Scan")
+
+            beam_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView)
+
+            self.btn_beam.setIcon(beam_icon)
+
+        except (ImportError, AttributeError):
+            self.btn_beam = QPushButton("Beam Analysis")
+
+        self.btn_beam.setFixedHeight(34)
+
+        self.btn_beam.setEnabled(False)  # Disabled until optimization finishes
+
+        self.btn_beam.setToolTip(
+            "Run a beam scan: vary thickness (eM) around the optimum to map the\n"
+            "RMSE valley and assess solution uniqueness."
+        )
+
+        self.btn_beam.setStyleSheet(
+            f"background: {CertusTheme.BACKGROUND}; color: {CertusTheme.TEXT_MAIN}; border: 1px solid {CertusTheme.BORDER}; border-radius: 4px;"
+        )
+
+        # Connect to hypothetical handler (subclass must implement or crash/noop)
+
+        def _start_beam_analysis_if_available(*_args) -> None:
+            getattr(self, "start_beam_analysis", lambda: None)()
+
+        self.btn_beam.clicked.connect(_start_beam_analysis_if_available)
+
+        action_bar = CertusActionBar()
+
+        action_bar.add_widget(self.btn_beam)
+
+        self.btn_details = QPushButton("Logs")
+        self.btn_details.setFixedHeight(34)
+
+        self.btn_details.setCheckable(True)
+
+        self.btn_details.setToolTip("Show or hide the live log panel below the plots.")
+
+        self.btn_details.clicked.connect(self.on_toggle_details)
+
+        action_bar.add_widget(self.btn_details)
+
+        from certus.utils.certus_reset_framework import create_reset_button
+
+        self.clear_btn = create_reset_button(self)
+
+        action_bar.add_widget(self.clear_btn)
+
+        action_bar.add_stretch()
+
+        container.addWidget(action_bar)
+
+        layout.addLayout(container)
+
+    def on_toggle_details(self, checked) -> None:
+
+        self.log_container.setVisible(checked)
+
+        h = self.right_splitter.height()
+
+        if checked:
+            self.right_splitter.setSizes([int(h * 0.8), int(h * 0.2)])
+
+        else:
+            self.right_splitter.setSizes([h, 0])
+
+    # === SHARED UI COMPONENT FACTORIES ===
+
+    def _create_group_box(self, title) -> tuple:
+
+        c = CertusCard(title)
+
+        lay = c.body
+
+        lay.setSpacing(10)
+
+        lay.setContentsMargins(8, 12, 8, 8)
+
+        return c, lay
+
+    def _create_divider(self) -> QWidget:
+        """Create a subtle horizontal divider for premium grouping."""
+
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Plain)
+        line.setStyleSheet(f"color: {CertusTheme.BORDER}; background: {CertusTheme.BORDER};")
+        line.setFixedHeight(1)
+        return line
+
+    def _create_input_group(self) -> Any:
+
+        c, lay = self._create_group_box("Input Data")
+
+        self.btn_load = create_styled_button(" Load File...", "secondary")
+        self.btn_load.setToolTip(
+            "Load a data file (CSV or Excel) containing columns:\n"
+            "λ (nm), R, [T], [Rback] — percentage or 0-1 scale accepted."
+        )
+        self.btn_load.clicked.connect(self.load_target_file)
+        lay.addWidget(self.btn_load)
+
+        self.lbl_file = QLabel("No file loaded")
+        self.lbl_file.setStyleSheet(CertusTheme.get_hint_text_style())
+        lay.addWidget(self.lbl_file)
+
+        self.workflow_status = QLabel("Ready to load a spectrum")
+        self.workflow_status.setStyleSheet(CertusTheme.get_hint_text_style())
+        lay.addWidget(self.workflow_status)
+        lay.addWidget(self._create_divider())
+
+        lay.addWidget(QLabel("Wavelength filter"))
+
+        fl = QGridLayout()
+        fl.setContentsMargins(0, 0, 0, 0)
+        fl.setHorizontalSpacing(8)
+        fl.setVerticalSpacing(6)
+
+        fl.addWidget(QLabel("λ min"), 0, 0)
+        self.widgets["lmin_filter"] = QLineEdit()
+        self.widgets["lmin_filter"].setToolTip(
+            "Minimum wavelength (nm) used for fitting. Rows below this value are excluded."
+        )
+        fl.addWidget(self.widgets["lmin_filter"], 0, 1)
+
+        fl.addWidget(QLabel("λ max"), 1, 0)
+        self.widgets["lmax_filter"] = QLineEdit()
+        self.widgets["lmax_filter"].setToolTip(
+            "Maximum wavelength (nm) used for fitting. Rows above this value are excluded."
+        )
+        fl.addWidget(self.widgets["lmax_filter"], 1, 1)
+
+        lay.addLayout(fl)
+        return c
+
+    def _create_output_group(self) -> Any:
+
+        c = CertusCard("Output")
+        lay = QGridLayout()
+        lay.setContentsMargins(8, 12, 8, 8)
+        lay.setHorizontalSpacing(8)
+        lay.setVerticalSpacing(6)
+        c.body.addLayout(lay)
+
+        self.widgets["excel_filename"] = QLineEdit(DEFAULT_EXCEL_FILENAME)
+        self.widgets["excel_filename"].setToolTip("Name of the Excel output file. Written to the reports/ directory.")
+
+        lay.addWidget(QLabel("File"), 0, 0)
+        lay.addWidget(self.widgets["excel_filename"], 0, 1)
+        return c
+
+    def _create_physical_params_group(self, show_el: bool = False, el_defaults: tuple = ("900", "20")) -> CertusCard:
+        """
+
+        Creates standardized Physical Parameters group.
+
+        Args:
+
+            show_el: If True, includes eL (dielectric layer) parameters
+
+            el_defaults: Default values for (eL_nominal, eL_variation)
+
+        Returns:
+
+            CertusCard with configured inputs stored in self.widgets
+
+        """
+
+        c, lay = self._create_group_box("Physical Parameters")
+
+        self.widgets["eM_min"] = QLineEdit(str(DEFAULT_EM_MIN))
+        self.widgets["eM_max"] = QLineEdit(str(DEFAULT_EM_MAX))
+
+        row = QHBoxLayout()
+        row.addWidget(QLabel("Metal thickness range (nm)"))
+        row.addStretch()
+        row.addWidget(QLabel("Min"))
+        row.addWidget(self.widgets["eM_min"])
+        row.addWidget(QLabel("Max"))
+        row.addWidget(self.widgets["eM_max"])
+        lay.addLayout(row)
+
+        if show_el:
+            self.widgets["eL_nominal"] = QLineEdit(el_defaults[0])
+            self.widgets["eL_variation"] = QLineEdit(el_defaults[1])
+
+            row2 = QHBoxLayout()
+            row2.addWidget(QLabel("Dielectric layer (nm)"))
+            row2.addStretch()
+            row2.addWidget(QLabel("Nominal"))
+            row2.addWidget(self.widgets["eL_nominal"])
+            row2.addWidget(QLabel("±"))
+            row2.addWidget(self.widgets["eL_variation"])
+            lay.addLayout(row2)
+
+        return c
+
+    def _create_material_params_group(
+        self, show_diel_model: bool = False, substrate_options: list | None = None
+    ) -> CertusCard:
+        """
+
+        Creates standardized Material Parameters group (Spline knots).
+
+        Args:
+
+            show_diel_model: If True, includes dielectric model inputs (n_inf, A)
+
+            substrate_options: List of substrate names for combo box
+
+        Returns:
+
+            CertusCard with configured inputs stored in self.widgets
+
+        """
+
+        c, lay = self._create_group_box("Material Parameters")
+
+        row1 = QHBoxLayout()
+        row1.addWidget(QLabel("Spline knots"))
+        row1.addStretch()
+
+        self.widgets["num_knots"] = QLineEdit(str(DEFAULT_NUM_KNOTS))
+        self.widgets["num_knots"].setFixedWidth(50)
+        row1.addWidget(QLabel("Count"))
+        row1.addWidget(self.widgets["num_knots"])
+
+        self.widgets["nk_min"] = QLineEdit(str(DEFAULT_NK_MIN))
+        self.widgets["nk_min"].setFixedWidth(40)
+        self.widgets["nk_max"] = QLineEdit(str(DEFAULT_NK_MAX))
+        self.widgets["nk_max"].setFixedWidth(40)
+        row1.addSpacing(8)
+        row1.addWidget(QLabel("n/k"))
+        row1.addWidget(self.widgets["nk_min"])
+        row1.addWidget(QLabel("to"))
+        row1.addWidget(self.widgets["nk_max"])
+        lay.addLayout(row1)
+
+        row2 = QHBoxLayout()
+        row2.addWidget(QLabel("Minimum knot distance (nm)"))
+        row2.addStretch()
+        self.widgets["min_knot_dist"] = QLineEdit(str(DEFAULT_MIN_KNOT_DISTANCE))
+        self.widgets["min_knot_dist"].setFixedWidth(60)
+        row2.addWidget(self.widgets["min_knot_dist"])
+        lay.addLayout(row2)
+
+        if show_diel_model:
+            row3 = QHBoxLayout()
+            row3.addWidget(QLabel("Dielectric model"))
+            row3.addStretch()
+            row3.addWidget(QLabel("n∞"))
+            self.widgets["n_inf"] = QLineEdit("1.46")
+            self.widgets["n_inf"].setFixedWidth(50)
+            row3.addWidget(self.widgets["n_inf"])
+            row3.addWidget(QLabel("A"))
+            self.widgets["A_coeff"] = QLineEdit("3500")
+            self.widgets["A_coeff"].setFixedWidth(60)
+            row3.addWidget(self.widgets["A_coeff"])
+            lay.addLayout(row3)
+
+        if substrate_options:
+            row4 = QHBoxLayout()
+            row4.addWidget(QLabel("Substrate"))
+            row4.addStretch()
+            self.widgets["substrate"] = QComboBox()
+            self.widgets["substrate"].addItems(substrate_options)
+            row4.addWidget(self.widgets["substrate"])
+            lay.addLayout(row4)
+
+        return c
+
+    def _create_live_params_group(self) -> CertusCard:
+        """
+
+        Creates standardized Live Parameters display group (updated during optimization).
+
+        Returns:
+
+            CertusCard with QLabel widgets stored in self.widgets
+
+        """
+
+        c, lay = self._create_group_box("Live Parameters")
+
+        row1 = QHBoxLayout()
+        row1.addWidget(QLabel("Thickness"))
+        row1.addStretch()
+        self.widgets["live_eM"] = QLabel("--")
+        self.widgets["live_eM"].setStyleSheet(f"font-weight: bold; color: {CertusTheme.PRIMARY};")
+        row1.addWidget(self.widgets["live_eM"])
+        row1.addWidget(QLabel("nm"))
+        lay.addLayout(row1)
+
+        row2 = QHBoxLayout()
+        row2.addWidget(QLabel("RMSE"))
+        row2.addStretch()
+        self.widgets["live_MSE"] = QLabel("--")
+        self.widgets["live_MSE"].setStyleSheet(f"font-weight: bold; color: {CertusTheme.SUCCESS};")
+        row2.addWidget(self.widgets["live_MSE"])
+        lay.addLayout(row2)
+
+        row3 = QHBoxLayout()
+        row3.addWidget(QLabel("Iterations"))
+        row3.addStretch()
+        self.widgets["live_iter"] = QLabel("--")
+        row3.addWidget(self.widgets["live_iter"])
+        lay.addLayout(row3)
+
+        return c
+
+    def _create_status_bar(self) -> None:
+
+        self.status_bar = QStatusBar()
+
+        self.setStatusBar(self.status_bar)
+
+        self.status_bar.setStyleSheet(CertusTheme.get_status_bar_stylesheet())
+
+        self.status_label = CertusStatusPill("Ready", "ready")
+        self.status_label.setToolTip("Current application state and optimization progress.")
+
+        self.status_bar.addWidget(self.status_label, 1)
+
+        self.stat_counters = {"MS": 0, "MCS": 0, "SP": 0}
+
+        self.stats_label = QLabel(" 0  |  0  |   0")
+
+        self.stats_label.setToolTip(
+            " Objective function evaluations  |   Monte Carlo / iterations  |   Spectral points processed"
+        )
+
+        self.status_bar.addPermanentWidget(self.stats_label)
+
+        self.progress_widget = EnhancedProgressWidget()
+        self.progress_widget.setToolTip("Optimization progress and live convergence feedback.")
+
+        self.status_bar.addPermanentWidget(self.progress_widget)
+
+        self.btn_theme = CertusThemeToggle(self)
+        self.btn_theme.setToolTip("Toggle between light and dark themes.")
+
+        self.status_bar.addPermanentWidget(self.btn_theme)
+
+    def load_target_file(self, filepath=None) -> bool:
+        """robust loading logic (Shared). Returns True once the file is loaded, False when none was chosen or it failed."""
+
+        if filepath is None or isinstance(filepath, bool):
+            filepath, df = open_data_file_and_read(
+                self,
+                "Open Reflectance File",
+                DATA_FILES_FILTER_EXTENDED,
+            )
+
+            if filepath is None:
+                return False
+
+        else:
+            df = read_data_file_robust(filepath)
+
+        if not filepath:
+            return False
+
+        try:
+            # Basic validation
+            if len(df.columns) < 2:
+                raise ValueError("Files needs >= 2 cols")
+
+            # Store raw data (subclass processes it)
+            self._last_target_file = filepath
+            self.lbl_file.setText(Path(filepath).name)
+            if hasattr(self, "workflow_status"):
+                self.workflow_status.setText("Spectrum loaded — configure parameters and run")
+
+            # Common processing: wavelengths
+
+            data = df.to_numpy()
+
+            data = data[data[:, 0].argsort()]  # Sort lambda
+
+            self.target_data = data  # Store raw
+
+            self.logger.info(f"Loaded spectrum {Path(filepath).name} — {len(data)} points")
+
+            if os.environ.get("QT_QPA_PLATFORM", "").lower() != "offscreen":
+                n_rows = int(data.shape[0]) if isinstance(data, np.ndarray) else 0
+
+                finite_wls = data[:, 0][np.isfinite(data[:, 0])] if n_rows > 0 else np.array([])
+                lmin = float(np.min(finite_wls)) if finite_wls.size > 0 else float("nan")
+                lmax = float(np.max(finite_wls)) if finite_wls.size > 0 else float("nan")
+
+                _sub_w = self.widgets.get("substrate")
+                substrate_txt = (_sub_w.currentText() if _sub_w is not None else "(unknown)").upper()
+
+                _ncols = int(data.shape[1]) if isinstance(data, np.ndarray) and data.ndim == 2 else 0
+                faces_txt = f"{_ncols - 1} column(s)" if _ncols > 1 else "(unknown)"
+
+                summary = build_summary_plain_text(
+                    "CERTUS METAL - Load Summary",
+                    [
+                        f"File: {Path(filepath).resolve(strict=False)}",
+                        "",
+                        "General",
+                        f"SUBSTRATE: {substrate_txt}",
+                        f"FACES: {faces_txt}",
+                        (f"Rows: {n_rows}", n_rows <= 0),
+                        "",
+                        "Data",
+                        (
+                            f"Columns: {int(data.shape[1]) if isinstance(data, np.ndarray) and data.ndim == 2 else 0}",
+                            False,
+                        ),
+                        (
+                            f"Wavelength range: [{lmin:.1f}, {lmax:.1f}] nm",
+                            not (np.isfinite(lmin) and np.isfinite(lmax) and lmax > lmin),
+                        ),
+                    ],
+                )
+
+                show_load_summary_dialog(self, "METAL Load Summary", summary)
+
+            # Subclass hook
+
+            if hasattr(self, "on_file_loaded"):
+                self.on_file_loaded(data)
+            return True
+
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
+            QMessageBox.warning(self, "Load Error", str(e))
+            return False
+
+    def update_stats_display(self) -> None:
+
+        self.stats_label.setText(
+            f" {format_count_kmg(self.stat_counters['MS'])}  |  {format_count_kmg(self.stat_counters['MCS'])}  |   {format_count_kmg(self.stat_counters['SP'])}"
+        )
+
+    def on_stats_update(self, ctype, inc) -> None:
+
+        if ctype in self.stat_counters:
+            self.stat_counters[ctype] += inc
+
+            self.update_stats_display()
+
+    def on_optimization_error(self, error_message) -> None:
+        """Handles optimization error"""
+        self._uninstall_all_skeletons()
+        self.progress_widget.stop("Error")
+        QMessageBox.critical(self, "Optimization Error", error_message)
+        self.btn_run.setEnabled(True)
+        self.btn_stop.setEnabled(False)
+
+    def _on_beam_error(self, error_message) -> None:
+        """Handles beam analysis error"""
+        self._uninstall_all_skeletons()
+        self.progress_widget.stop("Error: Beam")
+        QMessageBox.critical(self, "Beam Analysis Error", error_message)
+        self.btn_run.setEnabled(True)
+        self.btn_beam.setEnabled(True)
+        self.btn_stop.setEnabled(False)
+
+    _COMPUTATION_THREADS = ("optimization_thread", "beam_thread")
+
+    def closeEvent(self, event) -> None:
+        """Clean up all worker threads on close."""
+        if not self.confirm_close_during_run(event):  # D41: ask before the workers below are stopped
+            return
+        for attr in ("worker", "beam_worker"):
+            w = getattr(self, attr, None)
+            if w and hasattr(w, "stop"):
+                w.stop()
+        for attr in ("optimization_thread", "beam_thread"):
+            t = getattr(self, attr, None)
+            if t is not None:
+                try:
+                    if t.isRunning():
+                        t.quit()
+
+                        if not t.wait(2000):
+                            logging.critical(
+                                f"{attr} did not stop within 2s in closeEvent - skipping terminate() to avoid unsafe thread kill."
+                            )
+
+                except RuntimeError:
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+
+        super().closeEvent(event)
+
+    # --- Config hooks (unified contract) ---
+    #
+    # ``_collect_config`` / ``_apply_config`` are the names used by
+    # :class:`CertusBaseApp` (``certus_ui.py``). METAL historically used
+    # ``_get_config_dict`` / ``_apply_config_dict``; both names are
+    # supported so existing subclasses (METAL_SINGLE / METAL_BILAYER) that
+    # override the legacy names keep working while new code can rely on the
+    # unified contract.
+
+    def _get_config_dict(self) -> dict:
+        """Legacy alias for :meth:`_collect_config` (kept for METAL subclasses)."""
+
+        return {}
+
+    def _apply_config_dict(self, config) -> None:
+        """Legacy alias for :meth:`_apply_config` (kept for METAL subclasses)."""
+
+        pass
+
+    def _collect_config(self) -> Any:
+        """Unified config collector. Defaults to :meth:`_get_config_dict` so
+
+        subclasses overriding the legacy hook keep working transparently."""
+
+        config = self._get_config_dict()
+
+        if getattr(self, "target_data", None) is not None:
+            config["target_file"] = getattr(self, "_last_target_file", "")
+            config["target_schema"] = "lambda_R_T_Rback"
+
+        if hasattr(self, "final_results") and self.final_results is not None:
+            result = self.final_results["result"]
+
+            config["optimization_result"] = {
+                "mse": float(result.fun),
+                "params": result.x.tolist(),
+                "nfev": int(result.nfev) if hasattr(result, "nfev") else 0,
+            }
+
+        return config
+
+    def _apply_config(self, config) -> None:
+        """Unified config applier. Defaults to :meth:`_apply_config_dict` so
+
+        subclasses overriding the legacy hook keep working transparently."""
+
+        if "physical_params" not in config:
+            raise ValueError("Invalid configuration file format.")
+
+        if "excel_filename" in self.widgets:
+            self.widgets["excel_filename"].setText(config.get("excel_filename", DEFAULT_EXCEL_FILENAME))
+
+        self._apply_config_dict(config)
+
+        filt = config.get("filters", {})
+
+        if "lmin_filter" in self.widgets:
+            self.widgets["lmin_filter"].setText(str(filt.get("lmin_filter", 400)))
+
+        if "lmax_filter" in self.widgets:
+            self.widgets["lmax_filter"].setText(str(filt.get("lmax_filter", 1000)))
+
+        self.update_lambda_filters()
+
+        target_file = config.get("target_file", "")
+
+        if target_file and Path(target_file).exists():
+            self.load_target_file(target_file)
+
+        elif target_file:
+            self.logger.warning(f"Target file from config not found: {target_file}")
+
+    def _post_save_config(self, filename: str) -> None:
+
+        QMessageBox.information(self, "Save Successful", f"Configuration saved to\n{filename}")
+
+    def _post_load_config(self, filename: str, config: dict) -> None:
+
+        if getattr(self, "_auto_batch_mode", False):
+            # An unattended batch has nobody to click a modal dialog: it would wait forever.
+            self.logger.info("Configuration loaded from %s", filename)
+            return
+
+        if os.environ.get("QT_QPA_PLATFORM", "").lower() != "offscreen":
+            p = config.get("physical_params", {}) if isinstance(config, dict) else {}
+
+            _sub_w = self.widgets.get("substrate")
+            substrate_txt = (_sub_w.currentText() if _sub_w is not None else "(unknown)").upper()
+
+            target_file = config.get("target_file", "")
+
+            summary = build_summary_plain_text(
+                "CERTUS METAL - Config Summary",
+                [
+                    f"File: {Path(filename).resolve(strict=False)}",
+                    "",
+                    "General",
+                    f"SUBSTRATE: {substrate_txt}",
+                    f"Target file from config: {target_file or '(none)'}",
+                    (
+                        f"Target file exists: {'yes' if (target_file and Path(target_file).exists()) else 'no'}",
+                        bool(target_file) and not Path(target_file).exists(),
+                    ),
+                    "",
+                    "Compatibility checks",
+                    f"Physical params keys: {len(p)}",
+                    (
+                        f"Optimization params present: {'yes' if 'optimization_params' in config else 'no'}",
+                        "optimization_params" not in config,
+                    ),
+                    (f"Filter params present: {'yes' if 'filters' in config else 'no'}", "filters" not in config),
+                ],
+            )
+
+            show_load_summary_dialog(self, "METAL Config Summary", summary)
+
+        QMessageBox.information(self, "Load Successful", f"Configuration loaded from\n{filename}")
+
+    # Abstract methods
+
+    def start_optimization(self) -> None:
+
+        raise NotImplementedError
+
+    def copy_logs_to_clipboard(self) -> None:
+        """Copy logs to clipboard (delegates to certus_ui.copy_app_logs_to_clipboard)."""
+        from certus.ui.certus_ui import copy_app_logs_to_clipboard
+        if copy_app_logs_to_clipboard(self) and hasattr(self, "status_label"):
+            self.status_label.setText("Logs copied to clipboard!")
+
+    def _metal_start_optimization(
+        self,
+        worker_class: type[QObject],
+        build_bounds_fn: Callable[[dict, np.ndarray], np.ndarray],
+        build_params_fn: Callable[[dict], None] | None = None,
+        before_run_fn: Callable[[dict], bool] | None = None,
+    ) -> None:
+        """Shared logic for starting metal optimization."""
+        if getattr(self, "optimization_thread", None) is not None:
+            try:
+                if self.optimization_thread.isRunning():
+                    if getattr(self, "worker", None):
+                        self.worker.stop()
+                    self.optimization_thread.quit()
+                    if not self.optimization_thread.wait(2000):
+                        logging.critical(
+                            "Optimization thread did not stop within 2s - skipping terminate() to avoid unsafe thread kill."
+                        )
+            except RuntimeError:
+                pass
+            self.optimization_thread = None
+            self.worker = None
+
+        if self.target_data is None:
+            from certus.utils.errors import show_error
+            show_error(self, "optim_no_data")
+            return
+        try:
+            has_points = len(self.target_data) > 0
+        except TypeError:
+            has_points = True
+        if not has_points:
+            from certus.utils.errors import show_error
+            show_error(self, "optim_no_data")
+            return
+
+        try:
+            p = {k: v.text() for k, v in self.widgets.items() if isinstance(v, QLineEdit)}
+            params = {k: float(v) for k, v in p.items() if k not in ["excel_filename"]}
+            
+            params.update(
+                {
+                    "excel_filename": self.widgets["excel_filename"].text(),
+                    "popsize": DEFAULT_POPSIZE,
+                    "maxiter": DEFAULT_MAXITER,
+                    "tol": DEFAULT_TOL,
+                    "mutation_min": DEFAULT_MUTATION_MIN,
+                    "mutation_max": DEFAULT_MUTATION_MAX,
+                    "recombination": DEFAULT_RECOMBINATION,
+                    "updating": DEFAULT_UPDATING,
+                    "workers": DEFAULT_WORKERS,
+                }
+            )
+
+            if build_params_fn:
+                build_params_fn(params)
+
+            mask = (self.target_data["lambda"] >= params["lmin_filter"]) & (
+                self.target_data["lambda"] <= params["lmax_filter"]
+            )
+            target_lambda_filtered = self.target_data["lambda"][mask]
+            
+            params["target_lambda"] = target_lambda_filtered
+            params["target_r"] = self.target_data["R"][mask]
+            
+            if "T" in self.target_data:
+                params["target_t"] = self.target_data["T"][mask]
+            if "Rback" in self.target_data:
+                params["target_rb"] = self.target_data["Rback"][mask]
+
+            if before_run_fn and not before_run_fn(params):
+                return
+
+            bounds = build_bounds_fn(params, target_lambda_filtered)
+            params["bounds"] = bounds
+
+        except (ValueError, KeyError) as e:
+            QMessageBox.critical(self, "Parameter Error", f"Invalid value: {e}")
+            return
+
+        self.mse_data = {"iterations": [], "errors": []}
+        self.mse_curve.setData([], [])
+        if hasattr(self, "diel_curve"):
+            self.diel_curve.setData([], [])
+
+        for label in [
+            "live_eM", "live_MSE", "live_eM_label", "live_eL_label",
+            "live_n_infini_label", "live_A_diel_label", "live_mse_label"
+        ]:
+            if label in self.widgets:
+                self.widgets[label].setText("...")
+
+        self.btn_run.setEnabled(False)
+        self.btn_stop.setEnabled(True)
+
+        self._last_worker_params = params.copy()
+        self.optimization_thread = QThread()
+        self.worker = worker_class(params)
+        self.worker.moveToThread(self.optimization_thread)
+
+        self.optimization_thread.started.connect(self.worker.run)
+        self.worker.finished.connect(self.on_optimization_finished)
+        self.worker.progress.connect(self.update_plots)
+        self.worker.progress.connect(self._on_optim_progress)
+        self.worker.error.connect(self.on_optimization_error)
+        self.worker.stats_update.connect(self.on_stats_update)
+
+        self.worker.finished.connect(self.optimization_thread.quit)
+        self.worker.error.connect(self.optimization_thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.optimization_thread.finished.connect(self.optimization_thread.deleteLater)
+
+        self._optim_max_iter = params.get("maxiter", DEFAULT_MAXITER)
+        self.progress_widget.start()
+        self.optimization_thread.start()
+
+        self.stat_counters = {"MS": 0, "MCS": 0, "SP": 0}
+        self.update_stats_display()
+
+    def stop_optimization(self) -> None:
+        """Confirm-then-stop for optimization and beam analysis workers.
+
+        Shared implementation used by both METAL_SINGLE and METAL_BILAYER.
+        Subclasses can override ``_extra_stop_cleanup`` for app-specific
+        post-stop logic.
+        """
+
+        self._uninstall_all_skeletons()
+
+        if not confirm_stop_with_timeout(self):
+            return
+
+        if hasattr(self, "progress_widget"):
+            self.progress_widget.stop("Cancelled")
+
+        logger = getattr(self, "logger", None)
+
+        stop_worker_and_thread(
+            getattr(self, "worker", None),
+            getattr(self, "optimization_thread", None),
+            timeout_ms=3000,
+            logger=logger,
+            label="Optimization thread",
+        )
+        stop_worker_and_thread(
+            getattr(self, "beam_worker", None),
+            getattr(self, "beam_thread", None),
+            timeout_ms=3000,
+            logger=logger,
+            label="Beam analysis thread",
+        )
+
+        if hasattr(self, "btn_run"):
+            self.btn_run.setEnabled(True)
+        if hasattr(self, "btn_beam"):
+            self.btn_beam.setEnabled(True)
+        if hasattr(self, "btn_stop"):
+            self.btn_stop.setEnabled(False)
+
+        extra = getattr(self, "_extra_stop_cleanup", None)
+        if callable(extra):
+            extra()
+
+    # --- Standard report adoption (P6, opt-in) -----------------------------
+    #
+    # ``export_via_builder`` lets METAL subclasses produce an Excel + HTML
+    # report through the unified :func:`certus_data.build_standard_report`
+    # instead of hand-rolling their own Excel writer + HTML generator. The
+    # existing ``export_results`` implementations are preserved; new code or
+    # migrations can call this helper directly.
+
+    def export_via_builder(
+        self,
+        sections: list[ReportSection],
+        *,
+        excel_path: str | None = None,
+        html_path: str | None = None,
+        html_title: str | None = None,
+    ) -> dict[str, bool]:
+        """Build a standard report (Excel + HTML) from ``sections``."""
+
+        title = html_title or f"{getattr(self, 'APP_TITLE', 'CERTUS')} — Report"
+        try:
+            self.set_validation_status("OK")
+        except (RuntimeError, AttributeError, TypeError, ValueError):
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+        run_manifest = None
+        try:
+            seed_val = None
+            for _seed_candidate in (
+                getattr(self, "run_seed", None),
+                getattr(self, "random_seed", None),
+                getattr(self, "ensemble_seed", None),
+                getattr(self, "_loaded_config", {}).get("seed")
+                if isinstance(getattr(self, "_loaded_config", None), dict)
+                else None,
+                getattr(self, "_loaded_config", {}).get("random_seed")
+                if isinstance(getattr(self, "_loaded_config", None), dict)
+                else None,
+                getattr(self, "_loaded_config", {}).get("ensemble_seed")
+                if isinstance(getattr(self, "_loaded_config", None), dict)
+                else None,
+            ):
+                if _seed_candidate is None:
+                    continue
+                try:
+                    seed_val = int(_seed_candidate)
+                    break
+                except (TypeError, ValueError):
+                    continue
+
+            status_txt = str(getattr(self, "validation_status", "OK") or "OK")
+            try:
+                status_val = ValidationStatus(status_txt)
+            except ValueError:
+                status_val = ValidationStatus.OK
+            svc = IndexFitService(runner=lambda _cfg: getattr(self, "_last_result", {}) or {})
+            req = IndexFitRequest(
+                config={
+                    "module": str(getattr(self, "MODULE_ID", "CERTUS_METAL")),
+                    "app_title": str(getattr(self, "APP_TITLE", "CERTUS METAL")),
+                },
+                source_paths=[
+                    p
+                    for p in (
+                        str(getattr(self, "filename", "") or "").strip(),
+                        str(getattr(self, "_last_config_file", "") or "").strip(),
+                    )
+                    if p
+                ],
+                seed=seed_val,
+                app_id=str(getattr(self, "MODULE_ID", "CERTUS_METAL")),
+                app_version=str(getattr(self, "MODULE_VERSION", "unknown")),
+                warnings=list(getattr(self, "validation_warnings", []) or []),
+                status=status_val,
+            )
+            run_manifest = svc.fit(req).manifest
+        except NUMERICAL_FAULT_EXCEPTIONS as exc:
+            logger = getattr(self, "logger", None)
+            if logger is not None:
+                logger.warning("METAL manifest generation failed: %s", exc)
+            run_manifest = None
+        result = build_standard_report(
+            sections,
+            excel_path=excel_path,
+            html_path=html_path,
+            html_title=title,
+            run_manifest=run_manifest,
+            require_complete_manifest=True,
+        )
+        logger = getattr(self, "logger", None)
+        if logger is not None:
+            for kind, ok in result.items():
+                target = excel_path if kind == "excel" else html_path
+                if ok:
+                    logger.info(f"Standard report {kind} written: {target}")
+                else:
+                    logger.warning(f"Standard report {kind} failed: {target}")
+        return result
+
+    @staticmethod
+    def widget_to_b64(widget) -> str:
+        """Capture a QWidget as a base64-encoded PNG string for HTML reports.
+
+        Returns an empty string if the widget is None or does not support
+        ``grab()`` (e.g. during headless / offscreen testing).
+        """
+        if widget is None:
+            return ""
+        try:
+            import base64
+
+            from PyQt6.QtCore import QBuffer, QIODevice
+
+            img = widget.grab().toImage()
+            buf = QBuffer()
+            buf.open(QIODevice.OpenModeFlag.WriteOnly)
+            img.save(buf, "PNG")
+            return base64.b64encode(buf.data()).decode()
+        except (RuntimeError, AttributeError, TypeError, ValueError, OSError):  # QBuffer / grab may fail headless
+            return ""
+
+    # --- Shared by METAL_SINGLE and METAL_BILAYER ----------------------------------
+    #
+    # Each application provides what these methods call: the sig_numba_ready and
+    # sig_numba_error signals, _warmup_numba_thread_runner, _on_numba_ready_ui,
+    # _on_numba_error_ui, _resolve_config_target_file, maybe_quit_after_auto_batch,
+    # and _do_export_results, the writer of its own report.
+
+    #: Opening words of the error logged when the report export fails.
+    EXPORT_FAILURE_LOG = "Error exporting"
+
+    def _warmup_numba(self) -> None:
+        """JIT precompilation via background thread"""
+        try:
+            self.sig_numba_ready.disconnect()
+            self.sig_numba_error.disconnect()
+        except TypeError:
+            pass
+        self.sig_numba_ready.connect(self._on_numba_ready_ui)
+        self.sig_numba_error.connect(self._on_numba_error_ui)
+        import threading
+        if hasattr(self, "status_label"):
+            self.status_label.setText("System warming up (compiling JIT)...")
+        threading.Thread(target=self._warmup_numba_thread_runner, daemon=True).start()
+
+    def export_results(self) -> None:
+        """Exports results to Excel + HTML (Single/Beam)"""
+
+        if hasattr(self, "beam_stats") and self.beam_stats is not None:
+            self._export_beam_results()
+            return
+
+        if not hasattr(self, "final_results"):
+            show_toast(self, "Please run optimization first.", "warning")
+            return
+
+        # Prepare data
+        reports_dir = get_resource_path("reports")
+        os.makedirs(reports_dir, exist_ok=True)
+
+        # Self-export check logic handled by caller usually or here
+        if not get_export_config():
+            return
+
+        try:
+            self._do_export_results(reports_dir)
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
+            self.logger.error(f"{self.EXPORT_FAILURE_LOG}: {e}")
+            traceback.print_exc()
+
+    def _do_export_results(self, reports_dir: str) -> None:
+        """Write the Excel + HTML report of the finished optimization (per application)."""
+
+        raise NotImplementedError
+
+    def _enable_auto_batch_mode(self, config_path: str) -> None:
+        self._auto_batch_mode = True
+        self._auto_batch_config = config_path
+        self._auto_batch_started = False
+        self._auto_batch_quit = False
+
+        def _kickoff():
+            if self._auto_batch_started:
+                return
+            self._auto_batch_started = True
+            self.logger.info("AUTO_BATCH starting optimization from config: %s", config_path)
+            self._last_run_config_path = config_path
+            self.load_config(config_path)
+            target_path = self._resolve_config_target_file(config_path)
+            if target_path:
+                self.load_target_file(target_path)
+            if not getattr(self, "target_data", None):
+                self.logger.error("AUTO_BATCH aborted: no valid target data loaded")
+                self.maybe_quit_after_auto_batch()
+                return
+            QTimer.singleShot(1500, self.start_optimization)
+
+        QTimer.singleShot(1000, _kickoff)
+
+    def _write_auto_batch_result(self, results, iteration_count: int) -> None:
+        out_dir = Path(self._last_run_config_path).parent if getattr(self, "_last_run_config_path", None) else Path.cwd()
+        out_path = out_dir / "auto_batch_result.json"
+        result_obj = results.get("result", None)
+        x = getattr(result_obj, "x", None)
+        params = []
+        if x is not None:
+            try:
+                params = [float(v) for v in np.asarray(x).ravel().tolist()]
+            except Exception:
+                params = []
+
+        live_last = getattr(self, "_auto_batch_last_progress", {}) or {}
+        live_best_rmse = getattr(self, "_auto_batch_best_rmse", None)
+        live_best_mse = getattr(self, "_auto_batch_best_mse", None)
+
+        final_mse = float(getattr(result_obj, "fun", results.get("mse", np.nan)))
+        final_rmse = float(np.sqrt(final_mse)) if np.isfinite(final_mse) and final_mse >= 0 else None
+
+        best_rmse = None
+        if live_best_rmse is not None:
+            try:
+                best_rmse = float(live_best_rmse)
+            except Exception:
+                best_rmse = None
+        if best_rmse is None and live_last.get("best_rmse") is not None:
+            try:
+                best_rmse = float(live_last.get("best_rmse"))
+            except Exception:
+                best_rmse = None
+        if best_rmse is None:
+            best_rmse = final_rmse
+
+        best_mse = None
+        if live_best_mse is not None:
+            try:
+                best_mse = float(live_best_mse)
+            except Exception:
+                best_mse = None
+        if best_mse is None and live_last.get("best_cost") is not None:
+            try:
+                best_mse = float(live_last.get("best_cost"))
+            except Exception:
+                best_mse = None
+        if best_mse is None:
+            best_mse = final_mse
+
+        if not params and live_last.get("params") is not None:
+            try:
+                params = [float(v) for v in np.asarray(live_last.get("params")).ravel().tolist()]
+            except Exception:
+                params = []
+
+        payload = {
+            "timestamp": __import__("datetime").datetime.now().isoformat(),
+            "best_rmse": best_rmse,
+            "best_mse": best_mse,
+            "final_rmse": final_rmse,
+            "final_mse": final_mse,
+            "live_current_rmse": live_last.get("current_rmse", None),
+            "live_best_rmse": live_last.get("best_rmse", None),
+            "iterations": int(iteration_count),
+            "nit": int(results.get("nit", iteration_count)),
+            "success": bool(results.get("success", False)),
+            "message": str(results.get("message", "")),
+            "params": params,
+            "config": str(getattr(self, "_last_run_config_path", "")),
+        }
+        import json
+        out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        self.logger.info("AUTO_BATCH wrote result file=%s best_rmse=%s", out_path, best_rmse)
+        try:
+            if getattr(self, "logger", None) and getattr(self.logger, "handlers", None):
+                for handler in self.logger.handlers:
+                    try:
+                        handler.flush()
+                    except Exception:
+                        logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+        except Exception:
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+

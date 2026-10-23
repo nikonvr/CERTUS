@@ -47,11 +47,11 @@ SITES_D_APPEL = {
         "PGlobalConfig.for_local(",
     ),
     "CERTUS_METAL_SINGLE:CertusMetalSingleApp._setup_plots": (
-        "certus/metal/certus_metal_common.py",
+        "certus/ui/certus_metal_base_app.py",
         "self._setup_plots()",
     ),
     "CERTUS_METAL_SINGLE:CertusMetalSingleApp._setup_parameter_grid": (
-        "certus/metal/certus_metal_common.py",
+        "certus/ui/certus_metal_base_app.py",
         "self._setup_parameter_grid(",
     ),
     "CERTUS_METAL_SINGLE:CertusMetalSingleApp._warmup_numba": (

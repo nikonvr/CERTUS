@@ -280,7 +280,8 @@ class StateManager:
             "INFO",
         )
 
-        self._apply_optimization_config(c.get("optimization", {}))
+        # The window saves "optimization"; the files of example/example_design name the block "optim".
+        self._apply_optimization_config(c.get("optimization", c.get("optim", {})))
         self.ui._update_optim_point_count()
         self.ui._update_layer_count()
 
@@ -490,7 +491,7 @@ class StateManager:
 
         logging.info("[LOAD] Calling _schedule_eval (final)...")
 
-        self._apply_optimization_config(config.get("optimization", {}))
+        self._apply_optimization_config(config.get("optimization", config.get("optim", {})))
         self.ui._update_optim_point_count()
         self.ui._update_layer_count()
 

@@ -550,7 +550,7 @@ class NeedleWorker(QObject):
             best_res = None
             N = len(stack)
             needle_mat_names, scan_mask = self._build_needle_scan_mask(stack, mats_nk)
-            use_cached = not oblique_mode and (not has_back)
+            use_cached = not oblique_mode  # the back side has its cached kernel (needle_scan_cached_backside)
             if use_cached:
                 best_res = self._run_needle_cached_scan(N=N, scan_mask=scan_mask, needle_mat_names=needle_mat_names, mats_nk=mats_nk, complex_dtype=complex_dtype, wls=wls, n_layers_T_orig=n_layers_T_orig, n_sub=n_sub, ep_base=ep_base, tgt_vals=tgt_vals, tgt_weights=tgt_weights, STEP_NM=STEP_NM, PROBE_THICKNESS=PROBE_THICKNESS, has_back=has_back, n_back_T=n_back_T, d_back=d_back, float_dtype=float_dtype)
             else:

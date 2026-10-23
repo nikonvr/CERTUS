@@ -41,13 +41,25 @@ class NeedleOptimizationStrategy:
     @staticmethod
 
     def _run_needle_cached_scan(worker, *, N: int, scan_mask: np.ndarray, needle_mat_names: list[str], mats_nk: dict, complex_dtype, wls: np.ndarray, n_layers_T_orig: np.ndarray, n_sub: np.ndarray, ep_base: np.ndarray, tgt_vals: np.ndarray, tgt_weights: np.ndarray, STEP_NM: float, PROBE_THICKNESS: float, has_back: bool, n_back_T: np.ndarray, d_back: np.ndarray, float_dtype) -> dict[str, Any] | None:
-        """Run cached needle scan path (normal mode, no backside)."""
+        """Run cached needle scan path (normal mode, with or without an incoherent back side)."""
         n_needle_arr = np.zeros((N, len(wls)), dtype=complex_dtype)
         for i in range(N):
             if scan_mask[i]:
                 n_needle_arr[i] = mats_nk[needle_mat_names[i]]
         n_needle_T = np.ascontiguousarray(n_needle_arr.T)
-        best_layer, best_depth, best_cost = needle_scan_cached(wls, n_layers_T_orig, n_needle_T, n_sub, ep_base, tgt_vals, tgt_weights, STEP_NM, PROBE_THICKNESS, scan_mask)
+        if has_back:
+            # Incoherent back side: its reflectance and transmittance seen from the substrate do not depend on the
+            # needle and are computed once; the cached scan then costs a few 2x2 products per candidate (x14 to x39
+            # faster than the uncached scan at 34-96 layers, same candidate; reports/DESIGN_bs5050_2026-10-22).
+            from certus.physics.certus_opt_needle import needle_scan_cached_backside
+            from certus.physics.certus_tmm_matrix import calc_spectrum_full_exact
+
+            _rf, _tf, _rfp, rb_prime, tb = calc_spectrum_full_exact(wls, ep_base, n_layers_T_orig, d_back, n_back_T, n_sub)
+            best_layer, best_depth, best_cost = needle_scan_cached_backside(
+                wls, n_layers_T_orig, n_needle_T, n_sub, ep_base, tgt_vals, tgt_weights, STEP_NM, PROBE_THICKNESS,
+                scan_mask.astype(np.int64), np.ascontiguousarray(rb_prime), np.ascontiguousarray(tb))
+        else:
+            best_layer, best_depth, best_cost = needle_scan_cached(wls, n_layers_T_orig, n_needle_T, n_sub, ep_base, tgt_vals, tgt_weights, STEP_NM, PROBE_THICKNESS, scan_mask)
         if best_layer < 0:
             return None
         i = int(best_layer)

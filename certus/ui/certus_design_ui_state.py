@@ -202,6 +202,9 @@ class StateManager:
                 "auto_scale_y": (self.ui.auto_scale_y_check.isChecked() if hasattr(self.ui, "auto_scale_y_check") else True),
             },
         }
+        for key, attr in (("max_layers", "_max_layers_cap"), ("max_total_qwot", "_max_total_qwot")):
+            if getattr(self.ui, attr, None):
+                cfg["optimization"][key] = getattr(self.ui, attr)
 
         return cfg
 
@@ -342,6 +345,11 @@ class StateManager:
 
         if hasattr(self.ui, "auto_scale_y_check"):
             self.ui.auto_scale_y_check.setChecked(opt.get("auto_scale_y", self.ui.auto_scale_y_check.isChecked()))
+
+        # Limits of the design, absent from most files: the most layers the workflow may grow to, and the most
+        # total optical thickness (QWOT at l0, n4 convention) of the global stage. A file without them clears them.
+        self.ui._max_layers_cap = int(opt["max_layers"]) if opt.get("max_layers") else None
+        self.ui._max_total_qwot = float(opt["max_total_qwot"]) if opt.get("max_total_qwot") else None
 
     def config_load_problems(self, c: dict) -> list[str]:
         """What `c` names that this window cannot reproduce (D88): loading it would compute with something else.

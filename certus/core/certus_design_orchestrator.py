@@ -63,6 +63,20 @@ class DesignOrchestrator:
 
     # ================= EXTRACTED METHODS =================
 
+    def _layer_ceiling(self) -> int:
+        """Most layers the workflow may grow to: CFG.MAX_LAYERS, or the design file's `max_layers` when lower."""
+        cap = getattr(self.ui, "_max_layers_cap", None)
+        return int(min(CFG.MAX_LAYERS, cap)) if cap else int(CFG.MAX_LAYERS)
+
+    def _room_for_a_needle(self, count: int) -> bool:
+        """True if a needle may start: it splits a layer and adds two, which must stay within the ceiling.
+
+        Without a `max_layers` the test stays the former `count < CFG.MAX_LAYERS`.
+        """
+        if not getattr(self.ui, "_max_layers_cap", None):
+            return count < CFG.MAX_LAYERS
+        return count + 2 <= self._layer_ceiling()
+
     def _is_in_needle_cycle(self) -> bool:
         """Return True when post-optim workflow is inside Needle cycle states."""
         return hasattr(self, "_needle_cycle_step") and self._needle_cycle_step in [1, 2, 3]
@@ -339,7 +353,7 @@ class DesignOrchestrator:
             self.ui._revert_to_checkpoint()
             return True
 
-        if current_count_after_clean < self._target_layer_count and current_count_after_clean < CFG.MAX_LAYERS:
+        if current_count_after_clean < self._target_layer_count and self._room_for_a_needle(current_count_after_clean):
             self.ui.log(
                 f"[DESIGN.needle] growth continuing | current_layers={current_count_after_clean} | target_layers={self._target_layer_count} | action=queue_next_cycle",
                 "INFO",
@@ -405,7 +419,7 @@ class DesignOrchestrator:
         )
         needs_needle = has_deficit or needs_exploration
 
-        if not (needs_needle and current_count < CFG.MAX_LAYERS):
+        if not (needs_needle and self._room_for_a_needle(current_count)):
             return False
 
         if hasattr(self, "_needle_cycle_step") and self._needle_cycle_step in [1, 2, 3]:
@@ -413,10 +427,10 @@ class DesignOrchestrator:
 
         if not getattr(self, "_overshoot_active", False) and not getattr(self, "_overshoot_done", False):
             self._original_target_count = self._target_layer_count
-            if self._target_layer_count < CFG.MAX_LAYERS:
+            if self._target_layer_count < self._layer_ceiling():
                 ratio = getattr(self.ui, "_needle_overshoot_ratio", 0.30)
                 extra_layers = max(math.ceil(self._target_layer_count * ratio), 4)
-                overshoot = min(self._target_layer_count + extra_layers, CFG.MAX_LAYERS)
+                overshoot = min(self._target_layer_count + extra_layers, self._layer_ceiling())
                 self._target_layer_count = overshoot
                 self._overshoot_active = True
                 self.ui.log(
@@ -1035,8 +1049,8 @@ class DesignOrchestrator:
             )
             self._overshoot_active = False
             self._overshoot_done = False
-            self._target_layer_count = CFG.MAX_LAYERS
-            self._original_target_count = CFG.MAX_LAYERS
+            self._target_layer_count = self._layer_ceiling()
+            self._original_target_count = self._layer_ceiling()
             if hasattr(self, "_needle_fail_count"):
                 delattr(self, "_needle_fail_count")
             self._clear_needle_cycle_state()

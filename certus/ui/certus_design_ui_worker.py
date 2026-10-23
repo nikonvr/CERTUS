@@ -265,6 +265,38 @@ class WorkerManager:
 
         return g_max_feval, g_n100, g_max_iter, g_max_clusters
 
+    def _fill_to_max_layers(self) -> None:
+        """With the file's `max_layers` and growth allowed, add rows up to that ceiling before a global run.
+
+        The ceiling alone does not make the workflow grow: from the 26 rows of JSON-design-example.json it stayed
+        at 26 layers (RMSE 0.00095 on the fixed grid), while the 50/50 splitter records came from 34-row starts
+        (0.000147). New rows continue the alternation of the last two rows at one QWOT and keep the exact
+        thicknesses of the others; the memetic global stage then works on every layer allowed.
+        """
+        cap = getattr(self.ui, "_max_layers_cap", None)
+        growth = self.ui.allow_growth_check.isChecked() if hasattr(self.ui, "allow_growth_check") else True
+        rows = self.ui.front_table.rowCount()
+        if not isinstance(cap, int) or not growth or rows < 2 or rows >= cap:
+            return
+        last, before = self.ui._safe_get_combo_text(rows - 1, 0), self.ui._safe_get_combo_text(rows - 2, 0)
+        if not last or not before or last == before:
+            return
+        mats = self.ui._get_materials()
+        l0 = self.ui.l0_spin.value()
+        ep = self.ui.ep_current
+        ep = list(np.asarray(ep, dtype=float)) if ep is not None and len(ep) == rows else None
+        for k in range(cap - rows):
+            mat = before if k % 2 == 0 else last
+            self.ui._add_front_row(mat, 1.0, True)
+            if ep is not None:
+                ep.append(l0 / (4.0 * float(mats[mat].n4)))
+        if ep is not None:
+            self.ui.ep_current = np.asarray(ep, dtype=float)
+            self.ui._use_exact_ep = True
+        self.ui.orchestrator._target_layer_count = self.ui.front_table.rowCount()
+        self.ui._update_layer_count()
+        self.ui.log(f"[MAX_LAYERS] Filled the stack from {rows} to {cap} layers before the global stage", "INFO")
+
     @safe_ui_action
     def run_optim(self, mode: str, keep_history: bool = False, **kwargs) -> None:
         """
@@ -395,6 +427,9 @@ class WorkerManager:
                 self.ui.orchestrator, "_needle_cycle_step"
             ):
                 self.ui._post_optim_start_time = None
+
+        if mode == "global" and not keep_history:
+            self._fill_to_max_layers()
 
         stack, mats, active, ep0, wls = self.ui._collect_run_optim_inputs()
         if stack is None:

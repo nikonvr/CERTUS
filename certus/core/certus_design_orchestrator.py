@@ -64,9 +64,14 @@ class DesignOrchestrator:
     # ================= EXTRACTED METHODS =================
 
     def _layer_ceiling(self) -> int:
-        """Most layers the workflow may grow to: CFG.MAX_LAYERS, or the design file's `max_layers` when lower."""
+        """Most layers the workflow may grow to: the design file's `max_layers`, else CFG.MAX_LAYERS.
+
+        The file may go above CFG.MAX_LAYERS (100): Bonne Mère starts from 96 layers and is allowed 110 (owner's
+        decision of 2026-10-23). A needle stops at CFG.MAX_LAYERS in the needle worker; the stack reaches a higher
+        ceiling through the fill of a global run (WorkerManager._fill_to_max_layers).
+        """
         cap = getattr(self.ui, "_max_layers_cap", None)
-        return int(min(CFG.MAX_LAYERS, cap)) if cap else int(CFG.MAX_LAYERS)
+        return int(cap) if isinstance(cap, int) and cap > 0 else int(CFG.MAX_LAYERS)
 
     def _room_for_a_needle(self, count: int) -> bool:
         """True if a needle may start: it splits a layer and adds two, which must stay within the ceiling.

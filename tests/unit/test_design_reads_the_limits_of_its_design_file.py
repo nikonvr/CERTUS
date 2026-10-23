@@ -7,6 +7,7 @@ leaves the former limits (CFG.MAX_LAYERS, no thickness cap).
 
 from __future__ import annotations
 
+import itertools
 import json
 from pathlib import Path
 
@@ -80,3 +81,23 @@ def test_the_final_rule_keeps_a_4nm_high_index_layer_only_under_an_optical_floor
     app._apply_5nm_minimum()
 
     assert app.front_table.rowCount() == rows_left  # without the floor: removed, its two L neighbours merged
+
+
+@pytest.mark.parametrize(("limits", "rows"), [({"max_layers": 34}, 34), ({}, 26)])
+def test_a_global_run_first_fills_the_stack_up_to_max_layers(qapp, tmp_path, limits, rows) -> None:
+    app = _load(tmp_path, **limits)
+    names_before = [layer.mat for layer in app._get_front_stack()]
+
+    app.worker_manager._fill_to_max_layers()
+
+    names = [layer.mat for layer in app._get_front_stack()]
+    assert len(names) == rows
+    assert names[: len(names_before)] == names_before
+    assert all(a != b for a, b in itertools.pairwise(names))  # the alternation goes on
+    assert app.orchestrator._target_layer_count == rows or not limits
+
+
+def test_a_file_may_allow_more_layers_than_the_default_ceiling(qapp, tmp_path) -> None:
+    app = _load(tmp_path, max_layers=110)
+
+    assert app.orchestrator._layer_ceiling() == 110

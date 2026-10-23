@@ -18,8 +18,8 @@ import numpy as np
 import pytest
 from PyQt6.QtCore import Qt
 
-from certus.spline import certus_index_spline_rendering as module
-from certus.spline.certus_index_spline_rendering import _PlotMixin
+from certus.ui import certus_index_spline_rendering as module
+from certus.ui.certus_index_spline_rendering import _PlotMixin
 
 
 class Plot:

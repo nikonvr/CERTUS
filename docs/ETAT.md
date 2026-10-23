@@ -16,6 +16,8 @@
 
 **Actions en cours (2026-10-21).** A6 retirée, A7 et premier correctif A8 terminés. Le défaut de transmission découvert par le premier banc A3 est corrigé et entièrement validé ; nouveau protocole et reprise des mesures à suivre. État, preuves et prochaine action : [`bilan`](../reports/ACTIONS_autonomes_2026-10-20/bilan.md).
 
+**DESIGN, séparatrice 50/50 (2026-10-23).** Étape mémétique optionnelle, inactive par défaut : RMSE 0,00017 (médiane) contre 0,0018–0,0042 ; réglage, défauts et décisions dans le [`bilan`](../reports/DESIGN_bs5050_2026-10-22/bilan.md).
+
 **Bonne Mère (2026-10-19).** Meilleur plan mesuré et chemin vers l'optimum : [`studies/bonne_mere/README.md`](../studies/bonne_mere/README.md) (21 couches Rate, SEEL P95 0,446 nm au bruit 0,05, 0 arrêt). Dérive de la source non modélisée. Défaut ouvert de STRAT : l'hystérésis du comptage des points tournants suit le bruit ; à bruit faible, la fente fabrique des extrema ([phase 1](../reports/BONNE_MERE_phase1_budget_SuperChamp76_2026-10-19/bilan.md)).
 
 **STRAT sur r75 (2026-10-20).** `strat_local_search` (recherche locale appariée du mode et de la λ, cherchée à ±0,010 d'indice) est actif par défaut et `tp_hysteresis_floor` vaut 0,000415, sur décision de 👤 ; banc deep, graine 77 : 0,2515 → 0,2080, 0,4363 → 0,3561, 0,5441 → 0,5032 nm ([rapport](../reports/STRAT_r75_leviers_bonne_mere_2026-10-20/bilan.md)). Validation complète au paragraphe suivant ; A10 à lancer.

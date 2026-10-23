@@ -257,3 +257,22 @@ def test_the_guard_is_on_by_default_and_can_be_turned_off() -> None:
 
     assert guard_is_armed({})
     assert not guard_is_armed({"strat_local_search_guard": False})
+
+
+def test_preselection_is_off_by_default_and_reads_its_two_settings() -> None:
+    from certus.core.certus_strat_local_search import presel_settings
+
+    assert presel_settings({}) == (0, 3)
+    assert presel_settings({"strat_local_search_presel_runs": 75, "strat_local_search_presel_keep": 2}) == (75, 2)
+    assert "presel_runs" not in joint_local_search(_plan(), _evaluator(), 6, _cfg(), 11, (101, 102))[1]
+
+
+def test_preselection_finds_the_same_wavelengths_with_fewer_full_evaluations() -> None:
+    _plain_plan, plain = joint_local_search(_plan(), _evaluator(), 6, _cfg(), 11, (101, 102))
+    pre_plan, pre = joint_local_search(_plan(), _evaluator(), 6, _cfg(presel_runs=50, presel_keep=3), 11, (101, 102))
+    assert pre["accepted"]
+    assert pre["evaluations"] < plain["evaluations"]
+    assert pre["presel_evaluations"] > 0
+    for k, best in BEST.items():
+        assert abs(wavelength_of(pre_plan, k) - best) <= 10.0, (k, wavelength_of(pre_plan, k))
+    assert wavelength_of(pre_plan, 3) != 600.0  # a candidate that stops is never kept, pre-selection or not

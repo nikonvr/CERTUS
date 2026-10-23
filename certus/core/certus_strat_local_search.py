@@ -45,6 +45,11 @@ def is_armed(params: dict[str, Any]) -> bool:
     return bool(params.get("strat_local_search", True))
 
 
+def presel_settings(params: dict[str, Any]) -> tuple[int, int]:
+    """(`strat_local_search_presel_runs`, `strat_local_search_presel_keep`): off by default (0 draws); keep 0 means 3."""
+    return int(params.get("strat_local_search_presel_runs", 0) or 0), int(params.get("strat_local_search_presel_keep", 0) or 0) or 3
+
+
 def guard_is_armed(params: dict[str, Any]) -> bool:
     """Whether the check also judges under the configured corridor. On by default (owner, 2026-10-22, after ten benches)."""
     return bool(params.get("strat_local_search_guard", True))
@@ -89,6 +94,10 @@ class LocalSearchConfig:
     step_nm: float = 10.0
     allow_rate: bool = True
     rate_min_layer: int = 2
+    #: Pre-selection (`strat_local_search_presel_runs`, 0 = off, the former path): every candidate of a layer is first ranked
+    #: on this many draws of the search seed, and only the `presel_keep` best go to the `search_runs` evaluation and its rule.
+    presel_runs: int = 0
+    presel_keep: int = 3
 
 
 def wavelength_of(plan: dict[str, Any], layer: int) -> float | None:
@@ -195,10 +204,15 @@ def joint_local_search(
     kept: list[str] = []
     history: list[dict[str, Any]] = []  # the plan after each kept change
     n_eval = 1
+    n_presel = 0
     for pass_no in range(1, cfg.passes + 1):
         for layer in range(n_layers):
             best: tuple[float, str, dict[str, Any], Evaluation] | None = None
-            for label, plan in candidates(current, layer, cfg):
+            layer_candidates = list(candidates(current, layer, cfg))
+            if cfg.presel_runs > 0 and len(layer_candidates) > cfg.presel_keep:
+                layer_candidates, n_more = _preselect(current, layer_candidates, evaluate, cfg, search_seed)
+                n_presel += n_more
+            for label, plan in layer_candidates:
                 ev = evaluate(plan, search_seed, cfg.search_runs)
                 n_eval += 1
                 if stops(ev) > stops(cur_ev):
@@ -214,6 +228,8 @@ def joint_local_search(
             f"{n_eval} evaluations")
     report: dict[str, Any] = {"changes": kept, "evaluations": n_eval, "search_seed": search_seed,
                               "check_seeds": list(check_seeds), "accepted": False}
+    if cfg.presel_runs > 0:
+        report.update(presel_runs=cfg.presel_runs, presel_keep=cfg.presel_keep, presel_evaluations=n_presel)
     if not kept:
         log("[LOCAL-SEARCH] no change kept: the winner is already a local optimum")
         return start, report
@@ -255,6 +271,21 @@ def joint_local_search(
         f"confirmation dRMSE2 {100 * v_c['check_relative_gain']:+.1f} %, stops {v_c['check_stops'][0]} -> {v_c['check_stops'][1]}: "
         f"{'kept' if ok_c else 'refused, winner unchanged'}")
     return (history[k], report) if ok_c else (start, report)
+
+
+def _preselect(current: dict[str, Any], layer_candidates: list[tuple[str, dict[str, Any]]],
+               evaluate: Callable[[dict[str, Any], int, int], Evaluation], cfg: LocalSearchConfig,
+               search_seed: int) -> tuple[list[tuple[str, dict[str, Any]]], int]:
+    """The `presel_keep` candidates with the lowest paired mean RMSE^2 at the nominal level on `presel_runs` draws, among those
+    that add no stop there; (kept, evaluations spent). The full rule still decides on `search_runs` draws."""
+    ref = evaluate(current, search_seed, cfg.presel_runs)
+    scored = []
+    for k, (_label, plan) in enumerate(layer_candidates):
+        ev = evaluate(plan, search_seed, cfg.presel_runs)
+        if stops(ev) <= stops(ref):
+            scored.append((paired_delta(ref, ev, cfg.nominal_level)[0], k))
+    keep = sorted(k for _d, k in sorted(scored)[:cfg.presel_keep])
+    return [layer_candidates[k] for k in keep], len(layer_candidates) + 1
 
 
 def _judge(ref: Evaluation, new: Evaluation, cfg: LocalSearchConfig,

@@ -359,6 +359,25 @@ LEVIERS: tuple[Levier, ...] = (
                 "double les evaluations du controle. Une graine de banc par cas. `false` retablit le chemin d'avant.",
     ),
     Levier(
+        cle="strat_local_search_presel_runs",
+        libelle="Recherche locale : nombre de tirages de la preselection des candidats (0 = sans preselection)",
+        defaut=0,
+        genre="int",
+        statut=NON_MESURE,
+        mesure="A13, profil du 2026-10-23 : 96 % du temps de l'etage dans deux noyaux compiles ; seule la recherche peut couter moins.",
+        reserve="Chaque candidat d'une couche est d'abord classe sur ce nombre de tirages ; les meilleurs passent seuls a 300 tirages "
+                "et a la regle habituelle. 0 retablit le chemin d'avant.",
+    ),
+    Levier(
+        cle="strat_local_search_presel_keep",
+        libelle="Recherche locale : candidats gardes par couche apres la preselection",
+        defaut=0,
+        genre="int",
+        statut=NON_MESURE,
+        mesure="Sans effet tant que strat_local_search_presel_runs vaut 0 ; 0 veut dire 3 candidats gardes par couche (A13, 2026-10-23).",
+        reserve="Plus il est petit, plus l'etage est rapide et plus le risque d'ecarter le bon candidat grandit.",
+    ),
+    Levier(
         cle="strat_local_search_fresh_id",
         libelle="Recherche locale : identifiant neuf pour le plan affine",
         defaut=False,

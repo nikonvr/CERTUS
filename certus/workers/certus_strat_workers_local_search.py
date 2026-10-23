@@ -19,6 +19,7 @@ from certus.core.certus_strat_local_search import (
     joint_local_search,
     native_evaluator,
     nominal_level_index,
+    presel_settings,
     search_params,
 )
 from certus.utils.certus_data import SharedIndicesWorker
@@ -49,6 +50,8 @@ def run_local_search(
             nominal_level=nominal_level_index(params),
             allow_rate=bool(params.get("allow_rate", True)),
             rate_min_layer=RATE_MIN_LAYER,
+            presel_runs=presel_settings(params)[0],
+            presel_keep=presel_settings(params)[1],
         )
         evaluate = native_evaluator(search_params(params), nominal, clues, pre_calc_data.get("full_dynamics_grid", {}))
         guard = guard_is_armed(params)

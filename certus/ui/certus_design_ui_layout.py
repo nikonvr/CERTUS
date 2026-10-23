@@ -769,6 +769,20 @@ class LayoutManager:
 
         self.ui.plot_tabs.addTab(self.ui.plot_convergence, "Convergence")
 
+        # RMSE of each Pareto record against its layer count; bars: mean +/- 2 sigma of the RMSE when every layer
+        # gets a Gaussian thickness error of 0.1 % + 0.2 nm at 2 sigma (certus/core/certus_design_tolerance.py).
+        self.ui.plot_rmse_layers = CertusScientificPlot(
+            self.ui, "RMSE vs layers (bars: mean ± 2σ, errors 0.1 % + 0.2 nm at 2σ)", "RMSE", "Layers"
+        )
+        self.ui.plot_rmse_layers.showGrid(x=True, y=True)
+        self.ui.rmse_layers_bars = pg.ErrorBarItem(beam=0.3, pen=pg.mkPen(CertusTheme.SECONDARY, width=1.5))
+        self.ui.plot_rmse_layers.addItem(self.ui.rmse_layers_bars)
+        self.ui.rmse_layers_points = self.ui.plot_rmse_layers.plot(
+            [], [], pen=None, symbol="o", symbolSize=8, symbolBrush=pg.mkBrush(CertusTheme.PRIMARY),
+            symbolPen=pg.mkPen(CertusTheme.SURFACE, width=1),
+        )
+        self.ui.plot_tabs.addTab(self.ui.plot_rmse_layers, "RMSE vs layers")
+
         # "Why CERTUS?" marketing content moved out of scientific plot tabs (Option A)
 
         v_lay.addWidget(plot_container)

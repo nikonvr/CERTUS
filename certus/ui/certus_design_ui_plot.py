@@ -438,6 +438,13 @@ class PlotManager:
             self.ui.pareto_table.insertRow(d)
             rec = self.ui.pareto_history[N]
             self._populate_pareto_table_row(d, N, rec)
+        self._update_rmse_layers_plot()
+
+    def _update_rmse_layers_plot(self) -> None:
+        """Refresh the "RMSE vs layers" tab (certus/ui/certus_design_ui_rmse_layers.py)."""
+        from certus.ui.certus_design_ui_rmse_layers import update_rmse_layers_plot
+
+        update_rmse_layers_plot(self.ui)
 
     def _update_pareto_record(self, current_ep=None, current_rmse=None) -> None:
         """Records current configuration in Pareto history if strictly better.

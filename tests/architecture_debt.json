@@ -3,9 +3,7 @@
   "aretes_montantes": [
     "certus.spline.certus_index_spline_corridor_ui -> certus.ui.certus_manual_sigma_knot_dialog",
     "certus.spline.certus_index_spline_corridor_ui -> certus.ui.certus_plot",
-    "certus.spline.certus_index_spline_corridor_ui -> certus.ui.certus_ui",
-    "certus.spline.certus_index_spline_smart_init -> certus.ui.certus_smart_init_curve_editor",
-    "certus.spline.certus_index_spline_smart_init -> certus.ui.certus_ui"
+    "certus.spline.certus_index_spline_corridor_ui -> certus.ui.certus_ui"
   ],
   "cycles": [
     [
@@ -41,7 +39,6 @@
     "certus/spline/certus_corridor_exploration.py::compute_bootstrap_corridors_by_d": 444,
     "certus/spline/certus_corridor_exploration.py::compute_regular_grid_rmse_profile": 622,
     "certus/spline/certus_corridor_fitter.py::_fit_nodes_at_fixed_d": 445,
-    "certus/spline/certus_index_spline_smart_init.py::SmartInitPreviewManager.__init__": 572,
     "certus/spline/spline_pipeline_mesh_clean.py::worker_spline_auto_clean_knots": 485,
     "certus/spline/spline_pipeline_mesh_insert.py::insert_manual_sigma_nodes": 480,
     "certus/spline/spline_pipeline_orchestrator.py::worker_spline_optimization": 446,
@@ -49,6 +46,7 @@
     "certus/spline/spline_workers.py::_run_single_spline_stage": 325,
     "certus/ui/certus_index_spline_managers_ui.py::Step4MeshOptimizerBuilder.build": 804,
     "certus/ui/certus_index_spline_manualmesh_mixin.py::CertusIndexSplineManualMeshMixin._open_manual_extra_knots_dialog": 433,
+    "certus/ui/certus_index_spline_smart_init.py::SmartInitPreviewManager.__init__": 572,
     "certus/ui/certus_manual_sigma_knot_dialog.py::ManualSigmaKnotDialog.__init__": 461,
     "certus/ui/certus_re_excel_mixin.py::CertusREExcelMixin.load_reverse_engineering_from_path": 514,
     "certus/ui/certus_re_ui.py::CertusREResultsDialog.__init__": 459,

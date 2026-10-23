@@ -391,7 +391,7 @@ class _SmartInitDialogMixin:
             getattr(self, "_preview_wait_event", None) is not None,
         )
         try:
-            from certus.spline.certus_index_spline_smart_init import SmartInitPreviewManager
+            from certus.ui.certus_index_spline_smart_init import SmartInitPreviewManager
             manager = SmartInitPreviewManager(self, payload)
             self._open_live_nk_monitor(next_to=manager.dlg)
             logger.info(

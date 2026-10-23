@@ -1,7 +1,7 @@
 """Re-optimize the Bonne Mère design with the levers of the 2026-10-22/23 DESIGN campaign.
 
     python reports/BONNE_MERE_design_2026-10-23/reoptimize.py --study STUDY [--max-layers 110] [--budget-min 120]
-        [--substrate-id 0] [--tag _silica]
+        [--substrate-id 0] [--tag _silica] [--start FILE]
 
 STUDY is the study restored from studies/bonne_mere/archives (dossier_final/outils/restaurer_archive.py): its
 scripts/local_comparisons.py gives the optics of the retained design (H800 Nb2O5 / SiO2 on catalogue sapphire 3,
@@ -41,6 +41,7 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--substrate-id", type=int, default=None, help="catalogue id (0 fused silica, 3 sapphire)")
     ap.add_argument("--tag", default="", help="suffix of results.jsonl and best_design.json")
+    ap.add_argument("--start", type=Path, default=None, help="start design (thickness_nm, material_indices); default: the retained one")
     args = ap.parse_args()
     sys.path.insert(0, str(REPO))
     sys.path.insert(1, str(args.study / "scripts"))
@@ -99,8 +100,9 @@ def main() -> None:
     def time_left() -> bool:
         return (time.monotonic() - t_start) / 60.0 < args.budget_min
 
-    ep0 = np.asarray(design["thickness_nm"], dtype=float)
-    prob = Problem(design["material_indices"])
+    start = design if args.start is None else json.loads(args.start.read_text(encoding="utf-8"))
+    ep0 = np.asarray(start["thickness_nm"], dtype=float)
+    prob = Problem(start["material_indices"])
     best = (record("0 retained (reference)", prob, ep0), ep0, prob)
 
     free = prob.polish(ep0, 0.0)

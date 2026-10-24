@@ -167,7 +167,7 @@ def main() -> int:
     # wavelengths): that assembly is not C2 and is refused. With it, the slices and this scoring share the whole scan range.
     if args.domaine_fixe:
         dom_lo, dom_hi = corridor_wl_range(wl.astype(np.float64),
-                                           corridor_monitor_span({**prm, "index_corridor_fixed_domain": True}, np.empty(0)))
+                                           corridor_monitor_span({**prm, "index_corridor_fixed_domain": True}, np.empty(0), wl))
     else:
         dom_lo, dom_hi = float(wl[0]), float(wl[-1])
 

@@ -30,13 +30,14 @@ def test_the_cached_thicknesses_are_those_of_the_nominal_level():
 
 def test_by_default_the_domain_follows_the_plan():
     plan = np.array([480.0, 620.0])
-    assert corridor_monitor_span({}, plan) is plan
+    assert corridor_monitor_span({}, plan, np.arange(610.0, 655.5, 0.5)) is plan
 
 
 def test_with_the_fixed_domain_two_plans_and_the_assembler_share_one_domain():
     params = {"index_corridor_fixed_domain": True, "scan_wl_min": 450.0, "scan_wl_max": 750.0}
     band = np.arange(610.0, 655.5, 0.5)
-    slice_a = corridor_wl_range(band, corridor_monitor_span(params, np.array([598.0, 640.0])))
-    slice_b = corridor_wl_range(band, corridor_monitor_span(params, np.array([700.0, 712.0])))
-    assembler = corridor_wl_range(band, corridor_monitor_span(params, np.empty(0)))
-    assert slice_a == slice_b == assembler == (450.0, 750.0)
+    slice_a = corridor_wl_range(band, corridor_monitor_span(params, np.array([598.0, 640.0]), band))
+    slice_b = corridor_wl_range(band, corridor_monitor_span(params, np.array([700.0, 712.0]), band))
+    assembler = corridor_wl_range(band, corridor_monitor_span(params, np.empty(0), band))
+    # owner 2026-10-24, option (a): the spectral grid alone, not the scan range (which softened the index noise in the band)
+    assert slice_a == slice_b == assembler == (610.0, 655.0)

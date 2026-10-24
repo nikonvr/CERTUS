@@ -16,6 +16,7 @@ import probe_blocs_vs_plantage as P  # noqa: E402
 
 P.COMPOSANTS["bm90"] = ("reports/BONNE_MERE_strat_90c_2026-10-23/config_strat_90c_corridor0.010.json", 90)
 P.COMPOSANTS["bm90rules"] = ("reports/BONNE_MERE_strat_90c_2026-10-23/config_strat_90c_rules.json", 90)  # with the operator's Rate rules
+P.COMPOSANTS["bm90final"] = ("reports/BONNE_MERE_strat_90c_2026-10-23/config_strat_90c_rules_final.json", 90)  # rules in the final search only
 COMP = os.environ.get("BM90_COMPONENT", "bm90")
 sys.argv = [sys.argv[0], COMP, *sys.argv[1:]]
 sys.exit(P.main())

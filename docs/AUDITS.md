@@ -103,6 +103,7 @@ code du 2026-10-19, audit d'arrêt OMS du 2026-10-10 : rapports datés dans `rep
 | ALG-26 | Scan Needle oblique (s, p) sans cache : toute la pile recalculée par position | `_run_needle_fallback_scan` | piste ; même cache qu'ALG-14, ×10–×40 estimé |
 | ALG-27 | Criblage des enfants par polissage court (`memetic_screen_maxiter`, 0 par défaut) jamais mesuré | `run_memetic` | piste ; ×2 estimé, risque sur la qualité |
 | ALG-28 | Trois appelants recompilés à chaque démarrage (parade C18, `cache=False`) | `calc_spectrum_front`, `calc_spectrum_full`, `compute_batch_rmse` | piste ; quelques secondes par lancement |
+| ALG-29 | Règles Rate d'opérateur appliquées dès la recherche : aucun plan déposable sur bm90 (12 271 plans, plantage ≥ 59,7 %) | `apply_rate_rules` dans `_execute_robustness_tasks` | constaté ; `rate_rules_final_only` en mesure |
 | C20 | Gradient hérité faux sur couches absorbantes (D113) | `compute_gradient_all_layers_analytic` | ouvert |
 | C06/C07 | Nœud NaN → `n = k = 0` (D108) ; épaisseur négative acceptée (D109) | `get_nk_from_spline`, `calculate_RT_vectorized_real` | ouvert |
 | C21/C22 | Entrées invalides (NaN, k < 0, n = 0) rendues en fini plausible (D114) | noyaux `fastmath`, `certus_inputs` | ouvert ; politique k < 0 à trancher |

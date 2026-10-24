@@ -5,6 +5,18 @@ Réglages de 👤 : corridor d'indice ±0,010, monitoring 430–900 nm, fente fi
 couche (ni précouche ni changement de témoin), classement sur le SEEL P95 sans arrêt. STRAT de cet arbre (`9e3887bd`),
 mode deep, budgets de l'étude Bonne Mère ([`make_config.py`](make_config.py)).
 
+## Ce qu'il faut retenir (2026-10-24, 18 h)
+
+- **Plan à déposer** : [`modelam_s077_sapphire_rule.json`](modelam_s077_sapphire_rule.json), 15 couches Rate (83 % d'optique),
+  SEEL 0,2608 nm et RMSE 0,98 pp au holdout (±0,010 d'indice), 0 arrêt au holdout, 1 sur 9 000 à la confirmation ;
+  dossier de réalisation [`Bonne_Mere_90c_silice_realisation.xlsx`](Bonne_Mere_90c_silice_realisation.xlsx).
+- **Ce qui a marché** : STRAT complet libre, puis passage en optique des couches Rate interdites une à une depuis le
+  substrat, chacune à sa meilleure λ de 430–900 nm, puis affinage apparié (mode, λ) jugé sur la cible complète.
+- **Ce qui n'a pas marché** : cible projetée (+19 % de SEEL, arrêts 1 → 41) ; règles appliquées dès la recherche dans
+  STRAT natif (aucun plan déposable) ; passes d'affinage 3–4 (RMSE² moyen −5 %, SEEL P95 +0,7 %).
+- **Prix des règles de 👤** : +27 % de SEEL contre le plan libre (0,2046 nm, 61 Rate) ; 69 % du RMSE² vient de l'indice.
+- **En cours** : `rate_rules_final_only`, la méthode à la main codée dans STRAT, à mesurer contre 0,2608 nm.
+
 ## Résultats
 
 | étape | plan | SEEL (nm) | arrêts |
@@ -28,6 +40,15 @@ avec 61 Rate. Part de l'indice (mêmes tirages de holdout, corridor 0 contre ±0
 69 % du RMSE² moyen pour le plan retenu (SEEL 0,2339 → 0,2608 nm), 81 % pour le plan libre (0,1688 → 0,2046 nm) ; 0 arrêt.
 Le leviers STRAT des 23–24/10 (branche `claude/2026-10-22`) n'apportent rien ici : la garde contrôle au corridor configuré,
 déjà ±0,010 ; A12 et A13 sont refusés sur leur branche.
+
+## STRAT natif avec les règles (2026-10-24)
+
+Règles codées dans STRAT (`8dfb8a4d`, inactives par défaut) et appliquées partout (`config_strat_90c_rules.json`,
+graine 77, 10 h 21 → 18 h 00) : **échec**. Les 12 271 plans évalués sont tous éliminés par le plantage (au moins
+60 % de dépôts arrêtés, 59,7 % pour le meilleur) ; la recherche locale, acceptée par son contrôle (RMSE² −39 %), part d'un plan qui plante et
+finit à 60 % de plantage ([`native_rules_everywhere_s077_summary.json`](native_rules_everywhere_s077_summary.json)).
+Appliquer la règle dès la recherche remet chaque couche Rate interdite en optique à une λ choisie pour un autre usage, et
+plus rien de déposable n'en sort. Le plan fait à la main partait du gagnant libre : c'est le mode `rate_rules_final_only`.
 
 ## Cible projetée (levier saphir), essayée sur le plan retenu
 

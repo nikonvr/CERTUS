@@ -1,0 +1,43 @@
+{
+ "verdict": "OK",
+ "n_strats": 12271,
+ "crash_eliminated": 12271,
+ "local_search": {
+  "accepted": true,
+  "check_relative_gain": -0.39485384078762553,
+  "check_stops": [
+   5531,
+   3654
+  ],
+  "check_p95": [
+   0.28952468414938776,
+   0.27740961698388694
+  ],
+  "evaluations": 7355
+ },
+ "best": [
+  {
+   "id": 999050004,
+   "origin": "LOCAL_SEARCH",
+   "score": 0.2751703336524273,
+   "rate_layers": 16,
+   "crash_rate": 0.5966666666666667
+  },
+  {
+   "id": 999050005,
+   "origin": "RATE_RESCUE12(from 999000016)",
+   "score": 0.2891637595335289,
+   "rate_layers": 17,
+   "crash_rate": 0.96
+  },
+  {
+   "id": 999050006,
+   "origin": "RATE_RESCUE7(from 999000016)",
+   "score": 0.2891637595335289,
+   "rate_layers": 17,
+   "crash_rate": 0.96
+  }
+ ],
+ "min_crash_rate": 0.5966666666666667,
+ "run": "10:21 -> 18:00, commit 43c5a957"
+}

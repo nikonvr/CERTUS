@@ -20,6 +20,12 @@ from certus.core.certus_strat_local_search import (
     nominal_level_index,
     search_params,
 )
+from certus.core.certus_strat_rate_rules import (
+    allowed_rate_layers,
+    optical_thicknesses_nm,
+    rate_cap,
+    rate_rules_from_params,
+)
 from certus.utils.certus_data import SharedIndicesWorker
 
 Ranker = Callable[[list[dict[str, Any]]], list[dict[str, Any]]]
@@ -42,12 +48,18 @@ def run_local_search(
     start = ranked[0]["strategy"]
     nominal = list(pre_calc_data["p_thick_nominal"])
     base_seed = int(params.get("robustness_seed", 42)) if params.get("robustness_seed") is not None else 42  # as the task reads it
+    rules = rate_rules_from_params(params)
+    ruled = {}
+    if rules.active:  # the operator's Rate rules (certus_strat_rate_rules); inactive: the fields keep their defaults
+        ruled = {"rate_allowed": allowed_rate_layers(rules, optical_thicknesses_nm(params)), "rate_cap": rate_cap(rules, len(nominal)),
+                 "repair_layers": frozenset(int(k) for k in start.get("rate_rules_converted", []))}
     with SharedIndicesWorker(shared_clues_info) as clues:
         cfg = LocalSearchConfig(
             grid=tuple(_resolve_monitoring_wavelength_grid(params, clues, pre_calc_data["all_wls"])),
             nominal_level=nominal_level_index(params),
             allow_rate=bool(params.get("allow_rate", True)),
-            rate_min_layer=RATE_MIN_LAYER,
+            rate_min_layer=max(RATE_MIN_LAYER, rules.min_layer),
+            **ruled,
         )
         evaluate = native_evaluator(search_params(params), nominal, clues, pre_calc_data.get("full_dynamics_grid", {}))
         plan, report = joint_local_search(start, evaluate, len(nominal), cfg, base_seed + SEARCH_SEED_OFFSET,

@@ -22,6 +22,7 @@ from certus.core.certus_strat_core import (
     SYM_DEFAULT_TIE_EPS_REL,
     SYM_DEFAULT_WEIGHT,
 )
+from certus.core.certus_strat_rate_rules import rate_rules_params
 from certus.core.certus_strat_robustness import INDEX_CORRIDOR_DEFAULT
 from certus.ui import certus_strat_witness as witness
 from certus.ui.certus_strat_defaults import default_settings
@@ -1046,11 +1047,9 @@ class CertusStratStateMixin:
         Intelligently resolves material clues:
 
         - Custom mode: uses constant float value from nH_r/nL_r field
-
         - Dispersive mode: uses material name string for database lookup
 
         Returns:
-
             Dict containing all parameters for the simulation workflow."""
 
         # An entry that cannot be read is remembered by `_get_float_safe`, for `input_problems`.
@@ -1430,6 +1429,7 @@ class CertusStratStateMixin:
             "rate_layer_sets": _config_list_of_list_int(getattr(self, "_loaded_config", {}), "rate_layer_sets"),
             "rate_by_swing": _config_flag_default(getattr(self, "_loaded_config", {}), "rate_by_swing", True),
             "rate_tail_keep_optical": int(_config_float(getattr(self, "_loaded_config", {}), "rate_tail_keep_optical", 0.0)),
+            **rate_rules_params(getattr(self, "_loaded_config", {})),  # the operator's Rate rules, 0 = no rule
             "rate_rescue": _config_flag_default(getattr(self, "_loaded_config", {}), "rate_rescue", True),
             "rate_rescue_few": int(_config_float(getattr(self, "_loaded_config", {}), "rate_rescue_few", 10.0)),
             "elite_rate_moves": _config_flag_default(getattr(self, "_loaded_config", {}), "elite_rate_moves", True),

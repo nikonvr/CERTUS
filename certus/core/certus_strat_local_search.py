@@ -84,6 +84,11 @@ class LocalSearchConfig:
     step_nm: float = 10.0
     allow_rate: bool = True
     rate_min_layer: int = 2
+    #: The operator's Rate rules (certus_strat_rate_rules): layers allowed in Rate (None: all), largest Rate count (None: no
+    #: cap), and the layers the rules laid optically, whose whole wavelength grid is scanned.
+    rate_allowed: frozenset[int] | None = None
+    rate_cap: int | None = None
+    repair_layers: frozenset[int] = frozenset()
 
 
 def wavelength_of(plan: dict[str, Any], layer: int) -> float | None:
@@ -122,21 +127,27 @@ def candidates(plan: dict[str, Any], layer: int, cfg: LocalSearchConfig) -> Iter
     """Every (label, plan) the stage tries for one layer."""
     grid = np.asarray(cfg.grid, dtype=np.float64)
     rate = set(int(r) for r in plan.get("rate_layers") or [])
-    if layer in rate:
+    if layer in rate or layer in cfg.repair_layers:
         targets = np.arange(grid[0], grid[-1] + 1e-9, cfg.step_nm)
+        wl0 = None if layer in rate else wavelength_of(plan, layer)
         for wl in _snap(grid, targets):
+            if wl == wl0:
+                continue
             out = with_wavelength(plan, layer, wl)
             out["rate_layers"] = sorted(rate - {layer})
             yield f"L{layer} optical@{wl:g}", out
-        return
+        if layer in rate:
+            return
     wl0 = wavelength_of(plan, layer)
     if wl0 is None:
         return
-    offsets = np.arange(-cfg.span_nm, cfg.span_nm + 1e-9, cfg.step_nm)
-    for wl in _snap(grid, wl0 + offsets):
-        if wl != wl0:
-            yield f"L{layer} {wl0:g}->{wl:g}", with_wavelength(plan, layer, wl)
-    if cfg.allow_rate and layer >= cfg.rate_min_layer:
+    if layer not in cfg.repair_layers:
+        offsets = np.arange(-cfg.span_nm, cfg.span_nm + 1e-9, cfg.step_nm)
+        for wl in _snap(grid, wl0 + offsets):
+            if wl != wl0:
+                yield f"L{layer} {wl0:g}->{wl:g}", with_wavelength(plan, layer, wl)
+    if (cfg.allow_rate and layer >= cfg.rate_min_layer and (cfg.rate_allowed is None or layer in cfg.rate_allowed)
+            and (cfg.rate_cap is None or len(rate) < cfg.rate_cap)):
         out = dict(plan)
         out["rate_layers"] = sorted(rate | {layer})
         yield f"L{layer} Rate", out

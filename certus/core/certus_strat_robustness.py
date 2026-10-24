@@ -48,6 +48,7 @@ from certus.core.certus_strat_ranking import (
     strategy_id_for_block,
     strategy_id_source_block_count,
 )
+from certus.core.certus_strat_rate_rules import apply_rate_rules
 from certus.core.certus_strat_robustness_diagnostics import (
     _CAUSE_WORDS,
     _MARGIN_REPORT_CEILING_A,
@@ -556,6 +557,10 @@ def _execute_robustness_tasks(
     """
     import multiprocessing
 
+    # The operator's Rate rules (certus_strat_rate_rules), here because every evaluated plan passes through this pool.
+    n_ruled = apply_rate_rules(all_strategies, params)
+    if n_ruled:
+        logger.info(f"[RATE-RULES] {n_ruled} plan(s) lay their forbidden Rate layers optically")
     max_workers = max(1, multiprocessing.cpu_count() // 2)
     if len(all_strategies) > 1:
         logger.info(

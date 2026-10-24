@@ -366,6 +366,40 @@ LEVIERS: tuple[Levier, ...] = (
                 "degenere en balayage exhaustif -- cout Monte-Carlo x6.",
         constante=True,
     ),
+    # ---------------------------------------------------------------- RATE: the operator's rules
+    Levier(
+        cle="rate_min_layer",
+        libelle="Regle d'operateur : premiere couche (indice depuis 0) qui peut etre posee en Rate",
+        defaut=0,
+        genre="int",
+        statut=NON_MESURE,
+        mesure="Regle de 👤 pour Bonne Mere 90 couches (2026-10-24) : pas de Rate avant la couche 10, soit 9 ici. Le plan fait "
+               "a la main sous les trois regles rend SEEL 0,2608 nm au holdout contre 0,2046 nm pour le plan libre "
+               "(reports/BONNE_MERE_strat_90c_2026-10-23). STRAT natif avec la regle : a mesurer.",
+        reserve="Appliquee a tout plan evalue (certus_strat_rate_rules) : une couche Rate interdite est posee en optique a la "
+                "lambda de son bloc, puis la recherche locale balaie toute la grille de cette couche. 0 = pas de regle. Se pose "
+                "par la configuration JSON, sans widget.",
+    ),
+    Levier(
+        cle="rate_max_optical_thickness_nm",
+        libelle="Regle d'operateur : Rate seulement si l'epaisseur optique n(l0).d est au plus cette valeur (nm)",
+        defaut=0,
+        genre="float",
+        statut=NON_MESURE,
+        mesure="Regle du plan saphir retenu de Bonne Mere (OT <= 50 nm, 2026-10-19), reprise par 👤 pour les 90 couches. "
+               "n(l0).d = multiplicateur . l0 / 4. STRAT natif avec la regle : a mesurer.",
+        reserve="0 = pas de regle. Meme mecanisme que `rate_min_layer`. Se pose par la configuration JSON, sans widget.",
+    ),
+    Levier(
+        cle="rate_max_fraction",
+        libelle="Regle d'operateur : part maximale des couches posees en Rate",
+        defaut=0,
+        genre="float",
+        statut=NON_MESURE,
+        mesure="Demande de 👤 (2026-10-24) : 75 % des couches en optique, soit 0,25 ici. STRAT natif avec la regle : a mesurer.",
+        reserve="0 ou >= 1 = pas de regle. Au-dela de la part, les couches Rate les plus epaisses passent en optique d'abord. "
+                "Se pose par la configuration JSON, sans widget.",
+    ),
     # ---------------------------------------------------------------- MULTI-TEMOIN
     Levier(
         cle="witness_reset_layers",

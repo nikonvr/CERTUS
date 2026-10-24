@@ -67,7 +67,7 @@
     "certus/ui/certus_manual_sigma_knot_dialog.py::ManualSigmaKnotDialog.__init__": 461,
     "certus/ui/certus_re_excel_mixin.py::CertusREExcelMixin.load_reverse_engineering_from_path": 514,
     "certus/ui/certus_re_ui.py::CertusREResultsDialog.__init__": 459,
-    "certus/ui/certus_strat_ui_state.py::CertusStratStateMixin.collect_params": 516,
+    "certus/ui/certus_strat_ui_state.py::CertusStratStateMixin.collect_params": 515,
     "certus/utils/certus_ux.py::build_premium_overrides": 574
   },
   "fonctions_complexes": {

@@ -15,7 +15,10 @@ mode deep, budgets de l'étude Bonne Mère ([`make_config.py`](make_config.py)).
 - **Ce qui n'a pas marché** : cible projetée (+19 % de SEEL, arrêts 1 → 41) ; règles appliquées dès la recherche dans
   STRAT natif (aucun plan déposable) ; passes d'affinage 3–4 (RMSE² moyen −5 %, SEEL P95 +0,7 %).
 - **Prix des règles de 👤** : +27 % de SEEL contre le plan libre (0,2046 nm, 61 Rate) ; 69 % du RMSE² vient de l'indice.
-- **En cours** : `rate_rules_final_only`, la méthode à la main codée dans STRAT, à mesurer contre 0,2608 nm.
+- **STRAT natif, `rate_rules_final_only`** (`ea5c284a`, graine 77, 19 h 35 → 23 h 40) : plan conforme (17 Rate), SEEL **0,3355 nm**
+  au holdout contre 0,2608 à la main, 1 arrêt ([`native_final_s077_plan.json`](native_final_s077_plan.json),
+  [`native_final_holdout.json`](native_final_holdout.json)). Écart probable : la main partait du plan libre déjà affiné
+  (0,2046 nm), le mode natif part du gagnant ELITE (0,313 nm).
 
 ## Résultats
 

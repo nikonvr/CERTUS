@@ -42,7 +42,7 @@ régression (`tests/unit/test_the_architecture_debt_only_shrinks.py` ne tourne p
 
 | programme | état | prochaine action |
 |---|---|---|
-| **Calcul (STRAT)** | étalon : `r75x2` à la fente de 2 nm. Recherche locale finale active avec sa garde au corridor configuré ; sur `r75x2`, −13,3 / −11,1 / neutre / −9,7 % de SEEL selon la graine de banc ([bilan](../reports/STRAT_garde_2026-10-22/bilan.md)). Sans rampes, aucun plan optique pur n'est déposable ; avec le secours Rate, tous les plans de la liste le sont, au modèle de Rate de STRAT (§7) | A3, A9, A13 ([`ETAT_actions.md`](ETAT_actions.md)) |
+| **Calcul (STRAT)** | étalon : `r75x2` à la fente de 2 nm. Recherche locale finale active avec sa garde au corridor configuré ; sur `r75x2`, −13,3 / −11,1 / neutre / −9,7 % de SEEL selon la graine de banc ([bilan](../reports/STRAT_garde_2026-10-22/bilan.md)). Sans rampes, aucun plan optique pur n'est déposable ; avec le secours Rate, tous les plans de la liste le sont, au modèle de Rate de STRAT (§7) | A9, A13 ([`ETAT_actions.md`](ETAT_actions.md)) |
 | **RE** | indices tabulés lus en n − ik depuis R148 (2026-10-05) : un RE antérieur sur indices absorbants en incidence oblique est à refaire ; un indice demandé hors de sa table est prolongé par une constante, avec un avertissement | — |
 | **Base de dépôts** | 140 monocouches mesurées au Photon RT (`example/database_depots/`), chargées par INDEX (« Deposit database… ») ; la voie (T ou R) se lit dans la géométrie du détecteur. Onze ajustements certifiés servent de références (`references_index.json`, `scripts\bench_base_depots.py`) : neuf à moins de 2 % d'épaisseur, deux écarts expliqués (`docs/AUDITS.md` IDX-01). RE ne la lit pas (il lui faut un classeur complet) | IDX-01 ; §5 |
 | **Exécutable gelé** | couche OpenMP (D87), 411 Mo (D72), sans les outils de développement ; construit à `dbec2fc1`, « l'exécutable fonctionne » (👤). Licences embarquées dans `licenses/` | D72 |
@@ -63,7 +63,7 @@ SEEL du `RESULT` officiel ; taux de plantage de `RANK00`.
 | aléatoire `JSON-strat-random75`, 75 couches | **0,2225** | 0 % | fast livré ; fente fixe 2 nm ; 2 634 stratégies, 51 blocs |
 | aléatoire ×2 `r75x2`, fente native 1 nm | **0,5833** | 0 % | deep livré ; fente fixe 1 nm ; 3 946 stratégies, 15 blocs |
 | `r75x2` avec ses rampes livrées, fente 2 nm | **0,5092** | 0 % | deep livré ; fente fixe 2 nm ; 4 691 stratégies, 56 blocs |
-| passe-bande 5 cavités, 99 couches, quatre verres témoins | **0,549** (médiane ; 0,415-0,590, graines 42/101/202) | 0 % | fast ; fente 2 nm ; partition 0-22-42-76-99 ; `index_corridor_fixed_domain` armé, bruit d'indice adouci, **non comparable aux autres lignes** ([rapport](../reports/STRAT_A3_C2_99c_2026-10-23/bilan.md), [domaine](../reports/STRAT_domaine_fixe_6bancs_2026-10-24/bilan.md)) |
+| passe-bande 5 cavités, 99 couches, quatre verres témoins | **0,597** (médiane ; 0,575-0,670, graines 42/101/202) | 0 % | fast ; fente 2 nm ; partition 0-22-42-76-99 ; domaine d'indice = grille spectrale, `index_corridor_fixed_domain` armé ([rapport](../reports/STRAT_A3_99c_grille_2026-10-24/bilan.md)) |
 
 **Lire ces chiffres :**
 

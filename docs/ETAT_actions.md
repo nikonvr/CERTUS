@@ -39,8 +39,6 @@ python scripts\resumer_artefact_sonde.py reports\blocs_vs_plantage_r75x0.5_deep_
   tableau, ce qui n'est pas mesuré), mettre à jour ce document, `git worktree remove --force "%TEMP%\mesure_wt"`. Aucun chemin personnel dans un
   fichier versionné. Les entrées `.git/worktrees/*` que Drive refuse de supprimer sont normales.
 
-**A3 — Le 99 couches sous l'option (a) de 👤** (2026-10-24) : `index_corridor_fixed_domain` normalisera l'erreur d'indice sur la grille spectrale seule, au lieu de la plage de balayage qui adoucit le bruit ([preuve](../reports/STRAT_domaine_fixe_6bancs_2026-10-24/bilan.md)). *Livrable* : code et test, puis le repère 99 couches sur trois graines dans la table §2.
-
 **A9 — 99 couches en une campagne** (demande de 👤 du 2026-10-16). Protocole prêt : `reports/STRAT_99c_A9_protocole_2026-10-17/` (`chain_A9.sh`,
 graines réservées) ; il ne lance rien sans `GO_OWNER.txt` écrit par 👤. *Livrable* : sur plusieurs graines, plans déposables, plantages, SEEL de
 consensus des plans figés, confirmation indépendante et coût, dans le dossier du protocole. *Ne pas* : lancer sans le GO.

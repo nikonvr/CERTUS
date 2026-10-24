@@ -1,0 +1,33 @@
+{
+  "a": 76,
+  "b": 99,
+  "n": 23,
+  "mode": "fast",
+  "stamp": "2026-10-24T21:49:50",
+  "instrument": "339e9cb3",
+  "machine": "AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD | 16 threads",
+  "seed": 42,
+  "verdict": "DEPOSABLE",
+  "n_strats": 397,
+  "n_deposables": 397,
+  "crash_min": 0.0,
+  "crash_retenue": 0.0,
+  "score": 0.06829364892814278,
+  "run_s": 614.2,
+  "index_corridor_fixed_domain": true,
+  "tirages": 50,
+  "provenance": {
+    "certus_version": "26_05",
+    "git_commit": "339e9cb3cd9b1d8b61e922526a565d90971f072a",
+    "git_dirty": false,
+    "python": "3.14.8",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "numba": "0.67.0",
+    "numba_cache_key": "5edeefe62424",
+    "numba_cache_keyed": true,
+    "platform": "Windows-11-10.0.26200-SP0",
+    "machine": "AMD64",
+    "generated_at_utc": "2026-10-24T20:00:05+00:00"
+  }
+}

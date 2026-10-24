@@ -55,12 +55,12 @@ contre le design nominal, au bruit nominal, en pp ([`corridor_0.005_result.json`
 
 [`Bonne_Mere_90c_silice_realisation.xlsx`](Bonne_Mere_90c_silice_realisation.xlsx), pour programmer le dépôt sur Helios 800
 et OMS 5100 : paramètres (vitesses provisoires à renseigner), stratégie couche par couche (mode, λ, niveau d'arrêt, sens,
-points tournants), signaux attendus, spectres, indices, cible ; généré par [`make_xlsx.py.txt`](make_xlsx.py.txt) (`python -X utf8 make_xlsx.py.txt OUT.xlsx`) (RMSE nominal
+points tournants), signaux attendus, spectres, indices, cible ; généré par [`make_xlsx.py.txt`](make_xlsx.py.txt) (à lancer avec Python, le nom du classeur en argument) (RMSE nominal
 recalculé 1,5495 pp, égal au design).
 
 ## Commandes
 
-- STRAT : `python -X utf8 probe_bm90.py deep 0 0 2 0 77` avec `CERTUS_BENCH_TIMEOUT_S=36000` (le run dure 3 h 40 ;
+- STRAT : `python -X utf8 reports/BONNE_MERE_strat_90c_2026-10-23/probe_bm90.py deep 0 0 2 0 77` avec `CERTUS_BENCH_TIMEOUT_S=36000` (le run dure 3 h 40 ;
   la limite par défaut de 30 min rend `ECHEC_RESULT_NONE`) ; sortie `reports/blocs_vs_plantage_bm90_deep_s077.json`
   (19 Mo, non suivie).
-- Affinage : `python -X utf8 modelam_bm90.py bm90 TAG OFFSET` (copie de l'outil r75, dossier de travail `%TEMP%\bm90`).
+- Affinage : `python -X utf8 reports/BONNE_MERE_strat_90c_2026-10-23/modelam_bm90.py bm90 TAG OFFSET` (copie de l'outil r75, dossier de travail `%TEMP%\bm90`).

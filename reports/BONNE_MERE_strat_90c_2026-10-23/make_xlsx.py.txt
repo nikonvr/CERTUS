@@ -1,0 +1,394 @@
+"""Bonne Mere 90-layer fabrication workbook (fused silica): stack, indices, monitoring strategy and the expected witness
+signal versus deposited thickness and time, for programming the run on the Helios 800 with the OMS 5100.
+
+python -X utf8 make_xlsx.py.txt OUT.xlsx
+Adapted from the sapphire workbook generator (%TEMP%/r75/bm_xlsx.py). Sources: the retained design
+reports/BONNE_MERE_design_2026-10-23/best_design_needle_swap_90_nominal.json, the retained strategy
+reports/BONNE_MERE_strat_90c_2026-10-23/modelam_s077_sapphire_rule.json, the target of the study
+(studies/bonne_mere/dossier_final/donnees/cible_retenue_601points.csv). No precoat. Substrate: bulk fused silica, CERTUS
+substrate id 0 (the index the design was optimized with). Optics: certus.physics.certus_opt_tmm
+.calculate_RTRback_incoherent_vectorized (film on a thick incoherent substrate, back face included).
+"""
+import functools
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+import numpy as np
+
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parents[1]
+sys.path.insert(0, str(REPO))
+from openpyxl import Workbook  # noqa: E402
+from openpyxl.chart import Reference, ScatterChart, Series  # noqa: E402
+from openpyxl.styles import Alignment, Font, PatternFill  # noqa: E402
+from openpyxl.utils import get_column_letter  # noqa: E402
+
+from certus.core._certus_physics_impl import get_n_substrate_array_by_id  # noqa: E402
+from certus.physics.certus_material_db import MaterialDatabase  # noqa: E402
+from certus.physics.certus_opt_tmm import calculate_RTRback_incoherent_vectorized  # noqa: E402
+
+OUT = Path(sys.argv[1])
+QW = 600.0
+DESIGN_FILE = REPO / "reports/BONNE_MERE_design_2026-10-23/best_design_needle_swap_90_nominal.json"
+PLAN_FILE = HERE / "modelam_s077_sapphire_rule.json"
+TARGET_FILE = REPO / "studies/bonne_mere/dossier_final/donnees/cible_retenue_601points.csv"
+design = json.loads(DESIGN_FILE.read_text(encoding="utf-8"))
+plan = json.loads(PLAN_FILE.read_text(encoding="utf-8"))["plan"]
+cfg = json.loads((HERE / "config_strat_90c_corridor0.010.json").read_text(encoding="utf-8"))
+target = np.loadtxt(TARGET_FILE, delimiter=",", skiprows=1)
+db = MaterialDatabase(str(REPO / "example" / "database_index" / "indices.xlsx"))
+H, L, SUB = design["materials"][0], design["materials"][1], "Silice fondue (CERTUS id 0)"
+PERF = "SEEL P95 0,2608 nm ; 0 arrêt au holdout (3 x 1 000 tirages par bruit), 1 arrêt sur 9 000 aux graines de confirmation"
+
+
+@functools.lru_cache(maxsize=None)
+def n_of(mat, wl):
+    if mat == SUB:
+        return complex(get_n_substrate_array_by_id(0, np.array([float(wl)]))[0])
+    return complex(db._db.get_refractive_index(mat, float(wl)))
+
+
+# ---- operations from the design and the plan ------------------------------------------------------------------------------
+N = design["n_layers"]
+assert N == 90
+assert max(b["end"] for b in plan["blocks"]) == N
+mats = [design["materials"][i] for i in design["material_indices"]]
+thick = np.array(design["thickness_nm"], dtype=float)
+rate = set(plan["rate_layers"])
+assert not rate & set(range(9)), "no Rate before layer 10 (owner)"
+lam_plan = [next(float(b["wavelength"]) for b in plan["blocks"] if b["start"] <= k < b["end"]) for k in range(N)]
+ops = [dict(component_layer=k + 1, role="couche pièce", mode="Rate" if k in rate else "Optique") for k in range(N)]
+assert all(m == (H if k % 2 == 0 else L) for k, m in enumerate(mats))
+lam_mon = []
+for k in range(N):
+    if ops[k]["mode"] == "Optique":
+        lam_mon.append(lam_plan[k])
+    else:
+        lam_mon.append(next(lam_plan[j] for j in range(k - 1, -1, -1) if ops[j]["mode"] == "Optique"))
+
+
+def witness_T(th, wl):
+    """T (fraction) of the witness for a stack th (substrate first) at one wavelength, back face included."""
+    th = np.asarray(th, dtype=np.float64)
+    nl = np.array([[n_of(mats[k], wl) for k in range(len(th))]], dtype=np.complex128)
+    _, T, _ = calculate_RTRback_incoherent_vectorized(th, nl, np.array([n_of(SUB, wl)], dtype=np.complex128),
+                                                      np.array([float(wl)]))
+    return float(T[0])
+
+
+# ---- per operation: QWOT, signals, turning points ------------------------------------------------------------------------
+rows, curves, full = [], [], []
+for k, o in enumerate(ops):
+    wl, d = lam_mon[k], thick[k]
+    n600, nmon, n550 = n_of(mats[k], QW), n_of(mats[k], wl), n_of(mats[k], 550.0)
+    below = list(thick[:k])
+    step = 0.1
+    grid = np.append(np.arange(0.0, d, step), d)
+    T = np.array([witness_T(below + [x], wl) for x in grid])
+    dT = np.diff(T)
+    ext = [i for i in range(1, len(dT)) if dT[i - 1] * dT[i] < 0]  # extrema crossed during the layer
+    slope = (T[-1] - T[-2]) / (grid[-1] - grid[-2])
+    rows.append(dict(op=k + 1, comp=o["component_layer"], role=o["role"], mat=mats[k], d=d, n600=n600.real, k600=-n600.imag,
+                     qwot=4 * n600.real * d / QW, n550=n550.real, ot550=n550.real * d, mode=o["mode"], wl=wl, nmon=nmon.real,
+                     T0=100 * T[0], T1=100 * T[-1], ntp=len(ext), tp=[(round(float(grid[i]), 1), round(100 * float(T[i]), 3)) for i in ext],
+                     slope=100 * slope, sens="montant" if slope > 0 else "descendant", nsub=n_of(SUB, wl).real))
+    sub = np.unique(np.append(np.linspace(0, len(grid) - 1, 41).round().astype(int), np.array(ext, dtype=int)))
+    curves.append([(float(grid[i]), 100 * float(T[i])) for i in sub])
+    full.append((grid.copy(), 100 * T, [int(i) for i in ext]))
+
+# ---- part spectrum at nominal ------------------------------------------------------------------------------------------
+wls = target[:, 0]
+nl = np.array([[n_of(mats[k], w) for k in range(N)] for w in wls], dtype=np.complex128)
+_, Tpart, _ = calculate_RTRback_incoherent_vectorized(thick.astype(np.float64), nl,
+                                                       np.array([n_of(SUB, w) for w in wls], dtype=np.complex128), wls.astype(np.float64))
+rmse = float(np.sqrt(np.mean((100 * Tpart - target[:, 1]) ** 2)))
+
+# ---- workbook -----------------------------------------------------------------------------------------------------------
+wb = Workbook()
+wb.properties.creator = "CERTUS"
+wb.properties.lastModifiedBy = "CERTUS"
+wb.properties.title = "Bonne Mere 90 couches silice - dossier de realisation"
+B, Y = Font(bold=True), PatternFill("solid", fgColor="FFF2CC")
+
+
+def sheet(ws, header, data, widths=None):
+    ws.append(header)
+    for c in ws[1]:
+        c.font = B
+        c.alignment = Alignment(wrap_text=True, vertical="top")
+    for r in data:
+        ws.append(r)
+    ws.freeze_panes = "A2"
+    for i, h in enumerate(header, 1):
+        ws.column_dimensions[get_column_letter(i)].width = (widths or {}).get(i, max(10, min(28, len(str(h)) + 2)))
+
+
+# Parameters (rates editable)
+ws = wb.active
+ws.title = "Paramètres"
+ws.append(["Paramètre", "Valeur", "Unité", "Remarque"])
+for c in ws[1]:
+    c.font = B
+P = [("Machine", "Helios 800 (pulvérisation), contrôle optique OMS 5100", "", ""),
+     ("Vitesse de dépôt H (Nb2O5)", 0.30, "nm/s", "À RENSEIGNER : valeur provisoire, pilote toutes les colonnes de temps"),
+     ("Vitesse de dépôt L (SiO2)", 0.50, "nm/s", "À RENSEIGNER : valeur provisoire, pilote toutes les colonnes de temps"),
+     ("Matériau H", H, "", ""), ("Matériau L", L, "", ""), ("Substrat (pièce et témoin)", SUB, "", "face arrière incluse dans les signaux"),
+     ("Indice de la silice à 450 nm", round(n_of(SUB, 450.0).real, 6), "", "table complète : onglet Indices"),
+     ("Indice de la silice à 550 nm", round(n_of(SUB, 550.0).real, 6), "", ""),
+     ("Indice de la silice à 600 nm", round(n_of(SUB, 600.0).real, 6), "", ""),
+     ("Longueur d'onde de référence des QWOT", QW, "nm", "QWOT = 4·n(600)·d / 600"),
+     ("Nombre d'opérations", N, "", "90 couches, pièce et témoin, sans précouche"),
+     ("Couches en Optique", sum(1 for r in rows if r["mode"] == "Optique"), "", f"{100 * sum(r['mode'] == 'Optique' for r in rows) / N:.0f} %"),
+     ("Couches en Rate", sum(r["mode"] == "Rate" for r in rows), "", "règle : épaisseur optique n(550)·d ≤ 50 nm, aucune avant la couche 10"),
+     ("Témoin", "1 seul, jamais changé", "", "reçoit les 90 couches"),
+     ("Précouches", "aucune", "", "première couche 99,6 nm"),
+     ("Plage de monitoring", f"{cfg['scan_wl_min']:.0f}–{cfg['scan_wl_max']:.0f}", "nm", ""),
+     ("Fente du monochromateur", cfg["monochromator_resolution_nm"], "nm", "fixe ; les signaux ci-joints sont calculés sans moyenne de fente"),
+     ("Incertitude d'indice supposée", cfg["index_corridor"], "unité d'indice", "écart systématique par matériau, uniforme"),
+     ("Bruit photométrique nominal", 0.05, "% T", "niveaux évalués : 0,025 / 0,05 / 0,10"),
+     ("Hystérésis de lecture des points tournants", cfg["tp_hysteresis_factor"], "× bruit", ""),
+     ("Performance attendue (modèle)", PERF, "", "graines neuves ; dérive de la source NON modélisée"),
+     ("RMSE nominal pièce / cible (recalculé ici)", round(rmse, 4), "pp", f"design : {design['rmse_percentage_points']:.4f} pp"),
+     ("Stratégie", "STRAT graine 77 + affinage apparié sous la règle du saphir", "", "")]
+for p in P:
+    ws.append(list(p))
+for r in (3, 4):
+    ws.cell(r, 2).fill = Y
+ws.column_dimensions["A"].width, ws.column_dimensions["B"].width, ws.column_dimensions["D"].width = 42, 48, 80
+RATE = {H: "Paramètres!$B$3", L: "Paramètres!$B$4"}
+
+# Stack and strategy
+hdr = ["Op", "Couche pièce", "Rôle", "Matériau", "Épaisseur mécanique (nm)", "n(600)", "k(600)", "QWOT à 600 nm", "n(550)",
+       "Épaisseur optique n(550)·d (nm)", "Mode de contrôle", "λ du monochromateur (nm) (Rate : dernière λ optique)", "n couche (λ monochromateur)", "T témoin début (%)",
+       "T témoin arrêt = niveau d'arrêt (%)", "Sens du signal à l'arrêt", "Pente à l'arrêt (%T/nm)", "Points tournants franchis",
+       "Points tournants (épaisseur nm ; T %)", "Durée (s)", "Temps cumulé fin (s)", "n silice (λ monochromateur)"]
+ws = wb.create_sheet("Stratégie")
+data = []
+for i, r in enumerate(rows):
+    row = i + 2
+    data.append([r["op"], int(r["comp"]), r["role"], r["mat"], r["d"], r["n600"], r["k600"], r["qwot"], r["n550"],
+                 r["ot550"], r["mode"], r["wl"], r["nmon"], r["T0"], r["T1"], r["sens"], r["slope"], r["ntp"],
+                 " | ".join(f"{a} ; {b}" for a, b in r["tp"]), f"=E{row}/{RATE[r['mat']]}", f"=SUM($T$2:T{row})", r["nsub"]])
+sheet(ws, hdr, data, {3: 22, 19: 40})
+for row in ws.iter_rows(min_row=2):
+    for c, fmt in zip(row, [None, None, None, None, "0.000", "0.0000", "0.00000", "0.0000", "0.0000", "0.00", None, "0.0", "0.0000",
+                            "0.000", "0.000", None, "0.000", None, None, "0.0", "0.0", "0.000000"]):
+        if fmt:
+            c.number_format = fmt
+    if row[10].value == "Rate":
+        for c in row:
+            c.fill = PatternFill("solid", fgColor="DDEBF7")
+
+# Expected signals
+ws = wb.create_sheet("Signaux")
+hdr = ["Op", "Mode", "Matériau", "λ du monochromateur (nm)", "Épaisseur déposée dans la couche (nm)", "T témoin attendue (%)",
+       "Temps dans la couche (s)", "Temps cumulé (s)"]
+data, r0 = [], 2
+for i, (r, cv) in enumerate(zip(rows, curves)):
+    start = f"Stratégie!U{i + 1}" if i else "0"
+    for d, t in cv:
+        row = r0 + len(data)
+        data.append([r["op"], r["mode"], r["mat"], r["wl"], d, t, f"=E{row}/{RATE[r['mat']]}", f"={start}+G{row}"])
+sheet(ws, hdr, data)
+for row in ws.iter_rows(min_row=2):
+    row[4].number_format, row[5].number_format, row[6].number_format, row[7].number_format = "0.00", "0.000", "0.0", "0.0"
+ch = ScatterChart()
+ch.title, ch.x_axis.title, ch.y_axis.title = "Signal témoin attendu (λ de contrôle de chaque opération)", "Temps cumulé (s)", "T (%)"
+ch.style, ch.height, ch.width = 13, 12, 30
+s = Series(Reference(ws, min_col=6, min_row=2, max_row=1 + len(data)), Reference(ws, min_col=8, min_row=2, max_row=1 + len(data)), title="T témoin")
+s.marker.symbol, s.graphicalProperties.line.noFill = "circle", True
+s.marker.size = 2
+ch.series.append(s)
+ws.add_chart(ch, "J2")
+
+# Final spectra, theoretical, no error
+ws = wb.create_sheet("Spectres finaux")
+sw = np.arange(380.0, 900.0 + 1e-9, 1.0)
+
+
+def stack_T(th, ms, w_arr):
+    nl = np.array([[n_of(m, float(w)) for m in ms] for w in w_arr], dtype=np.complex128)
+    _, T, _ = calculate_RTRback_incoherent_vectorized(np.asarray(th, dtype=np.float64), nl,
+                                                       np.array([n_of(SUB, float(w)) for w in w_arr], dtype=np.complex128), w_arr.astype(np.float64))
+    return 100 * T
+
+
+Tp = stack_T(thick, mats, sw)
+tgt = np.interp(sw, wls, target[:, 1], left=np.nan, right=np.nan)
+sheet(ws, ["λ (nm)", "Pièce et témoin, T (%)", "Cible T (%) (400-729 nm)"],
+      [[float(w), float(b), (None if np.isnan(c) else float(c))] for w, b, c in zip(sw, Tp, tgt)], {2: 18, 3: 18})
+ch = ScatterChart()
+ch.title, ch.x_axis.title, ch.y_axis.title, ch.height, ch.width = "Réponse spectrale à achèvement, sans erreur", "λ (nm)", "T (%)", 12, 28
+for col, name in ((2, "Pièce et témoin"), (3, "Cible")):
+    s2 = Series(Reference(ws, min_col=col, min_row=2, max_row=1 + len(sw)), Reference(ws, min_col=1, min_row=2, max_row=1 + len(sw)), title=name)
+    s2.marker.symbol = "none"
+    ch.series.append(s2)
+ws.add_chart(ch, "F2")
+
+# Indices
+ws = wb.create_sheet("Indices")
+grid = np.arange(400.0, 900.0 + 1e-9, 5.0)
+data = [[w] + sum(([n_of(m, w).real, -n_of(m, w).imag] for m in (H, L, SUB)), []) for w in grid]
+sheet(ws, ["λ (nm)", f"n {H}", f"k {H}", f"n {L}", f"k {L}", f"n {SUB}", f"k {SUB}"], data)
+ws.append([])
+ws.append(["Convention n̂ = n − ik (k ≥ 0). Couches : example/database_index/indices.xlsx (base CERTUS) ; silice : substrat id 0 de CERTUS."])
+
+# Target and nominal spectrum
+ws = wb.create_sheet("Cible et nominal")
+sheet(ws, ["λ (nm)", "Cible T (%)", "Pièce nominale T (%)", "Écart (pp)"],
+      [[float(w), float(t), 100 * float(tp), 100 * float(tp) - float(t)] for w, t, tp in zip(wls, target[:, 1], Tpart)])
+ch = ScatterChart()
+ch.title, ch.x_axis.title, ch.y_axis.title, ch.height, ch.width = "Cible et pièce nominale", "λ (nm)", "T (%)", 10, 24
+for col, name in ((2, "Cible"), (3, "Nominal")):
+    s = Series(Reference(ws, min_col=col, min_row=2, max_row=1 + len(wls)), Reference(ws, min_col=1, min_row=2, max_row=1 + len(wls)), title=name)
+    s.marker.symbol = "none"
+    ch.series.append(s)
+ws.add_chart(ch, "F2")
+
+# Notes
+ws = wb.create_sheet("Lisez-moi")
+notes = [
+    "Bonne Mère 90 couches sur silice — dossier de réalisation pour Helios 800 et OMS 5100 (généré par CERTUS)",
+    "",
+    "Ordre des opérations : du substrat vers l'air. Op 1 à 90 : couches 1 à 90 sur la pièce ET le témoin. Pas de précouche.",
+    "Contrôle Optique : arrêter quand T témoin, à λ de contrôle, atteint le niveau d'arrêt (onglet Stratégie), après avoir franchi le nombre",
+    "  de points tournants indiqué, dans le sens indiqué. Contrôle Rate : arrêter au temps = épaisseur / vitesse (quartz ou temps) ;",
+    "  pendant une couche Rate le monochromateur reste sur la dernière λ optique : le signal attendu est donné à cette λ.",
+    "Signaux : T du témoin (face arrière de la silice incluse), à λ de contrôle, sans moyenne de fente ni bruit, pour l'empilement nominal.",
+    "  Le signal réel s'en écarte dès qu'une couche précédente s'écarte de son nominal : suivre le niveau d'arrêt, pas l'horloge.",
+    "Temps : calculés par Excel à partir des vitesses de l'onglet Paramètres (cellules jaunes, valeurs PROVISOIRES à remplacer).",
+    "QWOT à 600 nm : 4·n(600)·d / 600. Épaisseur optique de la règle Rate : n(550)·d.",
+    "Spectres finaux : T à achèvement de la pièce (90 couches), théorique, sans erreur ; le témoin est identique (pas de précouche).",
+    "Points tournants : extrema de T(d) dans la couche, comptés sur la courbe calculée (pas 0,1 nm), jamais déduits du QWOT.",
+    "Hypothèses du modèle de performance : incertitude d'indice ±0,010, bruit 0,025/0,05/0,10 % T, fente 2 nm ; dérive de la source non modélisée.",
+    "Règles de la stratégie (2026-10-24) : aucune couche Rate avant la couche 10 ; Rate seulement si n(550)·d ≤ 50 nm (règle du saphir).",
+]
+for n in notes:
+    ws.append([n])
+ws["A1"].font = B
+ws.column_dimensions["A"].width = 140
+wb.move_sheet("Lisez-moi", offset=-6)  # noqa: keep first
+
+src = {f.name: hashlib.sha256(f.read_bytes()).hexdigest()[:16] for f in (DESIGN_FILE, PLAN_FILE, TARGET_FILE)}
+ws.append([])
+ws.append(["Sources (sha256, 16 premiers caractères) : " + " ; ".join(f"{k} {v}" for k, v in src.items())])
+wb.calculation.fullCalcOnLoad = True
+
+# ---- graphs as images (visible in any viewer) ---------------------------------------------------------------------------
+import tempfile  # noqa: E402
+
+import matplotlib  # noqa: E402
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt  # noqa: E402
+from openpyxl.drawing.image import Image as XLImage  # noqa: E402
+
+tmp = Path(tempfile.mkdtemp())
+rates = {H: 0.30, L: 0.50}
+ws = wb.create_sheet("Graphiques", 1)
+ws["A1"] = "Graphiques (images). Temps calculés avec les vitesses PROVISOIRES 0,30 nm/s (H) et 0,50 nm/s (L) ; les graphiques natifs des onglets Signaux et Spectres finaux suivent les vitesses saisies."
+ws["A1"].font = B
+anchor = [3]
+
+
+def put(fig, name, h_rows):
+    f = tmp / f"{name}.png"
+    fig.savefig(f, dpi=110, bbox_inches="tight")
+    plt.close(fig)
+    img = XLImage(str(f))
+    ws.add_image(img, f"A{anchor[0]}")
+    anchor[0] += h_rows
+
+
+# 1. witness signal versus time
+fig, ax = plt.subplots(figsize=(16, 5))
+t0 = 0.0
+for r, (g, T, ext) in zip(rows, full):
+    t = t0 + g / rates[r["mat"]]
+    ax.plot(t, T, color=("tab:blue" if r["mode"] == "Optique" else "tab:orange"), lw=0.8)
+    if r["mode"] == "Optique":
+        ax.plot(t[-1], T[-1], "k.", ms=3)
+    t0 = t[-1]
+ax.set_xlabel("Temps cumulé (s), vitesses provisoires")
+ax.set_ylabel("T témoin (%)")
+ax.set_title("Signal témoin attendu au cours du dépôt (bleu : Optique, orange : Rate à la dernière λ optique ; points : arrêts)")
+ax.grid(alpha=0.3)
+put(fig, "signal_temps", 27)
+
+# 2. final spectra
+fig, ax = plt.subplots(figsize=(16, 5))
+ax.plot(sw, Tp, label="Pièce et témoin")
+ax.plot(wls, target[:, 1], "k--", lw=1, label="Cible")
+ax.set_xlabel("λ (nm)")
+ax.set_ylabel("T (%)")
+ax.set_title("Réponse spectrale à achèvement, théorique, sans erreur")
+ax.grid(alpha=0.3)
+ax.legend()
+put(fig, "spectres", 27)
+
+# 3. stack: QWOT at 600 nm and mechanical thickness per op
+fig, axs = plt.subplots(2, 1, figsize=(16, 7), sharex=True)
+x = [r["op"] for r in rows]
+col = ["tab:red" if r["mat"] == H else "tab:cyan" for r in rows]
+hat = ["//" if r["mode"] == "Rate" else "" for r in rows]
+for ax, key, lab in ((axs[0], "qwot", "QWOT à 600 nm"), (axs[1], "d", "Épaisseur mécanique (nm)")):
+    for xi, r, c, h in zip(x, rows, col, hat):
+        ax.bar(xi, r[key], color=c, hatch=h, edgecolor="k", lw=0.3)
+    ax.set_ylabel(lab)
+    ax.grid(alpha=0.3, axis="y")
+axs[0].set_title("Empilement (rouge : Nb2O5, cyan : SiO2, hachuré : Rate)")
+axs[1].set_xlabel("Opération")
+put(fig, "empilement", 37)
+
+# 4. monitoring wavelength and stop level per op
+fig, ax = plt.subplots(figsize=(16, 4.5))
+ax.scatter(x, [r["wl"] for r in rows], c=["tab:blue" if r["mode"] == "Optique" else "tab:orange" for r in rows], s=14)
+ax.set_xlabel("Opération")
+ax.set_ylabel("λ monochromateur (nm)")
+ax2 = ax.twinx()
+ax2.plot(x, [r["T1"] for r in rows], "g-", lw=0.7)
+ax2.set_ylabel("Niveau d'arrêt T (%)", color="g")
+ax.set_title("λ du monochromateur (bleu : Optique, orange : Rate) et niveau d'arrêt")
+ax.grid(alpha=0.3)
+put(fig, "lambda_arret", 24)
+
+# 5. indices, fused silica included
+fig, axs = plt.subplots(1, 2, figsize=(16, 4.5))
+gw = np.arange(400.0, 900.0 + 1e-9, 5.0)
+for m in (H, L, SUB):
+    axs[0].plot(gw, [n_of(m, w).real for w in gw], label=m)
+    axs[1].plot(gw, [-n_of(m, w).imag for w in gw], label=m)
+axs[0].set_ylabel("n")
+axs[1].set_ylabel("k")
+for ax in axs:
+    ax.set_xlabel("λ (nm)")
+    ax.grid(alpha=0.3)
+    ax.legend()
+axs[0].set_title("Indices (convention n − ik)")
+put(fig, "indices", 24)
+
+# 6. one panel per optical op: signal versus thickness, stop level, turning points
+opt = [i for i, r in enumerate(rows) if r["mode"] == "Optique"]
+for page in range(0, len(opt), 20):
+    sel = opt[page:page + 20]
+    fig, axs = plt.subplots(4, 5, figsize=(16, 11))
+    for ax in axs.flat[len(sel):]:
+        ax.axis("off")
+    for ax, i in zip(axs.flat, sel):
+        g, T, ext = full[i]
+        r = rows[i]
+        ax.plot(g, T, lw=0.9)
+        ax.plot(g[ext], T[ext], "rv", ms=4)
+        ax.axhline(r["T1"], color="g", lw=0.6, ls="--")
+        ax.set_title(f"op {r['op']} {r['mat'][5:]} {r['d']:.1f} nm @ {r['wl']:.0f} nm", fontsize=8)
+        ax.tick_params(labelsize=7)
+        ax.grid(alpha=0.3)
+    fig.suptitle(f"Signal témoin pendant chaque couche Optique (x : épaisseur déposée nm, y : T %) ; triangles : points tournants ; tirets : niveau d'arrêt — opérations {rows[sel[0]]['op']} à {rows[sel[-1]]['op']}")
+    fig.tight_layout()
+    put(fig, f"couches_{page}", 55)
+
+wb.save(OUT)
+print("saved", OUT, "| RMSE nominal recomputed", round(rmse, 4), "vs design", round(design["rmse_percentage_points"], 4),
+      "| optical ops", sum(r["mode"] == "Optique" for r in rows), "| turning points total", sum(r["ntp"] for r in rows),
+      "| QWOT600 op1", round(rows[0]["qwot"], 4))

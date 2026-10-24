@@ -1,0 +1,206 @@
+"""Batch-of-layers ("micro-window") refinement of a Bonne Mere 90-layer plan (copy of the r75 tool windows.py).
+
+Changes from %TEMP%/r75/windows.py: component bm90 registered here, work folder %TEMP%/bm90, wavelengths 430-900 nm.
+Only optical layers move (their wavelength), so Rate/optical rules of the start plan hold.
+
+python -X utf8 windows.py COMP START_TAG OUT_TAG SEARCH_SEED OFFSET
+Windows of 8 optical layers, stride 4, from the substrate up; inside each window two coordinate-descent passes over its
+optical layers, wavelengths at +-60 nm around the current one by 10 nm, a change kept at once when it lowers the paired
+mean RMSE^2 at the nominal noise on the search seed (300 draws) without adding a stop. Then the plan is frozen and judged
+against START on confirmation (20261020401+OFFSET..) and final holdout (20261020501+OFFSET..) seeds, 1000 draws each.
+"""
+from __future__ import annotations
+
+import copy
+import json
+import logging
+import os
+import sys
+import time
+from pathlib import Path
+
+COMP, START, OUT_TAG, SSEED, OFF = sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4]), int(sys.argv[5])
+BUFFER = int(sys.argv[6]) if len(sys.argv) > 6 else -1  # >= 0: projected final target, errors set to zero past window end + BUFFER layers
+REPO = Path(__file__).resolve().parents[2]
+V = Path(os.environ["TEMP"]) / "bm90"
+sys.path.insert(0, str(REPO))
+sys.path.insert(1, str(REPO / "scripts"))
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+LOG = open(V / f"windows_{OUT_TAG}.log", "a", encoding="utf-8")
+
+
+def say(*a):
+    m = " ".join(str(x) for x in a)
+    print(m, flush=True)
+    LOG.write(m + "\n")
+    LOG.flush()
+
+
+def main():
+    import numpy as np
+    import bench_examples as Bx
+    import probe_blocs_vs_plantage as P
+    from CERTUS_STRAT import CertusStratApp
+    from _composant import charger_configuration
+    from certus.core.certus_strat_config import precompute_clues_and_matrices
+    from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+    from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+    import certus.core.certus_strat_robustness_task as task
+    from certus.utils.certus_exclusions import filter_params_for_gui
+    from certus_physics import CRASH_SENTINEL_MIN
+
+    P.COMPOSANTS["bm90"] = ("reports/BONNE_MERE_strat_90c_2026-10-23/config_strat_90c_corridor0.010.json", 90)
+    cfg, n_layers = P.COMPOSANTS[COMP]
+    Bx.qapp()
+    Bx.autoanswer_dialogs(True)
+    app = CertusStratApp()
+    charger_configuration(app, REPO / cfg)
+    if "execution_mode" in getattr(app, "widgets", {}):
+        app.widgets["execution_mode"].setCurrentText("deep")
+    base = app.collect_params()
+    base.update({"show_plots": False, "monochromator_resolution_nm": 2.0, "search_resolution": False, "noise_layer_offset": 0,
+                 "noise_total_layers": n_layers, "require_turning_point": 0, **P._leviers_rate(0), "execution_mode": "deep"})
+    logger = logging.getLogger("certus_strat")
+    logger.setLevel(logging.WARNING)
+    nominal = base.get("p_thick_nominal")
+    if nominal is None:
+        from certus.core.certus_strat_pipeline import get_refractive_index
+        l0 = float(base["l0"])
+        mult = [float(e) for e in base["stack_string"].split(",") if e.strip()]
+        nH, nL = get_refractive_index(base["nH_id"], l0), get_refractive_index(base["nL_id"], l0)
+        nominal = [(m * l0) / (4.0 * np.real(nH if i % 2 == 0 else nL)) for i, m in enumerate(mult)]
+        base["p_thick_nominal"] = nominal
+    nominal = list(nominal)
+    clues, _, _ = precompute_clues_and_matrices(base, nominal, logger)
+    optics = _prepare_robustness_nominal_optics(base, nominal, {"clues_at_wl": clues})
+    levels = _resolve_robustness_noise_levels(base)
+    native_rmse = task.compute_batch_rmse
+    project = {"after": None}
+    nominal_arr = np.asarray(nominal, dtype=np.float64)
+
+    def projected_rmse(*args, **kw):
+        """Projected final target: layers past `after` deposited exactly, same draws (C2) for everything else."""
+        k = project["after"]
+        if k is not None:
+            th = np.array(args[0], dtype=np.float64, copy=True)
+            ok = np.all(th[:, :k + 1] < CRASH_SENTINEL_MIN, axis=1)
+            th[np.ix_(ok, np.arange(k + 1, th.shape[1]))] = nominal_arr[k + 1:]
+            args = (np.ascontiguousarray(th), *args[1:])
+        return native_rmse(*args, **kw)
+
+    task.compute_batch_rmse = projected_rmse
+
+    def evaluate(plan, seed, runs, after=None):
+        project["after"] = after
+        params = dict(base, robustness_seed=int(seed))
+        p = copy.deepcopy(plan)
+        _attach_slit_profiles([p], nominal, params, logger)
+        res = task._test_strategy_robustness_task(p, 0, levels, runs, nominal, clues, filter_params_for_gui(params), *optics, {},
+                                                  compute_layer_profile=False)
+        out = []
+        for lv in res["results_per_noise"]:
+            rmse = np.asarray(lv["rmse_all"], dtype=float)
+            th = np.asarray(lv["thicknesses_all"], dtype=float)
+            out.append((rmse, np.any((th if after is None else th[:, :after + 1]) > CRASH_SENTINEL_MIN, axis=1)))
+        project["after"] = None
+        return out
+
+    def paired(a, b):
+        """mean of rmse^2(b) - rmse^2(a) at the nominal level over draws both complete; stops of a and b over all levels."""
+        both = ~a[1][1] & ~b[1][1]
+        d = b[1][0][both] ** 2 - a[1][0][both] ** 2
+        return float(d.mean()), float(d.std(ddof=1) / np.sqrt(len(d))), sum(int(x[1].sum()) for x in a), sum(int(x[1].sum()) for x in b)
+
+    def set_layer(p, k, lam):
+        out = []
+        for b in p["blocks"]:
+            s, e, w = b["start"], b["end"], float(b["wavelength"])
+            if s <= k < e:
+                if s < k:
+                    out.append(dict(start=s, end=k, wavelength=w))
+                out.append(dict(start=k, end=k + 1, wavelength=float(lam)))
+                if k + 1 < e:
+                    out.append(dict(start=k + 1, end=e, wavelength=w))
+            else:
+                out.append(dict(start=s, end=e, wavelength=w))
+        q = dict(p)
+        q["blocks"] = out
+        return q
+
+    def wl_of(p, k):
+        return next(float(b["wavelength"]) for b in p["blocks"] if b["start"] <= k < b["end"])
+
+    start = json.loads((V / f"winner_{START}.json").read_text(encoding="utf-8"))
+    if OUT_TAG == "selftest":
+        rate0 = set(start["rate_layers"])
+        opt = [k for k in range(n_layers) if k not in rate0]
+        after = opt[len(opt) // 2]
+        down = next(k for k in opt if k > after + 1)
+        up = next(k for k in opt if k < after)
+        full = evaluate(start, SSEED, 300)
+        proj_last = evaluate(start, SSEED, 300, n_layers - 1)
+        ok1 = all(np.array_equal(full[i][0], proj_last[i][0]) for i in range(3))
+        p0 = evaluate(start, SSEED, 300, after)
+        pd = evaluate(set_layer(start, down, wl_of(start, down) + 20), SSEED, 300, after)
+        pu = evaluate(set_layer(start, up, wl_of(start, up) + 20), SSEED, 300, after)
+        ok_up = ~p0[1][1] & ~pu[1][1]
+        ok2 = all(np.array_equal(p0[i][0][~p0[i][1]], pd[i][0][~pd[i][1]]) for i in range(3))
+        ok3 = not np.array_equal(p0[1][0][ok_up], pu[1][0][ok_up])
+        lower = float(np.mean(p0[1][0][~p0[1][1]] ** 2)) < float(np.mean(full[1][0][~full[1][1]] ** 2))
+        say(f"SELFTEST after={after} down={down} up={up}: projection at the last layer == native {ok1}; downstream change leaves "
+            f"the projected score bit-identical {ok2}; upstream change moves it {ok3}; projected RMSE2 below full {lower}")
+        say(f"SELFTEST projected RMSE2 {float(np.mean(p0[1][0][~p0[1][1]] ** 2)):.4e} vs full {float(np.mean(full[1][0][~full[1][1]] ** 2)):.4e} (information: downstream optical layers compensate upstream errors)")
+        say("SELFTEST " + ("PASS" if ok1 and ok2 and ok3 else "FAIL"))
+        return
+    rate = set(start["rate_layers"])
+    optical = [k for k in range(n_layers) if k not in rate]
+    windows = [optical[i:i + 8] for i in range(0, max(1, len(optical) - 4), 4)]
+    current = start
+    base_eval = evaluate(start, SSEED, 300)
+    t0, n_eval, kept = time.monotonic(), 1, []
+    say(f"== {COMP} {OUT_TAG}: {len(optical)} optical layers, {len(windows)} windows, projected buffer {BUFFER}")
+    for wi, win in enumerate(windows):
+        after = None if BUFFER < 0 else min(n_layers - 1, win[-1] + BUFFER)
+        cur_eval = evaluate(current, SSEED, 300, after)
+        for pss in (1, 2):
+            for k in win:
+                lam0 = wl_of(current, k)
+                best = None
+                for lam in range(int(max(430, lam0 - 60)), int(min(900, lam0 + 60)) + 1, 10):
+                    if float(lam) == lam0:
+                        continue
+                    trial = set_layer(current, k, lam)
+                    ev = evaluate(trial, SSEED, 300, after)
+                    n_eval += 1
+                    d, se, s_cur, s_try = paired(cur_eval, ev)
+                    if s_try <= s_cur and d < 0 and (best is None or d < best[0]):
+                        best = (d, lam, trial, ev)
+                if best is not None:
+                    current, cur_eval = best[2], best[3]
+                    kept.append((k, best[1]))
+        d, se, _, _ = paired(base_eval, evaluate(current, SSEED, 300))
+        say(f"   window {wi + 1}/{len(windows)} layers {win[0]}-{win[-1]}: changes so far {len(kept)}, dRMSE2 vs start {d:+.3e}, "
+            f"{n_eval} evaluations, {time.monotonic() - t0:.0f} s")
+    current["origin"] = f"{start['origin']} + windows {OUT_TAG}"
+    (V / f"windowed_{OUT_TAG}.json").write_text(json.dumps(current, indent=1), encoding="utf-8")
+    say(f"   frozen: {len(kept)} changes {kept}")
+    final = {}
+    for tag, first in (("conf", 20261020401), ("hold", 20261020501)):
+        seeds = [first + OFF + i for i in range(3)]
+        evs_s = [evaluate(start, s, 1000) for s in seeds]
+        evs_c = [evaluate(current, s, 1000) for s in seeds]
+        d = np.concatenate([b[1][0][~a[1][1] & ~b[1][1]] ** 2 - a[1][0][~a[1][1] & ~b[1][1]] ** 2 for a, b in zip(evs_s, evs_c)])
+        r0 = np.mean(np.concatenate([a[1][0][~a[1][1]] ** 2 for a in evs_s]))
+        p95 = {nm: max(float(np.percentile(np.concatenate([e[i][0] for e in evs]), 95)) for i in range(3))
+               for nm, evs in (("start", evs_s), ("win", evs_c))}
+        stops = {nm: sum(int(x[1].sum()) for e in evs for x in e) for nm, evs in (("start", evs_s), ("win", evs_c))}
+        final[tag] = dict(rel=float(d.mean() / r0), se=float(d.std(ddof=1) / np.sqrt(len(d)) / r0), stops=stops, p95=p95,
+                          seel_start=2 * p95["start"] ** 0.5, seel_win=2 * p95["win"] ** 0.5)
+        say(f"   {tag}: dRMSE2 {100 * d.mean() / r0:+.1f} % (SE {100 * final[tag]['se']:.1f} %), stops {stops['start']} -> {stops['win']}, "
+            f"SEEL_strat {final[tag]['seel_start']:.4f} -> {final[tag]['seel_win']:.4f} nm")
+    (V / f"windows_{OUT_TAG}.json").write_text(json.dumps(dict(comp=COMP, start=START, kept=kept, final=final), indent=1), encoding="utf-8")
+    say("done")
+
+
+if __name__ == "__main__":
+    main()

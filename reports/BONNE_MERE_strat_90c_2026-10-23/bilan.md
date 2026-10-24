@@ -16,7 +16,7 @@ mode deep, budgets de l'étude Bonne Mère ([`make_config.py`](make_config.py)).
 | **règle du saphir** (👤, 24/10) : pas de Rate avant la couche 10, Rate seulement si n·d ≤ 50 nm ; 44 couches passées en optique (meilleure λ chacune), 2 passes, 37 changements | **15 Rate, 83 % d'optique** | **0,2608** au holdout (+125 % RMSE² contre le plan libre) | 0 au holdout, 1 sur 9 000 à la confirmation |
 | idem + 2 passes (passes 3–4), 14 changements, 14 Rate | 14 Rate, 84 % d'optique | 0,2626 au holdout (RMSE² moyen −5,1 %, ET 0,4 %, mais SEEL P95 +0,7 %) | 0 au holdout, 1 sur 9 000 à la confirmation |
 
-SEEL au sens de STRAT, 2·√(P95 du RMSE²) sur le pire des trois bruits ; holdout : graines 20261022201–203,
+SEEL au sens de STRAT, 2·√(P95 du RMSE spectral) sur le pire des trois bruits ; holdout : graines 20261022201–203,
 3 × 1000 tirages, appariées. Plans : [`winner_strat_s077.json`](winner_strat_s077.json),
 [`modelam_s077_refine.json`](modelam_s077_refine.json) (journal `modelam_s077_refine_log.txt`), règle du saphir
 [`modelam_s077_sapphire_rule.json`](modelam_s077_sapphire_rule.json) (`FORCE_OPTICAL` = toutes les couches hors des 17 fines
@@ -28,6 +28,27 @@ avec 61 Rate. Part de l'indice (mêmes tirages de holdout, corridor 0 contre ±0
 69 % du RMSE² moyen pour le plan retenu (SEEL 0,2339 → 0,2608 nm), 81 % pour le plan libre (0,1688 → 0,2046 nm) ; 0 arrêt.
 Le leviers STRAT des 23–24/10 (branche `claude/2026-10-22`) n'apportent rien ici : la garde contrôle au corridor configuré,
 déjà ±0,010 ; A12 et A13 sont refusés sur leur branche.
+
+## Sensibilité au corridor d'indice
+
+Mêmes tirages de holdout (graines 20261022201–203, 3 × 1000), seul le corridor change ; RMSE moyen de T de la pièce déposée
+contre le design nominal, au bruit nominal, en pp ([`corridor_0.005_result.json`](corridor_0.005_result.json),
+[`index_share_result.json`](index_share_result.json)) :
+
+| corridor d'indice | plan retenu, 15 Rate : SEEL / RMSE | plan libre, 61 Rate : SEEL / RMSE |
+|---|---|---|
+| 0 | 0,2339 nm / 0,55 pp | 0,1688 nm / 0,29 pp |
+| ±0,005 | **0,2392 nm / 0,69 pp** | 0,1792 nm / 0,43 pp |
+| ±0,010 | **0,2608 nm / 0,98 pp** | 0,2046 nm / 0,66 pp |
+
+0 arrêt partout. Le RMSE contre la cible ajoute à ce RMSE l'écart nominal du design (1,5495 pp).
+
+## Dossier de réalisation
+
+[`Bonne_Mere_90c_silice_realisation.xlsx`](Bonne_Mere_90c_silice_realisation.xlsx), pour programmer le dépôt sur Helios 800
+et OMS 5100 : paramètres (vitesses provisoires à renseigner), stratégie couche par couche (mode, λ, niveau d'arrêt, sens,
+points tournants), signaux attendus, spectres, indices, cible ; généré par [`make_xlsx.py.txt`](make_xlsx.py.txt) (`python -X utf8 make_xlsx.py.txt OUT.xlsx`) (RMSE nominal
+recalculé 1,5495 pp, égal au design).
 
 ## Commandes
 

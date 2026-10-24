@@ -1,6 +1,6 @@
 """Index share of the error of Bonne Mere 90-layer plans: the same holdout draws with the index corridor at 0 and at +-0.010.
 
-python -X utf8 index_share_bm90.py PLAN.json [PLAN.json ...] (files in %TEMP%/bm90). Built from modelam_bm90.py.
+python -X utf8 index_share_bm90.py PLAN.json [PLAN.json ...] (files in %TEMP%/bm90); CORRIDORS="0,0.005,0.010" sets the corridors. Built from modelam_bm90.py.
 
 Changes from %TEMP%/r75/modelam.py: component bm90 registered here, work folder %TEMP%/bm90, wavelengths 430-900 nm
 (owner's monitoring range), start plan read from WINNER (default winner_bm90.json). FORCE_OPTICAL="3,7" keeps those layers
@@ -98,17 +98,19 @@ def main():
     for name in PLANS:
         plan = json.loads((V / name).read_text(encoding="utf-8"))
         row = {}
-        for c in (0.0, 0.010):
+        for c in [float(x) for x in os.environ.get("CORRIDORS", "0,0.010").split(",")]:
             corridor(c)
             evs = [evaluate(plan, 20261022201 + i, RUNS) for i in range(3)]
             p95 = max(float(np.percentile(np.concatenate([e[i][0] for e in evs]), 95)) for i in range(3))
             m = float(np.mean(np.concatenate([e[1][0][~e[1][1]] ** 2 for e in evs])))
             row[str(c)] = dict(seel=2 * p95 ** 0.5, mean_rmse2=m, stops=sum(int(x[1].sum()) for e in evs for x in e))
-        row["index_share_of_mean_rmse2"] = 1.0 - row["0.0"]["mean_rmse2"] / row["0.01"]["mean_rmse2"]
+        if "0.0" in row and "0.01" in row:
+            row["index_share_of_mean_rmse2"] = 1.0 - row["0.0"]["mean_rmse2"] / row["0.01"]["mean_rmse2"]
         out[name] = row
-        say(f"{name}: corridor 0 SEEL {row['0.0']['seel']:.4f} nm, corridor 0.010 SEEL {row['0.01']['seel']:.4f} nm, "
-            f"index share of mean RMSE2 {100 * row['index_share_of_mean_rmse2']:.0f} %, stops {row['0.0']['stops']} / {row['0.01']['stops']}")
-    (V / "index_share_result.json").write_text(json.dumps(out, indent=1), encoding="utf-8")
+        for c, v in row.items():
+            if isinstance(v, dict):
+                say(f"{name}: corridor {c}: SEEL {v['seel']:.4f} nm, mean RMSE {v['mean_rmse2'] ** 0.5:.5f}, stops {v['stops']}")
+    (V / os.environ.get("OUT_JSON", "index_share_result.json")).write_text(json.dumps(out, indent=1), encoding="utf-8")
     say("done")
 
 

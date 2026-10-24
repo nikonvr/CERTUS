@@ -16,7 +16,9 @@
 
 **Actions en cours (2026-10-21).** A6 retirée, A7 et premier correctif A8 terminés. Le défaut de transmission découvert par le premier banc A3 est corrigé et entièrement validé ; nouveau protocole et reprise des mesures à suivre. État, preuves et prochaine action : [`bilan`](../reports/ACTIONS_autonomes_2026-10-20/bilan.md).
 
-**DESIGN, séparatrice 50/50 (2026-10-23).** Mémétique et relances par défaut (décision de 👤) : depuis l'exemple, RMSE 0,000135 contre 0,0018–0,0042 avant ; bat Tikhonravov et al. 1996 sur leur problème ; état et défauts ouverts dans le [`bilan`](../reports/DESIGN_bs5050_2026-10-22/bilan.md).
+**DESIGN (2026-10-23).** Mémétique et relances par défaut (décision de 👤) : séparatrice depuis l'exemple 0,000135 contre 0,0018–0,0042 avant ; bat Tikhonravov et al. 1996 ; Bonne Mère sur silice 1,434 pp ; [`bilan`](../reports/DESIGN_bs5050_2026-10-22/bilan.md), constats ALG-14 à ALG-28 dans `AUDITS.md`.
+
+**Bonne Mère 90 c. silice (2026-10-24).** Stratégie sous les règles de 👤 : 15 Rate, SEEL 0,2608 nm (libre 0,2046) ([bilan](../reports/BONNE_MERE_strat_90c_2026-10-23/bilan.md)).
 
 **Bonne Mère (2026-10-19).** Meilleur plan mesuré et chemin vers l'optimum : [`studies/bonne_mere/README.md`](../studies/bonne_mere/README.md) (21 couches Rate, SEEL P95 0,446 nm au bruit 0,05, 0 arrêt). Dérive de la source non modélisée. Défaut ouvert de STRAT : l'hystérésis du comptage des points tournants suit le bruit ; à bruit faible, la fente fabrique des extrema ([phase 1](../reports/BONNE_MERE_phase1_budget_SuperChamp76_2026-10-19/bilan.md)).
 

@@ -87,3 +87,19 @@ de Tikhonravov est uniforme en λ (≈ 3 points par frange à 400 nm), sans effe
 | plancher en fin (`floor_at_end`, pratique de 👤) | 6f0f51bb, planchers suivant l'empilement 2028fea7 | dans le workflow : 0,0151, 0,035, 0,051 (des couches fines restent après les aiguilles et la règle les retire) | **non fonctionnel dans le workflow** |
 | plancher en fin, mesure directe (sonde) | design libre 0,000168 → couches < 5 nm portées à 5 nm → polissage borné à 5 nm | 0,000192, contre 0,000135–0,000165 avec le plancher tout du long | un seul design ; polissage local seulement |
 | plancher OT 5 nm (`min_layer_ot_nm`) | f10318b2 | exemple : 0,000166 (30 couches) ; barres ±2σ identiques au plancher physique | sans gain mesurable |
+
+## 2026-10-23, après-midi : vitesse du scan Needle avec face arrière (ALG-14)
+
+Mesures réelles (médiane de 3, compilation exclue, 8 fils), scan sans cache (`_run_needle_fallback_scan`) contre
+`needle_scan_cached_backside` (`c034ffe2`), pas de 2 nm, aiguille de 1 nm, même aiguille choisie à chaque fois, coût égal à
+1e-15, coût de l'aiguille retenue recoupé par la lame incohérente de l'oracle à 1e-15 :
+
+| cas | candidats | sans cache | en cache | gain |
+|---|---|---|---|---|
+| 34 couches, 140 λ | 904 | 78 ms | 4,0 ms | ×19,5 |
+| 34 couches, 1601 λ | 904 | 659 ms | 47 ms | ×14,1 |
+| 96 couches, 601 λ (taille Bonne Mère) | 5485 | 3,91 s | 99 ms | ×39,4 |
+
+Dans le script Bonne Mère, une insertion passe de ~23 s (288 candidats, modèle reconstruit à chaque fois) à 0,11 s
+(~5500 candidats). Suivi : `tools/bench_kernels.py`, noyaux `needle_scan_front` (16,1 références) et
+`needle_scan_backside` (25,8), un fil, référence `tests/performance/kernel_baseline.json`.

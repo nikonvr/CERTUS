@@ -10,6 +10,7 @@ recoupé par l'oracle indépendant. Leviers, commandes et mesures : [`journal.md
 | DESIGN avant la campagne (PGLOBAL) | 0,0018 – 0,0042 | 21 – 27 · ~19 | 1,5 – 2,5 min |
 | DESIGN par défaut, `JSON-design-example.json` tel quel | **0,000135** – 0,000165 | 32 – 34 · 26,2 – 26,6, couches ≥ 5 nm | 21 – 48 min (8 fils) |
 | DESIGN, problème de Tikhonravov et al. 1996 (34 couches) | **8,6e-5** contre 1,77e-4 pour leur design | 34 · 26,4 contre 31,4 | 47 min |
+| DESIGN, même problème, courbe de 10 à 34 couches | 0,0151 (10 c.) → **0,000090** (34 c.) ; sous leur design dès 30 couches | sans plafond de QWOT | 3 – 26 min par point |
 
 - Face à la littérature : MF 8,53e-3 contre 1,2767e-2 publié, écart max 0,024 % contre 0,193 % ;
   [`tikhonravov/README.md`](tikhonravov/README.md), courbe RMSE = f(couches) dans `tikhonravov/curve/`.
@@ -34,10 +35,14 @@ fixer `max_layers` (rempli avant le global, peut dépasser 100), `max_total_qwot
 | la session de décimation Pareto ne se refermait jamais | corrigé (`08f7e7e6`) |
 | la règle finale des 5 nm retire des couches sans réoptimiser | contourné par le champion conforme et le plancher du mémétique |
 | l'étape globale PGLOBAL borne chaque couche à 1,2 QWOT | inchangé ; le mémétique monte à 3 QWOT |
+| un design pouvait être exporté sous le RMSE d'un autre (champion Pareto) | corrigé (`0f11743f`) |
 | `floor_at_end` (plancher en toute fin) : des couches fines réapparaissent après les aiguilles | ouvert, option inactive |
+| scan Needle avec face arrière sans cache | corrigé (`c034ffe2`), ×14 à ×39, suivi au banc des noyaux |
 
 ## Ce qui attend
 
 - `floor_at_end` à rendre fonctionnel dans le workflow, puis à mesurer contre le plancher tout du long.
 - Optimiser le RMSE attendu sous erreurs d'épaisseur plutôt que le RMSE nominal (piste, non lancée).
 - Écart non expliqué entre le RMSE de la fenêtre et celui de la grille fixe, même à 420 points par cible.
+- Six pistes de temps de calcul à mesurer : `docs/AUDITS.md`, ALG-23 à ALG-28. Registre de tous les constats : ALG-14 à ALG-28.
+- Bonne Mère : [`../BONNE_MERE_design_2026-10-23/README.md`](../BONNE_MERE_design_2026-10-23/README.md).

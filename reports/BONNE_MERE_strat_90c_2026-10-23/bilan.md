@@ -14,12 +14,20 @@ mode deep, budgets de l'étude Bonne Mère ([`make_config.py`](make_config.py)).
 | affinage apparié (mode, λ 430–900 nm), 2 passes, 18 changements | 61 Rate | **0,2046** au holdout (−8,8 % RMSE², ET 0,3 %) | 0 → 0 |
 | STRAT complet, graine 202 (01 h 13 → 04 h 21), recherche locale intégrée | 90 blocs, 65 Rate | 0,211 (recherche) | 0 |
 | **règle du saphir** (👤, 24/10) : pas de Rate avant la couche 10, Rate seulement si n·d ≤ 50 nm ; 44 couches passées en optique (meilleure λ chacune), 2 passes, 37 changements | **15 Rate, 83 % d'optique** | **0,2608** au holdout (+125 % RMSE² contre le plan libre) | 0 au holdout, 1 sur 9 000 à la confirmation |
+| idem + 2 passes (passes 3–4), 14 changements, 14 Rate | 14 Rate, 84 % d'optique | 0,2626 au holdout (RMSE² moyen −5,1 %, ET 0,4 %, mais SEEL P95 +0,7 %) | 0 au holdout, 1 sur 9 000 à la confirmation |
 
 SEEL au sens de STRAT, 2·√(P95 du RMSE²) sur le pire des trois bruits ; holdout : graines 20261022201–203,
 3 × 1000 tirages, appariées. Plans : [`winner_strat_s077.json`](winner_strat_s077.json),
 [`modelam_s077_refine.json`](modelam_s077_refine.json) (journal `modelam_s077_refine_log.txt`), règle du saphir
 [`modelam_s077_sapphire_rule.json`](modelam_s077_sapphire_rule.json) (`FORCE_OPTICAL` = toutes les couches hors des 17 fines
 au-delà de la couche 9 ; journal `modelam_s077_sapphire_rule_log.txt`).
+
+**Plan retenu sous les règles de 👤** : [`modelam_s077_sapphire_rule.json`](modelam_s077_sapphire_rule.json), 15 Rate, SEEL
+0,2608 nm (critère SEEL P95 ; les passes 3–4 baissent le RMSE² moyen mais pas le P95). Plan libre, meilleur absolu : 0,2046 nm
+avec 61 Rate. Part de l'indice (mêmes tirages de holdout, corridor 0 contre ±0,010, [`index_share_bm90.py`](index_share_bm90.py)) :
+69 % du RMSE² moyen pour le plan retenu (SEEL 0,2339 → 0,2608 nm), 81 % pour le plan libre (0,1688 → 0,2046 nm) ; 0 arrêt.
+Le leviers STRAT des 23–24/10 (branche `claude/2026-10-22`) n'apportent rien ici : la garde contrôle au corridor configuré,
+déjà ±0,010 ; A12 et A13 sont refusés sur leur branche.
 
 ## Commandes
 

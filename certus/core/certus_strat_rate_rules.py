@@ -13,6 +13,11 @@ Three settings, all inactive by default (the path is then unchanged):
 One place applies them to every evaluated plan (`apply_rate_rules`, called by the robustness pool before any draw): a
 forbidden Rate layer is laid optically at the wavelength of its block, and the plan records it in `rate_rules_converted`
 so the local search scans its whole wavelength grid. Over the share, the thickest Rate layers go optical first.
+
+`rate_rules_final_only` (off by default) applies them where the hand-made plan did instead: the search runs free, then the
+final local search lays each forbidden Rate layer of the free winner optically, from the substrate up, at its best
+wavelength of the whole grid, and refines under the rules (reports/BONNE_MERE_strat_90c_2026-10-23: 0.2608 nm by hand).
+It needs `strat_local_search`: without the stage the winner keeps its forbidden Rate layers.
 """
 
 from __future__ import annotations
@@ -46,9 +51,9 @@ def rate_rules_from_params(params: dict[str, Any]) -> RateRules:
     )
 
 
-def rate_rules_params(config: Any) -> dict[str, float]:
-    """The three settings read from a JSON configuration, for the run's params; a missing or unreadable value is 0 (no rule)."""
-    out = {}
+def rate_rules_params(config: Any) -> dict[str, Any]:
+    """The settings read from a JSON configuration, for the run's params; a missing or unreadable value is 0 (no rule)."""
+    out: dict[str, Any] = {"rate_rules_final_only": bool((config or {}).get("rate_rules_final_only") or False)}
     for key in ("rate_min_layer", "rate_max_optical_thickness_nm", "rate_max_fraction"):
         try:
             value = float((config or {}).get(key) or 0.0)

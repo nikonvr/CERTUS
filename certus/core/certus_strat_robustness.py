@@ -557,8 +557,9 @@ def _execute_robustness_tasks(
     """
     import multiprocessing
 
-    # The operator's Rate rules (certus_strat_rate_rules), here because every evaluated plan passes through this pool.
-    n_ruled = apply_rate_rules(all_strategies, params)
+    # The operator's Rate rules (certus_strat_rate_rules), here because every evaluated plan passes through this pool;
+    # with `rate_rules_final_only` the search runs free and only the final local search applies them.
+    n_ruled = 0 if params.get("rate_rules_final_only") else apply_rate_rules(all_strategies, params)
     if n_ruled:
         logger.info(f"[RATE-RULES] {n_ruled} plan(s) lay their forbidden Rate layers optically")
     max_workers = max(1, multiprocessing.cpu_count() // 2)

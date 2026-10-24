@@ -187,13 +187,33 @@ def joint_local_search(
     check_seeds: tuple[int, ...],
     log: Callable[[str], None] = lambda _msg: None,
     confirm_seeds: tuple[int, ...] = (),
+    convert: tuple[int, ...] = (),
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Run the stage; return (plan, report). The plan is `start` itself when the check refuses the search."""
+    """Run the stage; return (plan, report). The plan is `start` itself when the check refuses the search.
+
+    `convert`: Rate layers the operator's rules forbid (certus_strat_rate_rules, `rate_rules_final_only`). Before the passes
+    each goes optical, from the substrate up, at the wavelength of the whole grid that adds the fewest stops and lowers the
+    paired mean RMSE^2 most; the plan so converted then stands for `start`, the reference of the check.
+    """
     current = copy.deepcopy(start)
     cur_ev = evaluate(current, search_seed, cfg.search_runs)
+    n_eval = 1
+    conversions: list[str] = []
+    for layer in convert:
+        trials = []
+        for label, plan in candidates(current, layer, cfg):
+            ev = evaluate(plan, search_seed, cfg.search_runs)
+            n_eval += 1
+            trials.append((stops(ev), paired_delta(cur_ev, ev, cfg.nominal_level)[0], label, plan, ev))
+        if trials:
+            _s, _d, label, current, cur_ev = min(trials, key=lambda t: (t[0], t[1]))
+            conversions.append(label)
+    if convert:
+        start = copy.deepcopy(current)
+        log(f"[LOCAL-SEARCH] {len(conversions)} Rate layers laid optically by the operator's rules, "
+            f"{len(current.get('rate_layers') or [])} Rate layers left, search stops {stops(cur_ev)}")
     kept: list[str] = []
     history: list[dict[str, Any]] = []  # the plan after each kept change
-    n_eval = 1
     for pass_no in range(1, cfg.passes + 1):
         for layer in range(n_layers):
             best: tuple[float, str, dict[str, Any], Evaluation] | None = None
@@ -213,6 +233,8 @@ def joint_local_search(
             f"{n_eval} evaluations")
     report: dict[str, Any] = {"changes": kept, "evaluations": n_eval, "search_seed": search_seed,
                               "check_seeds": list(check_seeds), "accepted": False}
+    if convert:
+        report["rule_conversions"] = conversions
     if not kept:
         log("[LOCAL-SEARCH] no change kept: the winner is already a local optimum")
         return start, report

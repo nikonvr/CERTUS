@@ -92,3 +92,38 @@ def test_the_local_search_scans_the_whole_grid_of_a_layer_the_rules_laid_optical
     cfg = LocalSearchConfig(grid=grid, repair_layers=frozenset({6}))
     wavelengths = {label.split("@")[1] for label, _ in candidates(_plan([]), 6, cfg) if "optical@" in label}
     assert len(wavelengths) == len(grid) - 1  # every grid wavelength but the current 600 nm
+
+
+def test_with_final_only_the_pool_leaves_the_plans_free(monkeypatch) -> None:
+    seen = []
+
+    def fake_task(strategy, _idx, noise_levels, *_args, **_kwargs):
+        seen.append(list(strategy["rate_layers"]))
+        return {"strategy": dict(strategy), "strategy_id": strategy["strategy_id"], "robustness_score": 0.01, "crash_rate": 0.0,
+                "results_per_noise": [{"noise_level": lv, "thicknesses_all": [[100.0] * N_LAYERS]} for lv in noise_levels]}
+
+    monkeypatch.setattr(robustness, "_test_strategy_robustness_task", fake_task)
+    monkeypatch.setattr(robustness, "_calculate_strategy_spectral_resolution", lambda *a, **k: (2.0, -1, 0.0))
+    robustness._execute_robustness_tasks(
+        [_plan([2, 5, 6, 7])], [0.05], 1, [100.0] * N_LAYERS, {}, {}, np.array([550.0]), np.array([2.3]), np.array([1.5]),
+        np.array([1.5]), np.array([0.9]), {}, {**RULED, "rate_rules_final_only": True}, logging.getLogger("rules"))
+    assert seen == [[2, 5, 6, 7]]
+
+
+def test_the_final_search_lays_each_forbidden_layer_optically_at_its_best_wavelength() -> None:
+    from certus.core.certus_strat_local_search import joint_local_search, wavelength_of
+
+    best = {2: 520.0, 6: 680.0}
+
+    def evaluate(plan, _seed, runs):
+        rate = set(plan["rate_layers"])
+        err = sum(0.0 if k in rate else abs(wavelength_of(plan, k) - w) / 100.0 for k, w in best.items())
+        rmse = np.full(runs, 0.01 + err)
+        return [(rmse, np.zeros(runs, dtype=bool))] * 3
+
+    grid = tuple(float(w) for w in range(450, 751, 10))
+    cfg = LocalSearchConfig(grid=grid, passes=0, search_runs=8, check_runs=8, rate_allowed=frozenset({5, 7}))
+    plan, report = joint_local_search(_plan([2, 5, 6, 7]), evaluate, N_LAYERS, cfg, 1, (2,), convert=(2, 6))
+    assert plan["rate_layers"] == [5, 7]
+    assert (wavelength_of(plan, 2), wavelength_of(plan, 6)) == (520.0, 680.0)
+    assert report["rule_conversions"] == ["L2 optical@520", "L6 optical@680"]

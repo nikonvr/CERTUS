@@ -400,6 +400,18 @@ LEVIERS: tuple[Levier, ...] = (
         reserve="0 ou >= 1 = pas de regle. Au-dela de la part, les couches Rate les plus epaisses passent en optique d'abord. "
                 "Se pose par la configuration JSON, sans widget.",
     ),
+    Levier(
+        cle="rate_rules_final_only",
+        libelle="Regles d'operateur appliquees seulement a la recherche locale finale (comme le plan fait a la main)",
+        defaut=False,
+        genre="bool",
+        statut=NON_MESURE,
+        mesure="Methode du plan Bonne Mere 90 couches fait a la main (2026-10-24, SEEL 0,2608 nm) : recherche libre, puis chaque "
+               "couche Rate interdite du gagnant passe en optique a sa meilleure lambda, depuis le substrat, puis affinage sous "
+               "les regles. STRAT natif ainsi : a mesurer.",
+        reserve="Sans effet si aucune regle n'est posee. Exige `strat_local_search` : sans l'etape, le gagnant garde ses "
+                "couches Rate interdites. Le reste du classement final n'est pas soumis aux regles.",
+    ),
     # ---------------------------------------------------------------- MULTI-TEMOIN
     Levier(
         cle="witness_reset_layers",

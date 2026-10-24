@@ -1,0 +1,83 @@
+"""The six official STRAT benches, without and with `index_corridor_fixed_domain`, on the current code. (Claude, 2026-10-24)
+
+python -X utf8 bench_fixed_domain.py REPO OUTDIR
+
+Each case runs twice, `off` then `on`, through `scripts/bench_examples.py strat` (the official bench), one process at a time.
+The `on` arm adds the flag through `collect_params` (as `campagne_intervalles` does; the STRAT DTO keeps extra keys) and the
+child prints `FIXED_DOMAIN_PARAM=` with what `collect_params` returned, so the flag is seen to reach the parameters.
+A case already measured (its .txt holds RESULT=) is skipped. Results: OUTDIR/resultats.json.
+"""
+import json
+import os
+import re
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+REPO, OUT = Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve()
+EX = "example/example_strat/"
+CASES = (
+    ("48c_premium", EX + "JSON-strat-example.json"),
+    ("75c_fast", EX + "JSON-strat-random75.json"),
+    ("35c_deep", "reports/STRAT_A3_reperes_reprise_2026-10-21/config_35c_deep_A3.json"),
+    ("3cav_livre_36c_deep", EX + "JSON-strat-bandpass-3cav-deep.json"),
+    ("r75x2_native_1nm_deep", EX + "JSON-strat-random75-x2-fabricable.json"),
+    ("r75x2_rampes_2nm_deep", EX + "JSON-strat-random75-x2-fabricable-2nm.json"),
+)
+CHILD = '''
+import os, runpy, sys
+sys.path.insert(0, os.path.join(os.getcwd(), "scripts")); sys.path.insert(0, os.getcwd())
+from CERTUS_STRAT import CertusStratApp
+_orig = CertusStratApp.collect_params
+def collect_params(self, *a, **k):
+    p = _orig(self, *a, **k)
+    if os.environ.get("CLAUDE_FIXED_DOMAIN") == "1":
+        p["index_corridor_fixed_domain"] = True
+    print("FIXED_DOMAIN_PARAM=" + str(p.get("index_corridor_fixed_domain")), flush=True)
+    return p
+CertusStratApp.collect_params = collect_params
+sys.argv = ["scripts/bench_examples.py"] + sys.argv[1:]
+runpy.run_path("scripts/bench_examples.py", run_name="__main__")
+'''
+
+
+def main():
+    sys.path.insert(0, str(REPO))
+    from scripts.resumer_artefact_sonde import seel
+    OUT.mkdir(parents=True, exist_ok=True)
+    head = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], cwd=REPO, text=True).strip()
+    res_path = OUT / "resultats.json"
+    results = json.loads(res_path.read_text(encoding="utf-8")) if res_path.exists() else {"head": head, "rows": []}
+    for case, cfg in CASES:
+        for arm in ("off", "on"):
+            out = OUT / f"{case}_{arm}.txt"
+            if out.exists() and "RESULT=" in out.read_text(encoding="utf-8", errors="replace"):
+                continue
+            env = dict(os.environ, CERTUS_DESIGN_JSON=cfg, CERTUS_BENCH_TIMEOUT_S="21600", QT_QPA_PLATFORM="offscreen",
+                       PYTHONIOENCODING="utf-8", CLAUDE_FIXED_DOMAIN="1" if arm == "on" else "0")
+            for key in ("CERTUS_PROBE_OVERRIDES", "CERTUS_PROBE_TAG"):
+                env.pop(key, None)
+            t0 = time.monotonic()
+            with (OUT / f"{case}_{arm}.raw.log").open("wb") as log:
+                code = subprocess.call([sys.executable, "-X", "utf8", "-c", CHILD, "strat", "--auto-yes", "--out", str(out)],
+                                       cwd=REPO, env=env, stdout=log, stderr=subprocess.STDOUT)
+            text = out.read_text(encoding="utf-8", errors="replace") if out.exists() else ""
+            obs = dict(re.findall(r"^([A-Z0-9_]+)=(.*)$", text, flags=re.MULTILINE))
+            raw = (OUT / f"{case}_{arm}.raw.log").read_text(encoding="utf-8", errors="replace")
+            flags = sorted(set(re.findall(r"FIXED_DOMAIN_PARAM=(\w+)", raw)))
+            try:
+                r = float(obs.get("RESULT", "nan"))
+            except ValueError:
+                r = float("nan")
+            row = dict(case=case, arm=arm, exit=code, wall_s=round(time.monotonic() - t0, 1), result=r,
+                       seel_nm=seel(r) if r == r and r > 0 else None, crash=obs.get("STRAT_CRASH_ELIMINATED"),
+                       n_strategies=obs.get("STRAT_N_STRATEGIES"), wait_timeout="WAIT_TIMEOUT" in obs, flag_seen=flags,
+                       design=obs.get("DESIGN_JSON"))
+            results["rows"].append(row)
+            res_path.write_text(json.dumps(results, indent=1), encoding="utf-8")
+            print(json.dumps(row), flush=True)
+
+
+if __name__ == "__main__":
+    main()

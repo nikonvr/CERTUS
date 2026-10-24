@@ -63,7 +63,7 @@ SEEL du `RESULT` officiel ; taux de plantage de `RANK00`.
 | aléatoire `JSON-strat-random75`, 75 couches | **0,2225** | 0 % | fast livré ; fente fixe 2 nm ; 2 634 stratégies, 51 blocs |
 | aléatoire ×2 `r75x2`, fente native 1 nm | **0,5833** | 0 % | deep livré ; fente fixe 1 nm ; 3 946 stratégies, 15 blocs |
 | `r75x2` avec ses rampes livrées, fente 2 nm | **0,5092** | 0 % | deep livré ; fente fixe 2 nm ; 4 691 stratégies, 56 blocs |
-| passe-bande 5 cavités, 99 couches, quatre verres témoins | **0,549** (médiane ; 0,415-0,590, graines 42/101/202) | 0 % | fast ; fente 2 nm ; partition 0-22-42-76-99 ; `index_corridor_fixed_domain` armé ([rapport](../reports/STRAT_A3_C2_99c_2026-10-23/bilan.md)) |
+| passe-bande 5 cavités, 99 couches, quatre verres témoins | **0,549** (médiane ; 0,415-0,590, graines 42/101/202) | 0 % | fast ; fente 2 nm ; partition 0-22-42-76-99 ; `index_corridor_fixed_domain` armé, bruit d'indice adouci, **non comparable aux autres lignes** ([rapport](../reports/STRAT_A3_C2_99c_2026-10-23/bilan.md), [domaine](../reports/STRAT_domaine_fixe_6bancs_2026-10-24/bilan.md)) |
 
 **Lire ces chiffres :**
 

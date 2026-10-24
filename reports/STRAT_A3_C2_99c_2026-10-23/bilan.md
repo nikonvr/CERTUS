@@ -19,6 +19,7 @@ décrits dans [l'assemblage écarté](../STRAT_A3_C2_assemblage_2026-10-21/bilan
 faut rapporter la médiane et l'étendue, jamais la meilleure graine seule.
 
 Limites :
+- 🔴 Le domaine fixe adoucit le bruit d'indice dans la bande (610-655 nm normalisés sur 450-750 nm) : ce repère ne se compare pas aux autres lignes du §2 ([preuve](../STRAT_domaine_fixe_6bancs_2026-10-24/bilan.md)).
 - Une seule partition est mesurée sous C2 (celle retenue en 2026-10-21), pas un nouveau classement des partitions.
 - Le repère vaut pour le domaine fixe. L'effet de ce domaine sur les autres bancs n'est pas mesuré, et le défaut n'est
   pas changé (décision de 👤).

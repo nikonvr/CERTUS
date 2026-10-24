@@ -1,7 +1,9 @@
 """Joint local search over (mode, wavelength) per layer on the 90-layer Bonne Mere design (copy of the r75 tool modelam.py).
 
 Changes from %TEMP%/r75/modelam.py: component bm90 registered here, work folder %TEMP%/bm90, wavelengths 430-900 nm
-(owner's monitoring range), start plan read from WINNER (default winner_bm90.json).
+(owner's monitoring range), start plan read from WINNER (default winner_bm90.json). FORCE_OPTICAL="3,7" keeps those layers
+(0-based) optical: a Rate one first gets its best wavelength, and Rate is never offered for them; the holdout still
+compares with the WINNER plan.
 
 
 python -X utf8 modelam.py COMP OUT_TAG OFFSET
@@ -122,13 +124,20 @@ def main():
             for lam in range(int(max(430, lam0 - 60)), int(min(900, lam0 + 60)) + 1, 10):
                 if float(lam) != lam0:
                     yield f"lambda {lam0:.0f}->{lam}", set_layer(p, k, lam)
-            q = dict(p)
-            q["rate_layers"] = sorted(set(p["rate_layers"]) | {k})
-            yield "Rate", q
+            if k not in forced:
+                q = dict(p)
+                q["rate_layers"] = sorted(set(p["rate_layers"]) | {k})
+                yield "Rate", q
 
     start = json.loads((V / os.environ.get("WINNER", f"winner_{COMP}.json")).read_text(encoding="utf-8"))
     SS = 20261022001 + OFF
     cur, cur_ev = start, evaluate(start, SS, SEARCH_RUNS)
+    forced = {int(x) for x in os.environ.get("FORCE_OPTICAL", "").split(",") if x.strip()}
+    for k in sorted(forced & set(start["rate_layers"])):
+        trials = [(stops(ev), dmean(cur_ev, ev), label, q, ev) for label, q in candidates(cur, k) for ev in [evaluate(q, SS, SEARCH_RUNS)]]
+        s_min = min(t[0] for t in trials)
+        _, d, label, cur, cur_ev = min((t for t in trials if t[0] == s_min), key=lambda t: t[1])
+        say(f"   forced optical L{k}: {label}, search stops {s_min}, dRMSE2 vs start {d:+.3e}")
     layers = list(range(n_layers)) if RUNS == 1000 else list(range(6))
     t0, n_eval, kept = time.monotonic(), 1, []
     say(f"== {COMP} {OUT_TAG}: index corridor {base.get('index_corridor')}, start {len(start['rate_layers'])} Rate, search stops {stops(cur_ev)}")

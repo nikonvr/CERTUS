@@ -12,10 +12,14 @@ mode deep, budgets de l'étude Bonne Mère ([`make_config.py`](make_config.py)).
 | STRAT complet, graine 77 (20 h 24 → 00 h 04) : meilleur ELITE | 90 blocs, 73 Rate | 0,313 (recherche) | 0 |
 | idem, recherche locale intégrée de STRAT | 90 blocs, 61 Rate | 0,210 (recherche) ; **0,2099** au holdout | 0 |
 | affinage apparié (mode, λ 430–900 nm), 2 passes, 18 changements | 61 Rate | **0,2046** au holdout (−8,8 % RMSE², ET 0,3 %) | 0 → 0 |
+| STRAT complet, graine 202 (01 h 13 → 04 h 21), recherche locale intégrée | 90 blocs, 65 Rate | 0,211 (recherche) | 0 |
+| **règle du saphir** (👤, 24/10) : pas de Rate avant la couche 10, Rate seulement si n·d ≤ 50 nm ; 44 couches passées en optique (meilleure λ chacune), 2 passes, 37 changements | **15 Rate, 83 % d'optique** | **0,2608** au holdout (+125 % RMSE² contre le plan libre) | 0 au holdout, 1 sur 9 000 à la confirmation |
 
 SEEL au sens de STRAT, 2·√(P95 du RMSE²) sur le pire des trois bruits ; holdout : graines 20261022201–203,
 3 × 1000 tirages, appariées. Plans : [`winner_strat_s077.json`](winner_strat_s077.json),
-[`modelam_s077_refine.json`](modelam_s077_refine.json) (journal `modelam_s077_refine_log.txt`).
+[`modelam_s077_refine.json`](modelam_s077_refine.json) (journal `modelam_s077_refine_log.txt`), règle du saphir
+[`modelam_s077_sapphire_rule.json`](modelam_s077_sapphire_rule.json) (`FORCE_OPTICAL` = toutes les couches hors des 17 fines
+au-delà de la couche 9 ; journal `modelam_s077_sapphire_rule_log.txt`).
 
 ## Commandes
 

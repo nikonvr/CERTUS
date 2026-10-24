@@ -39,6 +39,8 @@ python scripts\resumer_artefact_sonde.py reports\blocs_vs_plantage_r75x0.5_deep_
   tableau, ce qui n'est pas mesuré), mettre à jour ce document, `git worktree remove --force "%TEMP%\mesure_wt"`. Aucun chemin personnel dans un
   fichier versionné. Les entrées `.git/worktrees/*` que Drive refuse de supprimer sont normales.
 
+**A3 — Le 99 couches sous l'option (a) de 👤** (2026-10-24) : `index_corridor_fixed_domain` normalisera l'erreur d'indice sur la grille spectrale seule, au lieu de la plage de balayage qui adoucit le bruit ([preuve](../reports/STRAT_domaine_fixe_6bancs_2026-10-24/bilan.md)). *Livrable* : code et test, puis le repère 99 couches sur trois graines dans la table §2.
+
 **A9 — 99 couches en une campagne** (demande de 👤 du 2026-10-16). Protocole prêt : `reports/STRAT_99c_A9_protocole_2026-10-17/` (`chain_A9.sh`,
 graines réservées) ; il ne lance rien sans `GO_OWNER.txt` écrit par 👤. *Livrable* : sur plusieurs graines, plans déposables, plantages, SEEL de
 consensus des plans figés, confirmation indépendante et coût, dans le dossier du protocole. *Ne pas* : lancer sans le GO.
@@ -46,14 +48,6 @@ consensus des plans figés, confirmation indépendante et coût, dans le dossier
 **A13 — Rendre `strat_local_search` rapide en production** (👤 : « un code ultra performant »). 96 % du temps est dans deux noyaux
 compilés ([profil](../reports/STRAT_A13_profil_2026-10-23/bilan.md)). Présélection des candidats codée, inactive : 75/3 et 150/5 refusées par
 leurs règles ([bilan](../reports/STRAT_A13_preselection_2026-10-23/bilan.md)). *Reste* : accélérer un noyau (prouvé au bit par `c1_diff`).
-
-**A5 — ELITE : six et dix tours, budgets 40 et 360** (≈ 4 h). Référence : `r75x0.5` deep graine 101, 3 tours, arrêt actif, budget 120,
-SEEL 0,3967 nm (branche `codex/actions-prudentes-2026-10-20`, `reports/STRAT_A5_tours_budgets_2026-10-21/`). *Faire* : quatre bancs, un à la fois,
-`strat_local_search=false` dans chaque surcharge pour isoler ELITE : `elite_rounds=6,elite_stop_on_no_gain=false` ; `elite_rounds=10,elite_stop_on_no_gain=false` ;
-`elite_rate_max_candidates=40` ; `elite_rate_max_candidates=360`, plus la référence refaite avec `strat_local_search=false`. *Livrable* :
-`reports/STRAT_A5_tours_budgets_suite_<date>/bilan.md`, un tableau de cinq lignes (surcharge, SEEL du meilleur plan, durée, paquets Rate du meilleur
-plan, commit) et les cinq artefacts ; chaque ligne cite la valeur lue dans `config` de son artefact. *Fini quand* : les cinq lignes existent.
-*Ne pas* : changer un défaut, conclure (l'interprétation revient à Claude).
 
 **A8a — Dette de lint E402, module par module** (une heure par module). *Faire* : mesure officielle
 `python -m ruff check . --isolated --select E402 --line-length 120 --target-version py314 --statistics` ; pour un module, déplacer les imports

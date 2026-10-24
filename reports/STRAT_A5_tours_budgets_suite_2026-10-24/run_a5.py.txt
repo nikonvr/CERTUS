@@ -1,0 +1,44 @@
+"""A5 continued: ELITE rounds and Rate budgets with the local search off, r75x0.5 deep, seed 101, slit 2 nm. (Claude, 2026-10-24)
+
+python -X utf8 run_a5.py REPO OUTDIR
+
+Five probe runs, one at a time, through `scripts/probe_blocs_vs_plantage.py r75x0.5 deep 0 0 2 0 101 0` (as the A5 driver of
+2026-10-21) with CERTUS_PROBE_OVERRIDES; `strat_local_search=false` in each, to isolate ELITE. A case whose artefact exists
+is skipped. Each child's console goes to OUTDIR/<tag>.log; the artefact lands where the probe writes it, then is moved to OUTDIR.
+"""
+import os
+import shutil
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+REPO, OUT = Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve()
+CASES = (
+    ("A5ref", "strat_local_search=false,elite_rounds=3"),
+    ("A5r6", "strat_local_search=false,elite_rounds=6,elite_stop_on_no_gain=false"),
+    ("A5r10", "strat_local_search=false,elite_rounds=10,elite_stop_on_no_gain=false"),
+    ("A5b40", "strat_local_search=false,elite_rate_max_candidates=40"),
+    ("A5b360", "strat_local_search=false,elite_rate_max_candidates=360"),
+)
+
+
+def main():
+    OUT.mkdir(parents=True, exist_ok=True)
+    for tag, over in CASES:
+        if list(OUT.glob(f"*_{tag}*.json")):
+            continue
+        before = {p: p.stat().st_mtime for p in (REPO / "reports").glob("blocs_vs_plantage_*.json")}
+        env = dict(os.environ, CERTUS_BENCH_TIMEOUT_S="21600", CERTUS_PROBE_OVERRIDES=over, CERTUS_PROBE_TAG=tag, QT_QPA_PLATFORM="offscreen", PYTHONIOENCODING="utf-8")
+        t0 = time.monotonic()
+        with (OUT / f"{tag}.log").open("wb") as log:
+            code = subprocess.call([sys.executable, "-X", "utf8", "scripts/probe_blocs_vs_plantage.py", "r75x0.5", "deep", "0", "0", "2",
+                                    "0", "101", "0"], cwd=REPO, env=env, stdout=log, stderr=subprocess.STDOUT)
+        new = [p for p in (REPO / "reports").glob("blocs_vs_plantage_*.json") if before.get(p) != p.stat().st_mtime]
+        for p in new:
+            shutil.move(str(p), OUT / p.name)
+        print(f"{tag} exit {code} {time.monotonic() - t0:.0f} s artefacts {[p.name for p in new]}", flush=True)
+
+
+if __name__ == "__main__":
+    main()

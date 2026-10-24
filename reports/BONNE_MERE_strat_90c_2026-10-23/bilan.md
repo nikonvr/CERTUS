@@ -29,6 +29,14 @@ avec 61 Rate. Part de l'indice (mêmes tirages de holdout, corridor 0 contre ±0
 Le leviers STRAT des 23–24/10 (branche `claude/2026-10-22`) n'apportent rien ici : la garde contrôle au corridor configuré,
 déjà ±0,010 ; A12 et A13 sont refusés sur leur branche.
 
+## Cible projetée (levier saphir), essayée sur le plan retenu
+
+Fenêtres de 8 couches optiques (pas de 4), λ ±60 nm, chaque choix jugé en supposant zéro erreur au-delà de la fenêtre + 4
+couches ([`windows_bm90.py.txt`](windows_bm90.py.txt), autotest PASS) : 77 changements, puis jugement sur la cible
+complète (graines 20261020501–503) : **perd**, SEEL 0,2595 → 0,3093 nm, RMSE² +97,5 % (ET 1,6 %), arrêts 1 → 41
+([`windows_projected_b4_result.json`](windows_projected_b4_result.json)). Même verdict que sur les trois designs r75 :
+en supposant l'aval parfait, l'optimiseur retient des λ que les erreurs réelles de l'aval rendent mauvaises.
+
 ## Sensibilité au corridor d'indice
 
 Mêmes tirages de holdout (graines 20261022201–203, 3 × 1000), seul le corridor change ; RMSE moyen de T de la pièce déposée

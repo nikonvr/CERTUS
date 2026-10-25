@@ -127,3 +127,44 @@ def test_the_final_search_lays_each_forbidden_layer_optically_at_its_best_wavele
     assert plan["rate_layers"] == [5, 7]
     assert (wavelength_of(plan, 2), wavelength_of(plan, 6)) == (520.0, 680.0)
     assert report["rule_conversions"] == ["L2 optical@520", "L6 optical@680"]
+
+
+def test_the_free_stage_runs_before_the_forbidden_layers_are_converted(monkeypatch) -> None:
+    """As by hand: the free search stage first, then the forbidden Rate layers of its winner are laid optically."""
+    import certus.core.certus_strat_ranking as ranking
+    import certus.core.certus_strat_robustness as robustness
+    import certus.workers.certus_strat_workers_local_search as wls
+
+    calls = []
+
+    def fake_joint(start, _evaluate, _n, cfg, *_args, convert=(), **_kwargs):
+        calls.append({"start_rate": list(start["rate_layers"]), "convert": tuple(convert), "allow_rate": cfg.allow_rate})
+        if not convert:  # the free stage finds Rate layers the rules forbid
+            return {**start, "rate_layers": [2, 6, 7]}, {"accepted": True, "changes": []}
+        return {**start, "rate_layers": [7]}, {"accepted": True, "changes": []}
+
+    class NoClues:
+        def __init__(self, _info) -> None:
+            pass
+
+        def __enter__(self):
+            return None
+
+        def __exit__(self, *_exc) -> bool:
+            return False
+
+    monkeypatch.setattr(wls, "SharedIndicesWorker", NoClues)
+    monkeypatch.setattr(wls, "joint_local_search", fake_joint)
+    monkeypatch.setattr(wls, "native_evaluator", lambda *_a, **_k: None)
+    monkeypatch.setattr(wls, "search_params", lambda _p: {"index_corridor": 0.0})
+    monkeypatch.setattr(wls, "nominal_level_index", lambda _p: 0)
+    monkeypatch.setattr(ranking, "_resolve_monitoring_wavelength_grid", lambda *_a, **_k: [550.0])
+    monkeypatch.setattr(robustness, "run_final_simulation_block",
+                        lambda ctx, *_a, **_k: {"all_strategies_results": [{"strategy": ctx["all_strategies"][0]}]})
+    params = {**RULED, "rate_rules_final_only": True, "logger": logging.getLogger("rules")}
+    pre = {"p_thick_nominal": [100.0] * N_LAYERS, "all_wls": [550.0], "nominal_matrix_cache": {}}
+    wls.run_local_search([{"strategy": _plan([2, 5])}], pre, params, {}, lambda rows: rows)
+    assert len(calls) == 2
+    assert calls[0]["convert"] == ()
+    assert calls[1]["start_rate"] == [2, 6, 7]
+    assert calls[1]["convert"] == (2, 6)

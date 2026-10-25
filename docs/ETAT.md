@@ -28,7 +28,12 @@ Tikhonravov et al. 1996 contre 1,77e-4 pour leur design ([bilan](../reports/DESI
 STRAT natif avec l'étape libre avant la conversion : 0,2655 nm, une graine, sans la garde ; A16 le remesure
 ([bilan](../reports/BONNE_MERE_strat_90c_2026-10-23/bilan.md)).
 
-**Dernière validation complète** : 2026-10-25, `3260c766`, `python scripts\validate_parallel.py` GO ; C1 non remesuré après la fusion.
+**Python de référence : 3.15.1** (depuis le 2026-10-25) ; les mesures antérieures sont sous 3.14.8. Dépendances : `pip install --require-hashes -r requirements.lock`
+(numba 0.68.0, llvmlite 0.50.0 ; les anciens pins n'avaient pas de roue 3.15). Même banc (`48c` premium, graine 42) sous 3.14.8 et 3.15.1 : mêmes 2 653
+stratégies, même meilleur plan, SEEL 0,15313 nm ; scores à 10⁻¹⁴ près (relatif médian), aucun identique au bit. Exécutable gelé construit et contrôlé sous 3.15.1.
+
+**Dernière validation complète** : 2026-10-25, `83ef201f`, sous 3.15.1 : `python scripts\validate_parallel.py` GO, en série (oracle 1 159, unit 5 706, ui 1 342,
+rest 321, performance 40) ; C1 non remesuré après la fusion.
 Avant de committer du code, la validation de CLAUDE.md §2 en entier : un sous-ensemble a déjà laissé passer une régression
 (`tests/unit/test_the_architecture_debt_only_shrinks.py` ne tourne pas avec les tests voisins).
 

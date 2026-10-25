@@ -1,7 +1,7 @@
 # CERTUS
 
 Optical thin-film suite: design, manufacturing strategy, index extraction and field analysis of multilayer
-coatings (Python 3.14, PyQt6, NumPy/SciPy/Numba). The transfer-matrix core is checked against an independent
+coatings (Python 3.15, PyQt6, NumPy/SciPy/Numba). The transfer-matrix core is checked against an independent
 reference (`tests/oracle/`): a silent error here is a wrong filter that someone builds.
 
 | Module | What it does |
@@ -16,7 +16,9 @@ reference (`tests/oracle/`): a silent error here is a wrong filter that someone 
 
 ## Run
 
-Python 3.14.5 or later. CERTUS runs from source: there is no build system, and `pip install .` is not supported.
+Python 3.15.1 is the reference (tests, measurements and the frozen build); 3.14.5 or later is declared. Install the locked
+dependencies with `pip install --require-hashes -r requirements.lock`. CERTUS runs from source: there is no build system, and
+`pip install .` is not supported.
 
 ```bash
 uv sync --no-install-project    # the dependencies, never the project

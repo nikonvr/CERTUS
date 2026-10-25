@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.14"]
+        python-version: ["3.14", "3.15"]
 
     env:
       # PyQt6 sans serveur X. À poser AVANT toute création de QApplication ;
@@ -133,7 +133,7 @@ jobs:
           if-no-files-found: ignore
 
   interface:
-    name: interface (windows, py3.14)
+    name: interface (windows, py3.15)
     # 🔴 L'INTERFACE SE MESURE SUR WINDOWS : l'audit d'ergonomie mesure des largeurs en
     # pixels avec Segoe UI, la police de la machine cible, et refuse de tourner sans
     # elle. Sous Linux, le 2026-09-26 : 69 échecs et 12 erreurs, tous dus à la police
@@ -158,13 +158,13 @@ jobs:
       - name: Installer uv
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
 
-      - name: Python 3.14
-        run: uv python install 3.14
+      - name: Python 3.15
+        run: uv python install 3.15
 
       - name: Dépendances
         # Les dernières versions stables, comme le job Linux — voir son commentaire.
         run: |
-          uv sync --upgrade --no-install-project --extra dev --python 3.14
+          uv sync --upgrade --no-install-project --extra dev --python 3.15
           uv pip list
           git checkout -- uv.lock
 

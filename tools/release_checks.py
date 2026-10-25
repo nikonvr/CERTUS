@@ -332,7 +332,7 @@ def check_release_structure() -> list[str]:
         return ["Missing workflow: .github/workflows/release-windows.yml"]
     wf_text = workflow.read_text(encoding="utf-8")
     required_tokens = [
-        'python-version: [ "3.14.5" ]',
+        'python-version: [ "3.15.1" ]',
         "Confirm Python release target",
         "python tools/release_checks.py",
         "python tools/release_checks.py --check-frozen",

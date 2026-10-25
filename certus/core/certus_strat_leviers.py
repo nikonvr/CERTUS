@@ -259,6 +259,18 @@ LEVIERS: tuple[Levier, ...] = (
     ),
     # ---------------------------------------------------------------- RATE: the Rate layers, moved by ELITE
     Levier(
+        cle="elite_optical_parents",
+        libelle="ELITE : nombre minimal de parents optiques purs",
+        defaut=0,
+        genre="int",
+        statut=RESERVE,
+        mesure="A4 (2026-10-22, reports/ANALYSE_claude_2026-10-22), modele d'arret par defaut, 48c graine 42 et r75x0.5 graine 101 : "
+               "aucun plan optique pur obtenu, parents du quota tous en plantage (>= 42 %), 6 a 23 % de candidats ELITE en moins ; "
+               "a 4, gagnant r75x0.5 moins bon de 2,7 % sur tirages neufs.",
+        reserve="0 conserve le chemin historique. Les parents reserves passent en tete ; quota borne par "
+                "les parents optiques disponibles. Le total depasse elite_parent_top_k si le quota l'exige.",
+    ),
+    Levier(
         cle="elite_rate_moves",
         libelle="ELITE deplace les couches Rate de ses parents (optique, paquet de Rate, optique a une autre longueur d'onde)",
         defaut=True,
@@ -333,6 +345,76 @@ LEVIERS: tuple[Levier, ...] = (
                "(75c), 0,4363 -> 0,3561 nm (r75x0.5), 0,5441 -> 0,5032 nm (r75x2), 0 arret ; la part de l'erreur d'indice est divisee par 2,3 a 4,5.",
         reserve="Cherche et controle sous une incertitude d'indice de +-0,010 (deux fois la nominale, decision du 2026-10-20 : les plans cherches a +-0,005 s'arretent a +-0,010). Une seule graine de banc ; cout environ 20 min de plus sur 16 coeurs (deux passes, 2 300 a 3 900 evaluations de 300 tirages). "
                 "Le plan n'est garde que s'il gagne sur deux graines fraiches de 1 000 tirages sans arret ajoute ; sinon le gagnant reste inchange.",
+    ),
+    Levier(
+        cle="strat_local_search_guard",
+        libelle="Recherche locale : controle aussi au corridor d'indice configure",
+        defaut=True,
+        genre="bool",
+        statut=RESERVE,
+        mesure="Analyse du 2026-10-22 (reports/ANALYSE_claude_2026-10-22) : r75x2 graine 101, le plan accepte a +-0,010 "
+               "perdait 10,7 % de SEEL a +-0,005, invisible au controle. Armee sur les dix bancs A14/A10 (reports/STRAT_garde_2026-10-22) : ce cas passe a -11,1 %, "
+               "les neuf autres sont inchanges.",
+        reserve="Exige en plus, sous le corridor configure, pas plus d'arrets et un P95 non superieur au depart ; "
+                "double les evaluations du controle. Une graine de banc par cas. `false` retablit le chemin d'avant.",
+    ),
+    Levier(
+        cle="strat_index_share_top_k",
+        libelle="Part d'indice : calculee pour les K meilleures strategies (0 = non calculee)",
+        defaut=0,
+        genre="int",
+        statut=NON_MESURE,
+        mesure="A11 (2026-10-23) : 1 - RMSE2(corridor nul) / RMSE2(corridor configure), meme plan, memes tirages, bruit nominal ; "
+               "colonne Index share % du tableau et des exports.",
+        reserve="Coute deux evaluations de robustness_num_runs tirages par strategie ; ne change ni le classement ni les plans.",
+    ),
+    Levier(
+        cle="strat_local_search_index_guided_layers",
+        libelle="Recherche locale : passe guidee par l'indice, nombre de couches les plus sensibles (0 = sans)",
+        defaut=0,
+        genre="int",
+        statut=NON_MESURE,
+        mesure="A12 (2026-10-23) : groupes de couches voisines deplaces ensemble a partir des couches qui transmettent le plus "
+               "l'erreur d'indice (A11) ; mesure contre l'etage actuel a venir.",
+        reserve="Ajoute des evaluations a l'etage ; meme regle d'acceptation que les mouvements d'une couche. 0 retablit le chemin d'avant.",
+    ),
+    Levier(
+        cle="strat_local_search_index_guided_group",
+        libelle="Recherche locale : taille maximale des groupes de la passe guidee (0 = 3)",
+        defaut=0,
+        genre="int",
+        statut=NON_MESURE,
+        mesure="Sans effet tant que strat_local_search_index_guided_layers vaut 0 ; 0 veut dire des paires et des triplets (A12).",
+        reserve="Plus il est grand, plus la passe coute d'evaluations.",
+    ),
+    Levier(
+        cle="strat_local_search_presel_runs",
+        libelle="Recherche locale : nombre de tirages de la preselection des candidats (0 = sans preselection)",
+        defaut=0,
+        genre="int",
+        statut=NON_MESURE,
+        mesure="A13, profil du 2026-10-23 : 96 % du temps de l'etage dans deux noyaux compiles ; seule la recherche peut couter moins.",
+        reserve="Chaque candidat d'une couche est d'abord classe sur ce nombre de tirages ; les meilleurs passent seuls a 300 tirages "
+                "et a la regle habituelle. 0 retablit le chemin d'avant.",
+    ),
+    Levier(
+        cle="strat_local_search_presel_keep",
+        libelle="Recherche locale : candidats gardes par couche apres la preselection",
+        defaut=0,
+        genre="int",
+        statut=NON_MESURE,
+        mesure="Sans effet tant que strat_local_search_presel_runs vaut 0 ; 0 veut dire 3 candidats gardes par couche (A13, 2026-10-23).",
+        reserve="Plus il est petit, plus l'etage est rapide et plus le risque d'ecarter le bon candidat grandit.",
+    ),
+    Levier(
+        cle="strat_local_search_fresh_id",
+        libelle="Recherche locale : identifiant neuf pour le plan affine",
+        defaut=False,
+        genre="bool",
+        statut=NON_MESURE,
+        mesure="Analyse du 2026-10-22 : sans lui, la ligne LOCAL_SEARCH garde l'identifiant de son parent (8 bancs acceptes sur 8).",
+        reserve="Change l'identifiant exporte du plan affine (le parent est garde dans `parent_strategy_id`) et controle "
+                "l'unicite sur toute la liste. `false` retablit le chemin d'avant.",
     ),
     # ---------------------------------------------------------------- RATE: the constants
     Levier(

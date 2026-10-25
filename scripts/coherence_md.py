@@ -651,7 +651,7 @@ def main() -> int:
     print("\n=== E. LES COMMANDES DOCUMENTEES S'EXECUTENT-ELLES ? ===")
     rx_py = re.compile(r"([A-Za-z]:[\\/][^\s`\"']*?python\.exe|\.?[\\/]?[\w.-]*venv[\\/]"
                        r"[Ss]cripts[\\/]python\.exe)")
-    rx_script = re.compile(r"(?:python|py)(?:\.exe)?\s+(?:-\w+\s+\S+\s+)*([\w./\\-]+\.py)\b")
+    rx_script = re.compile(r"(?:python|py)(?:\.exe)?\s+(?:-\w+\s+\S+\s+)*([\w./\\-]+\.py(?:\.txt)?)\b")
     vus_i: dict[str, list[str]] = {}
     vus_s: dict[str, list[str]] = {}
     # 🔴 LES `.py` AUSSI. Leurs docstrings portent une ligne d'usage copiable, et personne

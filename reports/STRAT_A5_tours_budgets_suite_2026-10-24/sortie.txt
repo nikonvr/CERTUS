@@ -1,0 +1,5 @@
+A5ref exit 0 2988 s artefacts ['blocs_vs_plantage_r75x0.5_deep_s101_A5ref.json']
+A5r6 exit 0 4817 s artefacts ['blocs_vs_plantage_r75x0.5_deep_s101_A5r6.json']
+A5r10 exit 0 4788 s artefacts ['blocs_vs_plantage_r75x0.5_deep_s101_A5r10.json']
+A5b40 exit 0 3569 s artefacts ['blocs_vs_plantage_r75x0.5_deep_s101_A5b40.json']
+A5b360 exit 0 2522 s artefacts ['blocs_vs_plantage_r75x0.5_deep_s101_A5b360.json']

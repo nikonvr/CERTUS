@@ -10,7 +10,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from certus.spline.certus_index_spline_corridor_worker import _CorridorWorkerMixin
+from certus.ui.certus_index_spline_corridor_worker import _CorridorWorkerMixin
 
 
 class Recorder:

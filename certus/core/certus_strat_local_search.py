@@ -45,6 +45,22 @@ def is_armed(params: dict[str, Any]) -> bool:
     return bool(params.get("strat_local_search", True))
 
 
+def presel_settings(params: dict[str, Any]) -> tuple[int, int]:
+    """(`strat_local_search_presel_runs`, `strat_local_search_presel_keep`): off by default (0 draws); keep 0 means 3."""
+    return int(params.get("strat_local_search_presel_runs", 0) or 0), int(params.get("strat_local_search_presel_keep", 0) or 0) or 3
+
+
+def index_guided_settings(params: dict[str, Any]) -> tuple[int, int]:
+    """(`strat_local_search_index_guided_layers`, `strat_local_search_index_guided_group`): off by default; group 0 means 3."""
+    return (int(params.get("strat_local_search_index_guided_layers", 0) or 0),
+            int(params.get("strat_local_search_index_guided_group", 0) or 0) or 3)
+
+
+def guard_is_armed(params: dict[str, Any]) -> bool:
+    """Whether the check also judges under the configured corridor. On by default (owner, 2026-10-22, after ten benches)."""
+    return bool(params.get("strat_local_search_guard", True))
+
+
 #: Seeds of the stage, offsets of `robustness_seed`: disjoint from the ranking seed, so the stage neither reuses nor
 #: biases the draws the winner was ranked on.
 SEARCH_SEED_OFFSET: int = 7_000_003
@@ -89,6 +105,15 @@ class LocalSearchConfig:
     rate_allowed: frozenset[int] | None = None
     rate_cap: int | None = None
     repair_layers: frozenset[int] = frozenset()
+    #: Pre-selection (`strat_local_search_presel_runs`, 0 = off, the former path): every candidate of a layer is first ranked
+    #: on this many draws of the search seed, and only the `presel_keep` best go to the `search_runs` evaluation and its rule.
+    presel_runs: int = 0
+    presel_keep: int = 3
+    #: Index-guided pass (`strat_local_search_index_guided_layers`, 0 = off, A12): after the passes, groups of 2 to
+    #: `index_guided_group` neighbouring layers starting at each of the layers that pass on the most index error are moved
+    #: together (one wavelength shift, all to Rate, all optical), under the same rule as the single-layer moves.
+    index_guided_layers: int = 0
+    index_guided_group: int = 3
 
 
 def wavelength_of(plan: dict[str, Any], layer: int) -> float | None:
@@ -153,6 +178,56 @@ def candidates(plan: dict[str, Any], layer: int, cfg: LocalSearchConfig) -> Iter
         yield f"L{layer} Rate", out
 
 
+def group_candidates(plan: dict[str, Any], layers: list[int], cfg: LocalSearchConfig) -> Iterator[tuple[str, dict[str, Any]]]:
+    """Every (label, plan) the index-guided pass tries for a group of neighbouring layers moved together."""
+    grid = np.asarray(cfg.grid, dtype=np.float64)
+    rate = set(int(r) for r in plan.get("rate_layers") or [])
+    name = f"L{layers[0]}-L{layers[-1]}"
+    if not rate.intersection(layers):
+        wl0 = [wavelength_of(plan, k) for k in layers]
+        if all(w is not None for w in wl0):
+            for off in np.arange(-cfg.span_nm, cfg.span_nm + 1e-9, cfg.step_nm):
+                if off == 0.0:
+                    continue
+                out = plan
+                for k, w in zip(layers, wl0, strict=True):
+                    out = with_wavelength(out, k, _snap(grid, np.asarray([w + off]))[0])
+                yield f"{name} {off:+g}nm", out
+        if cfg.allow_rate and layers[0] >= cfg.rate_min_layer:
+            out = dict(plan)
+            out["rate_layers"] = sorted(rate | set(layers))
+            yield f"{name} Rate", out
+    elif rate.issuperset(layers):
+        for wl in _snap(grid, np.arange(grid[0], grid[-1] + 1e-9, cfg.step_nm)):
+            out = plan
+            for k in layers:
+                out = with_wavelength(out, k, wl)
+            out = dict(out)
+            out["rate_layers"] = sorted(rate - set(layers))
+            yield f"{name} optical@{wl:g}", out
+
+
+def index_sensitivity_by_layer(on: Callable[[dict[str, Any], int, int], Any], off: Callable[[dict[str, Any], int, int], Any],
+                               nominal: list[float], seed: int, runs: int, level: int) -> Callable[[dict[str, Any]], np.ndarray]:
+    """sensitivity(plan): per layer, mean squared thickness error with the index corridor minus without, same draws (A12).
+
+    `on` and `off` are `native_evaluator(..., thickness=True)` under the two corridors; draws that stop under either are left out.
+    """
+    nominal_arr = np.asarray(nominal, dtype=np.float64)
+
+    def sensitivity(plan: dict[str, Any]) -> np.ndarray:
+        _r_on, s_on, th_on = on(plan, seed, runs)[level]
+        _r_off, s_off, th_off = off(plan, seed, runs)[level]
+        both = ~s_on & ~s_off
+        if not np.any(both):
+            return np.zeros(nominal_arr.size)
+        e_on = th_on[both] - nominal_arr
+        e_off = th_off[both] - nominal_arr
+        return np.mean(e_on ** 2 - e_off ** 2, axis=0)
+
+    return sensitivity
+
+
 def stops(ev: Evaluation) -> int:
     """Stopped draws over every noise level."""
     return int(sum(int(np.count_nonzero(stopped)) for _rmse, stopped in ev))
@@ -187,9 +262,16 @@ def joint_local_search(
     check_seeds: tuple[int, ...],
     log: Callable[[str], None] = lambda _msg: None,
     confirm_seeds: tuple[int, ...] = (),
+    evaluate_guard: Callable[[dict[str, Any], int, int], Evaluation] | None = None,
+    layer_sensitivity: Callable[[dict[str, Any]], np.ndarray] | None = None,
     convert: tuple[int, ...] = (),
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Run the stage; return (plan, report). The plan is `start` itself when the check refuses the search.
+
+    `evaluate_guard` (`strat_local_search_guard`, on by default since 2026-10-22, owner decision after ten benches): the same evaluator under the CONFIGURED index
+    corridor, the one the winner is reported under. When given, every check and confirmation also requires, under it,
+    no more stops and a P95 score not above the start's. Measured 2026-10-22 (reports/ANALYSE_claude_2026-10-22): on
+    r75x2, bench seed 101, the plan accepted at +-0.010 was 10.7 % worse in SEEL at +-0.005, unseen by the check.
 
     `convert`: Rate layers the operator's rules forbid (certus_strat_rate_rules, `rate_rules_final_only`). Before the passes
     each goes optical, from the substrate up, at the wavelength of the whole grid that adds the fewest stops and lowers the
@@ -214,10 +296,15 @@ def joint_local_search(
             f"{len(current.get('rate_layers') or [])} Rate layers left, search stops {stops(cur_ev)}")
     kept: list[str] = []
     history: list[dict[str, Any]] = []  # the plan after each kept change
+    n_presel = 0
     for pass_no in range(1, cfg.passes + 1):
         for layer in range(n_layers):
             best: tuple[float, str, dict[str, Any], Evaluation] | None = None
-            for label, plan in candidates(current, layer, cfg):
+            layer_candidates = list(candidates(current, layer, cfg))
+            if cfg.presel_runs > 0 and len(layer_candidates) > cfg.presel_keep:
+                layer_candidates, n_more = _preselect(current, layer_candidates, evaluate, cfg, search_seed)
+                n_presel += n_more
+            for label, plan in layer_candidates:
                 ev = evaluate(plan, search_seed, cfg.search_runs)
                 n_eval += 1
                 if stops(ev) > stops(cur_ev):
@@ -231,16 +318,48 @@ def joint_local_search(
                 history.append(current)
         log(f"[LOCAL-SEARCH] pass {pass_no}: {len(kept)} changes, {len(current.get('rate_layers') or [])} Rate layers, "
             f"{n_eval} evaluations")
+    n_guided = 0
+    if cfg.index_guided_layers > 0 and layer_sensitivity is not None:
+        sensitivity = np.asarray(layer_sensitivity(current), dtype=np.float64)
+        for first in [int(i) for i in np.argsort(-sensitivity)[:cfg.index_guided_layers]]:
+            for size in range(2, cfg.index_guided_group + 1):
+                layers = list(range(first, first + size))
+                if layers[-1] >= n_layers:
+                    continue
+                best = None
+                for label, plan in group_candidates(current, layers, cfg):
+                    ev = evaluate(plan, search_seed, cfg.search_runs)
+                    n_eval += 1
+                    if stops(ev) > stops(cur_ev):
+                        continue
+                    d, _se = paired_delta(cur_ev, ev, cfg.nominal_level)
+                    if d < 0.0 and (best is None or d < best[0]):
+                        best = (d, label, plan, ev)
+                if best is not None:
+                    current, cur_ev = best[2], best[3]
+                    kept.append(best[1])
+                    history.append(current)
+                    n_guided += 1
+        log(f"[LOCAL-SEARCH] index-guided pass: {n_guided} group changes, {n_eval} evaluations")
     report: dict[str, Any] = {"changes": kept, "evaluations": n_eval, "search_seed": search_seed,
                               "check_seeds": list(check_seeds), "accepted": False}
     if convert:
         report["rule_conversions"] = conversions
+    if cfg.index_guided_layers > 0:
+        report.update(index_guided_layers=cfg.index_guided_layers, index_guided_group=cfg.index_guided_group,
+                      index_guided_changes=n_guided)
+    if cfg.presel_runs > 0:
+        report.update(presel_runs=cfg.presel_runs, presel_keep=cfg.presel_keep, presel_evaluations=n_presel)
     if not kept:
         log("[LOCAL-SEARCH] no change kept: the winner is already a local optimum")
         return start, report
+    def guarded(plan: dict[str, Any], seeds: tuple[int, ...]) -> Evaluation | None:
+        return None if evaluate_guard is None else _concat([evaluate_guard(plan, s, cfg.check_runs) for s in seeds])
+
     ref = _concat([evaluate(start, s, cfg.check_runs) for s in check_seeds])
     new = _concat([evaluate(current, s, cfg.check_runs) for s in check_seeds])
-    ok, verdict = _judge(ref, new, cfg)
+    ref_g = guarded(start, check_seeds)
+    ok, verdict = _judge(ref, new, cfg, ref_g, guarded(current, check_seeds))
     report.update(verdict)
     report["accepted"] = ok
     log(f"[LOCAL-SEARCH] check on {len(check_seeds)} fresh seeds: dRMSE2 {100 * verdict['check_relative_gain']:+.1f} % "
@@ -254,7 +373,8 @@ def joint_local_search(
     picks = sorted({round(i * (len(history) - 1) / (MAX_FALLBACK_PLANS - 1)) for i in range(MAX_FALLBACK_PLANS)} - {len(history) - 1})
     best_k: tuple[float, int] | None = None
     for k in picks:
-        ok_k, v_k = _judge(ref, _concat([evaluate(history[k], s, cfg.check_runs) for s in check_seeds]), cfg)
+        ok_k, v_k = _judge(ref, _concat([evaluate(history[k], s, cfg.check_runs) for s in check_seeds]), cfg,
+                           ref_g, guarded(history[k], check_seeds))
         if ok_k and (best_k is None or v_k["check_relative_gain"] < best_k[0]):
             best_k = (v_k["check_relative_gain"], k)
     report["fallback_tried"] = len(picks)
@@ -263,7 +383,8 @@ def joint_local_search(
         return start, report
     k = best_k[1]
     ref_c = _concat([evaluate(start, s, cfg.check_runs) for s in confirm_seeds])
-    ok_c, v_c = _judge(ref_c, _concat([evaluate(history[k], s, cfg.check_runs) for s in confirm_seeds]), cfg)
+    ok_c, v_c = _judge(ref_c, _concat([evaluate(history[k], s, cfg.check_runs) for s in confirm_seeds]), cfg,
+                       guarded(start, confirm_seeds), guarded(history[k], confirm_seeds))
     report.update(fallback_changes=k + 1, confirm_seeds=list(confirm_seeds),
                   confirm={key.replace("check_", ""): val for key, val in v_c.items()}, accepted=ok_c)
     log(f"[LOCAL-SEARCH] fallback: the plan after {k + 1} of {len(history)} changes, check dRMSE2 {100 * best_k[0]:+.1f} %; "
@@ -272,14 +393,35 @@ def joint_local_search(
     return (history[k], report) if ok_c else (start, report)
 
 
-def _judge(ref: Evaluation, new: Evaluation, cfg: LocalSearchConfig) -> tuple[bool, dict[str, Any]]:
-    """The check rule: no more stops, a paired gain beyond two standard errors, a P95 score not above the reference."""
+def _preselect(current: dict[str, Any], layer_candidates: list[tuple[str, dict[str, Any]]],
+               evaluate: Callable[[dict[str, Any], int, int], Evaluation], cfg: LocalSearchConfig,
+               search_seed: int) -> tuple[list[tuple[str, dict[str, Any]]], int]:
+    """The `presel_keep` candidates with the lowest paired mean RMSE^2 at the nominal level on `presel_runs` draws, among those
+    that add no stop there; (kept, evaluations spent). The full rule still decides on `search_runs` draws."""
+    ref = evaluate(current, search_seed, cfg.presel_runs)
+    scored = []
+    for k, (_label, plan) in enumerate(layer_candidates):
+        ev = evaluate(plan, search_seed, cfg.presel_runs)
+        if stops(ev) <= stops(ref):
+            scored.append((paired_delta(ref, ev, cfg.nominal_level)[0], k))
+    keep = sorted(k for _d, k in sorted(scored)[:cfg.presel_keep])
+    return [layer_candidates[k] for k in keep], len(layer_candidates) + 1
+
+
+def _judge(ref: Evaluation, new: Evaluation, cfg: LocalSearchConfig,
+           ref_g: Evaluation | None = None, new_g: Evaluation | None = None) -> tuple[bool, dict[str, Any]]:
+    """The check rule: no more stops, a paired gain beyond two standard errors, a P95 score not above the reference;
+    with the guard evaluations, also no more stops and no higher P95 score under the configured corridor."""
     d, se = paired_delta(ref, new, cfg.nominal_level)
     base = float(np.mean(ref[cfg.nominal_level][0][~ref[cfg.nominal_level][1]] ** 2))
     verdict = {"check_relative_gain": d / base if base > 0 else float("nan"),
                "check_relative_se": se / base if base > 0 else float("nan"),
                "check_stops": (stops(ref), stops(new)), "check_p95": (p95_score(ref), p95_score(new))}
-    return bool(stops(new) <= stops(ref) and d < -2.0 * se and p95_score(new) <= p95_score(ref)), verdict
+    ok = bool(stops(new) <= stops(ref) and d < -2.0 * se and p95_score(new) <= p95_score(ref))
+    if ref_g is not None and new_g is not None:
+        verdict.update(check_guard_stops=(stops(ref_g), stops(new_g)), check_guard_p95=(p95_score(ref_g), p95_score(new_g)))
+        ok = ok and stops(new_g) <= stops(ref_g) and p95_score(new_g) <= p95_score(ref_g)
+    return ok, verdict
 
 
 def nominal_level_index(params: dict[str, Any]) -> int:
@@ -291,9 +433,11 @@ def nominal_level_index(params: dict[str, Any]) -> int:
 
 
 def native_evaluator(
-    params: dict[str, Any], p_thick_nominal: list[float], clues_at_wl: Any, full_dyn_grid: dict[str, Any]
+    params: dict[str, Any], p_thick_nominal: list[float], clues_at_wl: Any, full_dyn_grid: dict[str, Any], thickness: bool = False
 ) -> Callable[[dict[str, Any], int, int], Evaluation]:
-    """evaluate(plan, seed, runs) through STRAT's own robustness task, set up as `run_final_simulation_block` does."""
+    """evaluate(plan, seed, runs) through STRAT's own robustness task, set up as `run_final_simulation_block` does.
+
+    With `thickness`, each level also carries the deposited thicknesses (draws x layers), for the index-guided pass."""
     from certus.core.certus_strat_robustness import (
         _attach_slit_profiles,
         _precompute_layer_index_matrix,
@@ -319,6 +463,12 @@ def native_evaluator(
         res = _test_strategy_robustness_task(strategy, 0, levels, int(runs), nominal, clues_at_wl, filter_params_for_gui(seeded),
                                              wl_arr, nH_arr, nL_arr, nSub_arr, T_nom, full_dyn_grid,
                                              compute_layer_profile=False, n_layers_matrix_precomp=matrix)
+        if thickness:
+            out = []
+            for lv in res["results_per_noise"]:
+                th = np.asarray(lv["thicknesses_all"], dtype=np.float64)
+                out.append((np.asarray(lv["rmse_all"], dtype=np.float64), np.any(th > CRASH_SENTINEL_MIN, axis=1), th))
+            return out
         return [(np.asarray(lv["rmse_all"], dtype=np.float64),
                  np.any(np.asarray(lv["thicknesses_all"], dtype=np.float64) > CRASH_SENTINEL_MIN, axis=1))
                 for lv in res["results_per_noise"]]

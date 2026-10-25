@@ -1,0 +1,22 @@
+=== START strat ===
+dialogues: reponse automatique OUI
+journal de l'application redirige vers la console (logger 'CERTUS-STRAT')
+DESIGN_JSON=JSON-strat-random75-x2-fabricable.json
+WAIT_EXIT=finished
+STRAT_N_STRATEGIES=3066
+STRAT_CRASH_ELIMINATED=0/3066
+STRAT_CRASH_RATE_MIN=0.0000 MEDIAN=0.0000
+STRAT_RANK00 id=900150568 origin=LOCAL_SEARCH score=0.066553 crash=0.0000 elim=False nblocks=47 nwl=15 wl=[749,589,649,659,649,669,699,649,669,649,629,629,590,629,649,660,649,690,690,649,580,709,649,590,660,590,649,610,649,610,649,690,649,650,690,649,690,649,690,690,649,690,690,700,649,700,649]
+STRAT_RANK01 id=900150568 origin=ELITE score=0.078674 crash=0.0000 elim=False nblocks=1 nwl=1 wl=[649]
+STRAT_RANK02 id=900150526 origin=ELITE score=0.080732 crash=0.0000 elim=False nblocks=1 nwl=1 wl=[649]
+STRAT_RANK03 id=900150373 origin=ELITE score=0.080804 crash=0.0000 elim=False nblocks=1 nwl=1 wl=[649]
+STRAT_RANK04 id=900150566 origin=ELITE score=0.079484 crash=0.0100 elim=False nblocks=1 nwl=1 wl=[649]
+STRAT_RANK05 id=900150584 origin=ELITE score=0.078969 crash=0.0100 elim=False nblocks=1 nwl=1 wl=[649]
+STRAT_RANK06 id=901250964 origin=ELITE score=0.081553 crash=0.0000 elim=False nblocks=12 nwl=12 wl=[476,497,609,490,686,648,701,511,692,687,702,697]
+STRAT_RANK07 id=900250640 origin=ELITE score=0.081603 crash=0.0000 elim=False nblocks=2 nwl=2 wl=[649,692]
+STRAT_RANK08 id=900350734 origin=ELITE score=0.081669 crash=0.0000 elim=False nblocks=3 nwl=3 wl=[497,610,686]
+STRAT_RANK09 id=900350738 origin=ELITE score=0.081669 crash=0.0000 elim=False nblocks=3 nwl=3 wl=[497,610,687]
+MODULE=strat
+SETUP_S=0.929
+RUN_S=4221.802
+RESULT=0.06655262839463984

@@ -3,6 +3,7 @@
 import itertools
 import logging
 import time
+from collections.abc import Callable
 from typing import Any
 
 import numpy as np
@@ -49,6 +50,73 @@ RATE_SWING_MIN_DEFAULT: float = 0.025
 #: 24 581 placements: layer 1 was indeed proposed twice. Two results carried a label that
 #: lied about what had run. It is now refused upstream.
 RATE_MIN_LAYER: int = 2
+
+
+def _evaluate_with_optical_parent_pool(
+    execute_fn: Callable[..., list[dict[str, Any]]],
+    filter_fn: Callable[..., list[dict[str, Any]]],
+    refine: bool,
+    **task: Any,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]] | None]:
+    """Evaluate once, reserving active optical parents before the normal output gate."""
+    minimum = max(0, int(task["params"].get("elite_optical_parents", 0))) if refine else 0
+    if not minimum:
+        return execute_fn(**task), None
+    raw = execute_fn(**task, keep_gated=True)
+    pool = _reserve_elite_optical_parent_pool(raw, minimum, task["logger"])
+    return filter_fn(raw, logger=task["logger"]), pool
+
+
+def _reserve_elite_optical_parent_pool(
+    strategies_results: list[dict[str, Any]],
+    minimum_optical: int,
+    logger: logging.Logger,
+) -> list[dict[str, Any]]:
+    """Keep optical mutation parents before the finite-score gate removes them."""
+    optical = [item for item in strategies_results if not item["strategy"].get("rate_layers")]
+    optical.sort(key=lambda item: (float(item.get("crash_rate", 1.0)), _worst_finite_rmse(item)))
+    reserved = optical[:minimum_optical]
+    logger.info(
+        f"[ELITE-OPTICAL-POOL] available={len(optical)} reserved={len(reserved)} "
+        f"gated={sum(not np.isfinite(float(item.get('robustness_score', np.inf))) for item in reserved)}"
+    )
+    return reserved
+
+
+def _select_elite_optical_parents(
+    strategies_results: list[dict[str, Any]],
+    parent_count: int,
+    minimum_optical: int = 0,
+    logger: logging.Logger | None = None,
+    optical_pool: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    """Reserve optical parents first; zero keeps the historical slice.
+
+    🔑 WHICH PARENTS GET EXPLORED. ELITE tries the moves parent after parent until `elite_max_candidates` (120) are kept,
+    and a parent of K blocks has up to 4K - 2 of them: 📏 with ten near-duplicate parents of 11 blocks, the first four
+    fill the budget (38, 40, 40 and 2 candidates), with 15 blocks the first three (56, 56, 8). Reserved parents go first,
+    so they spend the budget first. 📏 A4, 2026-10-22 (reports/ANALYSE_claude_2026-10-22), default stop model, 48c seed 42
+    and r75x0.5 seed 101: every parent the quota placed crashed (>= 42 %), no pure optical plan reached the population,
+    and ELITE kept 6 to 23 % fewer candidates; at 4 the r75x0.5 winner was 2.7 % worse on fresh draws.
+    """
+    parents = strategies_results[:parent_count]
+    if minimum_optical <= 0:
+        return parents
+    optical = [item for item in strategies_results if not item["strategy"].get("rate_layers")]
+    optical_ids = {id(item) for item in optical}
+    optical.extend(item for item in optical_pool or []
+                   if id(item) not in optical_ids and not item["strategy"].get("rate_layers"))
+    reserved = optical[:minimum_optical]
+    reserved_ids = {id(item) for item in reserved}
+    # Optical parents go first: the per-parent traversal can exhaust the move budget.
+    remaining = max(len(parents), len(reserved)) - len(reserved)
+    parents = reserved + [item for item in strategies_results if id(item) not in reserved_ids][:remaining]
+    if logger is not None:
+        logger.info(
+            f"[ELITE-OPTICAL-PARENTS] requested={minimum_optical} available={len(optical)} "
+            f"selected={len(reserved)} total={len(parents)}"
+        )
+    return parents
 
 
 def _wl_de_la_couche(strategy: dict[str, Any], layer: int) -> float | None:

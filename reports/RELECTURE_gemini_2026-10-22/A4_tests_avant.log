@@ -1,0 +1,45 @@
+.FFFFF.                                                                  [100%]
+================================== FAILURES ===================================
+________ test_quota_reaches_the_real_candidate_generator[1-expected1] _________
+tests\unit\test_strat_elite_optical_parents.py:56: in test_quota_reaches_the_real_candidate_generator
+    assert [item["strategy"]["strategy_id"] for item in seen["parent_results"]] == expected
+E   assert [0, 1, 2] == [4, 0, 1]
+E     
+E     At index 0 diff: 0 != 4
+E     Use -v to get more diff
+________ test_quota_reaches_the_real_candidate_generator[2-expected2] _________
+tests\unit\test_strat_elite_optical_parents.py:56: in test_quota_reaches_the_real_candidate_generator
+    assert [item["strategy"]["strategy_id"] for item in seen["parent_results"]] == expected
+E   assert [0, 1, 2] == [4, 5, 0]
+E     
+E     At index 0 diff: 0 != 4
+E     Use -v to get more diff
+________ test_quota_reaches_the_real_candidate_generator[99-expected3] ________
+tests\unit\test_strat_elite_optical_parents.py:56: in test_quota_reaches_the_real_candidate_generator
+    assert [item["strategy"]["strategy_id"] for item in seen["parent_results"]] == expected
+E   assert [0, 1, 2] == [4, 5, 0]
+E     
+E     At index 0 diff: 0 != 4
+E     Use -v to get more diff
+_________________ test_quota_can_exceed_the_usual_parent_cap __________________
+tests\unit\test_strat_elite_optical_parents.py:64: in test_quota_can_exceed_the_usual_parent_cap
+    assert [item["strategy"]["strategy_id"] for item in seen["parent_results"]] == [2, 3, 4, 5]
+E   assert [0, 1, 2] == [2, 3, 4, 5]
+E     
+E     At index 0 diff: 0 != 2
+E     Right contains one more item: 5
+E     Use -v to get more diff
+_____________ test_crashed_optical_plans_do_not_satisfy_the_quota _____________
+tests\unit\test_strat_elite_optical_parents.py:71: in test_crashed_optical_plans_do_not_satisfy_the_quota
+    assert [item["strategy"]["strategy_id"] for item in seen["parent_results"]] == [5, 0, 1]
+E   assert [0, 1, 2] == [5, 0, 1]
+E     
+E     At index 0 diff: 0 != 5
+E     Use -v to get more diff
+=========================== short test summary info ===========================
+FAILED tests/unit/test_strat_elite_optical_parents.py::test_quota_reaches_the_real_candidate_generator[1-expected1]
+FAILED tests/unit/test_strat_elite_optical_parents.py::test_quota_reaches_the_real_candidate_generator[2-expected2]
+FAILED tests/unit/test_strat_elite_optical_parents.py::test_quota_reaches_the_real_candidate_generator[99-expected3]
+FAILED tests/unit/test_strat_elite_optical_parents.py::test_quota_can_exceed_the_usual_parent_cap
+FAILED tests/unit/test_strat_elite_optical_parents.py::test_crashed_optical_plans_do_not_satisfy_the_quota
+5 failed, 2 passed in 2.69s

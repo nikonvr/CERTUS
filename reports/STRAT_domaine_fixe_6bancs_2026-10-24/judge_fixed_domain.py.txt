@@ -1,0 +1,66 @@
+"""Does the fixed index domain change the noise the benches score with? (Claude, 2026-10-24)
+
+python -X utf8 judge_fixed_domain.py REPO CONFIG.json MODE WL [WL ...]
+
+Scores one-block plans (every layer monitored at WL, no Rate) with `native_evaluator`, the same 3 x 1000 draws, once with the
+default domain and once with `index_corridor_fixed_domain`. Same plan, same draws: any difference is the noise model alone.
+"""
+import json
+import logging
+import os
+import sys
+from pathlib import Path
+
+REPO, CFG, MODE, WLS = Path(sys.argv[1]).resolve(), Path(sys.argv[2]), sys.argv[3], [float(w) for w in sys.argv[4:]]
+sys.path.insert(0, str(REPO))
+sys.path.insert(1, str(REPO / "scripts"))
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+import numpy as np  # noqa: E402
+
+
+def main():
+    import bench_examples as Bx
+    from CERTUS_STRAT import CertusStratApp
+    from _composant import charger_configuration
+    from certus.core.certus_strat_config import precompute_clues_and_matrices
+    from certus.core.certus_strat_local_search import native_evaluator
+
+    Bx.qapp()
+    Bx.autoanswer_dialogs(True)
+    app = CertusStratApp()
+    charger_configuration(app, REPO / CFG)
+    app.widgets["execution_mode"].setCurrentText(MODE)
+    base = app.collect_params()
+    base["show_plots"] = False
+    logger = logging.getLogger("certus_strat")
+    logger.setLevel(logging.WARNING)
+    base["logger"] = logger
+    nominal = base.get("p_thick_nominal")
+    if nominal is None:
+        from certus.core.certus_strat_pipeline import get_refractive_index
+        l0 = float(base["l0"])
+        mult = [float(e) for e in base["stack_string"].split(",") if e.strip()]
+        nH, nL = get_refractive_index(base["nH_id"], l0), get_refractive_index(base["nL_id"], l0)
+        nominal = [(m * l0) / (4.0 * np.real(nH if i % 2 == 0 else nL)) for i, m in enumerate(mult)]
+        base["p_thick_nominal"] = nominal
+    nominal = list(nominal)
+    clues, _c, _w = precompute_clues_and_matrices(base, nominal, logger)
+    seeds = [20261024001 + i for i in range(3)]
+    out = {"config": str(CFG), "scan": [base.get("scan_wl_min"), base.get("scan_wl_max")], "index_corridor": base.get("index_corridor"),
+           "rows": []}
+    evs = {flag: native_evaluator({**base, "index_corridor_fixed_domain": flag}, nominal, clues, {}) for flag in (False, True)}
+    for wl in WLS:
+        plan = dict(strategy_id=1, origin="PROBE", blocks=[{"start": 0, "end": len(nominal), "wavelength": wl}], rate_layers=[],
+                    witness_reset_layers=[], monochromator_resolution_nm=float(base.get("monochromator_resolution_nm", 2.0)))
+        row = {"wl": wl}
+        for flag, ev in evs.items():
+            e = [ev(plan, s, 1000) for s in seeds]
+            p95 = [float(np.percentile(np.concatenate([x[lv][0] for x in e]), 95)) for lv in range(len(e[0]))]
+            row[str(flag)] = dict(seel=2 * max(p95) ** 0.5, p95=p95, stops=int(sum(int(x[lv][1].sum()) for x in e for lv in range(len(x)))))
+        out["rows"].append(row)
+        print(json.dumps(row), flush=True)
+    print("RESULT_JSON=" + json.dumps(out))
+
+
+if __name__ == "__main__":
+    main()

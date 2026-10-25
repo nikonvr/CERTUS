@@ -1,0 +1,635 @@
+composant 48c | mode premium | graine 42 | require_turning_point=0 | fente 2 nm | elargi 0 | machine AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD | 16 threads
+dialogues: reponse automatique OUI
+  surcharges [A4parentsM2] : {'elite_optical_parents': 2, 'strat_local_search': True}
+02:59:14 | INFO | Mining: n_blocks=48, CostMapThick Size=48, CostMapSq Size=48
+02:59:15 | INFO |    [MINING] n_blocks=48: the DP found no grouping; the fewest contiguous blocks with one admissible wavelength per block is 9 here (first block of two layers at least: True). The miner returns the structured seeds only; inheritance from the next block count adds its derived strategies after.
+02:59:15 | INFO |    [Block 48] Mining found 2 strategies.
+02:59:15 | INFO |    [Block 48] Running screening on 2 strategies...
+02:59:15 | INFO | [SLIT] slit bias active, 2/2 strategies -- slit 2 nm, profile of 17 nodes, 48 NEW profiles in 0.2 s (cache: 6420)
+02:59:15 | INFO | Running robustness tests on 2 strategies (ThreadPoolExecutor with 8 workers)...
+02:59:17 | WARNING | [ROBUSTNESS] 2 strategy(ies) dropped for a NON-FINITE score -- ids: 48800, 48801
+02:59:17 | ERROR | [ROBUSTNESS] 🔴 NONE of the 2 strategies holds under 5% of non-terminating depositions. The rate compounds over the height of the stack: the best candidate crashes in 100.0% of the draws. We still return the ranking by increasing risk — but NONE of these strategies is usable as is, and the component likely requires another monitoring paradigm.
+02:59:17 | WARNING |    [REGIME] 🔴 DEGENERATE: the 2 returned strategies carry a FALLBACK score, and their crash_rate is constant. The ranking that follows -- hence the choice of the ELITE PARENTS -- has no signal in its first two keys. `use_margin_ranking` is the only informative key in this regime.
+02:59:17 | INFO | [ABLATION] 2 strategies profiled in 0.9 s -- dominant source of the 1st: bruit de lecture (+45%)
+02:59:17 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=2, seeds=[41, 42, 43], mode=mean_std, runs=150)
+02:59:18 | INFO | [ELITE] control grid: 251 lambda at a step of 1 nm
+02:59:18 | INFO | [ELITE-OPTICAL-PARENTS] requested=2 available=0 selected=0 total=2
+02:59:18 | INFO |    [ELITE-PARENTS] Round 1 #01 id=48800 n_blocs=48 crash=100.00% seel=1.3344 marge=-1587.11A origin=STRUCTURED_REGULAR_PAR wl=[488, 543, 451, 544, 487, 499, 452, 543, 476, 476, 476, 490, 461, 500, 506, 476, 476, 484, 462, 462, 462, 475, 478, 478, 483, 486, 459, 459, 457, 450, 461, 466, 454, 455, 455, 456, 455, 460, 456, 471, 471, 471, 465, 457, 469, 461, 452, 455]
+02:59:18 | INFO |    [ELITE-PARENTS] Round 1 #02 id=48801 n_blocs=48 crash=100.00% seel=1.3344 marge=-1587.11A origin=STRUCTURED_1_PER_LAYER wl=[488, 543, 451, 544, 487, 499, 452, 543, 476, 476, 476, 490, 461, 500, 506, 476, 476, 484, 462, 462, 462, 475, 478, 478, 483, 486, 459, 459, 457, 450, 461, 466, 454, 455, 455, 456, 455, 460, 456, 471, 471, 471, 465, 457, 469, 461, 452, 455]
+02:59:18 | INFO | [ELITE-RATE] Round 1: 29 candidate(s) change the Rate layers of their parent.
+02:59:18 | INFO | [SLIT] slit bias active, 124/124 strategies -- slit 2 nm, profile of 17 nodes, 95 NEW profiles in 0.3 s (cache: 6515)
+02:59:18 | INFO | [ELITE] Round 1/2: generated=124 parents=2 rank10_nominal=0.018871 target=0.018871
+02:59:19 | INFO | [ELITE] Round 1: full_eval=15.
+02:59:19 | INFO | [ELITE] Round 1: rejets -- halving=109 full_rmse=0 score_non_fini=15 | retenues=0 sur 124 engendrees | sortie=COMPLETE
+02:59:19 | INFO | [ELITE-WL] Round 1 exit=COMPLETE generated 452:124 455:124 456:124 457:124 459:124 461:124 462:124 471:124 476:124 478:124 543:124 450:123 451:122 454:122 460:122 465:122 466:122 469:122 475:122 483:122 484:122 486:122 487:122 488:122 490:122 499:122 500:122 506:122 544:122 477:7 458:4 470:4 453:3 463:3 472:3 479:2 485:2 489:2 542:2 464:1 467:1 468:1 474:1 482:1 491:1 498:1 501:1 505:1 507:1 545:1
+02:59:19 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_halving 452:109 455:109 456:109 457:109 459:109 461:109 462:109 471:109 476:109 478:109 543:109 450:108 486:108 451:107 454:107 460:107 465:107 466:107 469:107 475:107 483:107 484:107 487:107 488:107 490:107 499:107 500:107 506:107 544:107 477:7 458:4 470:4 453:3 472:3 463:2 479:2 489:2 542:2 464:1 467:1 468:1 474:1 482:1 485:1 491:1 498:1 501:1 505:1 507:1 545:1
+02:59:19 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_full_rmse (none)
+02:59:19 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_score_non_fini 450:15 451:15 452:15 454:15 455:15 456:15 457:15 459:15 460:15 461:15 462:15 465:15 466:15 469:15 471:15 475:15 476:15 478:15 483:15 484:15 487:15 488:15 490:15 499:15 500:15 506:15 543:15 544:15 486:14 463:1 485:1
+02:59:19 | INFO | [ELITE-WL] Round 1 exit=COMPLETE reject_crash_bands score_non_fini/100%:14 score_non_fini/50-99%:1
+02:59:19 | INFO | [ELITE] Round 1: no candidate beat nominal threshold.
+02:59:19 | INFO | [ELITE] No candidate added across all rounds.
+02:59:19 | INFO | 🏆 Best Strategy ID: 48800 (STRUCTURED_REGULAR_PARTITION) - Score: 0.44513
+02:59:19 | INFO |    [Block 48] Screening complete. Results count: 2
+02:59:19 | INFO |    [Block 48] Full pass on 1 survivors (n_full=150)...
+02:59:19 | INFO | [RATE] 0 variants on 1 strategies, 40 at most each, DEEPEST boundaries first. 1 strategy(ies) skipped: no block boundary and no low-swing layer. [SWING] seuil 0.025, 47 evaluations TMM a lambda fixe, 0.0 s au total pour cette expansion.
+02:59:19 | INFO | [SLIT] A18 recherche de fente : 1 strategies x 4 fentes [5.0, 2.0, 1.0, 0.5] -> 2 candidates  |  saute par la courbure : 5 nm x1, 1 nm x1
+02:59:19 | INFO | [SLIT] slit bias active, 2/2 strategies -- slit 2 nm, profile of 17 nodes, 48 NEW profiles in 0.1 s (cache: 6563)
+02:59:19 | INFO | Running robustness tests on 2 strategies (ThreadPoolExecutor with 8 workers)...
+02:59:20 | INFO | Running robustness tests on 13 strategies (ThreadPoolExecutor with 8 workers)...
+02:59:20 | INFO | [RATE-RESCUE] 0 depositable plan(s) in the pass: 30 plan(s) x 8 cut(s) at most, 13 Rate tail(s) laid under the plans that gave way, 10 of them depositable; 0 plan(s) with Rate on the hard layers in at most 8 round(s), 0 of them depositable.
+02:59:20 | WARNING | [ROBUSTNESS] 5 strategy(ies) dropped for a NON-FINITE score -- ids: 48800, 970960000, 994850000, 994850001, 994850002
+02:59:23 | INFO | [ABLATION] 10 strategies profiled in 2.4 s -- dominant source of the 1st: corridor d'indice (+57%)
+02:59:23 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=10, seeds=[41, 42, 43], mode=mean_std, runs=150)
+02:59:24 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 10/10 (pre-elite).
+02:59:24 | INFO | [ELITE] control grid: 251 lambda at a step of 1 nm
+02:59:24 | INFO | [ELITE-OPTICAL-PARENTS] requested=2 available=0 selected=0 total=10
+02:59:24 | INFO |    [ELITE-PARENTS] Round 1 #01 id=994850006 n_blocs=48 crash=0.00% seel=0.2531 marge=0.80A origin=RATE_RESCUE8(from 4880 wl=[488, 543, 451, 544, 487, 499, 452, 543, 476, 476, 476, 490, 461, 500, 506, 476, 476, 484, 462, 462, 462, 475, 478, 478, 483, 486, 459, 459, 457, 450, 461, 466, 454, 455, 455, 456, 455, 460, 456, 471, 471, 471, 465, 457, 469, 461, 452, 455]
+02:59:24 | INFO |    [ELITE-PARENTS] Round 1 #02 id=994850004 n_blocs=48 crash=0.00% seel=0.2663 marge=0.80A origin=RATE_RESCUE19(from 488 wl=[488, 543, 451, 544, 487, 499, 452, 543, 476, 476, 476, 490, 461, 500, 506, 476, 476, 484, 462, 462, 462, 475, 478, 478, 483, 486, 459, 459, 457, 450, 461, 466, 454, 455, 455, 456, 455, 460, 456, 471, 471, 471, 465, 457, 469, 461, 452, 455]
+02:59:24 | INFO |    [ELITE-PARENTS] Round 1 #03 id=994850007 n_blocs=48 crash=0.00% seel=0.2958 marge=90.71A origin=RATE_RESCUE2(from 4880 wl=[488, 543, 451, 544, 487, 499, 452, 543, 476, 476, 476, 490, 461, 500, 506, 476, 476, 484, 462, 462, 462, 475, 478, 478, 483, 486, 459, 459, 457, 450, 461, 466, 454, 455, 455, 456, 455, 460, 456, 471, 471, 471, 465, 457, 469, 461, 452, 455]
+02:59:24 | INFO |    [ELITE-PARENTS] Round 1 #04 id=994850005 n_blocs=48 crash=0.00% seel=0.3225 marge=0.80A origin=RATE_RESCUE13(from 488 wl=[488, 543, 451, 544, 487, 499, 452, 543, 476, 476, 476, 490, 461, 500, 506, 476, 476, 484, 462, 462, 462, 475, 478, 478, 483, 486, 459, 459, 457, 450, 461, 466, 454, 455, 455, 456, 455, 460, 456, 471, 471, 471, 465, 457, 469, 461, 452, 455]
+02:59:24 | INFO |    [ELITE-PARENTS] Round 1 #05 id=994850003 n_blocs=48 crash=0.00% seel=0.3289 marge=0.80A origin=RATE_RESCUE24(from 488 wl=[488, 543, 451, 544, 487, 499, 452, 543, 476, 476, 476, 490, 461, 500, 506, 476, 476, 484, 462, 462, 462, 475, 478, 478, 483, 486, 459, 459, 457, 450, 461, 466, 454, 455, 455, 456, 455, 460, 456, 471, 471, 471, 465, 457, 469, 461, 452, 455]
+02:59:24 | INFO |    [ELITE-PARENTS] Round 1 #06 id=994850008 n_blocs=48 crash=0.00% seel=0.3896 marge=3.32A origin=RATE_RESCUE6(from 9709 wl=[488, 543, 451, 544, 487, 499, 452, 543, 476, 476, 476, 490, 461, 500, 506, 476, 476, 484, 462, 462, 462, 475, 478, 478, 483, 486, 459, 459, 457, 450, 461, 466, 454, 455, 455, 456, 455, 460, 456, 471, 471, 471, 465, 457, 469, 461, 452, 455]
+02:59:24 | INFO |    [ELITE-PARENTS] Round 1 #07 id=994850009 n_blocs=48 crash=0.00% seel=0.4721 marge=3.32A origin=RATE_RESCUE5(from 9709 wl=[488, 543, 451, 544, 487, 499, 452, 543, 476, 476, 476, 490, 461, 500, 506, 476, 476, 484, 462, 462, 462, 475, 478, 478, 483, 486, 459, 459, 457, 450, 461, 466, 454, 455, 455, 456, 455, 460, 456, 471, 471, 471, 465, 457, 469, 461, 452, 455]
+02:59:24 | INFO |    [ELITE-PARENTS] Round 1 #08 id=994850012 n_blocs=48 crash=0.00% seel=0.5139 marge=16.87A origin=RATE_RESCUE2(from 9709 wl=[488, 543, 451, 544, 487, 499, 452, 543, 476, 476, 476, 490, 461, 500, 506, 476, 476, 484, 462, 462, 462, 475, 478, 478, 483, 486, 459, 459, 457, 450, 461, 466, 454, 455, 455, 456, 455, 460, 456, 471, 471, 471, 465, 457, 469, 461, 452, 455]
+02:59:24 | INFO |    [ELITE-PARENTS] Round 1 #09 id=994850010 n_blocs=48 crash=0.00% seel=0.5160 marge=9.34A origin=RATE_RESCUE4(from 9709 wl=[488, 543, 451, 544, 487, 499, 452, 543, 476, 476, 476, 490, 461, 500, 506, 476, 476, 484, 462, 462, 462, 475, 478, 478, 483, 486, 459, 459, 457, 450, 461, 466, 454, 455, 455, 456, 455, 460, 456, 471, 471, 471, 465, 457, 469, 461, 452, 455]
+02:59:24 | INFO |    [ELITE-PARENTS] Round 1 #10 id=994850011 n_blocs=48 crash=0.00% seel=0.5464 marge=9.34A origin=RATE_RESCUE3(from 9709 wl=[488, 543, 451, 544, 487, 499, 452, 543, 476, 476, 476, 490, 461, 500, 506, 476, 476, 484, 462, 462, 462, 475, 478, 478, 483, 486, 459, 459, 457, 450, 461, 466, 454, 455, 455, 456, 455, 460, 456, 471, 471, 471, 465, 457, 469, 461, 452, 455]
+02:59:24 | INFO | [ELITE-RATE] Round 1: 120 candidate(s) change the Rate layers of their parent.
+02:59:24 | INFO | [SLIT] slit bias active, 240/240 strategies -- slit 2 nm, profile of 17 nodes, 0 NEW profiles in 0.0 s (cache: 6563)
+02:59:24 | INFO | [ELITE] Round 1/2: generated=240 parents=10 rank10_nominal=0.027829 target=0.027829
+02:59:26 | INFO | [ELITE] Round 1: full_eval=36.
+02:59:27 | INFO | [ELITE] Round 1: rejets -- halving=40 full_rmse=0 score_non_fini=0 | retenues=36 sur 240 engendrees | sortie=COMPLETE
+02:59:27 | INFO | [ELITE-WL] Round 1 exit=COMPLETE generated 452:240 455:240 456:240 457:240 459:240 461:240 462:240 471:240 476:240 478:240 543:240 450:239 454:238 460:238 465:238 466:238 469:238 475:238 483:238 484:238 486:238 500:238 506:238 451:236 487:236 488:236 490:236 499:236 544:236 477:10 453:4 458:4 470:4 489:4 542:4 463:3 472:3 479:2 485:2 491:2 498:2 545:2 464:1 467:1 468:1 474:1 482:1 501:1 505:1 507:1
+02:59:27 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_halving 450:40 451:40 452:40 454:40 455:40 456:40 457:40 459:40 460:40 461:40 462:40 465:40 466:40 469:40 471:40 475:40 476:40 478:40 483:40 484:40 486:40 487:40 488:40 490:40 499:40 500:40 506:40 543:40 544:40
+02:59:27 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_full_rmse (none)
+02:59:27 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_score_non_fini (none)
+02:59:27 | INFO | [ELITE] Round 1: added 36 strategy(ies) above threshold.
+02:59:27 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r1, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+02:59:28 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/46 (post-elite-r1).
+02:59:28 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+02:59:28 | INFO | [ELITE-OPTICAL-PARENTS] requested=2 available=0 selected=0 total=10
+02:59:28 | INFO |    [ELITE-PARENTS] Round 2 #01 id=904850135 n_blocs=48 crash=0.00% seel=0.2530 marge=0.80A origin=ELITE wl=[488, 543, 451, 544, 487, 500, 452, 543, 476, 476, 476, 490, 461, 500, 506, 476, 476, 484, 462, 462, 462, 475, 478, 478, 483, 486, 459, 459, 457, 450, 461, 466, 454, 455, 455, 456, 455, 460, 456, 471, 471, 471, 465, 457, 469, 461, 452, 455]
+02:59:28 | INFO |    [ELITE-PARENTS] Round 2 #02 id=904850125 n_blocs=48 crash=0.00% seel=0.2585 marge=0.82A origin=ELITE wl=[489, 543, 451, 544, 487, 499, 452, 543, 476, 476, 476, 490, 461, 500, 506, 476, 476, 484, 462, 462, 462, 475, 478, 478, 483, 486, 459, 459, 457, 450, 461, 466, 454, 455, 455, 456, 455, 460, 456, 471, 471, 471, 465, 457, 469, 461, 452, 455]
+02:59:28 | INFO |    [ELITE-PARENTS] Round 2 #03 id=904850146 n_blocs=48 crash=0.00% seel=0.2585 marge=0.80A origin=ELITE wl=[488, 543, 451, 544, 487, 499, 452, 543, 476, 476, 476, 489, 461, 500, 506, 476, 476, 484, 462, 462, 462, 475, 478, 478, 483, 486, 459, 459, 457, 450, 461, 466, 454, 455, 455, 456, 455, 460, 456, 471, 471, 471, 465, 457, 469, 461, 452, 455]
+02:59:28 | INFO |    [ELITE-PARENTS] Round 2 #04 id=904850147 n_blocs=48 crash=0.00% seel=0.2585 marge=0.80A origin=ELITE wl=[488, 543, 451, 544, 487, 499, 452, 543, 476, 476, 476, 491, 461, 500, 506, 476, 476, 484, 462, 462, 462, 475, 478, 478, 483, 486, 459, 459, 457, 450, 461, 466, 454, 455, 455, 456, 455, 460, 456, 471, 471, 471, 465, 457, 469, 461, 452, 455]
+02:59:28 | INFO |    [ELITE-PARENTS] Round 2 #05 id=994850004 n_blocs=48 crash=0.00% seel=0.2663 marge=0.80A origin=RATE_RESCUE19(from 488 wl=[488, 543, 451, 544, 487, 499, 452, 543, 476, 476, 476, 490, 461, 500, 506, 476, 476, 484, 462, 462, 462, 475, 478, 478, 483, 486, 459, 459, 457, 450, 461, 466, 454, 455, 455, 456, 455, 460, 456, 471, 471, 471, 465, 457, 469, 461, 452, 455]
+02:59:28 | INFO |    [ELITE-PARENTS] Round 2 #06 id=994850007 n_blocs=48 crash=0.00% seel=0.2958 marge=90.71A origin=RATE_RESCUE2(from 4880 wl=[488, 543, 451, 544, 487, 499, 452, 543, 476, 476, 476, 490, 461, 500, 506, 476, 476, 484, 462, 462, 462, 475, 478, 478, 483, 486, 459, 459, 457, 450, 461, 466, 454, 455, 455, 456, 455, 460, 456, 471, 471, 471, 465, 457, 469, 461, 452, 455]
+02:59:28 | INFO |    [ELITE-PARENTS] Round 2 #07 id=994850005 n_blocs=48 crash=0.00% seel=0.3225 marge=0.80A origin=RATE_RESCUE13(from 488 wl=[488, 543, 451, 544, 487, 499, 452, 543, 476, 476, 476, 490, 461, 500, 506, 476, 476, 484, 462, 462, 462, 475, 478, 478, 483, 486, 459, 459, 457, 450, 461, 466, 454, 455, 455, 456, 455, 460, 456, 471, 471, 471, 465, 457, 469, 461, 452, 455]
+02:59:28 | INFO |    [ELITE-PARENTS] Round 2 #08 id=994850003 n_blocs=48 crash=0.00% seel=0.3289 marge=0.80A origin=RATE_RESCUE24(from 488 wl=[488, 543, 451, 544, 487, 499, 452, 543, 476, 476, 476, 490, 461, 500, 506, 476, 476, 484, 462, 462, 462, 475, 478, 478, 483, 486, 459, 459, 457, 450, 461, 466, 454, 455, 455, 456, 455, 460, 456, 471, 471, 471, 465, 457, 469, 461, 452, 455]
+02:59:28 | INFO |    [ELITE-PARENTS] Round 2 #09 id=994850008 n_blocs=48 crash=0.00% seel=0.3896 marge=3.32A origin=RATE_RESCUE6(from 9709 wl=[488, 543, 451, 544, 487, 499, 452, 543, 476, 476, 476, 490, 461, 500, 506, 476, 476, 484, 462, 462, 462, 475, 478, 478, 483, 486, 459, 459, 457, 450, 461, 466, 454, 455, 455, 456, 455, 460, 456, 471, 471, 471, 465, 457, 469, 461, 452, 455]
+02:59:28 | INFO |    [ELITE-PARENTS] Round 2 #10 id=994850009 n_blocs=48 crash=0.00% seel=0.4721 marge=3.32A origin=RATE_RESCUE5(from 9709 wl=[488, 543, 451, 544, 487, 499, 452, 543, 476, 476, 476, 490, 461, 500, 506, 476, 476, 484, 462, 462, 462, 475, 478, 478, 483, 486, 459, 459, 457, 450, 461, 466, 454, 455, 455, 456, 455, 460, 456, 471, 471, 471, 465, 457, 469, 461, 452, 455]
+02:59:28 | INFO | [ELITE-RATE] Round 2: 120 candidate(s) change the Rate layers of their parent.
+02:59:28 | INFO | [SLIT] slit bias active, 240/240 strategies -- slit 2 nm, profile of 17 nodes, 2 NEW profiles in 0.0 s (cache: 6565)
+02:59:28 | INFO | [ELITE] Round 2/2: generated=240 parents=10 rank10_nominal=0.017232 target=0.017232
+02:59:30 | INFO | [ELITE] Round 2: full_eval=36.
+02:59:31 | INFO | [ELITE] Round 2: rejets -- halving=61 full_rmse=0 score_non_fini=0 | retenues=36 sur 240 engendrees | sortie=COMPLETE
+02:59:31 | INFO | [ELITE-WL] Round 2 exit=COMPLETE generated 452:240 455:240 456:240 457:240 459:240 461:240 462:240 471:240 476:240 478:240 543:240 450:239 454:238 460:238 465:238 466:238 469:238 475:238 483:238 484:238 486:238 500:238 506:238 451:236 487:236 544:236 490:210 488:200 499:133 489:53 491:15 477:10 453:4 458:4 470:4 542:4 463:3 472:3 501:3 479:2 485:2 545:2 464:1 467:1 468:1 474:1 482:1 498:1 505:1 507:1
+02:59:31 | INFO | [ELITE-WL] Round 2 exit=COMPLETE rejected_halving 450:61 451:61 452:61 454:61 455:61 456:61 457:61 459:61 460:61 461:61 462:61 465:61 466:61 469:61 471:61 475:61 476:61 478:61 483:61 484:61 486:61 487:61 500:61 506:61 543:61 544:61 488:57 499:57 490:53 489:8 491:4
+02:59:31 | INFO | [ELITE-WL] Round 2 exit=COMPLETE rejected_full_rmse (none)
+02:59:31 | INFO | [ELITE-WL] Round 2 exit=COMPLETE rejected_score_non_fini (none)
+02:59:31 | INFO | [ELITE] Round 2: added 36 strategy(ies) above threshold.
+02:59:31 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r2, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+02:59:32 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/82 (post-elite-r2).
+02:59:32 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+02:59:32 | INFO | 🏆 Best Strategy ID: 904850511 (ELITE) - Score: 0.01067
+02:59:32 | INFO | [Block 48] Best strategy ready: RMSE=0.01067 blocks=48
+02:59:32 | INFO | Mining: n_blocks=9, CostMapThick Size=48, CostMapSq Size=48
+02:59:33 | INFO |    [Block 9] Mining found 241 strategies.
+02:59:33 | INFO |    [Block 9] Running screening on 241 strategies...
+02:59:33 | INFO | [SLIT] slit bias active, 241/241 strategies -- slit 2 nm, profile of 17 nodes, 115 NEW profiles in 0.3 s (cache: 6680)
+02:59:33 | INFO | Running robustness tests on 241 strategies (ThreadPoolExecutor with 8 workers)...
+02:59:37 | WARNING | [ROBUSTNESS] 241 strategy(ies) dropped for a NON-FINITE score -- ids: 9000, 9001, 9002, 9003, 9004 ...
+02:59:37 | ERROR | [ROBUSTNESS] 🔴 NONE of the 241 strategies holds under 5% of non-terminating depositions. The rate compounds over the height of the stack: the best candidate crashes in 100.0% of the draws. We still return the ranking by increasing risk — but NONE of these strategies is usable as is, and the component likely requires another monitoring paradigm.
+02:59:37 | WARNING |    [REGIME] 🔴 DEGENERATE: the 241 returned strategies carry a FALLBACK score, and their crash_rate is constant. The ranking that follows -- hence the choice of the ELITE PARENTS -- has no signal in its first two keys. `use_margin_ranking` is the only informative key in this regime.
+02:59:45 | INFO | [ABLATION] 20 strategies profiled in 8.0 s -- dominant source of the 1st: biais de fente (+58%)
+02:59:45 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+02:59:47 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+02:59:47 | INFO | [ELITE] control grid: 251 lambda at a step of 1 nm
+02:59:47 | INFO | [ELITE-OPTICAL-PARENTS] requested=2 available=0 selected=0 total=10
+02:59:47 | INFO |    [ELITE-PARENTS] Round 1 #01 id=9166 n_blocs=9 crash=100.00% seel=0.9098 marge=-552.93A origin=THICKNESS² wl=[544, 464, 543, 473, 471, 465, 467, 452, 455]
+02:59:47 | INFO |    [ELITE-PARENTS] Round 1 #02 id=9170 n_blocs=9 crash=100.00% seel=0.9370 marge=-714.75A origin=THICKNESS² wl=[544, 459, 543, 473, 471, 465, 467, 452, 465]
+02:59:47 | INFO |    [ELITE-PARENTS] Round 1 #03 id=9220 n_blocs=9 crash=100.00% seel=1.2916 marge=-1432.70A origin=SYM wl=[544, 459, 543, 473, 471, 464, 467, 452, 455]
+02:59:47 | INFO |    [ELITE-PARENTS] Round 1 #04 id=9229 n_blocs=9 crash=100.00% seel=1.2935 marge=-1432.03A origin=SYM wl=[544, 459, 543, 473, 471, 464, 467, 452, 454]
+02:59:47 | INFO |    [ELITE-PARENTS] Round 1 #05 id=9245 n_blocs=9 crash=100.00% seel=1.2987 marge=-1649.89A origin=SYM wl=[544, 459, 543, 473, 471, 464, 467, 452, 454]
+02:59:47 | INFO |    [ELITE-PARENTS] Round 1 #06 id=9259 n_blocs=9 crash=100.00% seel=1.3020 marge=-1292.74A origin=SYM wl=[544, 459, 543, 460, 471, 464, 467, 452, 455]
+02:59:47 | INFO |    [ELITE-PARENTS] Round 1 #07 id=9228 n_blocs=9 crash=100.00% seel=1.3025 marge=-1648.33A origin=SYM wl=[544, 459, 543, 473, 471, 464, 467, 452, 455]
+02:59:47 | INFO |    [ELITE-PARENTS] Round 1 #08 id=9261 n_blocs=9 crash=100.00% seel=1.3058 marge=-1809.37A origin=SYM wl=[544, 459, 543, 460, 471, 464, 467, 452, 455]
+02:59:47 | INFO |    [ELITE-PARENTS] Round 1 #09 id=9243 n_blocs=9 crash=100.00% seel=1.3062 marge=-1681.15A origin=SYM wl=[544, 459, 543, 460, 471, 464, 467, 452, 455]
+02:59:47 | INFO |    [ELITE-PARENTS] Round 1 #10 id=9274 n_blocs=9 crash=100.00% seel=1.3083 marge=-1699.06A origin=SYM wl=[544, 459, 543, 473, 471, 464, 467, 452, 463]
+02:59:47 | INFO | [ELITE-RATE] Round 1: 120 candidate(s) change the Rate layers of their parent.
+02:59:48 | INFO | [SLIT] slit bias active, 240/240 strategies -- slit 2 nm, profile of 17 nodes, 119 NEW profiles in 0.3 s (cache: 6799)
+02:59:48 | INFO | [ELITE] Round 1/2: generated=240 parents=10 rank10_nominal=0.026562 target=0.026562
+02:59:49 | INFO | [ELITE] Round 1: full_eval=29.
+02:59:49 | INFO | [ELITE] Round 1: rejets -- halving=211 full_rmse=5 score_non_fini=24 | retenues=0 sur 240 engendrees | sortie=COMPLETE
+02:59:49 | INFO | [ELITE-WL] Round 1 exit=COMPLETE generated 452:230 467:230 471:230 543:230 544:230 464:200 473:194 459:193 455:122 465:74 454:66 460:40 463:16 472:10 466:8 453:7 451:5 468:5 470:5 474:5 542:5 545:5 458:4 456:2
+02:59:49 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_halving 543:203 544:203 452:202 471:202 467:201 464:172 473:172 459:165 455:114 465:72 454:52 460:33 463:11 472:10 466:8 451:5 453:5 468:5 474:5 458:4 470:4 542:4 545:4 456:2
+02:59:49 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_full_rmse 452:5 459:5 464:5 467:5 471:5 473:5 543:5 544:5 454:3 463:2
+02:59:49 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_score_non_fini 467:24 452:23 459:23 464:23 471:23 543:22 544:22 473:17 454:11 455:8 460:7 463:3 453:2 465:2 470:1 542:1 545:1
+02:59:49 | INFO | [ELITE-WL] Round 1 exit=COMPLETE reject_crash_bands score_non_fini/100%:24 full_rmse/100%:5
+02:59:49 | INFO | [ELITE] Round 1: no candidate beat nominal threshold.
+02:59:49 | INFO | [ELITE] No candidate added across all rounds.
+02:59:49 | INFO | 🏆 Best Strategy ID: 9166 (THICKNESS²) - Score: 0.20693
+02:59:49 | INFO |    [Block 9] Screening complete. Results count: 241
+02:59:49 | INFO |    [Block 9] Full pass on 10 survivors (n_full=150)...
+02:59:49 | INFO | [RATE] 90 variants on 10 strategies, 40 at most each, DEEPEST boundaries first. 0 strategy(ies) skipped: no block boundary and no low-swing layer. [SWING] seuil 0.025, 53 evaluations TMM a lambda fixe, 0.0 s au total pour cette expansion.
+02:59:50 | INFO | [SLIT] A18 recherche de fente : 100 strategies x 4 fentes [5.0, 2.0, 1.0, 0.5] -> 200 candidates  |  saute par la courbure : 5 nm x100, 1 nm x100
+02:59:50 | INFO | [SLIT] slit bias active, 200/200 strategies -- slit 2 nm, profile of 17 nodes, 54 NEW profiles in 0.1 s (cache: 6853)
+02:59:50 | INFO | Running robustness tests on 200 strategies (ThreadPoolExecutor with 8 workers)...
+03:00:03 | INFO | Running robustness tests on 240 strategies (ThreadPoolExecutor with 8 workers)...
+03:00:13 | INFO | [RATE-RESCUE] 0 depositable plan(s) in the pass: 30 plan(s) x 8 cut(s) at most, 240 Rate tail(s) laid under the plans that gave way, 240 of them depositable; 0 plan(s) with Rate on the hard layers in at most 8 round(s), 0 of them depositable.
+03:00:13 | WARNING | [ROBUSTNESS] 200 strategy(ies) dropped for a NON-FINITE score -- ids: 9166, 970180000, 9170, 970180001, 9157 ...
+03:00:19 | INFO | [ABLATION] 20 strategies profiled in 5.9 s -- dominant source of the 1st: corridor d'indice (+72%)
+03:00:19 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+03:00:21 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/240 (pre-elite).
+03:00:21 | INFO | [ELITE] control grid: 251 lambda at a step of 1 nm
+03:00:21 | INFO | [ELITE-OPTICAL-PARENTS] requested=2 available=0 selected=0 total=10
+03:00:21 | INFO |    [ELITE-PARENTS] Round 1 #01 id=990950004 n_blocs=9 crash=0.00% seel=0.1878 marge=0.83A origin=RATE_RESCUE20(from 990 wl=[544, 464, 543, 473, 471, 465, 467, 452, 455]
+03:00:21 | INFO |    [ELITE-PARENTS] Round 1 #02 id=990950051 n_blocs=9 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE25(from 990 wl=[544, 464, 543, 473, 471, 464, 467, 452, 455]
+03:00:21 | INFO |    [ELITE-PARENTS] Round 1 #03 id=990950012 n_blocs=9 crash=0.00% seel=0.1878 marge=0.83A origin=RATE_RESCUE20(from 990 wl=[544, 459, 543, 473, 471, 454, 467, 452, 455]
+03:00:21 | INFO |    [ELITE-PARENTS] Round 1 #04 id=990950003 n_blocs=9 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE27(from 990 wl=[544, 464, 543, 473, 471, 465, 467, 452, 455]
+03:00:21 | INFO |    [ELITE-PARENTS] Round 1 #05 id=990950019 n_blocs=9 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE27(from 990 wl=[544, 459, 543, 473, 471, 465, 467, 452, 455]
+03:00:21 | INFO |    [ELITE-PARENTS] Round 1 #06 id=990950027 n_blocs=9 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE27(from 990 wl=[544, 464, 543, 473, 471, 464, 467, 452, 455]
+03:00:21 | INFO |    [ELITE-PARENTS] Round 1 #07 id=990950043 n_blocs=9 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE27(from 990 wl=[544, 459, 543, 473, 471, 464, 467, 452, 455]
+03:00:21 | INFO |    [ELITE-PARENTS] Round 1 #08 id=990950059 n_blocs=9 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE25(from 990 wl=[544, 459, 543, 473, 471, 464, 467, 452, 455]
+03:00:21 | INFO |    [ELITE-PARENTS] Round 1 #09 id=990950067 n_blocs=9 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE25(from 990 wl=[544, 464, 543, 473, 471, 465, 467, 452, 455]
+03:00:21 | INFO |    [ELITE-PARENTS] Round 1 #10 id=990950075 n_blocs=9 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE25(from 990 wl=[544, 459, 543, 473, 471, 465, 467, 452, 465]
+03:00:21 | INFO | [ELITE-RATE] Round 1: 120 candidate(s) change the Rate layers of their parent.
+03:00:21 | INFO | [SLIT] slit bias active, 240/240 strategies -- slit 2 nm, profile of 17 nodes, 2 NEW profiles in 0.0 s (cache: 6855)
+03:00:21 | INFO | [ELITE] Round 1/2: generated=240 parents=10 rank10_nominal=0.007993 target=0.007993
+03:00:24 | INFO | [ELITE] Round 1: full_eval=36.
+03:00:25 | INFO | [ELITE] Round 1: rejets -- halving=43 full_rmse=10 score_non_fini=0 | retenues=26 sur 240 engendrees | sortie=COMPLETE
+03:00:25 | INFO | [ELITE-WL] Round 1 exit=COMPLETE generated 452:231 467:230 471:230 473:230 543:230 544:230 455:221 464:159 465:123 459:97 454:40 472:10 466:8 451:5 453:5 468:5 470:5 474:5 542:5 545:5 456:4 463:4 458:2 460:2
+03:00:25 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_halving 452:43 467:43 471:43 473:43 543:43 544:43 455:37 464:30 465:23 459:21 454:3
+03:00:25 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_full_rmse 452:10 467:10 471:10 473:10 543:10 544:10 455:9 464:7 465:5 459:4 454:2 463:1
+03:00:25 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_score_non_fini (none)
+03:00:25 | INFO | [ELITE-WL] Round 1 exit=COMPLETE reject_crash_bands full_rmse/<=1%:10
+03:00:25 | INFO | [ELITE] Round 1: added 26 strategy(ies) above threshold.
+03:00:25 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r1, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+03:00:25 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/266 (post-elite-r1).
+03:00:25 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+03:00:25 | INFO | [ELITE-OPTICAL-PARENTS] requested=2 available=0 selected=0 total=10
+03:00:25 | INFO |    [ELITE-PARENTS] Round 2 #01 id=900950408 n_blocs=9 crash=0.00% seel=0.1862 marge=0.83A origin=ELITE wl=[544, 464, 543, 473, 471, 465, 467, 452, 455]
+03:00:25 | INFO |    [ELITE-PARENTS] Round 2 #02 id=990950051 n_blocs=9 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE25(from 990 wl=[544, 464, 543, 473, 471, 464, 467, 452, 455]
+03:00:25 | INFO |    [ELITE-PARENTS] Round 2 #03 id=900950409 n_blocs=9 crash=0.00% seel=0.1862 marge=0.83A origin=ELITE wl=[544, 459, 543, 473, 471, 465, 467, 452, 455]
+03:00:25 | INFO |    [ELITE-PARENTS] Round 2 #04 id=900950410 n_blocs=9 crash=0.00% seel=0.1862 marge=0.83A origin=ELITE wl=[544, 464, 543, 473, 471, 464, 467, 452, 455]
+03:00:25 | INFO |    [ELITE-PARENTS] Round 2 #05 id=900950411 n_blocs=9 crash=0.00% seel=0.1862 marge=0.83A origin=ELITE wl=[544, 459, 543, 473, 471, 464, 467, 452, 455]
+03:00:25 | INFO |    [ELITE-PARENTS] Round 2 #06 id=990950004 n_blocs=9 crash=0.00% seel=0.1878 marge=0.83A origin=RATE_RESCUE20(from 990 wl=[544, 464, 543, 473, 471, 465, 467, 452, 455]
+03:00:25 | INFO |    [ELITE-PARENTS] Round 2 #07 id=990950012 n_blocs=9 crash=0.00% seel=0.1878 marge=0.83A origin=RATE_RESCUE20(from 990 wl=[544, 459, 543, 473, 471, 454, 467, 452, 455]
+03:00:25 | INFO |    [ELITE-PARENTS] Round 2 #08 id=990950003 n_blocs=9 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE27(from 990 wl=[544, 464, 543, 473, 471, 465, 467, 452, 455]
+03:00:25 | INFO |    [ELITE-PARENTS] Round 2 #09 id=990950019 n_blocs=9 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE27(from 990 wl=[544, 459, 543, 473, 471, 465, 467, 452, 455]
+03:00:25 | INFO |    [ELITE-PARENTS] Round 2 #10 id=990950027 n_blocs=9 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE27(from 990 wl=[544, 464, 543, 473, 471, 464, 467, 452, 455]
+03:00:26 | INFO | [ELITE-RATE] Round 2: 120 candidate(s) change the Rate layers of their parent.
+03:00:26 | INFO | [SLIT] slit bias active, 240/240 strategies -- slit 2 nm, profile of 17 nodes, 0 NEW profiles in 0.0 s (cache: 6855)
+03:00:26 | INFO | [ELITE] Round 2/2: generated=240 parents=10 rank10_nominal=0.007846 target=0.007846
+03:00:28 | INFO | [ELITE] Round 2: full_eval=36.
+03:00:30 | INFO | [ELITE] Round 2: rejets -- halving=45 full_rmse=4 score_non_fini=0 | retenues=32 sur 240 engendrees | sortie=COMPLETE
+03:00:30 | INFO | [ELITE-WL] Round 2 exit=COMPLETE generated 455:232 452:231 467:230 471:230 473:230 543:230 544:230 464:176 465:112 459:84 454:14 472:10 466:7 463:6 451:5 468:5 470:5 474:5 542:5 545:5 453:4 456:4 458:2 460:2
+03:00:30 | INFO | [ELITE-WL] Round 2 exit=COMPLETE rejected_halving 452:45 455:45 467:45 471:45 473:45 543:45 544:45 464:33 465:21 459:14 454:4
+03:00:30 | INFO | [ELITE-WL] Round 2 exit=COMPLETE rejected_full_rmse 452:4 455:4 467:4 471:4 473:4 543:4 464:3 459:2 465:2
+03:00:30 | INFO | [ELITE-WL] Round 2 exit=COMPLETE rejected_score_non_fini (none)
+03:00:30 | INFO | [ELITE-WL] Round 2 exit=COMPLETE reject_crash_bands full_rmse/<=1%:4
+03:00:30 | INFO | [ELITE] Round 2: added 32 strategy(ies) above threshold.
+03:00:30 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r2, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+03:00:30 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/298 (post-elite-r2).
+03:00:30 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+03:00:30 | INFO | 🏆 Best Strategy ID: 900950485 (ELITE) - Score: 0.00866
+03:00:30 | INFO | [Block 9] Best strategy ready: RMSE=0.00866 blocks=9
+03:00:31 | INFO | Mining: n_blocks=8, CostMapThick Size=48, CostMapSq Size=48
+03:00:31 | INFO |    [MINING] n_blocks=8: the DP found no grouping; the fewest contiguous blocks with one admissible wavelength per block is 9 here (first block of two layers at least: True). The miner returns the structured seeds only; inheritance from the next block count adds its derived strategies after.
+03:00:31 | INFO |    [Block 8] Mining found 2 strategies.
+03:00:31 | INFO |    [Block 8] Running screening on 2 strategies...
+03:00:31 | INFO | [SLIT] slit bias active, 2/2 strategies -- slit 2 nm, profile of 17 nodes, 96 NEW profiles in 0.3 s (cache: 6951)
+03:00:31 | INFO | Running robustness tests on 2 strategies (ThreadPoolExecutor with 8 workers)...
+03:00:31 | WARNING | [ROBUSTNESS] 2 strategy(ies) dropped for a NON-FINITE score -- ids: 8800, 8801
+03:00:31 | ERROR | [ROBUSTNESS] 🔴 NONE of the 2 strategies holds under 5% of non-terminating depositions. The rate compounds over the height of the stack: the best candidate crashes in 68.0% of the draws. We still return the ranking by increasing risk — but NONE of these strategies is usable as is, and the component likely requires another monitoring paradigm.
+03:00:31 | WARNING |    [REGIME] 🔴 DEGENERATE: the 2 returned strategies carry a FALLBACK score, and their crash_rate is constant. The ranking that follows -- hence the choice of the ELITE PARENTS -- has no signal in its first two keys. `use_margin_ranking` is the only informative key in this regime.
+03:00:32 | INFO | [ABLATION] 2 strategies profiled in 0.8 s -- dominant source of the 1st: corridor d'indice (+20%)
+03:00:32 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=2, seeds=[41, 42, 43], mode=mean_std, runs=150)
+03:00:32 | INFO | [ELITE] control grid: 251 lambda at a step of 1 nm
+03:00:32 | INFO | [ELITE-OPTICAL-PARENTS] requested=2 available=0 selected=0 total=2
+03:00:32 | INFO |    [ELITE-PARENTS] Round 1 #01 id=8800 n_blocs=8 crash=68.00% seel=1.3071 marge=-1652.47A origin=STRUCTURED_MONO_WL wl=[488, 488, 488, 488, 488, 488, 488, 488]
+03:00:32 | INFO |    [ELITE-PARENTS] Round 1 #02 id=8801 n_blocs=8 crash=100.00% seel=1.4043 marge=-1937.07A origin=STRUCTURED_REGULAR_PAR wl=[544, 476, 471, 476, 485, 462, 455, 466]
+03:00:32 | INFO | [ELITE-RATE] Round 1: 58 candidate(s) change the Rate layers of their parent.
+03:00:33 | INFO | [SLIT] slit bias active, 118/118 strategies -- slit 2 nm, profile of 17 nodes, 206 NEW profiles in 0.5 s (cache: 7157)
+03:00:33 | INFO | [ELITE] Round 1/2: generated=118 parents=2 rank10_nominal=0.473074 target=0.473074
+03:00:33 | INFO | [ELITE] Round 1: full_eval=36.
+03:00:34 | INFO | [ELITE] Round 1: rejets -- halving=48 full_rmse=0 score_non_fini=36 | retenues=0 sur 118 engendrees | sortie=COMPLETE
+03:00:34 | INFO | [ELITE-WL] Round 1 exit=COMPLETE generated 476:59 488:59 455:57 462:57 466:57 471:57 485:57 544:57 487:8 489:8 475:2 477:2 454:1 456:1 461:1 463:1 465:1 467:1 470:1 472:1 484:1 486:1 543:1 545:1
+03:00:34 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_halving 476:48 455:46 462:46 466:46 471:46 485:46 544:46 475:2 477:2 454:1 456:1 461:1 463:1 465:1 467:1 470:1 472:1 484:1 486:1 543:1 545:1
+03:00:34 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_full_rmse (none)
+03:00:34 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_score_non_fini 488:35 489:7 487:6 455:1 462:1 466:1 471:1 476:1 485:1 544:1
+03:00:34 | INFO | [ELITE-WL] Round 1 exit=COMPLETE reject_crash_bands score_non_fini/50-99%:28 score_non_fini/25-50%:5 score_non_fini/100%:3
+03:00:34 | INFO | [ELITE] Round 1: no candidate beat nominal threshold.
+03:00:34 | INFO | [ELITE] No candidate added across all rounds.
+03:00:34 | INFO | 🏆 Best Strategy ID: 8800 (STRUCTURED_MONO_WL) - Score: 0.42714
+03:00:34 | INFO |    [Block 8] Screening complete. Results count: 2
+03:00:34 | INFO | [SLIT] slit bias active, 92/92 strategies -- slit 2 nm, profile of 17 nodes, 122 NEW profiles in 0.3 s (cache: 7279)
+03:00:34 | INFO | Running robustness tests on 92 strategies (ThreadPoolExecutor with 8 workers)...
+03:00:36 | WARNING | [ROBUSTNESS] 92 strategy(ies) dropped for a NON-FINITE score -- ids: 900900001, 900900002, 900900003, 900900004, 900900005 ...
+03:00:36 | ERROR | [ROBUSTNESS] 🔴 NONE of the 92 strategies holds under 5% of non-terminating depositions. The rate compounds over the height of the stack: the best candidate crashes in 100.0% of the draws. We still return the ranking by increasing risk — but NONE of these strategies is usable as is, and the component likely requires another monitoring paradigm.
+03:00:36 | WARNING |    [REGIME] 🔴 DEGENERATE: the 92 returned strategies carry a FALLBACK score, and their crash_rate is constant. The ranking that follows -- hence the choice of the ELITE PARENTS -- has no signal in its first two keys. `use_margin_ranking` is the only informative key in this regime.
+03:00:44 | INFO | [ABLATION] 20 strategies profiled in 8.1 s -- dominant source of the 1st: biais de fente (+64%)
+03:00:44 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+03:00:46 | INFO | [ELITE] control grid: 251 lambda at a step of 1 nm
+03:00:46 | INFO | [ELITE-OPTICAL-PARENTS] requested=2 available=0 selected=0 total=10
+03:00:46 | INFO |    [ELITE-PARENTS] Round 1 #01 id=900900012 n_blocs=8 crash=100.00% seel=0.9038 marge=-52.33A origin=SMART_MERGE_THICKNESS2 wl=[544, 543, 473, 471, 465, 467, 452, 465]
+03:00:46 | INFO |    [ELITE-PARENTS] Round 1 #02 id=900900008 n_blocs=8 crash=100.00% seel=0.9225 marge=-266.13A origin=SMART_MERGE_THICKNESS2 wl=[544, 464, 543, 471, 465, 467, 452, 455]
+03:00:46 | INFO |    [ELITE-PARENTS] Round 1 #03 id=900900006 n_blocs=8 crash=100.00% seel=0.9232 marge=-257.54A origin=SMART_MERGE_THICKNESS2 wl=[544, 464, 543, 473, 471, 465, 467, 455]
+03:00:46 | INFO |    [ELITE-PARENTS] Round 1 #04 id=900900010 n_blocs=8 crash=100.00% seel=0.9235 marge=-156.60A origin=SMART_MERGE_THICKNESS2 wl=[544, 464, 543, 473, 471, 467, 452, 455]
+03:00:46 | INFO |    [ELITE-PARENTS] Round 1 #05 id=900900002 n_blocs=8 crash=100.00% seel=0.9326 marge=-569.21A origin=SMART_MERGE_THICKNESS2 wl=[544, 543, 473, 471, 465, 467, 452, 455]
+03:00:46 | INFO |    [ELITE-PARENTS] Round 1 #06 id=900900028 n_blocs=8 crash=100.00% seel=0.9344 marge=-474.91A origin=SMART_MERGE_THICKNESS2 wl=[544, 459, 543, 473, 471, 454, 467, 455]
+03:00:46 | INFO |    [ELITE-PARENTS] Round 1 #07 id=900900020 n_blocs=8 crash=100.00% seel=0.9499 marge=-596.01A origin=SMART_MERGE_THICKNESS2 wl=[544, 459, 543, 471, 465, 467, 452, 465]
+03:00:46 | INFO |    [ELITE-PARENTS] Round 1 #08 id=900900026 n_blocs=8 crash=100.00% seel=0.9680 marge=-1146.18A origin=SMART_MERGE_THICKNESS2 wl=[544, 459, 543, 473, 471, 454, 467, 455]
+03:00:46 | INFO |    [ELITE-PARENTS] Round 1 #09 id=900900004 n_blocs=8 crash=100.00% seel=0.9723 marge=-552.93A origin=SMART_MERGE_THICKNESS2 wl=[544, 464, 543, 473, 471, 465, 467, 455]
+03:00:46 | INFO |    [ELITE-PARENTS] Round 1 #10 id=900900034 n_blocs=8 crash=100.00% seel=0.9884 marge=-1018.96A origin=SMART_MERGE_THICKNESS2 wl=[544, 464, 543, 473, 471, 467, 452, 455]
+03:00:46 | INFO | [ELITE-RATE] Round 1: 120 candidate(s) change the Rate layers of their parent.
+03:00:46 | INFO | [SLIT] slit bias active, 240/240 strategies -- slit 2 nm, profile of 17 nodes, 101 NEW profiles in 0.3 s (cache: 7380)
+03:00:46 | INFO | [ELITE] Round 1/2: generated=240 parents=10 rank10_nominal=0.027834 target=0.027834
+03:00:47 | INFO | [ELITE] Round 1: full_eval=36.
+03:00:48 | INFO | [ELITE] Round 1: rejets -- halving=169 full_rmse=0 score_non_fini=36 | retenues=0 sur 240 engendrees | sortie=COMPLETE
+03:00:48 | INFO | [ELITE-WL] Round 1 exit=COMPLETE generated 467:230 471:230 543:230 544:230 473:185 455:184 465:166 452:159 464:128 459:36 454:28 466:10 472:9 468:5 470:5 542:5 545:5 451:4 453:4 456:4 474:4 463:3
+03:00:48 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_halving 543:163 544:163 467:161 471:161 455:145 473:122 464:118 465:101 452:96 459:33 454:25 472:7 466:6 468:5 456:4 463:3 470:3 542:3 545:3 451:2 453:2 474:2
+03:00:48 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_full_rmse (none)
+03:00:48 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_score_non_fini 473:36 467:34 471:34 543:34 544:34 465:31 452:30 455:19 464:6 466:4 453:2 454:2 459:2 470:2 542:2 545:2
+03:00:48 | INFO | [ELITE-WL] Round 1 exit=COMPLETE reject_crash_bands score_non_fini/100%:35 score_non_fini/25-50%:1
+03:00:48 | INFO | [ELITE] Round 1: no candidate beat nominal threshold.
+03:00:48 | INFO | [ELITE] No candidate added across all rounds.
+03:00:48 | INFO | 🏆 Best Strategy ID: 900900012 (SMART_MERGE_THICKNESS2 (from ID 9170)) - Score: 0.20423
+03:00:48 | INFO |    [Block 8] Full pass on 12 survivors (n_full=150)...
+03:00:48 | INFO | [RATE] 96 variants on 12 strategies, 40 at most each, DEEPEST boundaries first. 0 strategy(ies) skipped: no block boundary and no low-swing layer. [SWING] seuil 0.025, 154 evaluations TMM a lambda fixe, 0.0 s au total pour cette expansion.
+03:00:48 | INFO | [SLIT] A18 recherche de fente : 108 strategies x 4 fentes [5.0, 2.0, 1.0, 0.5] -> 216 candidates  |  saute par la courbure : 5 nm x108, 1 nm x108
+03:00:49 | INFO | [SLIT] slit bias active, 216/216 strategies -- slit 2 nm, profile of 17 nodes, 157 NEW profiles in 0.4 s (cache: 7537)
+03:00:49 | INFO | Running robustness tests on 216 strategies (ThreadPoolExecutor with 8 workers)...
+03:01:03 | INFO | Running robustness tests on 233 strategies (ThreadPoolExecutor with 8 workers)...
+03:01:13 | INFO | [RATE-RESCUE] 0 depositable plan(s) in the pass: 30 plan(s) x 8 cut(s) at most, 233 Rate tail(s) laid under the plans that gave way, 232 of them depositable; 0 plan(s) with Rate on the hard layers in at most 8 round(s), 0 of them depositable.
+03:01:13 | WARNING | [ROBUSTNESS] 217 strategy(ies) dropped for a NON-FINITE score -- ids: 8800, 970160000, 8801, 970160001, 900900012 ...
+03:01:19 | INFO | [ABLATION] 20 strategies profiled in 5.7 s -- dominant source of the 1st: corridor d'indice (+72%)
+03:01:19 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+03:01:21 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/232 (pre-elite).
+03:01:21 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+03:01:21 | INFO | [ELITE] control grid: 251 lambda at a step of 1 nm
+03:01:21 | INFO | [ELITE-OPTICAL-PARENTS] requested=2 available=0 selected=0 total=10
+03:01:21 | INFO |    [ELITE-PARENTS] Round 1 #01 id=990850141 n_blocs=8 crash=0.00% seel=0.1878 marge=0.83A origin=RATE_RESCUE20(from 990 wl=[544, 464, 543, 471, 465, 467, 452, 455]
+03:01:21 | INFO |    [ELITE-PARENTS] Round 1 #02 id=990850004 n_blocs=8 crash=0.00% seel=0.1878 marge=0.83A origin=RATE_RESCUE20(from 990 wl=[544, 543, 473, 471, 465, 467, 452, 455]
+03:01:21 | INFO |    [ELITE-PARENTS] Round 1 #03 id=990850019 n_blocs=8 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE25(from 990 wl=[544, 464, 543, 473, 471, 467, 452, 455]
+03:01:21 | INFO |    [ELITE-PARENTS] Round 1 #04 id=990850107 n_blocs=8 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE25(from 990 wl=[544, 543, 473, 471, 465, 467, 452, 455]
+03:01:21 | INFO |    [ELITE-PARENTS] Round 1 #05 id=990850131 n_blocs=8 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE25(from 990 wl=[544, 464, 543, 473, 471, 465, 467, 455]
+03:01:21 | INFO |    [ELITE-PARENTS] Round 1 #06 id=990850027 n_blocs=8 crash=0.00% seel=0.1894 marge=0.83A origin=RATE_RESCUE26(from 990 wl=[544, 459, 543, 473, 471, 454, 467, 455]
+03:01:21 | INFO |    [ELITE-PARENTS] Round 1 #07 id=990850055 n_blocs=8 crash=0.00% seel=0.4805 marge=25.33A origin=RATE_RESCUE2(from 9908 wl=[488, 488, 488, 488, 488, 488, 488, 488]
+03:01:21 | INFO |    [ELITE-PARENTS] Round 1 #08 id=990850003 n_blocs=8 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE27(from 990 wl=[544, 543, 473, 471, 465, 467, 452, 455]
+03:01:21 | INFO |    [ELITE-PARENTS] Round 1 #09 id=990850011 n_blocs=8 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE27(from 990 wl=[544, 543, 473, 471, 454, 467, 452, 455]
+03:01:21 | INFO |    [ELITE-PARENTS] Round 1 #10 id=990850035 n_blocs=8 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE27(from 990 wl=[544, 543, 473, 471, 465, 467, 452, 465]
+03:01:21 | INFO | [ELITE-RATE] Round 1: 120 candidate(s) change the Rate layers of their parent.
+03:01:21 | INFO | [SLIT] slit bias active, 240/240 strategies -- slit 2 nm, profile of 17 nodes, 0 NEW profiles in 0.0 s (cache: 7537)
+03:01:21 | INFO | [ELITE] Round 1/2: generated=240 parents=10 rank10_nominal=0.007846 target=0.007846
+03:01:23 | INFO | [ELITE] Round 1: full_eval=36.
+03:01:25 | INFO | [ELITE] Round 1: rejets -- halving=49 full_rmse=19 score_non_fini=0 | retenues=17 sur 240 engendrees | sortie=COMPLETE
+03:01:25 | INFO | [ELITE-WL] Round 1 exit=COMPLETE generated 467:218 471:218 543:218 544:218 455:206 473:182 452:177 465:161 464:101 454:29 459:12 488:12 466:9 472:9 456:5 468:5 470:5 542:5 545:5 451:4 453:4 474:4 463:3
+03:01:25 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_halving 467:37 471:37 543:37 544:37 455:35 473:33 452:25 465:23 464:16 488:12 454:8 459:6
+03:01:25 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_full_rmse 455:19 467:19 544:19 471:18 543:17 452:16 473:15 464:11 465:10 454:1 459:1 463:1 470:1 472:1 474:1 542:1
+03:01:25 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_score_non_fini (none)
+03:01:25 | INFO | [ELITE-WL] Round 1 exit=COMPLETE reject_crash_bands full_rmse/<=1%:18 full_rmse/50-99%:1
+03:01:25 | INFO | [ELITE] Round 1: added 17 strategy(ies) above threshold.
+03:01:25 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r1, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+03:01:25 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/249 (post-elite-r1).
+03:01:25 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+03:01:25 | INFO | [ELITE-OPTICAL-PARENTS] requested=2 available=0 selected=0 total=10
+03:01:25 | INFO |    [ELITE-PARENTS] Round 2 #01 id=900850535 n_blocs=8 crash=0.00% seel=0.1862 marge=0.83A origin=ELITE wl=[544, 543, 473, 471, 465, 467, 452, 465]
+03:01:25 | INFO |    [ELITE-PARENTS] Round 2 #02 id=900850521 n_blocs=8 crash=0.00% seel=0.1871 marge=0.83A origin=ELITE wl=[544, 459, 543, 473, 471, 454, 467, 455]
+03:01:25 | INFO |    [ELITE-PARENTS] Round 2 #03 id=990850141 n_blocs=8 crash=0.00% seel=0.1878 marge=0.83A origin=RATE_RESCUE20(from 990 wl=[544, 464, 543, 471, 465, 467, 452, 455]
+03:01:25 | INFO |    [ELITE-PARENTS] Round 2 #04 id=990850019 n_blocs=8 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE25(from 990 wl=[544, 464, 543, 473, 471, 467, 452, 455]
+03:01:25 | INFO |    [ELITE-PARENTS] Round 2 #05 id=990850107 n_blocs=8 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE25(from 990 wl=[544, 543, 473, 471, 465, 467, 452, 455]
+03:01:25 | INFO |    [ELITE-PARENTS] Round 2 #06 id=900850590 n_blocs=8 crash=0.00% seel=0.1888 marge=0.83A origin=ELITE wl=[544, 464, 543, 473, 471, 465, 467, 455]
+03:01:25 | INFO |    [ELITE-PARENTS] Round 2 #07 id=990850055 n_blocs=8 crash=0.00% seel=0.4805 marge=25.33A origin=RATE_RESCUE2(from 9908 wl=[488, 488, 488, 488, 488, 488, 488, 488]
+03:01:25 | INFO |    [ELITE-PARENTS] Round 2 #08 id=900850577 n_blocs=8 crash=0.00% seel=0.1868 marge=0.83A origin=ELITE wl=[544, 543, 473, 471, 465, 467, 452, 455]
+03:01:25 | INFO |    [ELITE-PARENTS] Round 2 #09 id=900850513 n_blocs=8 crash=0.00% seel=0.1878 marge=0.83A origin=ELITE wl=[544, 543, 473, 471, 465, 467, 452, 455]
+03:01:25 | INFO |    [ELITE-PARENTS] Round 2 #10 id=990850004 n_blocs=8 crash=0.00% seel=0.1878 marge=0.83A origin=RATE_RESCUE20(from 990 wl=[544, 543, 473, 471, 465, 467, 452, 455]
+03:01:25 | INFO | [ELITE-RATE] Round 2: 120 candidate(s) change the Rate layers of their parent.
+03:01:25 | INFO | [SLIT] slit bias active, 240/240 strategies -- slit 2 nm, profile of 17 nodes, 5 NEW profiles in 0.0 s (cache: 7542)
+03:01:25 | INFO | [ELITE] Round 2/2: generated=240 parents=10 rank10_nominal=0.008120 target=0.008120
+03:01:28 | INFO | [ELITE] Round 2: full_eval=36.
+03:01:30 | INFO | [ELITE] Round 2: rejets -- halving=37 full_rmse=1 score_non_fini=0 | retenues=35 sur 240 engendrees | sortie=COMPLETE
+03:01:30 | INFO | [ELITE-WL] Round 2 exit=COMPLETE generated 467:217 471:217 543:217 544:217 455:181 473:181 452:168 465:149 464:85 454:40 459:37 488:13 466:9 472:9 453:5 468:5 470:5 542:5 545:5 451:4 456:4 474:4 463:2 458:1 460:1
+03:01:30 | INFO | [ELITE-WL] Round 2 exit=COMPLETE rejected_halving 455:24 467:24 471:24 543:24 544:24 452:19 473:19 465:17 464:13 488:13 454:2 459:2
+03:01:30 | INFO | [ELITE-WL] Round 2 exit=COMPLETE rejected_full_rmse 452:1 465:1 467:1 471:1 473:1 543:1 544:1
+03:01:30 | INFO | [ELITE-WL] Round 2 exit=COMPLETE rejected_score_non_fini (none)
+03:01:30 | INFO | [ELITE-WL] Round 2 exit=COMPLETE reject_crash_bands full_rmse/100%:1
+03:01:30 | INFO | [ELITE] Round 2: added 35 strategy(ies) above threshold.
+03:01:30 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r2, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+03:01:31 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/284 (post-elite-r2).
+03:01:31 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+03:01:31 | INFO | 🏆 Best Strategy ID: 900850601 (ELITE) - Score: 0.00864
+03:01:31 | INFO | [Block 8] Best strategy ready: RMSE=0.00864 blocks=8
+03:01:31 | INFO | Mining: n_blocks=7, CostMapThick Size=48, CostMapSq Size=48
+03:01:31 | INFO |    [MINING] n_blocks=7: the DP found no grouping; the fewest contiguous blocks with one admissible wavelength per block is 9 here (first block of two layers at least: True). The miner returns the structured seeds only; inheritance from the next block count adds its derived strategies after.
+03:01:31 | INFO |    [Block 7] Mining found 1 strategies.
+03:01:31 | INFO |    [Block 7] Running screening on 1 strategies...
+03:01:31 | INFO | [SLIT] slit bias active, 1/1 strategies -- slit 2 nm, profile of 17 nodes, 48 NEW profiles in 0.2 s (cache: 7590)
+03:01:32 | INFO | [ABLATION] 1 strategies profiled in 0.4 s -- dominant source of the 1st: bruit de lecture (+8%)
+03:01:32 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=1, seeds=[41, 42, 43], mode=mean_std, runs=150)
+03:01:32 | INFO | [ELITE] control grid: 251 lambda at a step of 1 nm
+03:01:32 | INFO | [ELITE-OPTICAL-PARENTS] requested=2 available=0 selected=0 total=1
+03:01:32 | INFO |    [ELITE-PARENTS] Round 1 #01 id=7800 n_blocs=7 crash=100.00% seel=1.3504 marge=-1917.77A origin=STRUCTURED_REGULAR_PAR wl=[544, 544, 486, 478, 464, 488, 460]
+03:01:32 | INFO | [ELITE-RATE] Round 1: 29 candidate(s) change the Rate layers of their parent.
+03:01:32 | INFO | [SLIT] slit bias active, 55/55 strategies -- slit 2 nm, profile of 17 nodes, 106 NEW profiles in 0.2 s (cache: 7696)
+03:01:32 | INFO | [ELITE] Round 1/2: generated=55 parents=1 rank10_nominal=0.418093 target=0.418093
+03:01:33 | INFO | [ELITE] Round 1: full_eval=24.
+03:01:33 | INFO | [ELITE] Round 1: rejets -- halving=31 full_rmse=11 score_non_fini=13 | retenues=0 sur 55 engendrees | sortie=COMPLETE
+03:01:33 | INFO | [ELITE-WL] Round 1 exit=COMPLETE generated 544:55 460:53 464:53 478:53 486:53 488:53 487:2 543:2 545:2 459:1 461:1 463:1 465:1 477:1 479:1 485:1 489:1
+03:01:33 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_halving 544:31 460:30 486:30 464:29 478:29 488:29 459:1 463:1 465:1 477:1 479:1 485:1 487:1 489:1
+03:01:33 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_full_rmse 460:11 464:11 478:11 486:11 488:11 544:11 543:2 545:2
+03:01:33 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_score_non_fini 464:13 478:13 488:13 544:13 460:12 486:12 461:1 487:1
+03:01:33 | INFO | [ELITE-WL] Round 1 exit=COMPLETE reject_crash_bands score_non_fini/100%:13 full_rmse/100%:11
+03:01:33 | INFO | [ELITE] Round 1: no candidate beat nominal threshold.
+03:01:33 | INFO | [ELITE] No candidate added across all rounds.
+03:01:33 | INFO | 🏆 Best Strategy ID: 7800 (STRUCTURED_REGULAR_PARTITION) - Score: 0.45587
+03:01:33 | INFO |    [Block 7] Screening complete. Results count: 1
+03:01:33 | INFO | [SLIT] slit bias active, 100/100 strategies -- slit 2 nm, profile of 17 nodes, 296 NEW profiles in 0.7 s (cache: 7992)
+03:01:33 | INFO | Running robustness tests on 100 strategies (ThreadPoolExecutor with 8 workers)...
+03:01:35 | WARNING | [ROBUSTNESS] 100 strategy(ies) dropped for a NON-FINITE score -- ids: 900800001, 900800002, 900800003, 900800004, 900800005 ...
+03:01:35 | ERROR | [ROBUSTNESS] 🔴 NONE of the 100 strategies holds under 5% of non-terminating depositions. The rate compounds over the height of the stack: the best candidate crashes in 48.0% of the draws. We still return the ranking by increasing risk — but NONE of these strategies is usable as is, and the component likely requires another monitoring paradigm.
+03:01:35 | WARNING |    [REGIME] 🔴 DEGENERATE: the 100 returned strategies carry a FALLBACK score, and their crash_rate is constant. The ranking that follows -- hence the choice of the ELITE PARENTS -- has no signal in its first two keys. `use_margin_ranking` is the only informative key in this regime.
+03:01:43 | INFO | [ABLATION] 20 strategies profiled in 8.1 s -- dominant source of the 1st: biais de fente (+38%)
+03:01:43 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+03:01:46 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+03:01:46 | INFO | [ELITE] control grid: 251 lambda at a step of 1 nm
+03:01:46 | INFO | [ELITE-OPTICAL-PARENTS] requested=2 available=0 selected=0 total=10
+03:01:46 | INFO |    [ELITE-PARENTS] Round 1 #01 id=900800007 n_blocs=7 crash=100.00% seel=0.9025 marge=-90.07A origin=SMART_MERGE_THICKNESS2 wl=[544, 473, 471, 465, 467, 452, 465]
+03:01:46 | INFO |    [ELITE-PARENTS] Round 1 #02 id=900800010 n_blocs=7 crash=100.00% seel=0.9103 marge=-96.77A origin=SMART_MERGE_THICKNESS2 wl=[544, 543, 473, 471, 467, 452, 465]
+03:01:46 | INFO |    [ELITE-PARENTS] Round 1 #03 id=900800012 n_blocs=7 crash=100.00% seel=0.9255 marge=-258.22A origin=SMART_MERGE_THICKNESS2 wl=[544, 543, 471, 465, 467, 452, 455]
+03:01:46 | INFO |    [ELITE-PARENTS] Round 1 #04 id=900800083 n_blocs=7 crash=48.00% seel=1.1905 marge=-1809.08A origin=SMART_MERGE_MIXED (fro wl=[488, 519, 488, 488, 488, 488, 488]
+03:01:46 | INFO |    [ELITE-PARENTS] Round 1 #05 id=900800080 n_blocs=7 crash=64.00% seel=1.2821 marge=-1705.23A origin=SMART_MERGE_MIXED (fro wl=[486, 488, 488, 488, 488, 488, 488]
+03:01:46 | INFO |    [ELITE-PARENTS] Round 1 #06 id=900800096 n_blocs=7 crash=100.00% seel=1.3000 marge=-1918.62A origin=SMART_MERGE_MIXED (fro wl=[544, 476, 497, 485, 462, 455, 466]
+03:01:46 | INFO |    [ELITE-PARENTS] Round 1 #07 id=900800018 n_blocs=7 crash=100.00% seel=0.9271 marge=-162.19A origin=SMART_MERGE_THICKNESS2 wl=[544, 464, 543, 471, 467, 452, 455]
+03:01:46 | INFO |    [ELITE-PARENTS] Round 1 #08 id=900800061 n_blocs=7 crash=100.00% seel=0.9304 marge=-476.96A origin=SMART_MERGE_THICKNESS2 wl=[544, 543, 473, 471, 454, 467, 455]
+03:01:46 | INFO |    [ELITE-PARENTS] Round 1 #09 id=900800032 n_blocs=7 crash=100.00% seel=0.9353 marge=-43.55A origin=SMART_MERGE_THICKNESS2 wl=[544, 464, 543, 473, 471, 467, 452]
+03:01:46 | INFO |    [ELITE-PARENTS] Round 1 #10 id=900800035 n_blocs=7 crash=100.00% seel=0.9360 marge=-169.28A origin=SMART_MERGE_THICKNESS2 wl=[544, 464, 543, 473, 471, 467, 455]
+03:01:46 | INFO | [ELITE-RATE] Round 1: 120 candidate(s) change the Rate layers of their parent.
+03:01:46 | INFO | [SLIT] slit bias active, 240/240 strategies -- slit 2 nm, profile of 17 nodes, 205 NEW profiles in 0.5 s (cache: 8197)
+03:01:46 | INFO | [ELITE] Round 1/2: generated=240 parents=10 rank10_nominal=0.024426 target=0.024426
+03:01:47 | INFO | [ELITE] Round 1: full_eval=36.
+03:01:48 | INFO | [ELITE] Round 1: rejets -- halving=175 full_rmse=0 score_non_fini=36 | retenues=0 sur 240 engendrees | sortie=COMPLETE
+03:01:48 | INFO | [ELITE-WL] Round 1 exit=COMPLETE generated 544:156 467:143 471:143 452:119 543:114 473:99 465:97 455:83 488:76 464:40 486:36 519:36 466:22 485:16 462:15 497:15 476:14 454:13 487:13 489:12 472:5 545:4 451:3 453:3 468:3 470:3 474:2 542:2 456:1 475:1 518:1 520:1
+03:01:48 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_halving 544:94 467:80 471:80 488:76 452:69 473:61 543:53 455:48 465:47 464:36 486:36 519:36 466:19 485:16 462:15 497:15 476:14 487:13 489:12 472:4 468:3 454:2 545:2 451:1 453:1 456:1 470:1 474:1 475:1 518:1 520:1 542:1
+03:01:48 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_full_rmse (none)
+03:01:48 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_score_non_fini 467:35 471:35 544:34 473:33 543:33 452:26 465:25 455:10 454:8 464:3 453:1 466:1 470:1 472:1 474:1 542:1 545:1
+03:01:48 | INFO | [ELITE-WL] Round 1 exit=COMPLETE reject_crash_bands score_non_fini/100%:36
+03:01:48 | INFO | [ELITE] Round 1: no candidate beat nominal threshold.
+03:01:48 | INFO | [ELITE] No candidate added across all rounds.
+03:01:48 | INFO | 🏆 Best Strategy ID: 900800007 (SMART_MERGE_THICKNESS2 (from ID 900900012)) - Score: 0.20361
+03:01:48 | INFO |    [Block 7] Full pass on 11 survivors (n_full=150)...
+03:01:48 | INFO | [RATE] 77 variants on 11 strategies, 40 at most each, DEEPEST boundaries first. 0 strategy(ies) skipped: no block boundary and no low-swing layer. [SWING] seuil 0.025, 98 evaluations TMM a lambda fixe, 0.0 s au total pour cette expansion.
+03:01:48 | INFO | [SLIT] A18 recherche de fente : 88 strategies x 4 fentes [5.0, 2.0, 1.0, 0.5] -> 176 candidates  |  saute par la courbure : 5 nm x88, 1 nm x88
+03:01:48 | INFO | [SLIT] slit bias active, 176/176 strategies -- slit 2 nm, profile of 17 nodes, 99 NEW profiles in 0.2 s (cache: 8296)
+03:01:48 | INFO | Running robustness tests on 176 strategies (ThreadPoolExecutor with 8 workers)...
+03:02:00 | INFO | Running robustness tests on 240 strategies (ThreadPoolExecutor with 8 workers)...
+03:02:12 | INFO | [RATE-RESCUE] 0 depositable plan(s) in the pass: 30 plan(s) x 8 cut(s) at most, 240 Rate tail(s) laid under the plans that gave way, 239 of them depositable; 0 plan(s) with Rate on the hard layers in at most 8 round(s), 0 of them depositable.
+03:02:12 | WARNING | [ROBUSTNESS] 177 strategy(ies) dropped for a NON-FINITE score -- ids: 7800, 970140000, 900800007, 970140001, 900800010 ...
+03:02:17 | INFO | [ABLATION] 20 strategies profiled in 5.7 s -- dominant source of the 1st: corridor d'indice (+72%)
+03:02:17 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+03:02:19 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/239 (pre-elite).
+03:02:19 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+03:02:19 | INFO | [ELITE] control grid: 251 lambda at a step of 1 nm
+03:02:19 | INFO | [ELITE-OPTICAL-PARENTS] requested=2 available=0 selected=0 total=10
+03:02:19 | INFO |    [ELITE-PARENTS] Round 1 #01 id=990750075 n_blocs=7 crash=0.00% seel=0.1872 marge=0.83A origin=RATE_RESCUE21(from 990 wl=[544, 543, 471, 465, 467, 452, 455]
+03:02:19 | INFO |    [ELITE-PARENTS] Round 1 #02 id=990750004 n_blocs=7 crash=0.00% seel=0.1878 marge=0.83A origin=RATE_RESCUE20(from 990 wl=[544, 543, 473, 471, 467, 452, 455]
+03:02:19 | INFO |    [ELITE-PARENTS] Round 1 #03 id=990750019 n_blocs=7 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE27(from 990 wl=[544, 543, 473, 471, 454, 467, 455]
+03:02:19 | INFO |    [ELITE-PARENTS] Round 1 #04 id=990750051 n_blocs=7 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE27(from 990 wl=[544, 473, 471, 454, 467, 452, 455]
+03:02:19 | INFO |    [ELITE-PARENTS] Round 1 #05 id=990750035 n_blocs=7 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE25(from 990 wl=[544, 464, 543, 471, 467, 452, 455]
+03:02:19 | INFO |    [ELITE-PARENTS] Round 1 #06 id=990750011 n_blocs=7 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE25(from 990 wl=[544, 464, 543, 473, 471, 467, 455]
+03:02:19 | INFO |    [ELITE-PARENTS] Round 1 #07 id=990750027 n_blocs=7 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE25(from 990 wl=[544, 464, 543, 473, 471, 467, 452]
+03:02:19 | INFO |    [ELITE-PARENTS] Round 1 #08 id=990750067 n_blocs=7 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE25(from 990 wl=[544, 464, 473, 471, 465, 467, 455]
+03:02:19 | INFO |    [ELITE-PARENTS] Round 1 #09 id=990750003 n_blocs=7 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE27(from 990 wl=[544, 543, 473, 471, 467, 452, 455]
+03:02:19 | INFO |    [ELITE-PARENTS] Round 1 #10 id=990750043 n_blocs=7 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE27(from 990 wl=[544, 543, 473, 471, 467, 452, 465]
+03:02:19 | INFO | [ELITE-RATE] Round 1: 120 candidate(s) change the Rate layers of their parent.
+03:02:19 | INFO | [SLIT] slit bias active, 240/240 strategies -- slit 2 nm, profile of 17 nodes, 4 NEW profiles in 0.0 s (cache: 8300)
+03:02:19 | INFO | [ELITE] Round 1/2: generated=240 parents=10 rank10_nominal=0.007846 target=0.007846
+03:02:22 | INFO | [ELITE] Round 1: full_eval=36.
+03:02:23 | INFO | [ELITE] Round 1: rejets -- halving=45 full_rmse=18 score_non_fini=1 | retenues=17 sur 240 engendrees | sortie=COMPLETE
+03:02:23 | INFO | [ELITE-WL] Round 1 exit=COMPLETE generated 467:230 471:230 544:228 455:207 543:186 452:165 473:163 464:71 454:70 465:59 472:9 453:6 466:6 545:6 456:5 468:5 470:5 542:5 451:4 474:4 463:2
+03:02:23 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_halving 467:45 471:45 544:43 455:38 473:36 543:31 452:28 464:23 465:13 454:11 545:2
+03:02:23 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_full_rmse 544:18 467:16 471:16 455:15 543:15 452:13 465:10 464:7 473:6 466:2 451:1 453:1 454:1 468:1 470:1 472:1 542:1
+03:02:23 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_score_non_fini 452:1 455:1 467:1 471:1 473:1 543:1 544:1
+03:02:23 | INFO | [ELITE-WL] Round 1 exit=COMPLETE reject_crash_bands full_rmse/<=1%:18 score_non_fini/10-25%:1
+03:02:23 | INFO | [ELITE] Round 1: added 17 strategy(ies) above threshold.
+03:02:23 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r1, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+03:02:23 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/256 (post-elite-r1).
+03:02:23 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+03:02:23 | INFO | [ELITE-OPTICAL-PARENTS] requested=2 available=0 selected=0 total=10
+03:02:23 | INFO |    [ELITE-PARENTS] Round 2 #01 id=900750469 n_blocs=7 crash=0.00% seel=0.1862 marge=0.83A origin=ELITE wl=[544, 543, 473, 471, 467, 452, 465]
+03:02:23 | INFO |    [ELITE-PARENTS] Round 2 #02 id=900750463 n_blocs=7 crash=0.00% seel=0.1862 marge=0.83A origin=ELITE wl=[544, 473, 471, 454, 467, 452, 455]
+03:02:23 | INFO |    [ELITE-PARENTS] Round 2 #03 id=990750075 n_blocs=7 crash=0.00% seel=0.1872 marge=0.83A origin=RATE_RESCUE21(from 990 wl=[544, 543, 471, 465, 467, 452, 455]
+03:02:23 | INFO |    [ELITE-PARENTS] Round 2 #04 id=990750019 n_blocs=7 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE27(from 990 wl=[544, 543, 473, 471, 454, 467, 455]
+03:02:23 | INFO |    [ELITE-PARENTS] Round 2 #05 id=990750035 n_blocs=7 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE25(from 990 wl=[544, 464, 543, 471, 467, 452, 455]
+03:02:23 | INFO |    [ELITE-PARENTS] Round 2 #06 id=990750011 n_blocs=7 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE25(from 990 wl=[544, 464, 543, 473, 471, 467, 455]
+03:02:23 | INFO |    [ELITE-PARENTS] Round 2 #07 id=900750526 n_blocs=7 crash=0.00% seel=0.1888 marge=0.83A origin=ELITE wl=[544, 464, 543, 473, 471, 467, 452]
+03:02:23 | INFO |    [ELITE-PARENTS] Round 2 #08 id=900750457 n_blocs=7 crash=0.00% seel=0.1888 marge=0.83A origin=ELITE wl=[544, 464, 473, 471, 465, 467, 455]
+03:02:23 | INFO |    [ELITE-PARENTS] Round 2 #09 id=900750448 n_blocs=7 crash=0.00% seel=0.1878 marge=0.83A origin=ELITE wl=[544, 543, 473, 471, 467, 452, 455]
+03:02:23 | INFO |    [ELITE-PARENTS] Round 2 #10 id=900750468 n_blocs=7 crash=0.00% seel=0.1878 marge=0.83A origin=ELITE wl=[544, 543, 473, 471, 467, 452, 455]
+03:02:23 | INFO | [ELITE-RATE] Round 2: 120 candidate(s) change the Rate layers of their parent.
+03:02:23 | INFO | [SLIT] slit bias active, 240/240 strategies -- slit 2 nm, profile of 17 nodes, 0 NEW profiles in 0.0 s (cache: 8300)
+03:02:23 | INFO | [ELITE] Round 2/2: generated=240 parents=10 rank10_nominal=0.007613 target=0.007613
+03:02:26 | INFO | [ELITE] Round 2: full_eval=36.
+03:02:28 | INFO | [ELITE] Round 2: rejets -- halving=72 full_rmse=10 score_non_fini=0 | retenues=26 sur 240 engendrees | sortie=COMPLETE
+03:02:28 | INFO | [ELITE-WL] Round 2 exit=COMPLETE generated 467:230 471:230 544:228 543:185 455:184 452:165 473:163 465:83 464:74 454:67 472:9 466:7 453:6 545:6 468:5 470:5 542:5 451:4 456:4 474:4 463:2
+03:02:28 | INFO | [ELITE-WL] Round 2 exit=COMPLETE rejected_halving 467:70 471:70 544:68 455:65 543:63 473:55 454:33 452:26 464:25 465:13 545:3 472:2 453:1 456:1 466:1 468:1 470:1 474:1 542:1
+03:02:28 | INFO | [ELITE-WL] Round 2 exit=COMPLETE rejected_full_rmse 467:10 471:10 452:9 473:8 544:8 543:6 455:5 465:5 454:3 464:2 472:2 542:1
+03:02:28 | INFO | [ELITE-WL] Round 2 exit=COMPLETE rejected_score_non_fini (none)
+03:02:28 | INFO | [ELITE-WL] Round 2 exit=COMPLETE reject_crash_bands full_rmse/<=1%:7 full_rmse/100%:3
+03:02:28 | INFO | [ELITE] Round 2: added 26 strategy(ies) above threshold.
+03:02:28 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r2, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+03:02:28 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/282 (post-elite-r2).
+03:02:28 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+03:02:28 | INFO | 🏆 Best Strategy ID: 900750469 (ELITE) - Score: 0.00866
+03:02:28 | INFO | [Block 7] Best strategy ready: RMSE=0.00866 blocks=7
+03:02:28 | INFO | Mining: n_blocks=6, CostMapThick Size=48, CostMapSq Size=48
+03:02:28 | INFO |    [MINING] n_blocks=6: the DP found no grouping; the fewest contiguous blocks with one admissible wavelength per block is 9 here (first block of two layers at least: True). The miner returns the structured seeds only; inheritance from the next block count adds its derived strategies after.
+03:02:28 | INFO |    [Block 6] Mining found 2 strategies.
+03:02:28 | INFO |    [Block 6] Running screening on 2 strategies...
+03:02:29 | INFO | [SLIT] slit bias active, 2/2 strategies -- slit 2 nm, profile of 17 nodes, 96 NEW profiles in 0.3 s (cache: 8396)
+03:02:29 | INFO | Running robustness tests on 2 strategies (ThreadPoolExecutor with 8 workers)...
+03:02:29 | WARNING | [ROBUSTNESS] 2 strategy(ies) dropped for a NON-FINITE score -- ids: 6800, 6801
+03:02:29 | ERROR | [ROBUSTNESS] 🔴 NONE of the 2 strategies holds under 5% of non-terminating depositions. The rate compounds over the height of the stack: the best candidate crashes in 68.0% of the draws. We still return the ranking by increasing risk — but NONE of these strategies is usable as is, and the component likely requires another monitoring paradigm.
+03:02:29 | WARNING |    [REGIME] 🔴 DEGENERATE: the 2 returned strategies carry a FALLBACK score, and their crash_rate is constant. The ranking that follows -- hence the choice of the ELITE PARENTS -- has no signal in its first two keys. `use_margin_ranking` is the only informative key in this regime.
+03:02:29 | INFO | [ABLATION] 2 strategies profiled in 0.8 s -- dominant source of the 1st: corridor d'indice (+20%)
+03:02:29 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=2, seeds=[41, 42, 43], mode=mean_std, runs=150)
+03:02:30 | INFO | [ELITE] control grid: 251 lambda at a step of 1 nm
+03:02:30 | INFO | [ELITE-OPTICAL-PARENTS] requested=2 available=0 selected=0 total=2
+03:02:30 | INFO |    [ELITE-PARENTS] Round 1 #01 id=6800 n_blocs=6 crash=68.00% seel=1.3071 marge=-1652.47A origin=STRUCTURED_MONO_WL wl=[488, 488, 488, 488, 488, 488]
+03:02:30 | INFO |    [ELITE-PARENTS] Round 1 #02 id=6801 n_blocs=6 crash=100.00% seel=1.3233 marge=-1803.64A origin=STRUCTURED_REGULAR_PAR wl=[544, 476, 477, 505, 480, 474]
+03:02:30 | INFO | [ELITE-RATE] Round 1: 58 candidate(s) change the Rate layers of their parent.
+03:02:30 | INFO | [SLIT] slit bias active, 102/102 strategies -- slit 2 nm, profile of 17 nodes, 200 NEW profiles in 0.4 s (cache: 8596)
+03:02:30 | INFO | [ELITE] Round 1/2: generated=102 parents=2 rank10_nominal=0.422969 target=0.422969
+03:02:31 | INFO | [ELITE] Round 1: full_eval=36.
+03:02:31 | INFO | [ELITE] Round 1: rejets -- halving=27 full_rmse=2 score_non_fini=34 | retenues=0 sur 102 engendrees | sortie=COMPLETE
+03:02:31 | INFO | [ELITE-WL] Round 1 exit=COMPLETE generated 488:51 474:49 476:49 477:49 480:49 505:49 544:49 487:6 489:6 475:2 473:1 478:1 479:1 481:1 504:1 506:1 543:1 545:1
+03:02:31 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_halving 474:22 480:22 476:21 477:21 505:21 544:21 488:4 475:2 478:1 481:1 504:1 506:1 543:1 545:1
+03:02:31 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_full_rmse 488:2 489:1
+03:02:31 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_score_non_fini 488:26 474:8 476:8 477:8 480:8 505:8 544:8 487:5 489:4
+03:02:31 | INFO | [ELITE-WL] Round 1 exit=COMPLETE reject_crash_bands score_non_fini/50-99%:21 score_non_fini/100%:8 score_non_fini/25-50%:5 full_rmse/50-99%:1 full_rmse/100%:1
+03:02:31 | INFO | [ELITE] Round 1: no candidate beat nominal threshold.
+03:02:31 | INFO | [ELITE] No candidate added across all rounds.
+03:02:31 | INFO | 🏆 Best Strategy ID: 6800 (STRUCTURED_MONO_WL) - Score: 0.42714
+03:02:31 | INFO |    [Block 6] Screening complete. Results count: 2
+03:02:32 | INFO | [SLIT] slit bias active, 99/99 strategies -- slit 2 nm, profile of 17 nodes, 254 NEW profiles in 0.6 s (cache: 8850)
+03:02:32 | INFO | Running robustness tests on 99 strategies (ThreadPoolExecutor with 8 workers)...
+03:02:34 | WARNING | [ROBUSTNESS] 99 strategy(ies) dropped for a NON-FINITE score -- ids: 900700001, 900700002, 900700003, 900700004, 900700005 ...
+03:02:34 | ERROR | [ROBUSTNESS] 🔴 NONE of the 99 strategies holds under 5% of non-terminating depositions. The rate compounds over the height of the stack: the best candidate crashes in 96.0% of the draws. We still return the ranking by increasing risk — but NONE of these strategies is usable as is, and the component likely requires another monitoring paradigm.
+03:02:34 | WARNING |    [REGIME] 🔴 DEGENERATE: the 99 returned strategies carry a FALLBACK score, and their crash_rate is constant. The ranking that follows -- hence the choice of the ELITE PARENTS -- has no signal in its first two keys. `use_margin_ranking` is the only informative key in this regime.
+03:02:42 | INFO | [ABLATION] 20 strategies profiled in 8.1 s -- dominant source of the 1st: biais de fente (+55%)
+03:02:42 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+03:02:44 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+03:02:44 | INFO | [ELITE] control grid: 251 lambda at a step of 1 nm
+03:02:44 | INFO | [ELITE-OPTICAL-PARENTS] requested=2 available=0 selected=0 total=10
+03:02:44 | INFO |    [ELITE-PARENTS] Round 1 #01 id=900700017 n_blocs=6 crash=100.00% seel=0.8976 marge=-94.98A origin=SMART_MERGE_THICKNESS2 wl=[544, 473, 471, 467, 452, 465]
+03:02:44 | INFO |    [ELITE-PARENTS] Round 1 #02 id=900700013 n_blocs=6 crash=100.00% seel=0.9125 marge=-96.80A origin=SMART_MERGE_THICKNESS2 wl=[544, 543, 471, 467, 452, 465]
+03:02:44 | INFO |    [ELITE-PARENTS] Round 1 #03 id=900700066 n_blocs=6 crash=100.00% seel=0.9176 marge=-653.44A origin=SMART_MERGE_THICKNESS2 wl=[544, 464, 543, 473, 471, 455]
+03:02:44 | INFO |    [ELITE-PARENTS] Round 1 #04 id=900700094 n_blocs=6 crash=100.00% seel=1.2967 marge=-1605.72A origin=SMART_MERGE_MIXED (fro wl=[544, 544, 486, 464, 488, 460]
+03:02:44 | INFO |    [ELITE-PARENTS] Round 1 #05 id=900700090 n_blocs=6 crash=100.00% seel=1.3504 marge=-1917.77A origin=SMART_MERGE_MIXED (fro wl=[544, 486, 478, 464, 488, 460]
+03:02:44 | INFO |    [ELITE-PARENTS] Round 1 #06 id=900700092 n_blocs=6 crash=100.00% seel=1.3517 marge=-1637.73A origin=SMART_MERGE_MIXED (fro wl=[544, 544, 478, 464, 488, 460]
+03:02:44 | INFO |    [ELITE-PARENTS] Round 1 #07 id=900700010 n_blocs=6 crash=100.00% seel=0.9197 marge=-78.62A origin=SMART_MERGE_THICKNESS2 wl=[544, 471, 465, 467, 452, 465]
+03:02:44 | INFO |    [ELITE-PARENTS] Round 1 #08 id=900700029 n_blocs=6 crash=100.00% seel=0.9239 marge=-260.63A origin=SMART_MERGE_THICKNESS2 wl=[544, 471, 465, 467, 452, 455]
+03:02:44 | INFO |    [ELITE-PARENTS] Round 1 #09 id=900700055 n_blocs=6 crash=100.00% seel=0.9303 marge=-478.94A origin=SMART_MERGE_THICKNESS2 wl=[544, 473, 471, 454, 467, 455]
+03:02:44 | INFO |    [ELITE-PARENTS] Round 1 #10 id=900700042 n_blocs=6 crash=100.00% seel=0.9405 marge=-849.76A origin=SMART_MERGE_THICKNESS2 wl=[544, 464, 543, 471, 467, 455]
+03:02:44 | INFO | [ELITE-RATE] Round 1: 120 candidate(s) change the Rate layers of their parent.
+03:02:44 | INFO | [SLIT] slit bias active, 240/240 strategies -- slit 2 nm, profile of 17 nodes, 125 NEW profiles in 0.3 s (cache: 8975)
+03:02:44 | INFO | [ELITE] Round 1/2: generated=240 parents=10 rank10_nominal=0.187079 target=0.187079
+03:02:45 | INFO | [ELITE] Round 1: full_eval=36.
+03:02:46 | INFO | [ELITE] Round 1: rejets -- halving=140 full_rmse=0 score_non_fini=36 | retenues=0 sur 240 engendrees | sortie=COMPLETE
+03:02:46 | INFO | [ELITE-WL] Round 1 exit=COMPLETE generated 544:233 464:137 471:135 467:105 460:93 488:93 465:85 452:81 543:76 473:70 455:66 486:64 478:61 454:13 545:8 472:5 487:5 463:4 466:4 459:3 461:3 470:3 489:3 451:2 453:2 468:2 474:2 477:2 479:2 485:2 542:2 456:1
+03:02:46 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_halving 544:136 464:128 460:93 488:93 486:64 478:61 543:42 471:40 455:36 473:25 467:15 465:8 545:6 487:5 452:4 463:4 459:3 461:3 489:3 472:2 477:2 479:2 485:2 542:2 456:1 474:1
+03:02:46 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_full_rmse (none)
+03:02:46 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_score_non_fini 467:35 544:35 471:34 473:29 465:25 452:24 455:10 454:9 543:5 464:2 470:2 451:1 453:1 466:1 472:1 474:1 545:1
+03:02:46 | INFO | [ELITE-WL] Round 1 exit=COMPLETE reject_crash_bands score_non_fini/100%:36
+03:02:46 | INFO | [ELITE] Round 1: no candidate beat nominal threshold.
+03:02:46 | INFO | [ELITE] No candidate added across all rounds.
+03:02:46 | INFO | 🏆 Best Strategy ID: 900700017 (SMART_MERGE_THICKNESS2 (from ID 900800010)) - Score: 0.20141
+03:02:46 | INFO |    [Block 6] Full pass on 12 survivors (n_full=150)...
+03:02:46 | INFO | [RATE] 72 variants on 12 strategies, 40 at most each, DEEPEST boundaries first. 0 strategy(ies) skipped: no block boundary and no low-swing layer. [SWING] seuil 0.025, 184 evaluations TMM a lambda fixe, 0.0 s au total pour cette expansion.
+03:02:46 | INFO | [SLIT] A18 recherche de fente : 84 strategies x 4 fentes [5.0, 2.0, 1.0, 0.5] -> 154 candidates  |  saute par la courbure : 5 nm x84, 1 nm x84, 0.5 nm x14
+03:02:47 | INFO | [SLIT] slit bias active, 154/154 strategies -- slit 2 nm, profile of 17 nodes, 184 NEW profiles in 0.4 s (cache: 9159)
+03:02:47 | INFO | Running robustness tests on 154 strategies (ThreadPoolExecutor with 8 workers)...
+03:02:57 | INFO | Running robustness tests on 240 strategies (ThreadPoolExecutor with 8 workers)...
+03:03:08 | INFO | [RATE-RESCUE] 0 depositable plan(s) in the pass: 30 plan(s) x 8 cut(s) at most, 240 Rate tail(s) laid under the plans that gave way, 238 of them depositable; 0 plan(s) with Rate on the hard layers in at most 8 round(s), 0 of them depositable.
+03:03:08 | WARNING | [ROBUSTNESS] 156 strategy(ies) dropped for a NON-FINITE score -- ids: 6800, 970120000, 6801, 970120001, 900700017 ...
+03:03:14 | INFO | [ABLATION] 20 strategies profiled in 5.7 s -- dominant source of the 1st: corridor d'indice (+71%)
+03:03:14 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+03:03:15 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/238 (pre-elite).
+03:03:15 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+03:03:15 | INFO | [ELITE] control grid: 251 lambda at a step of 1 nm
+03:03:15 | INFO | [ELITE-OPTICAL-PARENTS] requested=2 available=0 selected=0 total=10
+03:03:15 | INFO |    [ELITE-PARENTS] Round 1 #01 id=990650114 n_blocs=6 crash=0.00% seel=0.1868 marge=0.83A origin=RATE_RESCUE26(from 990 wl=[543, 471, 465, 467, 452, 455]
+03:03:15 | INFO |    [ELITE-PARENTS] Round 1 #02 id=990650003 n_blocs=6 crash=0.00% seel=0.1873 marge=0.83A origin=RATE_RESCUE27(from 990 wl=[543, 473, 471, 467, 452, 455]
+03:03:15 | INFO |    [ELITE-PARENTS] Round 1 #03 id=990650052 n_blocs=6 crash=0.00% seel=0.1878 marge=0.83A origin=RATE_RESCUE20(from 990 wl=[544, 471, 465, 467, 452, 465]
+03:03:15 | INFO |    [ELITE-PARENTS] Round 1 #04 id=990650020 n_blocs=6 crash=0.00% seel=0.1901 marge=0.83A origin=RATE_RESCUE20(from 990 wl=[544, 473, 471, 454, 467, 455]
+03:03:15 | INFO |    [ELITE-PARENTS] Round 1 #05 id=990650043 n_blocs=6 crash=0.00% seel=0.1888 marge=0.83A origin=RATE_RESCUE27(from 990 wl=[544, 543, 471, 467, 452, 465]
+03:03:15 | INFO |    [ELITE-PARENTS] Round 1 #06 id=990650204 n_blocs=6 crash=0.00% seel=0.1916 marge=0.83A origin=RATE_RESCUE19(from 990 wl=[544, 464, 543, 473, 471, 455]
+03:03:15 | INFO |    [ELITE-PARENTS] Round 1 #07 id=990650063 n_blocs=6 crash=0.00% seel=0.4805 marge=25.33A origin=RATE_RESCUE2(from 9906 wl=[488, 488, 488, 488, 488, 488]
+03:03:15 | INFO |    [ELITE-PARENTS] Round 1 #08 id=990650035 n_blocs=6 crash=0.00% seel=0.1873 marge=0.83A origin=RATE_RESCUE27(from 990 wl=[543, 473, 471, 467, 452, 465]
+03:03:15 | INFO |    [ELITE-PARENTS] Round 1 #09 id=990650115 n_blocs=6 crash=0.00% seel=0.1875 marge=0.83A origin=RATE_RESCUE21(from 990 wl=[543, 471, 465, 467, 452, 455]
+03:03:15 | INFO |    [ELITE-PARENTS] Round 1 #10 id=990650124 n_blocs=6 crash=0.00% seel=0.1878 marge=0.83A origin=RATE_RESCUE20(from 990 wl=[544, 471, 465, 467, 452, 455]
+03:03:15 | INFO | [ELITE-RATE] Round 1: 120 candidate(s) change the Rate layers of their parent.
+03:03:15 | INFO | [SLIT] slit bias active, 240/240 strategies -- slit 2 nm, profile of 17 nodes, 37 NEW profiles in 0.1 s (cache: 9196)
+03:03:15 | INFO | [ELITE] Round 1/2: generated=240 parents=10 rank10_nominal=0.008120 target=0.008120
+03:03:18 | INFO | [ELITE] Round 1: full_eval=36.
+03:03:20 | INFO | [ELITE] Round 1: rejets -- halving=51 full_rmse=7 score_non_fini=2 | retenues=27 sur 240 engendrees | sortie=COMPLETE
+03:03:20 | INFO | [ELITE-WL] Round 1 exit=COMPLETE generated 471:209 467:179 452:150 543:145 455:141 544:127 465:124 473:100 464:34 454:32 488:19 466:9 472:9 470:6 453:5 468:5 451:4 456:4 487:4 542:4 545:4 474:3 489:3 463:1
+03:03:20 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_halving 471:32 467:26 455:25 452:23 543:23 488:19 465:18 473:17 544:16 464:6 487:4 454:3 489:3
+03:03:20 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_full_rmse 467:7 471:7 455:6 544:5 452:4 465:4 454:3 473:3 543:2
+03:03:20 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_score_non_fini 452:2 455:2 465:2 467:2 471:2 543:1 544:1
+03:03:20 | INFO | [ELITE-WL] Round 1 exit=COMPLETE reject_crash_bands full_rmse/<=1%:6 score_non_fini/50-99%:2 full_rmse/2-5%:1
+03:03:20 | INFO | [ELITE] Round 1: added 27 strategy(ies) above threshold.
+03:03:20 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r1, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+03:03:20 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/265 (post-elite-r1).
+03:03:20 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+03:03:20 | INFO | [ELITE-OPTICAL-PARENTS] requested=2 available=0 selected=0 total=10
+03:03:20 | INFO |    [ELITE-PARENTS] Round 2 #01 id=900650490 n_blocs=6 crash=0.00% seel=0.1873 marge=0.83A origin=ELITE wl=[543, 473, 471, 467, 452, 455]
+03:03:20 | INFO |    [ELITE-PARENTS] Round 2 #02 id=990650114 n_blocs=6 crash=0.00% seel=0.1875 marge=0.83A origin=RATE_RESCUE26(from 990 wl=[543, 471, 465, 467, 452, 455]
+03:03:20 | INFO |    [ELITE-PARENTS] Round 2 #03 id=990650052 n_blocs=6 crash=0.00% seel=0.1878 marge=0.83A origin=RATE_RESCUE20(from 990 wl=[544, 471, 465, 467, 452, 465]
+03:03:20 | INFO |    [ELITE-PARENTS] Round 2 #04 id=900650562 n_blocs=6 crash=0.00% seel=0.1876 marge=0.83A origin=ELITE wl=[544, 473, 471, 454, 467, 455]
+03:03:20 | INFO |    [ELITE-PARENTS] Round 2 #05 id=900650493 n_blocs=6 crash=0.00% seel=0.1888 marge=0.83A origin=ELITE wl=[544, 543, 471, 467, 452, 465]
+03:03:20 | INFO |    [ELITE-PARENTS] Round 2 #06 id=900650440 n_blocs=6 crash=0.00% seel=0.1916 marge=0.83A origin=ELITE wl=[544, 464, 544, 473, 471, 455]
+03:03:20 | INFO |    [ELITE-PARENTS] Round 2 #07 id=990650063 n_blocs=6 crash=0.00% seel=0.4805 marge=25.33A origin=RATE_RESCUE2(from 9906 wl=[488, 488, 488, 488, 488, 488]
+03:03:20 | INFO |    [ELITE-PARENTS] Round 2 #08 id=900650496 n_blocs=6 crash=0.00% seel=0.1873 marge=0.83A origin=ELITE wl=[543, 473, 471, 467, 452, 465]
+03:03:20 | INFO |    [ELITE-PARENTS] Round 2 #09 id=900650550 n_blocs=6 crash=0.00% seel=0.1873 marge=0.83A origin=ELITE wl=[543, 473, 471, 467, 452, 455]
+03:03:20 | INFO |    [ELITE-PARENTS] Round 2 #10 id=900650556 n_blocs=6 crash=0.00% seel=0.1873 marge=0.83A origin=ELITE wl=[543, 473, 471, 467, 452, 465]
+03:03:20 | INFO | [ELITE-RATE] Round 2: 120 candidate(s) change the Rate layers of their parent.
+03:03:20 | INFO | [SLIT] slit bias active, 240/240 strategies -- slit 2 nm, profile of 17 nodes, 0 NEW profiles in 0.0 s (cache: 9196)
+03:03:20 | INFO | [ELITE] Round 2/2: generated=240 parents=10 rank10_nominal=0.007589 target=0.007589
+03:03:22 | INFO | [ELITE] Round 2: full_eval=36.
+03:03:24 | INFO | [ELITE] Round 2: rejets -- halving=81 full_rmse=5 score_non_fini=2 | retenues=29 sur 240 engendrees | sortie=COMPLETE
+03:03:24 | INFO | [ELITE-WL] Round 2 exit=COMPLETE generated 471:207 467:176 452:145 455:129 473:125 543:123 544:121 465:108 464:35 454:34 488:21 466:9 472:9 470:6 453:5 468:5 545:5 451:4 456:4 487:4 474:3 489:3 542:3 463:1
+03:03:24 | INFO | [ELITE-WL] Round 2 exit=COMPLETE rejected_halving 471:58 467:48 452:43 455:43 465:39 543:35 544:24 473:23 488:21 464:11 454:6 487:4 489:3 545:3 466:2 451:1 453:1 456:1 468:1 470:1 472:1 542:1
+03:03:24 | INFO | [ELITE-WL] Round 2 exit=COMPLETE rejected_full_rmse 471:5 473:5 452:4 467:4 543:4 455:3 465:2 464:1 544:1
+03:03:24 | INFO | [ELITE-WL] Round 2 exit=COMPLETE rejected_score_non_fini 452:2 467:2 471:2 473:2 543:2 455:1 465:1
+03:03:24 | INFO | [ELITE-WL] Round 2 exit=COMPLETE reject_crash_bands full_rmse/<=1%:5 score_non_fini/5-10%:2
+03:03:24 | INFO | [ELITE] Round 2: added 29 strategy(ies) above threshold.
+03:03:24 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r2, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+03:03:25 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/294 (post-elite-r2).
+03:03:25 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+03:03:25 | INFO | 🏆 Best Strategy ID: 900650667 (ELITE) - Score: 0.00791
+03:03:25 | INFO | [Block 6] Best strategy ready: RMSE=0.00791 blocks=6
+03:03:26 | INFO | Mining: n_blocks=5, CostMapThick Size=48, CostMapSq Size=48
+03:03:26 | INFO |    [MINING] n_blocks=5: the DP found no grouping; the fewest contiguous blocks with one admissible wavelength per block is 9 here (first block of two layers at least: True). The miner returns the structured seeds only; inheritance from the next block count adds its derived strategies after.
+03:03:26 | INFO |    [Block 5] Mining found 1 strategies.
+03:03:26 | INFO |    [Block 5] Running screening on 1 strategies...
+03:03:26 | INFO | [SLIT] slit bias active, 1/1 strategies -- slit 2 nm, profile of 17 nodes, 48 NEW profiles in 0.1 s (cache: 9244)
+03:03:27 | INFO | [ABLATION] 1 strategies profiled in 0.4 s -- dominant source of the 1st: bruit de lecture (+6%)
+03:03:27 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=1, seeds=[41, 42, 43], mode=mean_std, runs=150)
+03:03:27 | INFO | [ELITE] control grid: 251 lambda at a step of 1 nm
+03:03:27 | INFO | [ELITE-OPTICAL-PARENTS] requested=2 available=0 selected=0 total=1
+03:03:27 | INFO |    [ELITE-PARENTS] Round 1 #01 id=5800 n_blocs=5 crash=100.00% seel=1.3491 marge=-1962.16A origin=STRUCTURED_REGULAR_PAR wl=[544, 476, 478, 462, 462]
+03:03:27 | INFO | [ELITE-RATE] Round 1: 29 candidate(s) change the Rate layers of their parent.
+03:03:27 | INFO | [SLIT] slit bias active, 47/47 strategies -- slit 2 nm, profile of 17 nodes, 102 NEW profiles in 0.2 s (cache: 9346)
+03:03:27 | INFO | [ELITE] Round 1/2: generated=47 parents=1 rank10_nominal=0.424088 target=0.424088
+03:03:27 | INFO | [ELITE] Round 1: full_eval=10.
+03:03:27 | INFO | [ELITE] Round 1: rejets -- halving=37 full_rmse=1 score_non_fini=9 | retenues=0 sur 47 engendrees | sortie=COMPLETE
+03:03:27 | INFO | [ELITE-WL] Round 1 exit=COMPLETE generated 462:47 476:45 478:45 544:45 461:2 463:2 477:2 475:1 479:1 543:1 545:1
+03:03:27 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_halving 462:37 476:36 478:36 544:35 461:2 463:2 475:1 477:1 543:1 545:1
+03:03:27 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_full_rmse 462:1 476:1 478:1 544:1
+03:03:27 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_score_non_fini 462:9 544:9 476:8 478:8 477:1 479:1
+03:03:27 | INFO | [ELITE-WL] Round 1 exit=COMPLETE reject_crash_bands score_non_fini/100%:9 full_rmse/100%:1
+03:03:27 | INFO | [ELITE] Round 1: no candidate beat nominal threshold.
+03:03:27 | INFO | [ELITE] No candidate added across all rounds.
+03:03:27 | INFO | 🏆 Best Strategy ID: 5800 (STRUCTURED_REGULAR_PARTITION) - Score: 0.45499
+03:03:27 | INFO |    [Block 5] Screening complete. Results count: 1
+03:03:28 | INFO | [SLIT] slit bias active, 107/107 strategies -- slit 2 nm, profile of 17 nodes, 376 NEW profiles in 0.8 s (cache: 9722)
+03:03:28 | INFO | Running robustness tests on 107 strategies (ThreadPoolExecutor with 8 workers)...
+03:03:30 | WARNING | [ROBUSTNESS] 107 strategy(ies) dropped for a NON-FINITE score -- ids: 900600001, 900600002, 900600003, 900600004, 900600005 ...
+03:03:30 | ERROR | [ROBUSTNESS] 🔴 NONE of the 107 strategies holds under 5% of non-terminating depositions. The rate compounds over the height of the stack: the best candidate crashes in 68.0% of the draws. We still return the ranking by increasing risk — but NONE of these strategies is usable as is, and the component likely requires another monitoring paradigm.
+03:03:30 | WARNING |    [REGIME] 🔴 DEGENERATE: the 107 returned strategies carry a FALLBACK score, and their crash_rate is constant. The ranking that follows -- hence the choice of the ELITE PARENTS -- has no signal in its first two keys. `use_margin_ranking` is the only informative key in this regime.
+03:03:38 | INFO | [ABLATION] 20 strategies profiled in 8.0 s -- dominant source of the 1st: biais de fente (+54%)
+03:03:38 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+03:03:40 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+03:03:40 | INFO | [ELITE] control grid: 251 lambda at a step of 1 nm
+03:03:40 | INFO | [ELITE-OPTICAL-PARENTS] requested=2 available=0 selected=0 total=10
+03:03:40 | INFO |    [ELITE-PARENTS] Round 1 #01 id=900600008 n_blocs=5 crash=100.00% seel=0.8949 marge=-80.86A origin=SMART_MERGE_THICKNESS2 wl=[544, 471, 467, 452, 465]
+03:03:40 | INFO |    [ELITE-PARENTS] Round 1 #02 id=900600033 n_blocs=5 crash=100.00% seel=0.9313 marge=-647.78A origin=SMART_MERGE_THICKNESS2 wl=[544, 543, 473, 471, 455]
+03:03:40 | INFO |    [ELITE-PARENTS] Round 1 #03 id=900600105 n_blocs=5 crash=100.00% seel=1.2907 marge=-1908.32A origin=SMART_MERGE_MIXED (fro wl=[544, 476, 477, 505, 474]
+03:03:40 | INFO |    [ELITE-PARENTS] Round 1 #04 id=900600091 n_blocs=5 crash=68.00% seel=1.2922 marge=-1883.92A origin=SMART_MERGE_MIXED (fro wl=[498, 488, 488, 488, 488]
+03:03:40 | INFO |    [ELITE-PARENTS] Round 1 #05 id=900600106 n_blocs=5 crash=100.00% seel=1.2987 marge=-1705.04A origin=SMART_MERGE_MIXED (fro wl=[544, 476, 477, 505, 474]
+03:03:40 | INFO |    [ELITE-PARENTS] Round 1 #06 id=900600087 n_blocs=5 crash=100.00% seel=0.9337 marge=-171.16A origin=SMART_MERGE_THICKNESS2 wl=[544, 471, 454, 467, 455]
+03:03:40 | INFO |    [ELITE-PARENTS] Round 1 #07 id=900600001 n_blocs=5 crash=100.00% seel=0.9350 marge=-39.98A origin=SMART_MERGE_THICKNESS2 wl=[544, 473, 471, 467, 452]
+03:03:40 | INFO |    [ELITE-PARENTS] Round 1 #08 id=900600029 n_blocs=5 crash=100.00% seel=0.9409 marge=-375.21A origin=SMART_MERGE_THICKNESS2 wl=[544, 543, 473, 471, 455]
+03:03:40 | INFO |    [ELITE-PARENTS] Round 1 #09 id=900600059 n_blocs=5 crash=100.00% seel=0.9424 marge=-260.63A origin=SMART_MERGE_THICKNESS2 wl=[544, 471, 465, 467, 455]
+03:03:40 | INFO |    [ELITE-PARENTS] Round 1 #10 id=900600030 n_blocs=5 crash=100.00% seel=0.9477 marge=-1052.32A origin=SMART_MERGE_THICKNESS2 wl=[544, 464, 473, 471, 455]
+03:03:40 | INFO | [ELITE-RATE] Round 1: 120 candidate(s) change the Rate layers of their parent.
+03:03:41 | INFO | [SLIT] slit bias active, 240/240 strategies -- slit 2 nm, profile of 17 nodes, 227 NEW profiles in 0.5 s (cache: 9949)
+03:03:41 | INFO | [ELITE] Round 1/2: generated=240 parents=10 rank10_nominal=0.166876 target=0.166876
+03:03:42 | INFO | [ELITE] Round 1: full_eval=36.
+03:03:42 | INFO | [ELITE] Round 1: rejets -- halving=115 full_rmse=0 score_non_fini=36 | retenues=0 sur 240 engendrees | sortie=COMPLETE
+03:03:42 | INFO | [ELITE-WL] Round 1 exit=COMPLETE generated 544:198 471:142 455:92 467:88 473:83 474:58 476:56 477:56 505:56 452:50 543:44 465:35 488:30 498:28 454:27 464:13 545:7 472:6 466:4 470:4 475:4 487:4 489:4 453:3 468:3 451:2 456:2 478:2 504:2 506:2 542:2 497:1 499:1
+03:03:42 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_halving 544:80 474:56 476:56 477:56 505:56 488:30 498:28 471:23 473:22 543:21 455:20 452:4 467:4 475:4 487:4 489:4 465:3 472:3 545:3 454:2 478:2 504:2 506:2 468:1 497:1 499:1 542:1
+03:03:42 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_full_rmse (none)
+03:03:42 | INFO | [ELITE-WL] Round 1 exit=COMPLETE rejected_score_non_fini 467:35 544:34 471:33 452:28 473:20 465:9 455:7 454:5 470:3 545:2 453:1 466:1 472:1 474:1
+03:03:42 | INFO | [ELITE-WL] Round 1 exit=COMPLETE reject_crash_bands score_non_fini/100%:36
+03:03:42 | INFO | [ELITE] Round 1: no candidate beat nominal threshold.
+03:03:42 | INFO | [ELITE] No candidate added across all rounds.
+03:03:42 | INFO | 🏆 Best Strategy ID: 900600008 (SMART_MERGE_THICKNESS2 (from ID 900700017)) - Score: 0.20022
+03:03:42 | INFO |    [Block 5] Full pass on 11 survivors (n_full=150)...
+03:03:42 | INFO | [RATE] 56 variants on 11 strategies, 40 at most each, DEEPEST boundaries first. 0 strategy(ies) skipped: no block boundary and no low-swing layer. [SWING] seuil 0.025, 142 evaluations TMM a lambda fixe, 0.0 s au total pour cette expansion.
+03:03:43 | INFO | [SLIT] A18 recherche de fente : 67 strategies x 4 fentes [5.0, 2.0, 1.0, 0.5] -> 110 candidates  |  saute par la courbure : 5 nm x67, 1 nm x67, 0.5 nm x24
+03:03:43 | INFO | [SLIT] slit bias active, 110/110 strategies -- slit 2 nm, profile of 17 nodes, 139 NEW profiles in 0.3 s (cache: 10088)
+03:03:43 | INFO | Running robustness tests on 110 strategies (ThreadPoolExecutor with 8 workers)...
+03:03:50 | INFO | Running robustness tests on 240 strategies (ThreadPoolExecutor with 8 workers)...
+03:04:02 | INFO | [RATE-RESCUE] 0 depositable plan(s) in the pass: 30 plan(s) x 8 cut(s) at most, 240 Rate tail(s) laid under the plans that gave way, 238 of them depositable; 0 plan(s) with Rate on the hard layers in at most 8 round(s), 0 of them depositable.
+03:04:02 | WARNING | [ROBUSTNESS] 112 strategy(ies) dropped for a NON-FINITE score -- ids: 5800, 970100000, 900600008, 900600017, 970100001 ...

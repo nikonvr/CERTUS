@@ -507,7 +507,7 @@ REAL_WINDOWS = {
     "CERTUS_HUB": ("CERTUS_HUB", "CertusHub"),
     "CERTUS_DESIGN": ("certus.ui.certus_design_ui", "CertusDesignApp"),
     "CERTUS_STRAT": ("certus.ui.certus_strat_ui", "CertusStratApp"),
-    "CERTUS_SMOOTHER": ("certus.utils.certus_curve_smoother", "CurveSmootherGUI"),
+    "CERTUS_SMOOTHER": ("certus.ui.certus_curve_smoother", "CurveSmootherGUI"),
     "CERTUS_SUBSTRATE_INDEX": ("certus.ui.certus_substrate_ui", "SubstrateIndexGUI"),
     "CERTUS_METAL_SINGLE": ("CERTUS_METAL_SINGLE", "CertusMetalSingleApp"),
 }

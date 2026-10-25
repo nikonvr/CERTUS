@@ -1,0 +1,293 @@
+{
+ "75c": {
+  "artefact": "blocs_vs_plantage_75c_deep_s202_gardeA10.json",
+  "runs": 300,
+  "seed": 7300205,
+  "rows": [
+   {
+    "rank": 1,
+    "origin": "LOCAL_SEARCH",
+    "seel": 0.21071730080291948,
+    "rate": 9,
+    "index_share": 0.5566348769913676,
+    "rmse2_index_on": 3.500509171803656e-05,
+    "rmse2_index_off": 1.552003679549574e-05
+   },
+   {
+    "rank": 2,
+    "origin": "ELITE",
+    "seel": 0.2442265200583159,
+    "rate": 5,
+    "index_share": 0.6109430738315056,
+    "rmse2_index_on": 8.700353209953884e-05,
+    "rmse2_index_off": 3.384932676444851e-05
+   },
+   {
+    "rank": 3,
+    "origin": "ELITE",
+    "seel": 0.24452452863408147,
+    "rate": 1,
+    "index_share": 0.6968989247410464,
+    "rmse2_index_on": 8.526580212218054e-05,
+    "rmse2_index_off": 2.5844156306050082e-05
+   },
+   {
+    "rank": 4,
+    "origin": "ELITE",
+    "seel": 0.24478220595428676,
+    "rate": 5,
+    "index_share": 0.6158518850485545,
+    "rmse2_index_on": 8.650379791009845e-05,
+    "rmse2_index_off": 3.323027090330511e-05
+   },
+   {
+    "rank": 5,
+    "origin": "ELITE",
+    "seel": 0.24478220595428676,
+    "rate": 5,
+    "index_share": 0.6158518850485545,
+    "rmse2_index_on": 8.650379791009845e-05,
+    "rmse2_index_off": 3.323027090330511e-05
+   },
+   {
+    "rank": 6,
+    "origin": "ELITE",
+    "seel": 0.24478220595428676,
+    "rate": 5,
+    "index_share": 0.6158518850485545,
+    "rmse2_index_on": 8.650379791009845e-05,
+    "rmse2_index_off": 3.323027090330511e-05
+   },
+   {
+    "rank": 7,
+    "origin": "ELITE",
+    "seel": 0.24519686192659462,
+    "rate": 1,
+    "index_share": 0.6899752191082212,
+    "rmse2_index_on": 8.309666949021068e-05,
+    "rmse2_index_off": 2.5762026751539126e-05
+   },
+   {
+    "rank": 8,
+    "origin": "ELITE",
+    "seel": 0.24522673637169604,
+    "rate": 1,
+    "index_share": 0.7074895326555894,
+    "rmse2_index_on": 8.113096709289392e-05,
+    "rmse2_index_off": 2.37316571004464e-05
+   },
+   {
+    "rank": 9,
+    "origin": "ELITE",
+    "seel": 0.24531487409947644,
+    "rate": 3,
+    "index_share": 0.5909496932472054,
+    "rmse2_index_on": 9.062136588172462e-05,
+    "rmse2_index_off": 3.706869751227669e-05
+   },
+   {
+    "rank": 10,
+    "origin": "ELITE",
+    "seel": 0.2453416353759277,
+    "rate": 3,
+    "index_share": 0.6942678561239427,
+    "rmse2_index_on": 8.32777534748906e-05,
+    "rmse2_index_off": 2.5460686107060086e-05
+   }
+  ]
+ },
+ "r75x0.5": {
+  "artefact": "blocs_vs_plantage_r75x0.5_deep_s202_gardeA10.json",
+  "runs": 300,
+  "seed": 7300205,
+  "rows": [
+   {
+    "rank": 1,
+    "origin": "LOCAL_SEARCH",
+    "seel": 0.3526163900628867,
+    "rate": 61,
+    "index_share": 0.445930266565976,
+    "rmse2_index_on": 0.00027713071042337556,
+    "rmse2_index_off": 0.0001535497388506614
+   },
+   {
+    "rank": 2,
+    "origin": "ELITE",
+    "seel": 0.39671478821937545,
+    "rate": 65,
+    "index_share": 0.3966986772646248,
+    "rmse2_index_on": 0.0004592097817379559,
+    "rmse2_index_off": 0.00027704186873553176
+   },
+   {
+    "rank": 3,
+    "origin": "ELITE",
+    "seel": 0.39671478821937545,
+    "rate": 65,
+    "index_share": 0.3966986772646248,
+    "rmse2_index_on": 0.0004592097817379559,
+    "rmse2_index_off": 0.00027704186873553176
+   },
+   {
+    "rank": 4,
+    "origin": "ELITE",
+    "seel": 0.39671478821937545,
+    "rate": 65,
+    "index_share": 0.3966986772646248,
+    "rmse2_index_on": 0.0004592097817379559,
+    "rmse2_index_off": 0.00027704186873553176
+   },
+   {
+    "rank": 5,
+    "origin": "ELITE",
+    "seel": 0.39671478821937545,
+    "rate": 65,
+    "index_share": 0.3966986772646248,
+    "rmse2_index_on": 0.0004592097817379559,
+    "rmse2_index_off": 0.00027704186873553176
+   },
+   {
+    "rank": 6,
+    "origin": "ELITE",
+    "seel": 0.39671478821937545,
+    "rate": 65,
+    "index_share": 0.3966986772646248,
+    "rmse2_index_on": 0.0004592097817379559,
+    "rmse2_index_off": 0.00027704186873553176
+   },
+   {
+    "rank": 7,
+    "origin": "ELITE",
+    "seel": 0.39671478821937545,
+    "rate": 65,
+    "index_share": 0.3966986772646248,
+    "rmse2_index_on": 0.0004592097817379559,
+    "rmse2_index_off": 0.00027704186873553176
+   },
+   {
+    "rank": 8,
+    "origin": "ELITE",
+    "seel": 0.39671478821937545,
+    "rate": 65,
+    "index_share": 0.3966986772646248,
+    "rmse2_index_on": 0.0004592097817379559,
+    "rmse2_index_off": 0.00027704186873553176
+   },
+   {
+    "rank": 9,
+    "origin": "ELITE",
+    "seel": 0.39671478821937545,
+    "rate": 65,
+    "index_share": 0.3966986772646248,
+    "rmse2_index_on": 0.0004592097817379559,
+    "rmse2_index_off": 0.00027704186873553176
+   },
+   {
+    "rank": 10,
+    "origin": "ELITE",
+    "seel": 0.39671478821937545,
+    "rate": 65,
+    "index_share": 0.3966986772646248,
+    "rmse2_index_on": 0.0004592097817379559,
+    "rmse2_index_off": 0.00027704186873553176
+   }
+  ]
+ },
+ "r75x2": {
+  "artefact": "blocs_vs_plantage_r75x2_deep_s101_gardeA10.json",
+  "runs": 300,
+  "seed": 7300104,
+  "rows": [
+   {
+    "rank": 1,
+    "origin": "LOCAL_SEARCH",
+    "seel": 0.4831422504343665,
+    "rate": 44,
+    "index_share": 0.8914376411616495,
+    "rmse2_index_on": 0.0013259281514850457,
+    "rmse2_index_off": 0.00014394588777539032
+   },
+   {
+    "rank": 2,
+    "origin": "ELITE",
+    "seel": 0.5358300876459229,
+    "rate": 60,
+    "index_share": 0.9386423699402683,
+    "rmse2_index_on": 0.0018794259259618377,
+    "rmse2_index_off": 0.00011531712068983522
+   },
+   {
+    "rank": 3,
+    "origin": "ELITE",
+    "seel": 0.5358300876459229,
+    "rate": 60,
+    "index_share": 0.9386423699402683,
+    "rmse2_index_on": 0.0018794259259618377,
+    "rmse2_index_off": 0.00011531712068983522
+   },
+   {
+    "rank": 4,
+    "origin": "ELITE",
+    "seel": 0.5358300876459229,
+    "rate": 60,
+    "index_share": 0.9386423699402683,
+    "rmse2_index_on": 0.0018794259259618377,
+    "rmse2_index_off": 0.00011531712068983522
+   },
+   {
+    "rank": 5,
+    "origin": "ELITE",
+    "seel": 0.5358300876459229,
+    "rate": 60,
+    "index_share": 0.9386423699402683,
+    "rmse2_index_on": 0.0018794259259618377,
+    "rmse2_index_off": 0.00011531712068983522
+   },
+   {
+    "rank": 6,
+    "origin": "ELITE",
+    "seel": 0.5358300876459229,
+    "rate": 60,
+    "index_share": 0.9386423699402683,
+    "rmse2_index_on": 0.0018794259259618377,
+    "rmse2_index_off": 0.00011531712068983522
+   },
+   {
+    "rank": 7,
+    "origin": "ELITE",
+    "seel": 0.5406153074418447,
+    "rate": 61,
+    "index_share": 0.9356291884670975,
+    "rmse2_index_on": 0.0019238166027392952,
+    "rmse2_index_off": 0.00012383763595879996
+   },
+   {
+    "rank": 8,
+    "origin": "ELITE",
+    "seel": 0.5406153074418447,
+    "rate": 60,
+    "index_share": 0.9386423699402683,
+    "rmse2_index_on": 0.0018794259259618377,
+    "rmse2_index_off": 0.00011531712068983522
+   },
+   {
+    "rank": 9,
+    "origin": "ELITE",
+    "seel": 0.5406153074418447,
+    "rate": 61,
+    "index_share": 0.9356291884670975,
+    "rmse2_index_on": 0.0019238166027392952,
+    "rmse2_index_off": 0.00012383763595879996
+   },
+   {
+    "rank": 10,
+    "origin": "ELITE",
+    "seel": 0.5406153074418447,
+    "rate": 61,
+    "index_share": 0.9356291884670975,
+    "rmse2_index_on": 0.0019238166027392952,
+    "rmse2_index_off": 0.00012383763595879996
+   }
+  ]
+ }
+}

@@ -1,0 +1,18 @@
+seed 42 [0,22) DEPOSABLE 505/505 crash_min 0.0 1121.4 s fixed_domain True
+seed 42 [22,42) DEPOSABLE 254/254 crash_min 0.0 402.2 s fixed_domain True
+seed 42 [42,76) DEPOSABLE 926/926 crash_min 0.0 1030.1 s fixed_domain True
+seed 42 [76,99) DEPOSABLE 397/397 crash_min 0.0 614.2 s fixed_domain True
+seed 101 [0,22) DEPOSABLE 240/240 crash_min 0.0 212.0 s fixed_domain True
+seed 101 [22,42) DEPOSABLE 232/232 crash_min 0.0 149.8 s fixed_domain True
+seed 101 [42,76) DEPOSABLE 738/738 crash_min 0.0 295.2 s fixed_domain True
+seed 101 [76,99) DEPOSABLE 272/272 crash_min 0.0 160.9 s fixed_domain True
+seed 202 [0,22) DEPOSABLE 295/295 crash_min 0.0 140.5 s fixed_domain True
+seed 202 [22,42) DEPOSABLE 234/234 crash_min 0.0 122.2 s fixed_domain True
+seed 202 [42,76) DEPOSABLE 1110/1110 crash_min 0.0 301.2 s fixed_domain True
+seed 202 [76,99) DEPOSABLE 286/286 crash_min 0.0 157.7 s fixed_domain True
+=== assembly seed 42
+meilleur SEEL 0.597 nm | cible 0,300 nm | resolution +/-5.1%
+=== assembly seed 101
+meilleur SEEL 0.575 nm | cible 0,300 nm | resolution +/-5.1%
+=== assembly seed 202
+meilleur SEEL 0.670 nm | cible 0,300 nm | resolution +/-5.1%

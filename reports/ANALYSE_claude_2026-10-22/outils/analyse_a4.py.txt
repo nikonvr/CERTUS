@@ -1,0 +1,106 @@
+"""Independent re-analysis of the six A4 benches (elite_optical_parents = 0 / 2 / 4) from their raw artefacts and logs.
+
+python -X utf8 analyse_a4.py REPO OUT.json
+
+Runs no simulation. Per bench: configuration and provenance read in the artefact, plan classes of the returned population
+(pure optical = no Rate layer; depositable = crash < 5 % at the worst of the three noise levels, as
+scripts/resumer_artefact_sonde.py), best SEEL, winner and stage report, and whether the winner is the same plan as M0's.
+From the native log: the quota's supply and selection per ELITE round ([ELITE-OPTICAL-PARENTS], [ELITE-OPTICAL-POOL]) and
+the crash rate of every parent ELITE took ([ELITE-PARENTS]).
+"""
+from __future__ import annotations
+
+import json
+import re
+import sys
+from collections import Counter
+from pathlib import Path
+
+REPO, OUT = Path(sys.argv[1]), Path(sys.argv[2])
+A4 = REPO / "reports" / "STRAT_A4_parents_optiques_2026-10-22"
+SEUIL = 0.05
+RX_Q = re.compile(r"\[ELITE-OPTICAL-PARENTS\] requested=(\d+) available=(\d+) selected=(\d+) total=(\d+)")
+RX_P = re.compile(r"\[ELITE-OPTICAL-POOL\] available=(\d+) reserved=(\d+) gated=(\d+)")
+RX_E = re.compile(r"\[ELITE-PARENTS\] Round (\d+) #(\d+) id=(\d+) n_blocs=\d+ crash=([\d.]+)% seel=(\S+)")
+
+
+def plan_key(r):
+    return (json.dumps(r["blocs"], sort_keys=True), tuple(sorted(r.get("rate_layers") or [])))
+
+
+def bench(art: Path):
+    d = json.loads(art.read_text(encoding="utf-8"))
+    rows = d["strategies"]
+    cls = Counter()
+    pure = [r for r in rows if not r.get("rate_layers")]
+    for r in rows:
+        cls["pure" if not r.get("rate_layers") else "rate"] += 1
+    dep = [r for r in rows if float(r.get("crash_rate", 1.0)) < SEUIL]
+    best = min(dep, key=lambda r: r["score"])
+    ls = [r for r in rows if r.get("origine") == "LOCAL_SEARCH"]
+    rep = d.get("strat_local_search") or {}
+    non_ls = sorted((r for r in rows if r.get("origine") != "LOCAL_SEARCH" and not r.get("crash_eliminated")), key=lambda r: r["score"])
+    return d, dict(config={k: d["config"].get(k) for k in ("elite_optical_parents", "strat_local_search", "elite_rate_moves", "rate_rescue",
+                                                         "elite_rate_max_candidates")},
+                   commit=d["provenance"]["git_commit"][:8], dirty=d["provenance"].get("git_dirty"), n=len(rows), classes=dict(cls),
+                   pure_in_population=len(pure), pure_min_crash=min((float(r.get("crash_rate", 1.0)) for r in pure), default=None),
+                   depositable=len(dep), best_seel=2 * best["score"] ** 0.5, best_origin=best.get("origine"), best_rate=len(best.get("rate_layers") or []),
+                   first_origin=rows[0].get("origine"), first_seel=2 * rows[0]["score"] ** 0.5,
+                   best_non_ls_seel=2 * non_ls[0]["score"] ** 0.5 if non_ls else None,
+                   stage=dict(accepted=rep.get("accepted"), fallback=rep.get("fallback_changes"), changes=len(rep.get("changes", [])),
+                              start=rep.get("start_strategy_id"), gain=rep.get("check_relative_gain"), stops=rep.get("check_stops")),
+                   ls=bool(ls))
+
+
+def log_stats(log: Path):
+    q, pool, parents = [], [], []
+    with log.open(encoding="utf-8", errors="replace") as f:
+        for line in f:
+            if "ELITE-OPTICAL-PARENTS" in line and (m := RX_Q.search(line)):
+                q.append(tuple(int(x) for x in m.groups()))
+            elif "ELITE-OPTICAL-POOL" in line and (m := RX_P.search(line)):
+                pool.append(tuple(int(x) for x in m.groups()))
+            elif "ELITE-PARENTS" in line and (m := RX_E.search(line)):
+                parents.append((int(m.group(1)), int(m.group(2)), int(m.group(3)), float(m.group(4)), m.group(5)))
+    out = dict(rounds=len(q), short=sum(1 for r, a, s, t in q if s < r), selected=Counter(s for r, a, s, t in q),
+               available_max=max((a for r, a, s, t in q), default=None), pool=len(pool),
+               pool_available=Counter(min(a, 999) for a, r, g in pool).most_common(6),
+               parents=len(parents), parents_crash100=sum(1 for p in parents if p[3] >= 99.99),
+               parents_crash_ge5=sum(1 for p in parents if p[3] >= 5.0))
+    return out, parents
+
+
+def main():
+    cas = json.loads((A4 / "cas.json").read_text(encoding="utf-8"))
+    res, keys, parent_ids = {}, {}, {}
+    for key, c in cas.items():
+        d, b = bench(A4 / c["artefact"])
+        b["cas_json_global_seel"] = c["global_seel_nm"]
+        b["cas_json_overrides"] = c["overrides"]
+        b["log"], parents = log_stats(A4 / "logs" / f"{key}.log")
+        parent_ids[key] = {(p[0], p[1]): p[2] for p in parents}
+        keys[key] = plan_key(d["strategies"][0])
+        res[key] = b
+    for key in res:
+        comp = key.split("_M")[0]
+        m0 = f"{comp}_M0"
+        res[key]["winner_same_plan_as_M0"] = keys[key] == keys[m0]
+        res[key]["d_best_seel_vs_M0_pct"] = 100 * (res[key]["best_seel"] / res[m0]["best_seel"] - 1)
+        common = set(parent_ids[key]) & set(parent_ids[m0])
+        res[key]["parent_slots_differing_from_M0"] = sum(1 for s in common if parent_ids[key][s] != parent_ids[m0][s])
+        res[key]["parent_slots_compared"] = len(common)
+    OUT.write_text(json.dumps(res, indent=1, default=str), encoding="utf-8")
+    for key, b in res.items():
+        print(f"== {key}: config {b['config']} commit {b['commit']} dirty {b['dirty']}")
+        print(f"   n {b['n']} classes {b['classes']} pure in pop {b['pure_in_population']} (min crash {b['pure_min_crash']}) depositable {b['depositable']}")
+        print(f"   best {b['best_seel']:.6f} ({b['best_origin']}, Rate {b['best_rate']}) cas.json {b['cas_json_global_seel']:.6f} | first {b['first_origin']}"
+              f" {b['first_seel']:.6f} | best non-LS {b['best_non_ls_seel']:.6f} | stage {b['stage']}")
+        print(f"   winner same plan as M0: {b['winner_same_plan_as_M0']}, best SEEL vs M0 {b['d_best_seel_vs_M0_pct']:+.2f} %, parent slots differing from M0 "
+              f"{b['parent_slots_differing_from_M0']}/{b['parent_slots_compared']}")
+        lg = b["log"]
+        print(f"   log: quota rounds {lg['rounds']} (short of request {lg['short']}), selected {dict(lg['selected'])}, max available {lg['available_max']};"
+              f" pool lines {lg['pool']} {lg['pool_available']}; parents logged {lg['parents']}, at 100 % crash {lg['parents_crash100']}, >= 5 % {lg['parents_crash_ge5']}")
+
+
+if __name__ == "__main__":
+    main()

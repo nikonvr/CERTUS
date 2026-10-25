@@ -34,6 +34,23 @@ import pyqtgraph as pg
 from certus.core.certus_core import (
     create_module_environment,
 )
+from certus.ui.certus_index_spline_corridors import (
+    _CorridorGenMixin,
+    _CorridorWorkerMixin,
+    _DataMixin,
+)
+from certus.ui.certus_index_spline_execution import (
+    _CorridorExportMixin,
+    _RunMixin,
+)
+from certus.ui.certus_index_spline_rendering import (
+    _PlotMixin,
+    _UIBuilderMixin,
+)
+from certus.ui.certus_index_spline_settings import (
+    _CorridorControlMixin,
+    _SettingsMixin,
+)
 from certus.ui.certus_ui import (
     CertusTheme,
 )
@@ -124,25 +141,8 @@ AUTO_BEST_MANUAL_N_SEG: int = 11  # K = N_seg + 1 = 12 wavelengths via sigma=1/l
 from certus.spline.certus_index_spline_core import (
     SplineOptConfig,
 )
-from certus.spline.certus_index_spline_corridors import (
-    _CorridorGenMixin,
-    _CorridorWorkerMixin,
-    _DataMixin,
-)
 from certus.spline.certus_index_spline_excel_export import (
     _ExcelExportMixin,
-)
-from certus.spline.certus_index_spline_execution import (
-    _CorridorExportMixin,
-    _RunMixin,
-)
-from certus.spline.certus_index_spline_rendering import (
-    _PlotMixin,
-    _UIBuilderMixin,
-)
-from certus.spline.certus_index_spline_settings import (
-    _CorridorControlMixin,
-    _SettingsMixin,
 )
 from certus.spline.spline_profile_corridors import (
     compute_regular_grid_rmse_profile,

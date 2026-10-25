@@ -1,0 +1,3 @@
+START 48c_M0: elite_optical_parents=0,strat_local_search=true
+DONE 48c_M0: global=0.15312639083714288 optical=None pure=0 seconds=1221.1
+START 48c_M2: elite_optical_parents=2,strat_local_search=true

@@ -1,0 +1,20 @@
+{
+  "48c_M0": {
+    "component": "48c",
+    "seed": 42,
+    "minimum": 0,
+    "commit": "38acac0dcfdd4ca9631f9a05500536710ef012ed",
+    "seconds": 1221.1428832999954,
+    "overrides": {
+      "elite_optical_parents": 0,
+      "strat_local_search": true
+    },
+    "global_seel_nm": 0.15312639083714288,
+    "optical_seel_nm": null,
+    "optical_depositable": 0,
+    "depositable": 2653,
+    "strategies": 2653,
+    "quota_logs": [],
+    "artefact": "artefacts/blocs_vs_plantage_48c_premium_s042_A4parentsM0_fente.json"
+  }
+}

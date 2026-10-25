@@ -428,15 +428,16 @@ class CertusStratExportMixin:
             strat = s.get("strategy", {})
             if not isinstance(strat, dict):
                 continue
-            strategies_data.append(
-                {
-                    "ID": strat.get("strategy_id", ""),
-                    "RMSE": s.get("rmse", 0),
-                    "Robustness": s.get("robustness_score", 0),
-                    "Blocks": strat.get("n_blocks", 0),
-                    "Blocks Def": str(strat.get("blocks", [])),
-                }
-            )
+            row = {
+                "ID": strat.get("strategy_id", ""),
+                "RMSE": s.get("rmse", 0),
+                "Robustness": s.get("robustness_score", 0),
+                "Blocks": strat.get("n_blocks", 0),
+                "Blocks Def": str(strat.get("blocks", [])),
+            }
+            if s.get("index_share") is not None:  # A11, only when the run computed it
+                row["Index share %"] = 100.0 * float(s["index_share"])
+            strategies_data.append(row)
 
         df_strategies = pd.DataFrame(strategies_data)
         df_structure = pd.DataFrame()

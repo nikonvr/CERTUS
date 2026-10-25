@@ -1,0 +1,133 @@
+"""A12: the local-search stage with and without the index-guided pass, offline, on the start plan of an A14/A10 bench. (Claude, 2026-10-23)
+
+python -X utf8 stage_ab_a12.py REPO CASE OUT.json [GUIDED_LAYERS GROUP [PREVIOUS.json]]
+
+CASE is one of CASES below. Set-up as the archived r75_scan (component configuration, `deep` or `premium`), robustness seed = the
+bench seed, so the stage uses the bench's search, check and confirm seeds. The start plan is the plan the bench's stage started
+from (`start_strategy_id`). Both arms run `joint_local_search` with the guard (default since 2026-10-23); arm "current" without
+the index-guided pass (reused from PREVIOUS when given: it is deterministic), arm "guided" with it (8 layers, groups of 2 and 3, the
+per-layer sensitivity of `index_sensitivity_by_layer` on the search seed, 300 draws). Then the two final plans are judged on fresh seeds (3 x 1000 draws, the same
+draws for both), at +-0.005 and +-0.010: SEEL = 2 sqrt(max over levels of P95), stops, paired bootstrap of the SEEL ratio.
+"""
+from __future__ import annotations
+
+import copy
+import json
+import logging
+import os
+import sys
+import time
+from pathlib import Path
+
+REPO, CASE, OUT = Path(sys.argv[1]).resolve(), sys.argv[2], Path(sys.argv[3])
+GUIDED = (int(sys.argv[4]), int(sys.argv[5])) if len(sys.argv) > 5 else (8, 3)
+#: a previous result of the same case: its deterministic 'current' arm is reused instead of being run again
+PREVIOUS = Path(sys.argv[6]) if len(sys.argv) > 6 and Path(sys.argv[6]).is_file() else None
+sys.path.insert(0, str(REPO))
+sys.path.insert(1, str(REPO / "scripts"))
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+import numpy as np  # noqa: E402
+
+CASES = {  # case: (campaign folder, artefact, component, mode, bench seed, index of the case in its campaign)
+    "48c_premium_s42": ("STRAT_etage_A14_2026-10-21", "blocs_vs_plantage_48c_premium_s042_etageA14_fente.json", "48c", "premium", 42, 0),
+    "r75x1.5_deep_s77": ("STRAT_etage_A14_2026-10-21", "blocs_vs_plantage_r75x1.5_deep_s077_etageA14.json", "r75x1.5", "deep", 77, 2),
+    "r75x1.75_deep_s77": ("STRAT_etage_A14_2026-10-21", "blocs_vs_plantage_r75x1.75_deep_s077_etageA14.json", "r75x1.75", "deep", 77, 3),
+    "r75x2-2nm_deep_s77": ("STRAT_etage_A14_2026-10-21", "blocs_vs_plantage_r75x2-2nm_deep_s077_etageA14.json", "r75x2-2nm", "deep", 77, 4),
+    "75c_deep_s101": ("STRAT_etage_A14_2026-10-21", "blocs_vs_plantage_75c_deep_s101_etageA14.json", "75c", "deep", 101, 5),
+    "75c_deep_s202": ("STRAT_etage_A10_2026-10-21", "blocs_vs_plantage_75c_deep_s202_etageA10.json", "75c", "deep", 202, 6),
+    "r75x0.5_deep_s202": ("STRAT_etage_A10_2026-10-21", "blocs_vs_plantage_r75x0.5_deep_s202_etageA10.json", "r75x0.5", "deep", 202, 7),
+    "r75x2_deep_s101": ("STRAT_etage_A10_2026-10-21", "blocs_vs_plantage_r75x2_deep_s101_etageA10.json", "r75x2", "deep", 101, 8),
+}
+JUDGE_SEED0 = 20261101001
+rng = np.random.default_rng(20261023)
+
+
+def main():
+    import bench_examples as Bx
+    import probe_blocs_vs_plantage as P
+    from CERTUS_STRAT import CertusStratApp
+    from _composant import charger_configuration
+    from certus.core.certus_strat_config import precompute_clues_and_matrices
+    from certus.core.certus_strat_local_search import (CHECK_SEED_OFFSETS, CONFIRM_SEED_OFFSETS, SEARCH_SEED_OFFSET, LocalSearchConfig,
+                                                       joint_local_search, native_evaluator, nominal_level_index, search_params,
+                                                       index_sensitivity_by_layer)
+    from certus.core.certus_strat_ranking import _resolve_monitoring_wavelength_grid
+    from certus.core.certus_strat_robustness_rate import RATE_MIN_LAYER
+
+    folder, art_name, comp, mode, bench_seed, k_case = CASES[CASE]
+    cfg_path, n_layers = P.COMPOSANTS[comp]
+    Bx.qapp()
+    Bx.autoanswer_dialogs(True)
+    app = CertusStratApp()
+    charger_configuration(app, REPO / cfg_path)
+    app.widgets["execution_mode"].setCurrentText(mode)
+    base = app.collect_params()
+    base.update({"show_plots": False, "monochromator_resolution_nm": 2.0, "search_resolution": False, "noise_layer_offset": 0,
+                 "noise_total_layers": n_layers, "require_turning_point": 0, **P._leviers_rate(0), "execution_mode": mode,
+                 "robustness_seed": bench_seed})
+    logger = logging.getLogger("certus_strat")
+    logger.setLevel(logging.WARNING)
+    base["logger"] = logger
+    nominal = base.get("p_thick_nominal")
+    if nominal is None:
+        from certus.core.certus_strat_pipeline import get_refractive_index
+        l0 = float(base["l0"])
+        mult = [float(e) for e in base["stack_string"].split(",") if e.strip()]
+        nH, nL = get_refractive_index(base["nH_id"], l0), get_refractive_index(base["nL_id"], l0)
+        nominal = [(m * l0) / (4.0 * np.real(nH if i % 2 == 0 else nL)) for i, m in enumerate(mult)]
+        base["p_thick_nominal"] = nominal
+    nominal = list(nominal)
+    clues, _cache, all_wls = precompute_clues_and_matrices(base, nominal, logger)
+    art = json.loads((REPO / "reports" / folder / art_name).read_text(encoding="utf-8"))
+    rep0 = art["strat_local_search"]
+    row = next(r for r in art["strategies"] if r["id"] == rep0["start_strategy_id"] and r["origine"] != "LOCAL_SEARCH")
+    start = dict(strategy_id=row["id"], origin=row["origine"], blocks=row["blocs"], rate_layers=row["rate_layers"],
+                 witness_reset_layers=row.get("witness_reset_layers") or [], monochromator_resolution_nm=row.get("resolution_nm") or 2.0)
+    grid = tuple(_resolve_monitoring_wavelength_grid(base, clues, all_wls))
+    evaluate = native_evaluator(search_params(base), nominal, clues, {})
+    evaluate_guard = native_evaluator(base, nominal, clues, {})
+    seeds = dict(search=bench_seed + SEARCH_SEED_OFFSET, check=tuple(bench_seed + o for o in CHECK_SEED_OFFSETS),
+                 confirm=tuple(bench_seed + o for o in CONFIRM_SEED_OFFSETS))
+    evaluate(start, seeds["search"], 50)  # warm-up (Numba)
+    arms = {}
+    if PREVIOUS is not None:
+        prev = json.loads(PREVIOUS.read_text(encoding="utf-8"))["arms"]["current"]
+        arms["current"] = dict(seconds=prev["seconds"], plan=prev["plan"], report=prev["report"])
+    sens = index_sensitivity_by_layer(native_evaluator(search_params(base), nominal, clues, {}, thickness=True),
+                                      native_evaluator({**search_params(base), "index_corridor": 0.0}, nominal, clues, {}, thickness=True),
+                                      nominal, seeds["search"], 300, nominal_level_index(base))
+    for arm, (layers_k, group) in (("current", (0, 3)), ("guided", GUIDED)):
+        if arm in arms:
+            continue
+        cfg = LocalSearchConfig(grid=grid, nominal_level=nominal_level_index(base), allow_rate=bool(base.get("allow_rate", True)),
+                                rate_min_layer=RATE_MIN_LAYER, index_guided_layers=layers_k, index_guided_group=group)
+        t0 = time.perf_counter()
+        plan, rep = joint_local_search(copy.deepcopy(start), evaluate, len(nominal), cfg, seeds["search"], seeds["check"],
+                                       lambda _m: None, seeds["confirm"], evaluate_guard, sens if layers_k else None)
+        arms[arm] = dict(seconds=time.perf_counter() - t0, plan=plan, report=rep)
+        print(f"{CASE} {arm}: {arms[arm]['seconds']:.0f} s, accepted {rep['accepted']}, changes {len(rep['changes'])}, "
+              f"fallback {rep.get('fallback_changes')}, evaluations {rep['evaluations']}, guided changes {rep.get('index_guided_changes', 0)}", flush=True)
+    judge_seeds = [JUDGE_SEED0 + 1000 * k_case + i for i in range(3)]
+    judged = {}
+    for ic in (0.005, 0.010):
+        ev_ic = native_evaluator({**base, "index_corridor": ic}, nominal, clues, {})
+        ev = {name: [ev_ic(p, s, 1000) for s in judge_seeds] for name, p in (("start", start), ("current", arms["current"]["plan"]),
+                                                                              ("guided", arms["guided"]["plan"]))}
+        cat = {n: [np.concatenate([e[lv][0] for e in ev[n]]) for lv in range(3)] for n in ev}
+        stops = {n: int(sum(int(e[lv][1].sum()) for e in ev[n] for lv in range(3))) for n in ev}
+        seel = {n: 2 * max(float(np.percentile(cat[n][lv], 95)) for lv in range(3)) ** 0.5 for n in ev}
+        idx = rng.integers(0, 3000, size=(2000, 3000))
+        boot = {n: np.max(np.stack([np.percentile(cat[n][lv][idx], 95, axis=1) for lv in range(3)]), axis=0) for n in ("current", "guided")}
+        ratio = np.sqrt(boot["guided"] / boot["current"]) - 1
+        judged[str(ic)] = dict(seel=seel, stops=stops, guided_vs_current=seel["guided"] / seel["current"] - 1,
+                               ci95=[float(np.percentile(ratio, 2.5)), float(np.percentile(ratio, 97.5))])
+        print(f"{CASE} +-{ic}: SEEL start {seel['start']:.4f} current {seel['current']:.4f} guided {seel['guided']:.4f} "
+              f"({100 * judged[str(ic)]['guided_vs_current']:+.1f} %) stops {stops}", flush=True)
+    OUT.write_text(json.dumps(dict(case=CASE, guided=GUIDED, current_reused=PREVIOUS is not None, seeds=seeds, judge_seeds=judge_seeds,
+                                   arms={a: dict(seconds=v["seconds"], report=v["report"], plan=v["plan"]) for a, v in arms.items()},
+                                   judged=judged), indent=1, default=float), encoding="utf-8")
+
+
+if __name__ == "__main__":
+    main()

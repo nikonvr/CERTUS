@@ -1,0 +1,82 @@
+"""Independent judgment of the A4 winners that differ from M0: r75x0.5 seed 101, M4 against M0 (Claude, 2026-10-22).
+
+python -X utf8 judge_a4.py REPO WORK
+
+The two frozen plans STRAT ranks first (artefacts of reports/STRAT_A4_parents_optiques_2026-10-22) are evaluated by STRAT's native
+robustness task (the archived r75_scan.py.txt) on fresh seeds 902210301-303, 1000 draws each, the same draws for both plans
+(C2), at +-0.005 and +-0.010. Reports SEEL = 2 sqrt(max over levels of P95), stops per level, paired mean RMSE^2 per level, the
+SEEL of each seed and a paired bootstrap (2000 resamples) of the SEEL ratio.
+"""
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+import numpy as np
+
+REPO, WORK = Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve()
+A4 = REPO / "reports" / "STRAT_A4_parents_optiques_2026-10-22" / "artefacts"
+SCAN = REPO / "reports" / "RELECTURE_gemini_2026-10-22" / "A10" / "r75x2_deep_s101" / "r75_scan.py.txt"
+SEEDS = (902210301, 902210302, 902210303)
+PLANS = {"M0": "blocs_vs_plantage_r75x0.5_deep_s101_A4parentsv2M0.json", "M4": "blocs_vs_plantage_r75x0.5_deep_s101_A4parentsv2M4.json"}
+rng = np.random.default_rng(20261022)
+
+
+def plan_of(row):
+    return dict(strategy_id=row["id"], origin=row["origine"], blocks=row["blocs"], rate_layers=row["rate_layers"],
+                witness_reset_layers=row.get("witness_reset_layers") or [], monochromator_resolution_nm=row.get("resolution_nm") or 2.0)
+
+
+def seel(v):
+    return 2.0 * float(v) ** 0.5
+
+
+def main():
+    WORK.mkdir(parents=True, exist_ok=True)
+    plans = {k: plan_of(json.loads((A4 / f).read_text(encoding="utf-8"))["strategies"][0]) for k, f in PLANS.items()}
+    jobs = [dict(name=f"{k}__{ic}__{s}", plan=p, seed=s, runs=1000, save=True, override={"index_corridor": ic})
+            for k, p in plans.items() for ic in (0.005, 0.010) for s in SEEDS]
+    (WORK / "jobs.json").write_text(json.dumps(jobs), encoding="utf-8")
+    (WORK / "r75_scan.py").write_text(SCAN.read_text(encoding="utf-8"), encoding="utf-8")
+    out = WORK / "res.jsonl"
+    if out.exists():
+        out.unlink()
+    with open(WORK / "scan.log", "w", encoding="utf-8") as log:
+        r = subprocess.run([sys.executable, "-X", "utf8", str(WORK / "r75_scan.py"), "--repo", str(REPO), "--jobs", str(WORK / "jobs.json"),
+                            "--out", str(out), "--comp", "r75x0.5", "--mode", "deep"], cwd=WORK, stdout=log, stderr=subprocess.STDOUT)
+    if r.returncode:
+        raise SystemExit(f"scan failed ({r.returncode}), see {WORK / 'scan.log'}")
+    res = {}
+    for ic in ("0.005", "0.01"):
+        a = {k: [dict(np.load(WORK / "res_arrays" / f"{k}__{ic}__{s}.npz")) for s in SEEDS] for k in plans}
+        cat = {k: [(np.concatenate([x[f"rmse_{lv}"] for x in a[k]]), np.concatenate([x[f"crashed_{lv}"] for x in a[k]])) for lv in range(3)]
+               for k in plans}
+        r = {k: dict(seel=seel(max(np.percentile(cat[k][lv][0], 95) for lv in range(3))),
+                     seel_by_level=[seel(np.percentile(cat[k][lv][0], 95)) for lv in range(3)],
+                     stops_by_level=[int(cat[k][lv][1].sum()) for lv in range(3)],
+                     seel_by_seed=[seel(max(np.percentile(x[f"rmse_{lv}"], 95) for lv in range(3))) for x in a[k]]) for k in plans}
+        rel = []
+        for lv in range(3):
+            (r0, c0), (r4, c4) = cat["M0"][lv], cat["M4"][lv]
+            both = ~c0 & ~c4
+            dd = r4[both] ** 2 - r0[both] ** 2
+            base = float(np.mean(r0[~c0] ** 2))
+            rel.append(dict(rel=float(dd.mean() / base), se=float(dd.std(ddof=1) / np.sqrt(dd.size) / base)))
+        idx = np.concatenate([rng.integers(0, 1000, size=(2000, 1000)) + 1000 * k for k in range(len(SEEDS))], axis=1)
+        boot = {k: np.max(np.stack([np.percentile(cat[k][lv][0][idx], 95, axis=1) for lv in range(3)]), axis=0) for k in plans}
+        ratio = np.sqrt(boot["M4"] / boot["M0"]) - 1
+        r["paired_rmse2_M4_vs_M0_by_level"] = rel
+        r["seel_ratio_M4_vs_M0"] = dict(point=r["M4"]["seel"] / r["M0"]["seel"] - 1, ci95=[float(np.percentile(ratio, 2.5)), float(np.percentile(ratio, 97.5))])
+        res[ic] = r
+        print(f"+-{ic}: SEEL M0 {r['M0']['seel']:.4f} M4 {r['M4']['seel']:.4f} ({100 * r['seel_ratio_M4_vs_M0']['point']:+.1f} %, CI "
+              f"[{100 * r['seel_ratio_M4_vs_M0']['ci95'][0]:+.1f}, {100 * r['seel_ratio_M4_vs_M0']['ci95'][1]:+.1f}]) | by level M0 "
+              f"{['%.4f' % v for v in r['M0']['seel_by_level']]} M4 {['%.4f' % v for v in r['M4']['seel_by_level']]} | stops M0 "
+              f"{r['M0']['stops_by_level']} M4 {r['M4']['stops_by_level']} | dRMSE2 M4-M0 by level {['%+.1f' % (100 * x['rel']) for x in rel]}"
+              f" | by seed M0 {['%.4f' % v for v in r['M0']['seel_by_seed']]} M4 {['%.4f' % v for v in r['M4']['seel_by_seed']]}")
+    (WORK / "judge_a4.json").write_text(json.dumps(res, indent=1), encoding="utf-8")
+
+
+if __name__ == "__main__":
+    main()

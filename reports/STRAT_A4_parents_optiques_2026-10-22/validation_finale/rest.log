@@ -1,0 +1,18 @@
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 22%]
+........................................................................ [ 45%]
+........................................................................ [ 67%]
+........................................................................ [ 90%]
+...............................                                          [100%]
+============================== warnings summary ===============================
+tests/headless/test_index.py: 17 warnings
+tests/headless/test_metal_bilayer.py: 4 warnings
+tests/headless/test_metal_single.py: 2 warnings
+  <HOME>\AppData\Roaming\Python\Python314\site-packages\pyqtgraph\functions.py:2996: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+  As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+    arr.shape = (3, 3)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+319 passed, 23 warnings in 317.24s (0:05:17)

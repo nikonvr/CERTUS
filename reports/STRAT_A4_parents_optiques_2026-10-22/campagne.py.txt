@@ -1,0 +1,99 @@
+"""Run the six prescribed A4 benches in sequence, resuming completed cases."""
+from __future__ import annotations
+
+import json
+import math
+import os
+import shutil
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+OUT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT / 'scripts'))
+from resumer_artefact_sonde import resumer
+
+
+def git(*args):
+    return subprocess.check_output(['git', *args], cwd=ROOT, text=True).strip()
+
+
+def write_table(results):
+    lines = ['# A4 — parents optiques purs (2026-10-22)', '',
+             'Protocole fixé dans [protocole.md](protocole.md). Étage `strat_local_search=true` actif pour les six bancs.', '',
+             '| composant | graine | M (`config`) | SEEL global (nm) | SEEL optique pur (nm) | optiques purs déposables | durée (s) | commit |',
+             '|---|---:|---:|---:|---:|---:|---:|---|']
+    for key, row in results.items():
+        pure = '—' if row['optical_seel_nm'] is None else f"{row['optical_seel_nm']:.6f}"
+        best = '—' if row['global_seel_nm'] is None else f"{row['global_seel_nm']:.6f}"
+        lines.append(f"| {row['component']} | {row['seed']} | {row['minimum']} | {best} | {pure} | "
+                     f"{row['optical_depositable']} | {row['seconds']:.1f} | `{row['commit'][:8]}` |")
+    lines += ['', 'Valeurs brutes, surcharges et journaux : `cas.json`, `artefacts/`, `logs/`. Le nombre de plans est celui de la population retournée.',
+              'Une graine par composant ; ces minimums ne sont pas des confirmations indépendantes. Aucun défaut modifié.']
+    (OUT / 'bilan.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
+
+
+def main():
+    assert not git('status', '--porcelain', '--untracked-files=no'), 'Tracked tree must be clean'
+    head = git('rev-parse', 'HEAD')
+    result_file = OUT / 'cas.json'
+    results = json.loads(result_file.read_text(encoding='utf-8')) if result_file.is_file() else {}
+    (OUT / 'artefacts').mkdir(exist_ok=True)
+    (OUT / 'logs').mkdir(exist_ok=True)
+    for comp, mode, slit, seed in [('48c', 'premium', 1, 42), ('r75x0.5', 'deep', 0, 101)]:
+        for minimum in (0, 2, 4):
+            key = f'{comp}_M{minimum}'
+            if key in results:
+                assert results[key]['commit'] == head, (key, 'source commit changed')
+                print(f'SKIPPED {key}', flush=True)
+                continue
+            tag = f'A4parentsv2M{minimum}'
+            overrides = f'elite_optical_parents={minimum},strat_local_search=true'
+            env = dict(os.environ, CERTUS_BENCH_TIMEOUT_S='38400', CERTUS_PROBE_OVERRIDES=overrides,
+                       CERTUS_PROBE_TAG=tag)
+            log = OUT / 'logs' / f'{key}.log'
+            command = [sys.executable, '-u', '-X', 'utf8', 'scripts/probe_blocs_vs_plantage.py',
+                       comp, mode, str(slit), '0', '2', '0', str(seed), '0']
+            print(f'START {key}: {overrides}', flush=True)
+            started = time.monotonic()
+            with log.open('w', encoding='utf-8') as stream:
+                completed = subprocess.run(command, cwd=ROOT, env=env, stdout=stream, stderr=subprocess.STDOUT)
+            elapsed = time.monotonic() - started
+            text = log.read_text(encoding='utf-8')
+            for private in (str(ROOT), ROOT.as_posix(), str(Path.home()), str(Path.home()).replace('\\', '/')):
+                text = text.replace(private, '<WORKSPACE>' if private in (str(ROOT), ROOT.as_posix()) else '<HOME>')
+            log.write_text(text, encoding='utf-8')
+            assert completed.returncode == 0, (key, completed.returncode, log.name)
+            paths = sorted((ROOT / 'reports').glob(f'blocs_vs_plantage_{comp}_{mode}_s{seed:03d}_{tag}*.json'),
+                           key=lambda path: path.stat().st_mtime)
+            assert paths, (key, 'no artefact')
+            source = paths[-1]
+            data = json.loads(source.read_text(encoding='utf-8'))
+            assert data['verdict'] == 'OK', (key, data.get('verdict'))
+            assert data['config']['elite_optical_parents'] == minimum, key
+            assert data['config']['strat_local_search'] is True, key
+            assert data['provenance']['git_commit'] == head and data['provenance']['git_dirty'] is False, key
+            if minimum:
+                assert f'[ELITE-OPTICAL-PARENTS] requested={minimum} ' in text, (key, 'quota not observed')
+            summary = resumer(data)
+            optical = summary['classes'].get('optique pur', {})
+            quota_logs = [line for line in text.splitlines() if '[ELITE-OPTICAL-PARENTS]' in line]
+            results[key] = dict(component=comp, seed=seed, minimum=minimum, commit=head, seconds=elapsed,
+                                overrides=data['config']['overrides'], global_seel_nm=summary['meilleur_seel'],
+                                optical_seel_nm=optical.get('meilleur_seel'), optical_depositable=optical.get('plans', 0),
+                                depositable=summary['deposables'], strategies=summary['strategies'], quota_logs=quota_logs,
+                                artefact='artefacts/' + source.name)
+            assert results[key]['global_seel_nm'] is None or math.isfinite(results[key]['global_seel_nm'])
+            shutil.copy2(source, OUT / 'artefacts' / source.name)
+            result_file.write_text(json.dumps(results, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+            write_table(results)
+            print(f'DONE {key}: global={results[key]["global_seel_nm"]} optical={results[key]["optical_seel_nm"]} '
+                  f'pure={results[key]["optical_depositable"]} seconds={elapsed:.1f}', flush=True)
+    assert len(results) == 6
+    print('A4=COMPLETE (six benches; interpretation reserved)', flush=True)
+
+
+if __name__ == '__main__':
+    main()

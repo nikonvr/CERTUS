@@ -1,0 +1,63 @@
+C1 - bits compares : base HEAD (38acac0)  contre  tete arbre de travail  (209 s)
+point d entree             tableaux differents   ulp max  relatif max
+---------------------------------------------------------------------
+appelants.batch                  60          0         -            -
+appelants.batch_abs              60          0         -            -
+appelants.batchc                 60          0         -            -
+appelants.batchc_abs             60          0         -            -
+appelants.batchu                 60          0         -            -
+appelants.batchu_abs             60          0         -            -
+appelants.batchw                 60          0         -            -
+appelants.batchw_abs             60          0         -            -
+appelants.front                 120          0         -            -
+appelants.front_abs             120          0         -            -
+appelants.full                  164          0         -            -
+appelants.full_abs              200          0         -            -
+normal.combination              120          0         -            -
+normal.combination_abs          120          0         -            -
+normal.cost0                     60          0         -            -
+normal.cost0_abs                 60          0         -            -
+normal.cost1                     60          0         -            -
+normal.cost1_abs                 60          0         -            -
+normal.fullexact                240          0         -            -
+normal.fullexact_abs            225          0         -            -
+normal.fused                    120          0         -            -
+normal.fused_abs                120          0         -            -
+normal.generic                  120          0         -            -
+normal.generic_abs              120          0         -            -
+normal.gradall0                 120          0         -            -
+normal.gradall0_abs             120          0         -            -
+normal.gradall1                 120          0         -            -
+normal.gradall1_abs             120          0         -            -
+normal.noback                   120          0         -            -
+normal.noback_abs               120          0         -            -
+normal.rtrback                  180          0         -            -
+normal.rtrback_abs              180          0         -            -
+normal.vecreal0                 120          0         -            -
+normal.vecreal0_abs             120          0         -            -
+normal.vecreal1                 120          0         -            -
+normal.vecreal1_abs             120          0         -            -
+oblique.backside                120          0         -            -
+oblique.backside_abs            120          0         -            -
+oblique.bundle                  240          0         -            -
+oblique.bundle_abs              240          0         -            -
+oblique.contrib                 180          0         -            -
+oblique.contrib_abs             180          0         -            -
+oblique.full                    120          0         -            -
+oblique.full_abs                120          0         -            -
+oblique.rtgrads0                240          0         -            -
+oblique.rtgrads0_abs            240          0         -            -
+oblique.rtgrads1                240          0         -            -
+oblique.rtgrads1_abs            240          0         -            -
+oblique.spectrum                120          0         -            -
+oblique.spectrum_abs            120          0         -            -
+strat.detailed                    3          0         -            -
+strat.growth                   2000          0         -            -
+strat.margins                   120          0         -            -
+strat.next                       60          0         -            -
+strat.scan                       90          0         -            -
+strat.states                     20          0         -            -
+strat.tprofile                   30          0         -            -
+strat.turning                   180          0         -            -
+
+C1 TENU : 9092 tableaux, tous identiques au bit

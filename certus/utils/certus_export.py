@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import QApplication, QMenu, QMessageBox
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 
 # Import shared strings from certus.ui.certus_ui to avoid duplication
-from certus.ui.certus_ui import CERTUS_UI_STRINGS
+from certus.core.certus_ui_strings import CERTUS_UI_STRINGS
 
 
 def _export_series_label(item: Any, idx: int) -> str:

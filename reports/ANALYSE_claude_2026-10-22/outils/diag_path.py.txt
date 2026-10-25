@@ -1,0 +1,87 @@
+"""Where does the local-search stage lose SEEL at +-0.005 on r75x2, bench seed 101? (Claude, 2026-10-22)
+
+python -X utf8 diag_path.py REPO WORK
+
+Rebuilds the plan after each of the stage's kept changes from the bench artefact (start plan + `changes`, with the stage's
+own `with_wavelength`), checks that the last one is the LOCAL_SEARCH row bit for bit, then evaluates every plan of the path
+with STRAT's native robustness task (the archived `r75_scan.py.txt` plus one line that dumps the nominal thicknesses) at +-0.005 and +-0.010,
+on two fresh seeds x 1000 draws, and saves the deposited thicknesses of the start and the final plan at +-0.005.
+Control: start and final replayed on the judge's seed 20261028001 must give the committed replay arrays bit for bit.
+"""
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+REPO, WORK = Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve()
+sys.path.insert(0, str(REPO))
+from certus.core.certus_strat_local_search import with_wavelength  # noqa: E402
+
+ART = REPO / "reports" / "STRAT_etage_A10_2026-10-21" / "blocs_vs_plantage_r75x2_deep_s101_etageA10.json"
+SCAN = REPO / "reports" / "RELECTURE_gemini_2026-10-22" / "A10" / "r75x2_deep_s101" / "r75_scan.py.txt"
+SEEDS = (902210221, 902210222)
+JUDGE_SEED = 20261028001
+
+
+def plan_of(row):
+    return dict(strategy_id=row["id"], origin=row["origine"], blocks=row["blocs"], rate_layers=row["rate_layers"],
+                witness_reset_layers=row.get("witness_reset_layers") or [], monochromator_resolution_nm=row.get("resolution_nm") or 2.0)
+
+
+def apply(plan, change):
+    layer = int(change.split()[0][1:])
+    out = dict(plan)
+    if "optical@" in change:
+        out = with_wavelength(plan, layer, float(change.split("@")[1]))
+        out["rate_layers"] = sorted(set(plan["rate_layers"]) - {layer})
+    elif change.endswith(" Rate"):
+        out["rate_layers"] = sorted(set(plan["rate_layers"]) | {layer})
+    else:
+        out = with_wavelength(plan, layer, float(change.split("->")[1]))
+    return out
+
+
+def main():
+    WORK.mkdir(parents=True, exist_ok=True)
+    d = json.loads(ART.read_text(encoding="utf-8"))
+    rep = d["strat_local_search"]
+    rows = d["strategies"]
+    start = next(r for r in rows if r["id"] == rep["start_strategy_id"] and r["origine"] != "LOCAL_SEARCH")
+    final = next(r for r in rows if r["origine"] == "LOCAL_SEARCH")
+    path = [plan_of(start)]
+    for c in rep["changes"]:
+        path.append(apply(path[-1], c))
+    key = lambda p: (json.dumps([[int(b["start"]), int(b["end"]), float(b["wavelength"])] for b in p["blocks"]]), sorted(p["rate_layers"]))
+    rebuilt_ok = key(path[-1]) == key(plan_of(final))
+    print("changes", len(rep["changes"]), "rebuilt final == LOCAL_SEARCH row:", rebuilt_ok, flush=True)
+    if not rebuilt_ok:
+        raise SystemExit("REBUILD=FAILED")
+    jobs = []
+    for k, p in enumerate(path):
+        for ic in (0.005, 0.010):
+            for s in SEEDS:
+                jobs.append(dict(name=f"k{k:02d}__{ic}__{s}", plan=p, seed=s, runs=1000, save=True, override={"index_corridor": ic},
+                                 save_thickness=(k in (0, len(path) - 1) and ic == 0.005)))
+    for name, p in (("elite", path[0]), ("final", path[-1])):
+        jobs.append(dict(name=f"control_{name}__0.005__{JUDGE_SEED}", plan=p, seed=JUDGE_SEED, runs=1000, save=True,
+                         override={"index_corridor": 0.005}))
+    (WORK / "path.json").write_text(json.dumps(dict(changes=rep["changes"], plans=path), indent=0), encoding="utf-8")
+    (WORK / "jobs.json").write_text(json.dumps(jobs), encoding="utf-8")
+    src = SCAN.read_text(encoding="utf-8")
+    anchor = "    nominal = list(nominal)"
+    assert src.count(anchor) == 1
+    dump = '\n    (OUT.parent / (OUT.stem + "_nominal.json")).write_text(json.dumps(nominal), encoding="utf-8")  # diag only'
+    (WORK / "r75_scan.py").write_text(src.replace(anchor, anchor + dump), encoding="utf-8")
+    out = WORK / "res.jsonl"
+    if out.exists():
+        out.unlink()
+    with open(WORK / "scan.log", "w", encoding="utf-8") as log:
+        r = subprocess.run([sys.executable, "-X", "utf8", str(WORK / "r75_scan.py"), "--repo", str(REPO), "--jobs", str(WORK / "jobs.json"),
+                            "--out", str(out), "--comp", "r75x2", "--mode", "deep"], cwd=WORK, stdout=log, stderr=subprocess.STDOUT)
+    print("scan exit code", r.returncode, flush=True)
+
+
+if __name__ == "__main__":
+    main()

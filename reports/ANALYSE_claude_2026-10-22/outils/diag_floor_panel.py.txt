@@ -1,0 +1,81 @@
+"""The eight A14/A10 frozen-plan judgments again, with the turning-point hysteresis of the nominal noise at every level.
+(Claude, 2026-10-22)
+
+python -X utf8 diag_floor_panel.py REPO WORK
+
+Every panel component sets tp_hysteresis_factor 1.66 and a 1x reading noise of 0.05 %: the hysteresis is 0.000415 T at 0.5x
+(the default floor), 0.00083 at 1x, 0.00166 at 2x. The jobs of the frozen-plan replay (reports/RELECTURE_gemini_2026-10-22,
+same plans, seeds and draws) are run again with tp_hysteresis_floor = 0.00083, which changes only the 0.5x level. Compared
+with the committed arrays: SEEL (2 sqrt of the max over levels of P95), stops per level, paired bootstrap of the SEEL ratio.
+"""
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+import numpy as np
+
+REPO, WORK = Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve()
+REL = REPO / "reports" / "RELECTURE_gemini_2026-10-22"
+CASES = [("A14", "48c_premium_s42", "48c", "premium"), ("A14", "r75x1.5_deep_s77", "r75x1.5", "deep"),
+         ("A14", "r75x1.75_deep_s77", "r75x1.75", "deep"), ("A14", "r75x2-2nm_deep_s77", "r75x2-2nm", "deep"),
+         ("A14", "75c_deep_s101", "75c", "deep"), ("A10", "75c_deep_s202", "75c", "deep"),
+         ("A10", "r75x0.5_deep_s202", "r75x0.5", "deep"), ("A10", "r75x2_deep_s101", "r75x2", "deep")]
+SCAN = REL / "A10" / "r75x2_deep_s101" / "r75_scan.py.txt"
+FLOOR = 0.00083
+rng = np.random.default_rng(20261022)
+
+
+def judge(arrs_e, arrs_f):
+    out = {}
+    for name, arrs in (("elite", arrs_e), ("final", arrs_f)):
+        lv = [float(np.percentile(np.concatenate([a[f"rmse_{i}"] for a in arrs]), 95)) for i in range(3)]
+        out[name] = dict(seel=2 * max(lv) ** 0.5, level=int(np.argmax(lv)), stops=[int(sum(a[f"crashed_{i}"].sum() for a in arrs)) for i in range(3)])
+    n = len(arrs_e)
+    idx = np.concatenate([rng.integers(0, 1000, size=(2000, 1000)) + 1000 * k for k in range(n)], axis=1)
+    boot = {}
+    for name, arrs in (("elite", arrs_e), ("final", arrs_f)):
+        boot[name] = np.max(np.stack([np.percentile(np.concatenate([a[f"rmse_{i}"] for a in arrs])[idx], 95, axis=1) for i in range(3)]), axis=0)
+    ratio = np.sqrt(boot["final"] / boot["elite"]) - 1
+    out["rel"] = out["final"]["seel"] / out["elite"]["seel"] - 1
+    out["ci95"] = [float(np.percentile(ratio, 2.5)), float(np.percentile(ratio, 97.5))]
+    return out
+
+
+def main():
+    WORK.mkdir(parents=True, exist_ok=True)
+    (WORK / "r75_scan.py").write_text(SCAN.read_text(encoding="utf-8"), encoding="utf-8")
+    res = {}
+    for camp, key, comp, mode in CASES:
+        folder = REL / camp / key
+        jobs = json.loads((folder / f"jobs_{comp}.json").read_text(encoding="utf-8"))
+        for j in jobs:
+            j["override"] = {**j["override"], "tp_hysteresis_floor": FLOOR}
+        wd = WORK / key
+        wd.mkdir(exist_ok=True)
+        (wd / "jobs.json").write_text(json.dumps(jobs), encoding="utf-8")
+        out = wd / "res.jsonl"
+        if out.exists():
+            out.unlink()
+        with open(wd / "scan.log", "w", encoding="utf-8") as log:
+            r = subprocess.run([sys.executable, "-X", "utf8", str(WORK / "r75_scan.py"), "--repo", str(REPO), "--jobs", str(wd / "jobs.json"),
+                                "--out", str(out), "--comp", comp, "--mode", mode], cwd=wd, stdout=log, stderr=subprocess.STDOUT)
+        if r.returncode:
+            raise SystemExit(f"{key}: scan failed ({r.returncode})")
+        seeds = sorted({j["seed"] for j in jobs})
+        res[key] = {}
+        for ic in ("0.005", "0.01"):
+            load = lambda d, p: [dict(np.load(d / f"res_{comp}_arrays" / f"{p}__{ic}__{s}.npz")) if d == folder
+                                 else dict(np.load(d / "res_arrays" / f"{p}__{ic}__{s}.npz")) for s in seeds]
+            base, new = judge(load(folder, "elite"), load(folder, "final")), judge(load(wd, "elite"), load(wd, "final"))
+            res[key][ic] = dict(base=base, floor=new)
+            print(f"{key:<20} +-{ic:<5} base {base['elite']['seel']:.4f}{base['elite']['stops']} -> {base['final']['seel']:.4f}{base['final']['stops']} "
+                  f"{100 * base['rel']:+.1f} % | floor {new['elite']['seel']:.4f}{new['elite']['stops']} -> {new['final']['seel']:.4f}"
+                  f"{new['final']['stops']} {100 * new['rel']:+.1f} % [{100 * new['ci95'][0]:+.1f}, {100 * new['ci95'][1]:+.1f}]", flush=True)
+    (WORK / "diag_floor_panel.json").write_text(json.dumps(res, indent=1), encoding="utf-8")
+
+
+if __name__ == "__main__":
+    main()

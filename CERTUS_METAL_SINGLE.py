@@ -16,7 +16,7 @@ The metal index is modeld as wavelength-dependent splines.
 
 This file is the launcher. The computation lives in
 certus/metal/certus_metal_single_physics.py, the Qt workers and the window in
-certus/metal/certus_metal_single_app.py; every name of both modules stays
+certus/metal/certus_metal_single_app.py and certus/ui/certus_metal_single_gui.py; every name of both modules stays
 reachable here, as CERTUS_METAL_SINGLE.<name>.
 """
 
@@ -36,6 +36,7 @@ _configure_numba_env()
 
 import certus.metal.certus_metal_single_app as certus_metal_single_app
 import certus.metal.certus_metal_single_physics as certus_metal_single_physics
+import certus.ui.certus_metal_single_gui as certus_metal_single_gui
 from certus.core.certus_core import (
     SUBSTRATE_MIN_LAMBDA,
     CertusFacadeModule,
@@ -43,11 +44,11 @@ from certus.core.certus_core import (
     create_module_environment,
     setup_logging,
 )
+from certus.metal.certus_metal_single_physics import _resolve_single_substrate_id
 
 # Bound here, not only reached through the facade below: tests load this file by
 # path, and a module loaded that way is never replaced by its facade.
-from certus.metal.certus_metal_single_app import CertusMetalSingleApp
-from certus.metal.certus_metal_single_physics import _resolve_single_substrate_id
+from certus.ui.certus_metal_single_gui import CertusMetalSingleApp
 from certus.ui.certus_ui import (
     init_certus_app,
     setup_gui_exception_handling,
@@ -67,7 +68,7 @@ setup_pyqtgraph_defaults()
 
 # Every name of the two modules stays reachable as CERTUS_METAL_SINGLE.<name>, and a
 # monkeypatch applied to this module reaches the module that uses the name.
-sys.modules[__name__] = CertusFacadeModule(__name__, [certus_metal_single_app, certus_metal_single_physics])
+sys.modules[__name__] = CertusFacadeModule(__name__, [certus_metal_single_gui, certus_metal_single_app, certus_metal_single_physics])
 
 
 # =============================================================================

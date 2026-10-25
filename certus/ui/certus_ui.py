@@ -300,6 +300,8 @@ from certus.utils.certus_data import read_data_file_robust
 from certus.workers.certus_base_workers import GenericWorker, WorkerSignals
 
 _LAZY_REEXPORTS: dict[str, tuple[str, str]] = {
+    "MetalBaseApp": ("certus.ui.certus_metal_base_app", "MetalBaseApp"),
+    "setup_common_metal_plots": ("certus.ui.certus_metal_base_app", "setup_common_metal_plots"),
     "get_certus_last_dir": ("certus.ui.certus_io_ui", "get_certus_last_dir"),
     "set_certus_last_dir": ("certus.ui.certus_io_ui", "set_certus_last_dir"),
     "certus_get_open_file_name": ("certus.ui.certus_io_ui", "certus_get_open_file_name"),

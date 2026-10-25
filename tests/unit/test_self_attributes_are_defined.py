@@ -39,8 +39,8 @@ WINDOWS = [
     "certus.ui.certus_index_spline_ui:CertusIndexSplineApp",
     "CERTUS_RE:CertusREApp",
     "certus.ui.certus_strat_ui:CertusStratApp",
-    "certus.metal.certus_metal_single_app:CertusMetalSingleApp",
-    "certus.metal.certus_metal_bilayer_app:CertusMetalBilayerApp",
+    "certus.ui.certus_metal_single_gui:CertusMetalSingleApp",
+    "certus.ui.certus_metal_bilayer_gui:CertusMetalBilayerApp",
     "CERTUS_HUB:CertusHub",
 ]
 

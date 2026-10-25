@@ -1,0 +1,76 @@
+"""A13: profile the evaluations of strat_local_search (native_evaluator, search corridor, 300 draws). Run from anywhere:
+
+python -X utf8 prof_stage.py REPO N OUT.prof
+Set-up as reports/.../r75_scan.py.txt (r75x2 deep); plan: the LOCAL_SEARCH row of the A10 bench r75x2 seed 101.
+"""
+import cProfile
+import json
+import logging
+import os
+import pstats
+import sys
+import time
+from pathlib import Path
+
+REPO, N, OUT = Path(sys.argv[1]).resolve(), int(sys.argv[2]), sys.argv[3]
+sys.path.insert(0, str(REPO))
+sys.path.insert(1, str(REPO / "scripts"))
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+import numpy as np  # noqa: E402
+
+import bench_examples as Bx  # noqa: E402
+import probe_blocs_vs_plantage as P  # noqa: E402
+from CERTUS_STRAT import CertusStratApp  # noqa: E402
+from _composant import charger_configuration  # noqa: E402
+from certus.core.certus_strat_config import precompute_clues_and_matrices  # noqa: E402
+from certus.core.certus_strat_local_search import native_evaluator, search_params  # noqa: E402
+
+cfg, n_layers = P.COMPOSANTS["r75x2"]
+Bx.qapp()
+Bx.autoanswer_dialogs(True)
+app = CertusStratApp()
+charger_configuration(app, REPO / cfg)
+app.widgets["execution_mode"].setCurrentText("deep")
+base = app.collect_params()
+base.update({"show_plots": False, "monochromator_resolution_nm": 2.0, "search_resolution": False, "noise_layer_offset": 0,
+             "noise_total_layers": n_layers, "require_turning_point": 0, **P._leviers_rate(0), "execution_mode": "deep"})
+logger = logging.getLogger("certus_strat")
+logger.setLevel(logging.WARNING)
+base["logger"] = logger
+nominal = base.get("p_thick_nominal")
+if nominal is None:
+    from certus.core.certus_strat_pipeline import get_refractive_index
+    l0 = float(base["l0"])
+    mult = [float(e) for e in base["stack_string"].split(",") if e.strip()]
+    nH, nL = get_refractive_index(base["nH_id"], l0), get_refractive_index(base["nL_id"], l0)
+    nominal = [(m * l0) / (4.0 * np.real(nH if i % 2 == 0 else nL)) for i, m in enumerate(mult)]
+    base["p_thick_nominal"] = nominal
+nominal = list(nominal)
+clues, _, _ = precompute_clues_and_matrices(base, nominal, logger)
+art = json.loads((REPO / "reports" / "STRAT_etage_A10_2026-10-21" / "blocs_vs_plantage_r75x2_deep_s101_etageA10.json").read_text(encoding="utf-8"))
+row = next(r for r in art["strategies"] if r["origine"] == "LOCAL_SEARCH")
+plan = dict(strategy_id=row["id"], origin=row["origine"], blocks=row["blocs"], rate_layers=row["rate_layers"],
+            witness_reset_layers=row.get("witness_reset_layers") or [], monochromator_resolution_nm=2.0)
+import certus.core.certus_strat_robustness_task as task
+TIMES = {}
+def timed(name, fn):
+    def wrap(*a, **k):
+        t = time.perf_counter(); r = fn(*a, **k); TIMES[name] = TIMES.get(name, 0.0) + time.perf_counter() - t; return r
+    return wrap
+for name in ("simulate_stack_robustness_batch", "calculate_RT_batch_kernel", "compute_batch_rmse"):
+    setattr(task, name, timed(name, getattr(task, name)))
+evaluate = native_evaluator(search_params(base), nominal, clues, {})
+evaluate(plan, 7000104, 300); TIMES.clear()  # warm-up: Numba compiles or loads its cache
+t0 = time.perf_counter()
+prof = cProfile.Profile()
+prof.enable()
+for k in range(N):
+    evaluate(plan, 7000104, 300)
+prof.disable()
+dt = time.perf_counter() - t0
+prof.dump_stats(OUT)
+print(f"{N} evaluations of 300 draws: {dt:.2f} s, {dt / N * 1000:.0f} ms each (profiled)")
+st = pstats.Stats(OUT)
+print({k: f"{v / N * 1000:.1f} ms/eval" for k, v in TIMES.items()})
+st.sort_stats("tottime").print_stats(8)

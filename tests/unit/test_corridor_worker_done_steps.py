@@ -18,9 +18,9 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from certus.spline import certus_index_spline_corridor_worker as module
-from certus.spline.certus_index_spline_corridor_ui import ManualSigmaKnotDialog
-from certus.spline.certus_index_spline_corridor_worker import _CorridorWorkerMixin
+from certus.ui import certus_index_spline_corridor_worker as module
+from certus.ui.certus_index_spline_corridor_ui import ManualSigmaKnotDialog
+from certus.ui.certus_index_spline_corridor_worker import _CorridorWorkerMixin
 
 ROLES = ("manual_sigma_insert", "manual_autoshift", "manual_auto_add_one", "manual_auto_clean", "manual_repartition_log", "manual_repartition_sigma")
 

@@ -30,7 +30,7 @@ $reference = (Resolve-Path 'reports/STRAT_Rate_equilibre_AB_2026-10-13/etat.json
 $plans = (Resolve-Path 'reports/STRAT_Rate_suite_2026-10-14/R0_replay_preparation/selected_fixed_plans_snapshot.json').Path
 $protocol = (Resolve-Path 'reports/STRAT_Rate_suite_2026-10-14/autonomie_jusqu_20261015_0800/protocol_R0_until_20261015_0800.json').Path
 $controlOut = Join-Path (Get-Location).Path 'reports/STRAT_Rate_suite_2026-10-14/R0_fixed_points/attempt_01'
-python scratch/rate_fixed_replay_R0_suite.py --worktree $ratewt --plans $plans --protocol $protocol --reference-state $reference --output $controlOut --run control --deadline-utc '2026-10-15T06:00:00Z' --plan
+# Obsolète (copie scratch absente) : python scratch/rate_fixed_replay_R0_suite.py --worktree $ratewt --plans $plans --protocol $protocol --reference-state $reference --output $controlOut --run control --deadline-utc '2026-10-15T06:00:00Z' --plan
 ```
 
 L'aperçu ci-dessus est à exécuter hors mesure ; il n'est pas exécuté par cette rédaction. Après
@@ -44,7 +44,7 @@ Après `R0=OK` et le vérificateur d'observation `GO` aux mêmes SHA256, aperçu
 $verifyRecord = (Resolve-Path 'reports/STRAT_Rate_suite_2026-10-14/R2_observer_verification/attempt_01/verification.json').Path
 $control = (Resolve-Path 'reports/STRAT_Rate_suite_2026-10-14/R0_fixed_points/attempt_01/control.json').Path
 $traceOut = Join-Path (Get-Location).Path 'reports/STRAT_Rate_suite_2026-10-14/R2_native_trace/attempt_01'
-python scratch/rate_native_pipeline_probe.py --worktree $ratewt --reference-state $reference --output $traceOut --deadline-utc '2026-10-15T06:00:00Z' --tag rate_native_trace_R2_20261014_v1 --verification-record $verifyRecord --validated-control $control --plan
+# Obsolète (copie scratch absente) : python scratch/rate_native_pipeline_probe.py --worktree $ratewt --reference-state $reference --output $traceOut --deadline-utc '2026-10-15T06:00:00Z' --tag rate_native_trace_R2_20261014_v1 --verification-record $verifyRecord --validated-control $control --plan
 ```
 
 Choisir des noms de tentative/tag neufs si ceux-ci existent déjà. Mesurer ensuite une seule trace,

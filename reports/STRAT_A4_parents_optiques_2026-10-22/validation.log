@@ -1,0 +1,9 @@
+VALIDATION PARALLELE -- d0d0acf1, 5 fichier(s) suivi(s) modifie(s)
+  python 3.14.8, 8 worker(s), ui 6, journaux : reports\STRAT_A4_parents_optiques_2026-10-22\validation
+  ruff            PASS      0:00  
+  coherence_md    PASS      0:10  
+  check_claude_md PASS      0:00  
+  check_docs      PASS      0:10  
+  oracle          PASS      0:16  1148 passed
+  unit : 1 echec(s) en parallele, rejeu seul en serie...
+  unit            FAIL      4:36  1 failed, 5605 passed, 7 skipped, 1 xfailed

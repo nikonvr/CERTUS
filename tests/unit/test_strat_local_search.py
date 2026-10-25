@@ -219,3 +219,96 @@ def test_without_confirmation_seeds_a_refused_search_gives_the_winner_back() -> 
     plan, report = joint_local_search(start, evaluate, 6, _cfg(passes=1), 11, (101, 102))
     assert not report["accepted"]
     assert plan is start
+
+
+def _worse_away_from(start: dict):
+    """A configured-corridor evaluator under which every plan but `start` is ten times worse (r75x2 seed 101, 2026-10-22)."""
+    def evaluate(plan, seed, runs):
+        rng = np.random.default_rng(seed)
+        err = 1.0 if plan["blocks"] == start["blocks"] and plan["rate_layers"] == start["rate_layers"] else 10.0
+        return [(np.abs(err * (1.0 + 0.1 * rng.normal(0.0, 1.0, runs))), np.zeros(runs, dtype=bool)) for _ in range(3)]
+    return evaluate
+
+
+def test_the_guard_refuses_a_plan_worse_under_the_configured_corridor() -> None:
+    start = _plan()
+    plan, report = joint_local_search(start, _evaluator(), 6, _cfg(), 11, (101, 102), confirm_seeds=(201, 202),
+                                      evaluate_guard=_worse_away_from(start))
+    assert not report["accepted"]
+    assert plan is start
+    assert report["check_guard_p95"][1] > report["check_guard_p95"][0]
+
+
+def test_without_the_guard_the_report_is_unchanged() -> None:
+    report = joint_local_search(_plan(), _evaluator(), 6, _cfg(), 11, (101, 102))[1]
+    assert report["accepted"]
+    assert not any(key.startswith("check_guard") for key in report)
+
+
+def test_a_guard_that_agrees_keeps_the_same_plan() -> None:
+    plain, _ = joint_local_search(_plan(), _evaluator(), 6, _cfg(), 11, (101, 102))
+    guarded, report = joint_local_search(_plan(), _evaluator(), 6, _cfg(), 11, (101, 102), evaluate_guard=_evaluator())
+    assert report["accepted"]
+    assert guarded == plain
+
+
+def test_the_guard_is_on_by_default_and_can_be_turned_off() -> None:
+    from certus.core.certus_strat_local_search import guard_is_armed
+
+    assert guard_is_armed({})
+    assert not guard_is_armed({"strat_local_search_guard": False})
+
+
+def test_preselection_is_off_by_default_and_reads_its_two_settings() -> None:
+    from certus.core.certus_strat_local_search import presel_settings
+
+    assert presel_settings({}) == (0, 3)
+    assert presel_settings({"strat_local_search_presel_runs": 75, "strat_local_search_presel_keep": 2}) == (75, 2)
+    assert "presel_runs" not in joint_local_search(_plan(), _evaluator(), 6, _cfg(), 11, (101, 102))[1]
+
+
+def test_preselection_finds_the_same_wavelengths_with_fewer_full_evaluations() -> None:
+    _plain_plan, plain = joint_local_search(_plan(), _evaluator(), 6, _cfg(), 11, (101, 102))
+    pre_plan, pre = joint_local_search(_plan(), _evaluator(), 6, _cfg(presel_runs=50, presel_keep=3), 11, (101, 102))
+    assert pre["accepted"]
+    assert pre["evaluations"] < plain["evaluations"]
+    assert pre["presel_evaluations"] > 0
+    for k, best in BEST.items():
+        assert abs(wavelength_of(pre_plan, k) - best) <= 10.0, (k, wavelength_of(pre_plan, k))
+    assert wavelength_of(pre_plan, 3) != 600.0  # a candidate that stops is never kept, pre-selection or not
+
+
+def test_the_index_guided_pass_is_off_by_default_and_reads_its_settings() -> None:
+    from certus.core.certus_strat_local_search import index_guided_settings
+
+    assert index_guided_settings({}) == (0, 3)
+    assert index_guided_settings({"strat_local_search_index_guided_layers": 8, "strat_local_search_index_guided_group": 2}) == (8, 2)
+    report = joint_local_search(_plan(), _evaluator(), 6, _cfg(), 11, (101, 102))[1]
+    assert not any(key.startswith("index_guided") for key in report)
+
+
+def test_group_candidates_shift_together_go_to_rate_together_and_come_back_together() -> None:
+    from certus.core.certus_strat_local_search import group_candidates
+
+    optical = {"blocks": [{"start": 0, "end": 6, "wavelength": 560.0}], "rate_layers": []}
+    labels = [label for label, _plan in group_candidates(optical, [2, 3], _cfg())]
+    assert "L2-L3 +10nm" in labels
+    assert "L2-L3 Rate" in labels
+    shifted = dict(group_candidates(optical, [2, 3], _cfg()))["L2-L3 +10nm"]
+    assert wavelength_of(shifted, 2) == wavelength_of(shifted, 3) == 570.0
+    assert wavelength_of(shifted, 1) == 560.0
+    in_rate = {"blocks": [{"start": 0, "end": 6, "wavelength": 560.0}], "rate_layers": [2, 3, 4]}
+    back = dict(group_candidates(in_rate, [2, 3, 4], _cfg()))
+    assert all(k.startswith("L2-L4 optical@") for k in back)
+    assert next(iter(back.values()))["rate_layers"] == []
+    assert list(group_candidates({"blocks": optical["blocks"], "rate_layers": [3]}, [2, 3], _cfg())) == []  # mixed group: no move
+
+
+def test_the_index_guided_pass_spends_more_evaluations_and_still_adds_no_stop() -> None:
+    plain = joint_local_search(_plan(), _evaluator(), 6, _cfg(), 11, (101, 102))[1]
+    plan, guided = joint_local_search(_plan(), _evaluator(), 6, _cfg(index_guided_layers=2, index_guided_group=3), 11, (101, 102),
+                                      layer_sensitivity=lambda _p: np.arange(6, dtype=float))
+    assert guided["index_guided_layers"] == 2
+    assert guided["index_guided_group"] == 3
+    assert guided["evaluations"] > plain["evaluations"]
+    assert stops(_evaluator()(plan, 5, 50)) == 0

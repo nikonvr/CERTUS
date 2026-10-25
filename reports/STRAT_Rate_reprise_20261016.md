@@ -235,7 +235,7 @@ dans un plafond initial24tâches ; ce sont des diagnostics, pas des holdouts fra
 Commande tentée :
 
 ```powershell
-python -X utf8 -X cpu_count=24 scratch\rate_followup_controlled_20261016.py prepare
+# Obsolète (copie scratch absente) : python -X utf8 -X cpu_count=24 scratch\rate_followup_controlled_20261016.py prepare
 ```
 
 Résultat : sortie1, `PermissionError: [WinError 5] Accès refusé` sur

@@ -453,7 +453,7 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
         vus["n"] += 1
         for _k in ("allow_rate", "rate_by_swing", "rate_tail_sweep", "rate_layer_sets", "rate_tail_keep_optical", "rate_rescue",
                    "rate_rescue_few", "elite_rate_moves", "elite_rate_max_candidates", "elite_rate_joint_candidates", "rate_post_refinement",
-                   "strat_local_search"):
+                   "strat_local_search", "elite_optical_parents"):
             if _k in p:
                 leviers_rate[_k] = p[_k]
         for _k in ("robustness_num_runs", "n_screen_runs", "dp_top_k", "consensus_num_runs"):

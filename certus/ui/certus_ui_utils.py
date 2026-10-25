@@ -109,7 +109,6 @@ from pathlib import Path
 warnings.filterwarnings("ignore", category=RuntimeWarning, message="overflow encountered in cast", module="pyqtgraph")
 
 
-
 from typing import TYPE_CHECKING, Any
 
 # PyQtGraph ViewBox vs NumPy/Python 3.14  cosmetic RuntimeWarning on cast (any emitting module)
@@ -151,6 +150,7 @@ from certus.core.certus_core import (
     handle_exception,
     start_jit_warmup,
 )
+from certus.core.certus_text_format import format_count_kmg  # noqa: F401  # re-exported
 from certus.ui.certus_qt_svg import SVG_AVAILABLE
 
 if SVG_AVAILABLE:
@@ -1177,26 +1177,6 @@ def confirm_stop_with_timeout(parent, timeout_sec=10) -> bool:
     # dialog leaves clickedButton() at None, which the old code read as "stop".
     return msg.clickedButton() is btn_stop
 
-def format_count_kmg(val) -> str:
-    """Format a counter value as a short K/M/G string.
-
-    Used by the stats display of METAL and STRAT applications
-    (``update_stats_display``). Returns plain ``str(val)`` for values
-    under 1000.
-    """
-
-    try:
-        v = float(val)
-    except (TypeError, ValueError):
-        return str(val)
-    if v >= 1e9:
-        return f"{v / 1e9:.1f}G"
-    if v >= 1e6:
-        return f"{v / 1e6:.1f}M"
-    if v >= 1e3:
-        return f"{v / 1e3:.1f}K"
-    # Preserve integer rendering when possible
-    return str(int(v)) if v == int(v) else f"{v:g}"
 
 def stop_worker_and_thread(
     worker,

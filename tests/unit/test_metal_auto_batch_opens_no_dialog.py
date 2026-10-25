@@ -28,8 +28,8 @@ def dialogs(monkeypatch):
 
 
 @pytest.mark.parametrize(("module_name", "class_name"), [
-    ("certus.metal.certus_metal_single_app", "CertusMetalSingleApp"),
-    ("certus.metal.certus_metal_bilayer_app", "CertusMetalBilayerApp"),
+    ("certus.ui.certus_metal_single_gui", "CertusMetalSingleApp"),
+    ("certus.ui.certus_metal_bilayer_gui", "CertusMetalBilayerApp"),
 ])
 def test_loading_a_configuration_in_auto_batch_opens_no_dialog(qapp, dialogs, module_name, class_name) -> None:
     import importlib
@@ -44,7 +44,7 @@ def test_loading_a_configuration_in_auto_batch_opens_no_dialog(qapp, dialogs, mo
 
 def test_an_interactive_load_still_confirms(qapp, dialogs) -> None:
     """Negative control: outside a batch the confirmation stays, so the patch above is live."""
-    from certus.metal.certus_metal_single_app import CertusMetalSingleApp
+    from certus.ui.certus_metal_single_gui import CertusMetalSingleApp
 
     window = CertusMetalSingleApp()
     window._auto_batch_mode = False

@@ -70,6 +70,8 @@ BASE_HEADERS = (
     "Dominant defect",
 )
 NOISE_HEADERS = ("SEEL (0.5x)", "SEEL (1.0x)", "SEEL (2.0x)")
+#: Last column, present only when the run computed it (A11).
+INDEX_SHARE_HEADER = "Index share %"
 SEEL_FIRST_COLUMN = len(BASE_HEADERS)
 BLOCKS_FIRST_COLUMN = SEEL_FIRST_COLUMN + len(NOISE_HEADERS)
 
@@ -436,6 +438,13 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
                 except (ValueError, IndexError, AttributeError):
                     logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
             self.table.setItem(row, start_col_errors + err_idx, item)
+
+        share = result.get("index_share")
+        if share is not None and self.table.columnCount() > start_col_errors + 10:
+            item = QTableWidgetItem(f"{100.0 * float(share):.0f}")
+            item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            item.setToolTip(f"Mean RMSE^2 with the index error {result.get('rmse2_index_on', 0.0):.3e}, without {result.get('rmse2_index_off', 0.0):.3e}")
+            self.table.setItem(row, start_col_errors + 10, item)
 
     def _fill_yield_cell(self, row, result):
         """Fill the yield column of one row: the share of depositions that complete, flagged when the strategy was rescued, with the three failure modes in the tooltip."""
@@ -824,7 +833,11 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
 
             error_headers = [f"Worst #{i + 1} (P95)" for i in range(10)]
 
-            all_headers = base_headers + noise_headers + block_headers + error_headers
+            # A11: the index share column exists only when the run computed it (`strat_index_share_top_k` > 0), so the
+            # table of a run without it is the table it always was.
+            index_headers = [INDEX_SHARE_HEADER] if any(r.get("index_share") is not None for r in strategies_results) else []
+
+            all_headers = base_headers + noise_headers + block_headers + error_headers + index_headers
 
             self.table.setColumnCount(len(all_headers))
 
@@ -866,6 +879,8 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
                 "wavelength changes, and optical sensitivity.",
                 "Next": "Button to inspect this strategy in detail (spectral performance, "
                 "layer-by-layer profile, extrema proximity).",
+                INDEX_SHARE_HEADER: "Share of the mean squared error that comes from the index uncertainty: the same plan on the same "
+                "draws with the configured index corridor, then with none. Lower = less sensitive to the index.",
             }
 
             # SEEL columns
@@ -1283,6 +1298,9 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
 
                     for i, txt in enumerate(worst_layers):
                         row[f"Worst_Err_P95_{i + 1}"] = txt
+
+                    if result.get("index_share") is not None:
+                        row["Index_Share_%"] = f"{100.0 * float(result['index_share']):.1f}"
 
                     data.append(row)
 

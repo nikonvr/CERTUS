@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from certus.utils.certus_curve_smoother import main
+from certus.ui.certus_curve_smoother import main
 
 if __name__ == "__main__":
     multiprocessing.freeze_support()

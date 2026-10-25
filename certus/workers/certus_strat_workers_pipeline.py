@@ -217,6 +217,14 @@ class FullPipelineStrategy:
                         finalize_options.get("ranker", rank_final_results),
                     )
                     finalize_options = {**finalize_options, "ranker": ls_ranker}
+                from certus.core.certus_strat_index_share import top_k as index_share_top_k
+                if index_share_top_k(worker.params) > 0:
+                    from certus.core.certus_strat_ranking import rank_final_results
+                    from certus.workers.certus_strat_workers_index_share import attach_index_share
+                    accumulated_strategies_results = attach_index_share(
+                        accumulated_strategies_results, pre_calc_data, worker.params, shm_manager.get_context_info(),
+                        finalize_options.get("ranker", rank_final_results), index_share_top_k(worker.params),
+                    )
                 worker.signals.progress_snapshot.emit(build_progress_snapshot(message="Finalizing results...", display_ratio=1.0, progress_ratio=1.0, eta_seconds=0.0, confidence=1.0, state=StepState.DONE, module='STRAT', phase='FINALIZE'))
 
                 import gc

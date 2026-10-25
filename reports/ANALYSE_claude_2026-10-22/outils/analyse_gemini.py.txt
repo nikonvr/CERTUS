@@ -1,0 +1,174 @@
+"""Independent re-analysis of the Gemini campaigns A14 and A10 from their raw artefacts (Claude, 2026-10-22).
+
+python -X utf8 analyse_gemini.py REPO OUT.json [GEMINI_TEMP]
+
+Runs no simulation. For each of the ten cases it reads the bench artefact (reports/STRAT_etage_<camp>_2026-10-21/*.json):
+stage report, start plan, ranked-first plan, best non-LOCAL_SEARCH plan. For the eight judged cases it reads the per-draw
+arrays of the frozen-plan replay (reports/RELECTURE_gemini_2026-10-22/<camp>/<case>/res_*_arrays/*.npz, 3 seeds x 1000
+draws, levels 0.5x / 1x / 2x of noise, corridors +-0.005 and +-0.010) and recomputes, per corridor and per level: P95,
+stops, SEEL, the level that sets the SEEL, the paired mean RMSE^2, the SEEL of each seed alone and a paired bootstrap of
+the SEEL difference. GEMINI_TEMP (default %TEMP%) holds Gemini's original arrays (etage_<camp>/res_*_arrays): each file
+is compared bit for bit with the replay.
+"""
+from __future__ import annotations
+
+import json
+import os
+import sys
+from pathlib import Path
+
+import numpy as np
+
+REPO, OUT = Path(sys.argv[1]), Path(sys.argv[2])
+GEM = Path(sys.argv[3]) if len(sys.argv) > 3 else Path(os.environ.get("TEMP", "."))
+CASES = {"A14": ["48c_premium_s42", "35c_deep_s42", "r75x1.5_deep_s77", "r75x1.75_deep_s77", "r75x2-2nm_deep_s77", "75c_deep_s101"],
+         "A10": ["75c_deep_s202", "r75x0.5_deep_s202", "r75x2_deep_s101", "r75x2_deep_s202"]}
+CORR = ("0.005", "0.01")
+B = 2000
+rng = np.random.default_rng(20261022)
+
+
+def seel(score: float) -> float:
+    return 2.0 * float(score) ** 0.5
+
+
+def brief(rows, r):
+    return dict(rank=rows.index(r), id=r["id"], origin=r.get("origine"), seel=seel(r["score"]), rate=len(r.get("rate_layers") or []),
+                crash_eliminated=r.get("crash_eliminated"), crash_rates_by_noise=r.get("crash_rates_by_noise"), n_blocs=r.get("n_blocs"))
+
+
+def change_kinds(changes):
+    kinds = {"lambda": 0, "rate_to_optical": 0, "optical_to_rate": 0}
+    for c in changes:
+        if "optical@" in c:
+            kinds["rate_to_optical"] += 1
+        elif c.endswith(" Rate"):
+            kinds["optical_to_rate"] += 1
+        else:
+            kinds["lambda"] += 1
+    return kinds
+
+
+def bench(art: Path):
+    d = json.loads(art.read_text(encoding="utf-8"))
+    rows = d["strategies"]
+    rep = d.get("strat_local_search") or {}
+    non_ls = [r for r in rows if r.get("origine") != "LOCAL_SEARCH"]
+    elite = sorted((r for r in non_ls if not r.get("crash_eliminated")), key=lambda r: r["score"])[0]
+    start = [r for r in non_ls if r["id"] == rep.get("start_strategy_id")]
+    ls = [r for r in rows if r.get("origine") == "LOCAL_SEARCH"]
+    changes = rep.get("changes", [])
+    used = changes[: rep["fallback_changes"]] if rep.get("fallback_changes") else changes
+    better_than_first = sum(1 for r in non_ls if not r.get("crash_eliminated") and r["score"] < rows[0]["score"])
+    return dict(n_strats=d["n_strats"], instrument=d["instrument"], dirty=d["provenance"].get("git_dirty"), seed=d["seed"],
+                config={k: d["config"].get(k) for k in ("strat_local_search", "elite_rate_moves", "rate_rescue", "elite_optical_parents")},
+                stage={k: v for k, v in rep.items() if k != "changes"}, n_changes=len(changes),
+                kinds_all=change_kinds(changes), kinds_used=change_kinds(used),
+                first=brief(rows, rows[0]), elite=brief(rows, elite), start=brief(rows, start[0]) if start else None,
+                ls=brief(rows, ls[0]) if ls else None, ls_shares_parent_id=bool(ls and start and ls[0]["id"] == start[0]["id"]),
+                rows_scoring_better_than_first=better_than_first)
+
+
+def load(folder: Path):
+    out = {}
+    for f in sorted(folder.glob("res_*_arrays/*.npz")):
+        plan, ic, s = f.stem.split("__")
+        with np.load(f) as z:
+            out[(plan, ic, int(s))] = {k: z[k] for k in z.files}
+    return out
+
+
+def same_bits(a, gem_dir: Path, comp: str):
+    n = same = 0
+    for (plan, ic, s), arrs in a.items():
+        g = gem_dir / f"res_{comp}_arrays" / f"{plan}__{ic}__{s}.npz"
+        if not g.exists():
+            continue
+        n += 1
+        with np.load(g) as z:
+            same += all(np.array_equal(arrs[k], z[k]) for k in arrs) and set(arrs) == set(z.files)
+    return n, same
+
+
+def p95(x, axis=None):
+    return np.percentile(x, 95, axis=axis)
+
+
+def judge(a):
+    res = {}
+    for ic in CORR:
+        seeds = sorted({s for (p, c, s) in a if c == ic})
+        if not seeds:
+            continue
+        cat = {p: {lv: (np.concatenate([a[(p, ic, s)][f"rmse_{lv}"] for s in seeds]),
+                        np.concatenate([a[(p, ic, s)][f"crashed_{lv}"] for s in seeds])) for lv in range(3)} for p in ("elite", "final")}
+        r = {}
+        for p in ("elite", "final"):
+            lv_p95 = [float(p95(cat[p][lv][0])) for lv in range(3)]
+            r[p] = dict(seel=seel(max(lv_p95)), level=int(np.argmax(lv_p95)), seel_by_level=[seel(v) for v in lv_p95],
+                        stops_by_level=[int(cat[p][lv][1].sum()) for lv in range(3)],
+                        seel_done_by_level=[seel(p95(cat[p][lv][0][~cat[p][lv][1]])) for lv in range(3)],
+                        rmse_crashed_min=[float(cat[p][lv][0][cat[p][lv][1]].min()) if cat[p][lv][1].any() else None for lv in range(3)],
+                        seel_by_seed=[seel(max(float(p95(a[(p, ic, s)][f"rmse_{lv}"])) for lv in range(3))) for s in seeds])
+        r["stops"] = {p: sum(r[p]["stops_by_level"]) for p in ("elite", "final")}
+        rel = []
+        for lv in range(3):
+            (re, ce), (rf, cf) = cat["elite"][lv], cat["final"][lv]
+            both = ~ce & ~cf
+            dd = rf[both] ** 2 - re[both] ** 2
+            base = float(np.mean(re[~ce] ** 2))
+            rel.append(dict(rel=float(dd.mean() / base), se=float(dd.std(ddof=1) / np.sqrt(dd.size) / base)))
+        r["paired_rmse2_by_level"] = rel
+        n = len(seeds) * 1000
+        idx = np.concatenate([rng.integers(0, 1000, size=(B, 1000)) + 1000 * k for k in range(len(seeds))], axis=1)
+        boot = {p: np.max(np.stack([p95(cat[p][lv][0][idx], axis=1) for lv in range(3)]), axis=0) for p in ("elite", "final")}
+        dseel = 2 * np.sqrt(boot["final"]) - 2 * np.sqrt(boot["elite"])
+        rseel = np.sqrt(boot["final"] / boot["elite"]) - 1
+        r["dseel"] = dict(point=r["final"]["seel"] - r["elite"]["seel"], ci95=[float(np.percentile(dseel, 2.5)), float(np.percentile(dseel, 97.5))],
+                          rel_point=r["final"]["seel"] / r["elite"]["seel"] - 1,
+                          rel_ci95=[float(np.percentile(rseel, 2.5)), float(np.percentile(rseel, 97.5))], n=n)
+        res[ic] = r
+    return res
+
+
+def main():
+    out = {}
+    for camp, cases in CASES.items():
+        cas = json.loads((REPO / "reports" / f"STRAT_etage_{camp}_2026-10-21" / "cas.json").read_text(encoding="utf-8"))
+        for key in cases:
+            comp = key.split("_")[0]
+            row = dict(campaign=camp, bench=bench(REPO / "reports" / f"STRAT_etage_{camp}_2026-10-21" / cas[key]["artefact"]))
+            folder = REPO / "reports" / "RELECTURE_gemini_2026-10-22" / camp / key
+            a = load(folder)
+            if a:
+                row["judge"] = judge(a)
+                row["bits_vs_gemini"] = same_bits(a, GEM / f"etage_{camp}", comp)
+                row["cas_json_max_abs_diff"] = max(max(abs(row["judge"][ic][p]["seel"] - cas[key][ic]["seel"][p]) for p in ("elite", "final"))
+                                                   for ic in CORR)
+                row["cas_json_stops_equal"] = all(row["judge"][ic]["stops"] == cas[key][ic]["stops"] for ic in CORR)
+                row["cas_json_rel_diff"] = max(abs(row["judge"][ic]["paired_rmse2_by_level"][1]["rel"] - cas[key][ic]["rel"]) for ic in CORR)
+            out[key] = row
+    OUT.write_text(json.dumps(out, indent=1), encoding="utf-8")
+    for key, row in out.items():
+        b = row["bench"]
+        print(f"== {key} [{row['campaign']}] stage accepted={b['stage'].get('accepted')} fallback={b['stage'].get('fallback_changes')}"
+              f" changes={b['n_changes']} kinds_used={b['kinds_used']}")
+        print(f"   first {b['first']['origin']} {b['first']['seel']:.4f} Rate {b['first']['rate']} | best non-LS {b['elite']['seel']:.4f}"
+              f" rank {b['elite']['rank']} Rate {b['elite']['rate']} | start rank {b['start']['rank'] if b['start'] else None}"
+              f" {b['start']['seel'] if b['start'] else float('nan'):.4f} same-as-best={b['start'] and b['start']['rank'] == b['elite']['rank']}"
+              f" | LS shares parent id={b['ls_shares_parent_id']} | non-LS rows better than first={b['rows_scoring_better_than_first']}")
+        if "judge" not in row:
+            continue
+        print(f"   bits vs Gemini {row['bits_vs_gemini']}, max |SEEL - cas.json| {row['cas_json_max_abs_diff']:.2e}, stops equal "
+              f"{row['cas_json_stops_equal']}, max |rel - cas.json| {row['cas_json_rel_diff']:.2e}")
+        for ic, r in row["judge"].items():
+            e, f = r["elite"], r["final"]
+            print(f"   +-{ic}: SEEL {e['seel']:.4f}(L{e['level']}) -> {f['seel']:.4f}(L{f['level']}) {100 * r['dseel']['rel_point']:+.1f} % "
+                  f"CI [{100 * r['dseel']['rel_ci95'][0]:+.1f}, {100 * r['dseel']['rel_ci95'][1]:+.1f}] | by level E "
+                  f"{['%.4f' % v for v in e['seel_by_level']]} F {['%.4f' % v for v in f['seel_by_level']]} | stops E {e['stops_by_level']} "
+                  f"F {f['stops_by_level']} | dRMSE2 by level {['%+.1f' % (100 * x['rel']) for x in r['paired_rmse2_by_level']]} | by seed E "
+                  f"{['%.4f' % v for v in e['seel_by_seed']]} F {['%.4f' % v for v in f['seel_by_seed']]}")
+
+
+if __name__ == "__main__":
+    main()

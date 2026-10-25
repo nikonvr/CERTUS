@@ -111,9 +111,7 @@ code du 2026-10-19, audit d'arrêt OMS du 2026-10-10 : rapports datés dans `rep
 | C23–C28 | Caches modifiables, base RE à 1 nm, FIELD non amorcé, mélange de graines voisines, dernier bit selon les fils, XYZ hors plage (D116) | — | ouvert |
 | C29 | Quatre mutants de formule survivent (D115) | `xyz_to_lab`, `delta_e_2000` … | ouvert |
 | C18 | Relecture du cache Numba plante l'interpréteur (D111) | `calc_spectrum_front`, `calc_spectrum_full`, `compute_batch_rmse` | parade `cache=False` ; cause ouverte |
-| C01 | `ColorWorker.run` levait `TypeError` | `ColorWorker.run` | corrigé `f32734a9` |
 | IDX-01 | Banc INDEX : `mesures-c1b-sio2` et `sb2s3-silice` hors de l'espace de recherche (garde E_g, `n_sub` NaN sous 230 nm, pénalité `TLU_PRIOR_TRANSPARENT_N_MIN_SOFT = 1.50` sur tout n < 1,50) | `TLUObjective` | ouvert ; décision de 👤 |
-| OMS-01 | Chemin « grille machine » de l'arrêt : cinq défauts (D93 à D95) | `certus_strat_growth` | corrigé le 2026-10-10 |
 | OMS-02 | Ancres, inversion et armement de l'arrêt (D96 à D98) | modèle d'arrêt | modèle par défaut depuis `8d9ced13` ; D99 non-défaut |
 | STR-01 | Dérive de vitesse `Rate` non modélisée (P3.1) ; seuil OT ≤ 50 nm non codé (P3.2) | `certus_strat_growth` | ouvert ; P3.0 mesuré : [rapport](../reports/STRAT_r75_leviers_bonne_mere_2026-10-20/bilan.md) |
 

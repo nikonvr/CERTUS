@@ -1,0 +1,218 @@
+{
+  "A14/48c_premium_s42": {
+    "artefact": "reports/STRAT_etage_A14_2026-10-21/blocs_vs_plantage_48c_premium_s042_etageA14_fente.json",
+    "source_commit": "620204516e8666266bfeb67fb759fef8ded9ed77",
+    "config_verified": true,
+    "same_scientific_sources": true,
+    "stage": "repli",
+    "paired_replay": {
+      "0.005": {
+        "seel_delta_nm": {
+          "elite": -1.7319479184152442e-14,
+          "final": -8.93729534823251e-15
+        },
+        "stops_identical": true,
+        "relative_rmse2_delta": 8.559819519859957e-14
+      },
+      "0.01": {
+        "seel_delta_nm": {
+          "elite": 2.3203661214665772e-14,
+          "final": 2.7478019859472624e-15
+        },
+        "stops_identical": true,
+        "relative_rmse2_delta": 1.4210854715202004e-14
+      }
+    }
+  },
+  "A14/35c_deep_s42": {
+    "artefact": "reports/STRAT_etage_A14_2026-10-21/blocs_vs_plantage_35c_deep_s042_etageA14.json",
+    "source_commit": "620204516e8666266bfeb67fb759fef8ded9ed77",
+    "config_verified": true,
+    "same_scientific_sources": true,
+    "stage": "refus\u00e9",
+    "paired_replay": {}
+  },
+  "A14/r75x1.5_deep_s77": {
+    "artefact": "reports/STRAT_etage_A14_2026-10-21/blocs_vs_plantage_r75x1.5_deep_s077_etageA14.json",
+    "source_commit": "620204516e8666266bfeb67fb759fef8ded9ed77",
+    "config_verified": true,
+    "same_scientific_sources": true,
+    "stage": "repli",
+    "paired_replay": {
+      "0.005": {
+        "seel_delta_nm": {
+          "elite": 0.0,
+          "final": 0.0
+        },
+        "stops_identical": true,
+        "relative_rmse2_delta": 0.0
+      },
+      "0.01": {
+        "seel_delta_nm": {
+          "elite": 0.0,
+          "final": 0.0
+        },
+        "stops_identical": true,
+        "relative_rmse2_delta": 0.0
+      }
+    }
+  },
+  "A14/r75x1.75_deep_s77": {
+    "artefact": "reports/STRAT_etage_A14_2026-10-21/blocs_vs_plantage_r75x1.75_deep_s077_etageA14.json",
+    "source_commit": "620204516e8666266bfeb67fb759fef8ded9ed77",
+    "config_verified": true,
+    "same_scientific_sources": true,
+    "stage": "repli",
+    "paired_replay": {
+      "0.005": {
+        "seel_delta_nm": {
+          "elite": 0.0,
+          "final": 0.0
+        },
+        "stops_identical": true,
+        "relative_rmse2_delta": 0.0
+      },
+      "0.01": {
+        "seel_delta_nm": {
+          "elite": 0.0,
+          "final": 0.0
+        },
+        "stops_identical": true,
+        "relative_rmse2_delta": 0.0
+      }
+    }
+  },
+  "A14/r75x2-2nm_deep_s77": {
+    "artefact": "reports/STRAT_etage_A14_2026-10-21/blocs_vs_plantage_r75x2-2nm_deep_s077_etageA14.json",
+    "source_commit": "620204516e8666266bfeb67fb759fef8ded9ed77",
+    "config_verified": true,
+    "same_scientific_sources": true,
+    "stage": "accept\u00e9",
+    "paired_replay": {
+      "0.005": {
+        "seel_delta_nm": {
+          "elite": 0.0,
+          "final": 0.0
+        },
+        "stops_identical": true,
+        "relative_rmse2_delta": 0.0
+      },
+      "0.01": {
+        "seel_delta_nm": {
+          "elite": 0.0,
+          "final": 0.0
+        },
+        "stops_identical": true,
+        "relative_rmse2_delta": 0.0
+      }
+    }
+  },
+  "A14/75c_deep_s101": {
+    "artefact": "reports/STRAT_etage_A14_2026-10-21/blocs_vs_plantage_75c_deep_s101_etageA14.json",
+    "source_commit": "620204516e8666266bfeb67fb759fef8ded9ed77",
+    "config_verified": true,
+    "same_scientific_sources": true,
+    "stage": "accept\u00e9",
+    "paired_replay": {
+      "0.005": {
+        "seel_delta_nm": {
+          "elite": 0.0,
+          "final": 0.0
+        },
+        "stops_identical": true,
+        "relative_rmse2_delta": 0.0
+      },
+      "0.01": {
+        "seel_delta_nm": {
+          "elite": 0.0,
+          "final": 0.0
+        },
+        "stops_identical": true,
+        "relative_rmse2_delta": 0.0
+      }
+    }
+  },
+  "A10/75c_deep_s202": {
+    "artefact": "reports/STRAT_etage_A10_2026-10-21/blocs_vs_plantage_75c_deep_s202_etageA10.json",
+    "source_commit": "6af2cc5be8b73171ad9bf956d42da0d79bae90b2",
+    "config_verified": true,
+    "same_scientific_sources": true,
+    "stage": "accept\u00e9",
+    "paired_replay": {
+      "0.005": {
+        "seel_delta_nm": {
+          "elite": 0.0,
+          "final": 0.0
+        },
+        "stops_identical": true,
+        "relative_rmse2_delta": 0.0
+      },
+      "0.01": {
+        "seel_delta_nm": {
+          "elite": 0.0,
+          "final": 0.0
+        },
+        "stops_identical": true,
+        "relative_rmse2_delta": 0.0
+      }
+    }
+  },
+  "A10/r75x0.5_deep_s202": {
+    "artefact": "reports/STRAT_etage_A10_2026-10-21/blocs_vs_plantage_r75x0.5_deep_s202_etageA10.json",
+    "source_commit": "6af2cc5be8b73171ad9bf956d42da0d79bae90b2",
+    "config_verified": true,
+    "same_scientific_sources": true,
+    "stage": "repli",
+    "paired_replay": {
+      "0.005": {
+        "seel_delta_nm": {
+          "elite": 0.0,
+          "final": 0.0
+        },
+        "stops_identical": true,
+        "relative_rmse2_delta": 0.0
+      },
+      "0.01": {
+        "seel_delta_nm": {
+          "elite": 0.0,
+          "final": 0.0
+        },
+        "stops_identical": true,
+        "relative_rmse2_delta": 0.0
+      }
+    }
+  },
+  "A10/r75x2_deep_s101": {
+    "artefact": "reports/STRAT_etage_A10_2026-10-21/blocs_vs_plantage_r75x2_deep_s101_etageA10.json",
+    "source_commit": "6af2cc5be8b73171ad9bf956d42da0d79bae90b2",
+    "config_verified": true,
+    "same_scientific_sources": true,
+    "stage": "accept\u00e9",
+    "paired_replay": {
+      "0.005": {
+        "seel_delta_nm": {
+          "elite": 0.0,
+          "final": 0.0
+        },
+        "stops_identical": true,
+        "relative_rmse2_delta": 0.0
+      },
+      "0.01": {
+        "seel_delta_nm": {
+          "elite": 0.0,
+          "final": 0.0
+        },
+        "stops_identical": true,
+        "relative_rmse2_delta": 0.0
+      }
+    }
+  },
+  "A10/r75x2_deep_s202": {
+    "artefact": "reports/STRAT_etage_A10_2026-10-21/blocs_vs_plantage_r75x2_deep_s202_etageA10.json",
+    "source_commit": "6af2cc5be8b73171ad9bf956d42da0d79bae90b2",
+    "config_verified": true,
+    "same_scientific_sources": true,
+    "stage": "refus\u00e9",
+    "paired_replay": {}
+  }
+}

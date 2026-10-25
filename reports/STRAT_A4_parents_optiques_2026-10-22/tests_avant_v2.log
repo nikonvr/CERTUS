@@ -1,0 +1,27 @@
+.....FF.F..                                                              [100%]
+================================== FAILURES ===================================
+_________ test_crashed_optical_parents_remain_available_for_mutation __________
+tests\unit\test_strat_elite_optical_parents.py:73: in test_crashed_optical_parents_remain_available_for_mutation
+    assert [item["strategy"]["strategy_id"] for item in seen["parent_results"]] == [4, 5, 0]
+E   assert [5, 0, 1] == [4, 5, 0]
+E     
+E     At index 0 diff: 5 != 4
+E     Use -v to get more diff
+___ test_reserved_pool_supplies_optical_parents_removed_by_the_finite_gate ____
+tests\unit\test_strat_elite_optical_parents.py:82: in test_reserved_pool_supplies_optical_parents_removed_by_the_finite_gate
+    assert [item["strategy"]["strategy_id"] for item in seen["parent_results"]] == [4, 5, 0]
+E   assert [0, 1, 2] == [4, 5, 0]
+E     
+E     At index 0 diff: 0 != 4
+E     Use -v to get more diff
+_ test_production_reserves_before_filtering_and_keeps_the_output_gate[2-True] _
+tests\unit\test_strat_elite_optical_parents.py:117: in test_production_reserves_before_filtering_and_keeps_the_output_gate
+    assert seen["keep_gated"] is active
+E   assert False is True
+------------------------------ Captured log call ------------------------------
+WARNING  test_strat_elite_optical_parents:certus_strat_robustness_gate.py:64 [ROBUSTNESS] 2 strategy(ies) dropped for a NON-FINITE score -- ids: 4, 5
+=========================== short test summary info ===========================
+FAILED tests/unit/test_strat_elite_optical_parents.py::test_crashed_optical_parents_remain_available_for_mutation
+FAILED tests/unit/test_strat_elite_optical_parents.py::test_reserved_pool_supplies_optical_parents_removed_by_the_finite_gate
+FAILED tests/unit/test_strat_elite_optical_parents.py::test_production_reserves_before_filtering_and_keeps_the_output_gate[2-True]
+3 failed, 8 passed in 2.64s

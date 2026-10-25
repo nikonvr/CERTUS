@@ -15,7 +15,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from certus.spline.certus_index_spline_rendering import _PlotMixin
+from certus.ui.certus_index_spline_rendering import _PlotMixin
 
 # --- _manual_grid_note -------------------------------------------------------------------------------------------------------------------
 

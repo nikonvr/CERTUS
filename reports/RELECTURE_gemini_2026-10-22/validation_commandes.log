@@ -1,0 +1,10 @@
+VALIDATION PARALLELE -- e774a120, 6 fichier(s) suivi(s) modifie(s)
+  python 3.14.8, 16 worker(s), ui 6, journaux : reports\RELECTURE_gemini_2026-10-22\validation_commandes
+  ruff            FAIL      0:00  
+  coherence_md    PASS      0:10  
+  check_claude_md PASS      0:00  
+  check_docs      PASS      0:10  
+
+ECHEC (ruff), code 1, non rejoue : lire reports\RELECTURE_gemini_2026-10-22\validation_commandes\ruff.log
+VALIDATION=NO-GO
+La reference de CLAUDE.md section 2 reste la suite complete en serie.

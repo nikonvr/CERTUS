@@ -1,0 +1,44 @@
+"""A3: the four slices of the retained 99-layer partition, three seeds, with the spectral-grid index domain, owner option (a) (C2). (Claude, 2026-10-23)
+
+python -X utf8 run_a3_c2.py REPO
+
+Calls `scripts/campagne_intervalles.mesurer` (the campaign's own measurement: STRAT on the slice, `fast`, slit 2 nm, the slice's
+thicknesses of the NOMINAL noise level cached) with `index_corridor_fixed_domain` armed, in the `_c2` cache, for the partition
+0-22 / 22-42 / 42-76 / 76-99 and the seeds 42, 101 and 202, then `scripts/classer_partitions.py --domaine-fixe --graine S`.
+One slice at a time; a slice already measured in the `_c2` cache is skipped.
+"""
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+REPO = Path(sys.argv[1]).resolve()
+sys.path.insert(0, str(REPO / "scripts"))
+import campagne_intervalles as C  # noqa: E402
+
+PARTITION = [(0, 22), (22, 42), (42, 76), (76, 99)]
+SEEDS = (42, 101, 202)
+
+
+def main():
+    C.DOMAINE_FIXE = True
+    cache = C.get_cache("fast")
+    cache = cache.with_name(cache.name + "_c2a")
+    cache.mkdir(parents=True, exist_ok=True)
+    for seed in SEEDS:
+        for a, b in PARTITION:
+            if C.deja_mesure(a, b, cache, seed):
+                print(f"seed {seed} [{a},{b}) already measured", flush=True)
+                continue
+            row = C.mesurer(a, b, mode="fast", cache_dir=cache, seed=seed)
+            C.fichier(a, b, cache, seed).write_text(json.dumps(C.avec_provenance(row), indent=2, ensure_ascii=False), encoding="utf-8")
+            print(f"seed {seed} [{a},{b}) {row['verdict']} {row.get('n_deposables')}/{row.get('n_strats')} crash_min {row.get('crash_min')} "
+                  f"{row.get('run_s')} s fixed_domain {row.get('index_corridor_fixed_domain')}", flush=True)
+    for seed in SEEDS:
+        r = subprocess.run([sys.executable, "-X", "utf8", str(REPO / "scripts" / "classer_partitions.py"), "--domaine-fixe", "--cache-dir", str(cache),
+                            "--graine", str(seed), "--lo", "20", "--hi", "60"], cwd=REPO, capture_output=True, text=True)
+        print(f"=== assembly seed {seed}\n{r.stdout[-1500:]}{r.stderr[-800:]}", flush=True)
+
+
+if __name__ == "__main__":
+    main()

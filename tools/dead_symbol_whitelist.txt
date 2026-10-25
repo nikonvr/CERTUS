@@ -170,7 +170,7 @@ certus.ui.mixins.certus_base_core_mixins:CertusCommandPaletteMixin.register_comm
 # DataFrame Savitzky-Golay tuner; test_certus_spectral_preproc checks its output.
 certus.utils.certus_spectral_preproc:auto_tune_savgol_params_from_dataframe
 # SPLINE report entry point; test_certus_spline_report and test_gui_smoke exercise it.
-certus.utils.certus_spline_report:SplineReportBuilder.build_report
+certus.spline.certus_spline_report:SplineReportBuilder.build_report
 # STRAT context-manager entry point; test_certus_strat_context tests nesting and restoration.
 certus.utils.certus_strat_context:StratContext.activate
 # STRAT process-context initializer; test_certus_strat_context checks worker setup.

@@ -30,7 +30,7 @@ sys.path.insert(0, str(ROOT))
 
 WINDOWS = {
     "CERTUS_HUB": ("CERTUS_HUB", "CertusHub"),
-    "CERTUS_SMOOTHER": ("certus.utils.certus_curve_smoother", "CurveSmootherGUI"),
+    "CERTUS_SMOOTHER": ("certus.ui.certus_curve_smoother", "CurveSmootherGUI"),
     "CERTUS_SUBSTRATE_INDEX": ("certus.ui.certus_substrate_ui", "SubstrateIndexGUI"),
     "CERTUS_METAL_SINGLE": ("CERTUS_METAL_SINGLE", "CertusMetalSingleApp"),
     "CERTUS_METAL_BILAYER": ("CERTUS_METAL_BILAYER", "CertusMetalBilayerApp"),
@@ -77,7 +77,7 @@ def test_the_smoother_keys_are_its_buttons_and_respect_their_greyed_state(qapp, 
     from PyQt6.QtGui import QShortcut
     from PyQt6.QtWidgets import QMessageBox
 
-    import certus.utils.certus_curve_smoother as smoother
+    import certus.ui.certus_curve_smoother as smoother
 
     shown: list[str] = []
     monkeypatch.setattr(QMessageBox, "information", staticmethod(lambda _parent, title, *_a, **_k: shown.append(title)))

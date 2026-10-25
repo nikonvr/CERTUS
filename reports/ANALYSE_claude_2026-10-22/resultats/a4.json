@@ -1,0 +1,452 @@
+{
+ "48c_M0": {
+  "config": {
+   "elite_optical_parents": 0,
+   "strat_local_search": true,
+   "elite_rate_moves": true,
+   "rate_rescue": true,
+   "elite_rate_max_candidates": 120
+  },
+  "commit": "b399b842",
+  "dirty": false,
+  "n": 2653,
+  "classes": {
+   "rate": 2653
+  },
+  "pure_in_population": 0,
+  "pure_min_crash": null,
+  "depositable": 2653,
+  "best_seel": 0.15312639083714288,
+  "best_origin": "LOCAL_SEARCH",
+  "best_rate": 13,
+  "first_origin": "LOCAL_SEARCH",
+  "first_seel": 0.15312639083714288,
+  "best_non_ls_seel": 0.17207542670096132,
+  "stage": {
+   "accepted": true,
+   "fallback": 35,
+   "changes": 38,
+   "start": 900250409,
+   "gain": -0.7862492714872944,
+   "stops": [
+    0,
+    1
+   ]
+  },
+  "ls": true,
+  "cas_json_global_seel": 0.15312639083714288,
+  "cas_json_overrides": {
+   "elite_optical_parents": 0,
+   "strat_local_search": true
+  },
+  "log": {
+   "rounds": 0,
+   "short": 0,
+   "selected": {},
+   "available_max": null,
+   "pool": 0,
+   "pool_available": [],
+   "parents": 306,
+   "parents_crash100": 91,
+   "parents_crash_ge5": 106
+  },
+  "winner_same_plan_as_M0": true,
+  "d_best_seel_vs_M0_pct": 0.0,
+  "parent_slots_differing_from_M0": 0,
+  "parent_slots_compared": 20
+ },
+ "48c_M2": {
+  "config": {
+   "elite_optical_parents": 2,
+   "strat_local_search": true,
+   "elite_rate_moves": true,
+   "rate_rescue": true,
+   "elite_rate_max_candidates": 120
+  },
+  "commit": "b399b842",
+  "dirty": false,
+  "n": 2602,
+  "classes": {
+   "rate": 2602
+  },
+  "pure_in_population": 0,
+  "pure_min_crash": null,
+  "depositable": 2602,
+  "best_seel": 0.15312639083713495,
+  "best_origin": "LOCAL_SEARCH",
+  "best_rate": 13,
+  "first_origin": "LOCAL_SEARCH",
+  "first_seel": 0.15312639083713495,
+  "best_non_ls_seel": 0.17207542670096582,
+  "stage": {
+   "accepted": true,
+   "fallback": 35,
+   "changes": 38,
+   "start": 900250427,
+   "gain": -0.7862492714872945,
+   "stops": [
+    0,
+    1
+   ]
+  },
+  "ls": true,
+  "cas_json_global_seel": 0.15312639083713495,
+  "cas_json_overrides": {
+   "elite_optical_parents": 2,
+   "strat_local_search": true
+  },
+  "log": {
+   "rounds": 38,
+   "short": 2,
+   "selected": {
+    "2": 36,
+    "1": 2
+   },
+   "available_max": 241,
+   "pool": 28,
+   "pool_available": [
+    [
+     2,
+     8
+    ],
+    [
+     20,
+     2
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     22,
+     2
+    ],
+    [
+     241,
+     1
+    ],
+    [
+     92,
+     1
+    ]
+   ],
+   "parents": 306,
+   "parents_crash100": 119,
+   "parents_crash_ge5": 146
+  },
+  "winner_same_plan_as_M0": true,
+  "d_best_seel_vs_M0_pct": -5.184741524999481e-12,
+  "parent_slots_differing_from_M0": 20,
+  "parent_slots_compared": 20
+ },
+ "48c_M4": {
+  "config": {
+   "elite_optical_parents": 4,
+   "strat_local_search": true,
+   "elite_rate_moves": true,
+   "rate_rescue": true,
+   "elite_rate_max_candidates": 120
+  },
+  "commit": "b399b842",
+  "dirty": false,
+  "n": 2602,
+  "classes": {
+   "rate": 2602
+  },
+  "pure_in_population": 0,
+  "pure_min_crash": null,
+  "depositable": 2602,
+  "best_seel": 0.15312639083713495,
+  "best_origin": "LOCAL_SEARCH",
+  "best_rate": 13,
+  "first_origin": "LOCAL_SEARCH",
+  "first_seel": 0.15312639083713495,
+  "best_non_ls_seel": 0.17207542670096582,
+  "stage": {
+   "accepted": true,
+   "fallback": 35,
+   "changes": 38,
+   "start": 900250446,
+   "gain": -0.7862492714872945,
+   "stops": [
+    0,
+    1
+   ]
+  },
+  "ls": true,
+  "cas_json_global_seel": 0.15312639083713495,
+  "cas_json_overrides": {
+   "elite_optical_parents": 4,
+   "strat_local_search": true
+  },
+  "log": {
+   "rounds": 38,
+   "short": 11,
+   "selected": {
+    "2": 9,
+    "4": 27,
+    "1": 2
+   },
+   "available_max": 241,
+   "pool": 28,
+   "pool_available": [
+    [
+     2,
+     8
+    ],
+    [
+     20,
+     2
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     22,
+     2
+    ],
+    [
+     241,
+     1
+    ],
+    [
+     92,
+     1
+    ]
+   ],
+   "parents": 306,
+   "parents_crash100": 155,
+   "parents_crash_ge5": 182
+  },
+  "winner_same_plan_as_M0": true,
+  "d_best_seel_vs_M0_pct": -5.184741524999481e-12,
+  "parent_slots_differing_from_M0": 20,
+  "parent_slots_compared": 20
+ },
+ "r75x0.5_M0": {
+  "config": {
+   "elite_optical_parents": 0,
+   "strat_local_search": true,
+   "elite_rate_moves": true,
+   "rate_rescue": true,
+   "elite_rate_max_candidates": 120
+  },
+  "commit": "b399b842",
+  "dirty": false,
+  "n": 4144,
+  "classes": {
+   "rate": 4144
+  },
+  "pure_in_population": 0,
+  "pure_min_crash": null,
+  "depositable": 4144,
+  "best_seel": 0.36014200135361113,
+  "best_origin": "LOCAL_SEARCH",
+  "best_rate": 53,
+  "first_origin": "LOCAL_SEARCH",
+  "first_seel": 0.36014200135361113,
+  "best_non_ls_seel": 0.39671478821937545,
+  "stage": {
+   "accepted": true,
+   "fallback": 25,
+   "changes": 30,
+   "start": 900951015,
+   "gain": -0.6216784091743792,
+   "stops": [
+    0,
+    19
+   ]
+  },
+  "ls": true,
+  "cas_json_global_seel": 0.36014200135361113,
+  "cas_json_overrides": {
+   "elite_optical_parents": 0,
+   "strat_local_search": true
+  },
+  "log": {
+   "rounds": 0,
+   "short": 0,
+   "selected": {},
+   "available_max": null,
+   "pool": 0,
+   "pool_available": [],
+   "parents": 644,
+   "parents_crash100": 161,
+   "parents_crash_ge5": 164
+  },
+  "winner_same_plan_as_M0": true,
+  "d_best_seel_vs_M0_pct": 0.0,
+  "parent_slots_differing_from_M0": 0,
+  "parent_slots_compared": 30
+ },
+ "r75x0.5_M2": {
+  "config": {
+   "elite_optical_parents": 2,
+   "strat_local_search": true,
+   "elite_rate_moves": true,
+   "rate_rescue": true,
+   "elite_rate_max_candidates": 120
+  },
+  "commit": "b399b842",
+  "dirty": false,
+  "n": 4058,
+  "classes": {
+   "rate": 4058
+  },
+  "pure_in_population": 0,
+  "pure_min_crash": null,
+  "depositable": 4058,
+  "best_seel": 0.36014200135361113,
+  "best_origin": "LOCAL_SEARCH",
+  "best_rate": 53,
+  "first_origin": "LOCAL_SEARCH",
+  "first_seel": 0.36014200135361113,
+  "best_non_ls_seel": 0.39671478821937545,
+  "stage": {
+   "accepted": true,
+   "fallback": 25,
+   "changes": 30,
+   "start": 900851080,
+   "gain": -0.6216784091743792,
+   "stops": [
+    0,
+    19
+   ]
+  },
+  "ls": true,
+  "cas_json_global_seel": 0.36014200135361113,
+  "cas_json_overrides": {
+   "elite_optical_parents": 2,
+   "strat_local_search": true
+  },
+  "log": {
+   "rounds": 78,
+   "short": 14,
+   "selected": {
+    "2": 64,
+    "1": 14
+   },
+   "available_max": 192,
+   "pool": 46,
+   "pool_available": [
+    [
+     1,
+     10
+    ],
+    [
+     2,
+     8
+    ],
+    [
+     26,
+     6
+    ],
+    [
+     27,
+     6
+    ],
+    [
+     192,
+     2
+    ],
+    [
+     12,
+     2
+    ]
+   ],
+   "parents": 644,
+   "parents_crash100": 224,
+   "parents_crash_ge5": 254
+  },
+  "winner_same_plan_as_M0": false,
+  "d_best_seel_vs_M0_pct": 0.0,
+  "parent_slots_differing_from_M0": 29,
+  "parent_slots_compared": 30
+ },
+ "r75x0.5_M4": {
+  "config": {
+   "elite_optical_parents": 4,
+   "strat_local_search": true,
+   "elite_rate_moves": true,
+   "rate_rescue": true,
+   "elite_rate_max_candidates": 120
+  },
+  "commit": "b399b842",
+  "dirty": false,
+  "n": 3822,
+  "classes": {
+   "rate": 3822
+  },
+  "pure_in_population": 0,
+  "pure_min_crash": null,
+  "depositable": 3822,
+  "best_seel": 0.3715047440428645,
+  "best_origin": "LOCAL_SEARCH",
+  "best_rate": 50,
+  "first_origin": "LOCAL_SEARCH",
+  "first_seel": 0.3715047440428645,
+  "best_non_ls_seel": 0.45780773873331254,
+  "stage": {
+   "accepted": true,
+   "fallback": null,
+   "changes": 23,
+   "start": 900550843,
+   "gain": -0.7518687412175012,
+   "stops": [
+    111,
+    12
+   ]
+  },
+  "ls": true,
+  "cas_json_global_seel": 0.3715047440428645,
+  "cas_json_overrides": {
+   "elite_optical_parents": 4,
+   "strat_local_search": true
+  },
+  "log": {
+   "rounds": 78,
+   "short": 22,
+   "selected": {
+    "2": 8,
+    "1": 14,
+    "4": 56
+   },
+   "available_max": 192,
+   "pool": 46,
+   "pool_available": [
+    [
+     1,
+     10
+    ],
+    [
+     2,
+     8
+    ],
+    [
+     26,
+     6
+    ],
+    [
+     27,
+     6
+    ],
+    [
+     192,
+     2
+    ],
+    [
+     12,
+     2
+    ]
+   ],
+   "parents": 644,
+   "parents_crash100": 305,
+   "parents_crash_ge5": 338
+  },
+  "winner_same_plan_as_M0": false,
+  "d_best_seel_vs_M0_pct": 3.1550729008407608,
+  "parent_slots_differing_from_M0": 30,
+  "parent_slots_compared": 30
+ }
+}

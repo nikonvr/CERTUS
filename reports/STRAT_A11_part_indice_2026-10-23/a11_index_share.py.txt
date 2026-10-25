@@ -1,0 +1,83 @@
+"""A11 report: the index share of the ten best strategies of the three 75-layer benches, with STRAT's own function. (Claude, 2026-10-23)
+
+python -X utf8 a11_index_share.py REPO OUT.json
+
+Benches: the guarded campaign of 2026-10-22 (reports/STRAT_garde_A10_2026-10-22), 75c seed 202, r75x0.5 seed 202, r75x2 seed 101, at the
+defaults. For each of the first ten rows of the final ranking: `index_share` of certus.core.certus_strat_index_share on the evaluations
+of `native_evaluator` under the configured corridor and under zero, `robustness_num_runs` draws (300 in deep), seed = bench seed +
+INDEX_SHARE_SEED_OFFSET, exactly as `attach_index_share` does in a run.
+"""
+from __future__ import annotations
+
+import json
+import logging
+import os
+import sys
+from pathlib import Path
+
+REPO, OUT = Path(sys.argv[1]).resolve(), Path(sys.argv[2])
+sys.path.insert(0, str(REPO))
+sys.path.insert(1, str(REPO / "scripts"))
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+import numpy as np  # noqa: E402
+
+CASES = {"75c": ("blocs_vs_plantage_75c_deep_s202_gardeA10.json", 202), "r75x0.5": ("blocs_vs_plantage_r75x0.5_deep_s202_gardeA10.json", 202),
+         "r75x2": ("blocs_vs_plantage_r75x2_deep_s101_gardeA10.json", 101)}
+
+
+def main():
+    import bench_examples as Bx
+    import probe_blocs_vs_plantage as P
+    from CERTUS_STRAT import CertusStratApp
+    from _composant import charger_configuration
+    from certus.core.certus_strat_config import precompute_clues_and_matrices
+    from certus.core.certus_strat_index_share import INDEX_SHARE_SEED_OFFSET, index_share
+    from certus.core.certus_strat_local_search import native_evaluator, nominal_level_index
+
+    Bx.qapp()
+    Bx.autoanswer_dialogs(True)
+    res = {}
+    for comp, (art_name, bench_seed) in CASES.items():
+        cfg_path, n_layers = P.COMPOSANTS[comp]
+        app = CertusStratApp()
+        charger_configuration(app, REPO / cfg_path)
+        app.widgets["execution_mode"].setCurrentText("deep")
+        base = app.collect_params()
+        base.update({"show_plots": False, "monochromator_resolution_nm": 2.0, "search_resolution": False, "noise_layer_offset": 0,
+                     "noise_total_layers": n_layers, "require_turning_point": 0, **P._leviers_rate(0), "execution_mode": "deep",
+                     "robustness_seed": bench_seed})
+        logger = logging.getLogger("certus_strat")
+        logger.setLevel(logging.WARNING)
+        base["logger"] = logger
+        nominal = base.get("p_thick_nominal")
+        if nominal is None:
+            from certus.core.certus_strat_pipeline import get_refractive_index
+            l0 = float(base["l0"])
+            mult = [float(e) for e in base["stack_string"].split(",") if e.strip()]
+            nH, nL = get_refractive_index(base["nH_id"], l0), get_refractive_index(base["nL_id"], l0)
+            nominal = [(m * l0) / (4.0 * np.real(nH if i % 2 == 0 else nL)) for i, m in enumerate(mult)]
+            base["p_thick_nominal"] = nominal
+        nominal = list(nominal)
+        clues, _cache, _wls = precompute_clues_and_matrices(base, nominal, logger)
+        on = native_evaluator(base, nominal, clues, {})
+        off = native_evaluator({**base, "index_corridor": 0.0}, nominal, clues, {})
+        runs = int(base.get("robustness_num_runs", 300))
+        seed = bench_seed + INDEX_SHARE_SEED_OFFSET
+        level = nominal_level_index(base)
+        art = json.loads((REPO / "reports" / "STRAT_garde_A10_2026-10-22" / art_name).read_text(encoding="utf-8"))
+        rows = []
+        for rank, row in enumerate(art["strategies"][:10], 1):
+            plan = dict(strategy_id=row["id"], origin=row["origine"], blocks=row["blocs"], rate_layers=row["rate_layers"],
+                        witness_reset_layers=row.get("witness_reset_layers") or [], monochromator_resolution_nm=row.get("resolution_nm") or 2.0)
+            r = index_share(on(plan, seed, runs), off(plan, seed, runs), level)
+            rows.append(dict(rank=rank, origin=row["origine"], seel=2 * row["score"] ** 0.5, rate=len(row["rate_layers"]), **r))
+            print(f"{comp} #{rank} {row['origine']:<13} SEEL {2 * row['score'] ** 0.5:.4f} Rate {len(row['rate_layers']):2d} "
+                  f"index share {100 * r['index_share']:.0f} %", flush=True)
+        res[comp] = dict(artefact=art_name, runs=runs, seed=seed, rows=rows)
+        app.close()
+    OUT.write_text(json.dumps(res, indent=1), encoding="utf-8")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,45 @@
+"""Run the eight CLAUDE.md validation commands serially, stopping at the first failure."""
+from __future__ import annotations
+
+import hashlib
+import json
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+OUT = Path(__file__).resolve().parent / 'validation_serie_v2'
+OUT.mkdir(exist_ok=True)
+sys.path.insert(0, str(ROOT / 'scripts'))
+from validate_parallel import parse_summary
+
+pytest = [sys.executable, '-m', 'pytest', '-q', '--no-cov', '-x']
+commands = [
+    ('ruff', [sys.executable, '-m', 'ruff', 'check', '.']),
+    ('oracle', pytest + ['tests/oracle/']),
+    ('unit', pytest + ['tests/unit/']),
+    ('ui', pytest + ['tests/ui/']),
+    ('rest', pytest + ['tests/', '--ignore=tests/oracle', '--ignore=tests/unit', '--ignore=tests/ui']),
+    *[(name, [sys.executable, f'scripts/{name}.py']) for name in ('coherence_md', 'check_claude_md', 'check_docs')],
+]
+changed = subprocess.check_output(['git', 'diff', '--name-only', 'HEAD', '--', 'certus', 'scripts', 'tests'],
+                                  cwd=ROOT, text=True).splitlines()
+hashes = {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in changed}
+record = {'head': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
+          'modified_source_sha256': hashes, 'stages': {}}
+for name, command in commands:
+    print(f'START {name}', flush=True)
+    started = time.monotonic()
+    log = OUT / f'{name}.log'
+    with log.open('w', encoding='utf-8') as stream:
+        result = subprocess.run(command, cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT)
+    record['stages'][name] = {'returncode': result.returncode, 'seconds': time.monotonic() - started,
+                             'counts': parse_summary(log.read_text(encoding='utf-8', errors='replace'))}
+    (OUT / 'resultats.json').write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
+    print(f'DONE {name}: {record["stages"][name]}', flush=True)
+    if result.returncode:
+        print('VALIDATION_SERIE=NO-GO', flush=True)
+        raise SystemExit(result.returncode)
+assert hashes == {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in changed}
+print('VALIDATION_SERIE=GO', flush=True)

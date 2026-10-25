@@ -14,8 +14,8 @@ import logging
 import numpy as np
 import pytest
 
-import certus.spline.certus_index_spline_corridor_data as data_module
-import certus.spline.certus_index_spline_corridors as corridors
+import certus.ui.certus_index_spline_corridor_data as data_module
+import certus.ui.certus_index_spline_corridors as corridors
 
 
 class _Window(corridors._DataMixin):

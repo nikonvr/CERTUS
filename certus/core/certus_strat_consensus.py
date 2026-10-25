@@ -32,6 +32,7 @@ from certus.core.certus_strat_ranking import (
     _resolve_monitoring_wavelength_grid,
     next_refinement_strategy_id,
 )
+from certus.core.certus_strat_robustness_rate import _select_elite_optical_parents
 from certus.utils.certus_strat_context import (
     _dedupe_preserve_order_int,
     _default_consensus_seeds,
@@ -699,9 +700,8 @@ def _log_elite_parents(
 
     WHY THIS EXISTS. ELITE's neighbourhood is deterministic, local and one-move-at-a-time:
     a single block's wavelength shifted by +/- span, or a single boundary shifted by one
-    layer, never both. So the whole outcome is decided by WHERE it starts -- and the parents
-    are simply `strategies_results[:elite_parent_top_k]`, i.e. the head of a list that has
-    been through the ranking and two diversity passes.
+    layer, never both. Parents come from the ranked head after diversity, with any active
+    optical quota reserved first by `_select_elite_optical_parents`.
 
     📏 Measured 2026-08-21 on `r75x2` at 2 nm, seed 42: 48 of its own nine-block strategies
     carry the block `(33, 53) @ 686 nm`, ONE nanometre in wavelength from the block
@@ -789,12 +789,8 @@ def _apply_elite_refinement_if_enabled(
         f"{float(ctx.params.get('scan_wl_step', 0.0)):g} nm"
     )
     total_elite_added = 0
-    # 🔑 WHICH PARENTS GET EXPLORED. The moves are tried parent after parent until `elite_max_candidates` (120) are kept,
-    # and a parent of K blocks has up to 4K - 2 of them: 📏 with ten near-duplicate parents of 11 blocks, the first four
-    # fill the budget (38, 40, 40 and 2 candidates), with 15 blocks the first three (56, 56, 8) -- `elite_parent_top_k`
-    # says ten. With `elite_round_robin` the parents take turns, one move each, every parent's moves in an order drawn
-    # from (robustness seed, round, parent rank): same budget, every parent explored. Off by default: the former order.
-    # Read from `params` only -- the configuration file does not route it (an option to measure, not yet to deliver).
+    # 🔑 Moves visit parents in order until the budget is full (📏 `_select_elite_optical_parents`). Round-robin
+    # gives each parent a turn, with moves shuffled by (seed, round, parent rank).
     round_robin = bool(ctx.params.get("elite_round_robin", False))
     base_seed = _resolve_robustness_base_seed(ctx.params)
     # 👤 2026-10-12: optics, a packet of Rate, optics at another wavelength: on by default (`r75x0.5` 0.4981 -> 0.3967 nm); `allow_rate = 0` is honoured.
@@ -803,7 +799,11 @@ def _apply_elite_refinement_if_enabled(
     worker_count = get_safe_worker_count()
 
     for elite_round in range(1, elite_rounds + 1):
-        parent_count = _elite_parent_count(strategies_results, elite_parent_top_k)
+        parents = _select_elite_optical_parents(
+            strategies_results, _elite_parent_count(strategies_results, elite_parent_top_k),
+            int(ctx.params.get("elite_optical_parents", 0)), ctx.logger, ctx.elite_optical_parent_pool,
+        )
+        parent_count = len(parents)
         nominal_target_pair = _resolve_elite_nominal_and_target_threshold(
             strategies_results,
             nominal_noise_level=nominal_noise_level,
@@ -816,9 +816,9 @@ def _apply_elite_refinement_if_enabled(
         existing_signatures = _existing_block_signatures(strategies_results)
         # 🔑 WHAT ELITE TAKES AS ITS STARTING POINT -- pure logging. Its mutation being
         # deterministic, local and one-at-a-time, the whole result is decided here.
-        _log_elite_parents(ctx.logger, elite_round, strategies_results[:parent_count])
+        _log_elite_parents(ctx.logger, elite_round, parents)
         elite_candidates, _next_sid = _generate_elite_candidate_strategies(
-            parent_results=strategies_results[:parent_count],
+            parent_results=parents,
             available_wls=available_wls,
             num_layers=ctx.num_layers,
             start_strategy_id=_refinement_start(strategies_results, ctx),

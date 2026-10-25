@@ -67,7 +67,7 @@ class TestMetalBaseAppConfigBridge:
     def _make_dummy(self, legacy_collect_returns=None, **hooks):
         """Create a dummy object with METAL hooks."""
 
-        from certus.metal.certus_metal_common import MetalBaseApp
+        from certus.ui.certus_metal_base_app import MetalBaseApp
         dummy = MagicMock()
         # Bind the bridge methods from MetalBaseApp to the dummy
         dummy._collect_config = MetalBaseApp._collect_config.__get__(dummy)

@@ -46,7 +46,7 @@ def test_strat_s_welcome_page_counts_the_materials_of_its_database(qapp, monkeyp
 
 
 def test_the_smart_init_preview_opens_the_live_nk_monitor_beside_it(qapp, monkeypatch):
-    import certus.spline.certus_index_spline_smart_init as smart_init
+    import certus.ui.certus_index_spline_smart_init as smart_init
     from certus.ui.certus_index_spline_monitor_ui import LiveIndexMonitor
     from certus.ui.certus_index_spline_ui import CertusIndexSplineApp
 

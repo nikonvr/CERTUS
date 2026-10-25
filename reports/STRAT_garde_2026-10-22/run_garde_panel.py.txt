@@ -1,0 +1,153 @@
+"""Confirmation of strat_local_search_guard (Claude, 2026-10-22): the A14 and A10 benches with the guard armed, judged as A14/A10
+(same judge seeds, so each case pairs with its unguarded result). Derived from reports/STRAT_etage_defauts_2026-10-21/run_etage_panel.py.txt.
+
+Ready to run, nothing to edit (made for Gemini). From the repository root, on a clean tree:
+
+    python -X utf8 reports/STRAT_etage_defauts_2026-10-21/run_etage_panel.py.txt A14
+    python -X utf8 reports/STRAT_etage_defauts_2026-10-21/run_etage_panel.py.txt A10
+
+What it does, one measurement at a time (CLAUDE.md section 4):
+1. `git worktree add --detach <TEMP>/mesure_wt HEAD`, a throwaway tree, so the main tree may be edited meanwhile;
+2. for each case, `scripts/probe_blocs_vs_plantage.py` in that tree with `CERTUS_PROBE_OVERRIDES=strat_local_search=true` (the
+   default, written so the artefact records it) and the tag of the campaign;
+3. the plan STRAT ranks first and the best non-LOCAL_SEARCH plan are evaluated by STRAT's native robustness task at +-0.005 and
+   +-0.010 of index uncertainty, 3 x 1 000 draws on fresh seeds, the same draws for both (C2);
+4. `reports/STRAT_etage_<campaign>_<date>/bilan.md` gets one table row per case, `cas.json` the raw figures, and the artefacts
+   are copied next to it. Then the throwaway tree is removed.
+Stops at the first failure and says which case. Never pushes, never changes a default.
+"""
+from __future__ import annotations
+
+import datetime as _dt
+import glob
+import json
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+import numpy as np
+
+ROOT = Path(__file__).resolve().parents[2]
+TOOLS = ROOT / "reports" / "STRAT_r75_leviers_bonne_mere_2026-10-20" / "outils"
+CAMPAIGNS = {
+    # (design, mode, slit search, seed)
+    "A14": [("48c", "premium", 1, 42), ("35c", "deep", 0, 42), ("r75x1.5", "deep", 0, 77), ("r75x1.75", "deep", 0, 77),
+            ("r75x2-2nm", "deep", 0, 77), ("75c", "deep", 0, 101)],
+    "A10": [("75c", "deep", 0, 202), ("r75x0.5", "deep", 0, 202), ("r75x2", "deep", 0, 101), ("r75x2", "deep", 0, 202)],
+    # r75x2, the reference component, on two more bench seeds (owner, 2026-10-23): 77 (first measured on a modified tree) and 303 (new)
+    "R75X2": [("r75x2", "deep", 0, 77), ("r75x2", "deep", 0, 303)],
+}
+JUDGE_SEED = {"A14": 20261025001, "A10": 20261026001, "R75X2": 20261031001}
+
+
+def sh(cmd, cwd, env=None, log=None):
+    print("$", " ".join(str(c) for c in cmd), flush=True)
+    with open(log, "w", encoding="utf-8") if log else open(os.devnull, "w") as out:
+        r = subprocess.run([str(c) for c in cmd], cwd=cwd, env=env, stdout=out, stderr=subprocess.STDOUT)
+    if r.returncode != 0:
+        raise SystemExit(f"FAILED ({r.returncode}): {' '.join(str(c) for c in cmd)} -- see {log}")
+
+
+def plan_of(row):
+    return dict(strategy_id=row["id"], origin=row["origine"], blocks=row["blocs"], rate_layers=row["rate_layers"],
+                witness_reset_layers=row.get("witness_reset_layers") or [], monochromator_resolution_nm=row.get("resolution_nm") or 2.0)
+
+
+def judge(wt, work, comp, mode, artefact, seed0):
+    d = json.loads(Path(artefact).read_text(encoding="utf-8"))
+    if d.get("verdict") != "OK":
+        return dict(verdict=d.get("verdict"))
+    rows = d["strategies"]
+    first = rows[0]
+    elite = sorted((x for x in rows if x.get("origine") != "LOCAL_SEARCH" and not x.get("crash_eliminated")), key=lambda x: x["score"])
+    if not elite:
+        return dict(verdict="NO_DEPOSITABLE_ELITE")
+    elite = elite[0]
+    rep = d.get("strat_local_search") or {}
+    if "guard_index_corridor" not in rep:
+        raise SystemExit("GUARD NOT REACHED: the stage report has no guard_index_corridor")
+    out = dict(verdict="OK", stage=("repli" if rep.get("fallback_changes") else "accepté") if rep.get("accepted") else "refusé",
+               seel_bench_elite=2 * elite["score"] ** 0.5, seel_bench_first=2 * first["score"] ** 0.5,
+               rate=(len(elite["rate_layers"]), len(first["rate_layers"])))
+    if first.get("origine") != "LOCAL_SEARCH":
+        return out
+    seeds = [seed0 + i for i in range(3)]
+    plans = {"elite": plan_of(elite), "final": plan_of(first)}
+    jobs = [dict(name=f"{n}__{ic}__{s}", plan=p, seed=s, runs=1000, save=True, override={"index_corridor": ic})
+            for n, p in plans.items() for ic in (0.005, 0.010) for s in seeds]
+    jf, res = work / f"jobs_{comp}.json", work / f"res_{comp}.jsonl"
+    jf.write_text(json.dumps(jobs), encoding="utf-8")
+    sh([sys.executable, "-X", "utf8", work / "r75_scan.py", "--repo", wt, "--jobs", jf, "--out", res, "--comp", comp, "--mode", mode],
+       cwd=work, log=work / f"scan_{comp}.log")
+    z = {}
+    for line in res.read_text(encoding="utf-8").splitlines():
+        r = json.loads(line)
+        z[r["name"]] = np.load(work / f"res_{comp}_arrays" / (r["name"] + ".npz"))
+    for ic in (0.005, 0.010):
+        a = {n: [z[f"{n}__{ic}__{s}"] for s in seeds] for n in plans}
+        seel = {n: 2 * max(float(np.percentile(np.concatenate([x[f"rmse_{i}"] for x in a[n]]), 95)) for i in range(3)) ** 0.5 for n in plans}
+        stops = {n: sum(int(x[f"crashed_{i}"].sum()) for x in a[n] for i in range(3)) for n in plans}
+        both = [~e["crashed_1"] & ~f["crashed_1"] for e, f in zip(a["elite"], a["final"])]
+        dd = np.concatenate([f["rmse_1"][m] ** 2 - e["rmse_1"][m] ** 2 for e, f, m in zip(a["elite"], a["final"], both)])
+        base = np.mean(np.concatenate([e["rmse_1"][~e["crashed_1"]] ** 2 for e in a["elite"]]))
+        out[str(ic)] = dict(seel=seel, stops=stops, rel=float(dd.mean() / base), se=float(dd.std(ddof=1) / np.sqrt(len(dd)) / base))
+    return out
+
+
+def main():
+    camp = sys.argv[1]
+    cases = CAMPAIGNS[camp]
+    dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], cwd=ROOT, capture_output=True, text=True).stdout
+    if dirty.strip():
+        raise SystemExit("the tracked tree is not clean: commit or stash first")
+    head = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
+    date = _dt.date.today().isoformat()
+    dest = ROOT / "reports" / f"STRAT_garde_{camp}_{date}"
+    dest.mkdir(parents=True, exist_ok=True)
+    wt = Path(tempfile.gettempdir()) / "mesure_wt_garde"
+    work = Path(tempfile.gettempdir()) / f"garde_{camp}"
+    work.mkdir(exist_ok=True)
+    shutil.copy(TOOLS / "r75_scan.py.txt", work / "r75_scan.py")
+    if wt.exists():
+        sh(["git", "worktree", "remove", "--force", wt], cwd=ROOT)
+    sh(["git", "worktree", "add", "--detach", wt, "HEAD"], cwd=ROOT)
+    results = json.loads((dest / "cas.json").read_text(encoding="utf-8")) if (dest / "cas.json").exists() else {}
+    env = dict(os.environ, CERTUS_BENCH_TIMEOUT_S="38400", CERTUS_PROBE_OVERRIDES="strat_local_search=true,strat_local_search_guard=true", CERTUS_PROBE_TAG=f"garde{camp}")
+    for k, (comp, mode, slit, seed) in enumerate(cases):
+        key = f"{comp}_{mode}_s{seed}"
+        if key in results:
+            print(f"{key}: already done, skipped", flush=True)
+            continue
+        sh([sys.executable, "-X", "utf8", "scripts/probe_blocs_vs_plantage.py", comp, mode, slit, 0, 2, 0, seed], cwd=wt, env=env,
+           log=work / f"bench_{key}.log")
+        found = sorted(glob.glob(str(wt / "reports" / f"blocs_vs_plantage_{comp}_{mode}_s{seed:03d}_garde{camp}*.json")), key=os.path.getmtime)
+        if not found:
+            raise SystemExit(f"{key}: no artefact found")
+        shutil.copy(found[-1], dest / Path(found[-1]).name)
+        results[key] = dict(judge(wt, work, comp, mode, found[-1], JUDGE_SEED[camp] + 1000 * k), artefact=Path(found[-1]).name)
+        (dest / "cas.json").write_text(json.dumps(results, indent=1), encoding="utf-8")
+        print(f"{key}: {results[key]}", flush=True)
+    lines = [f"# Étage avec garde au corridor configuré, campagne {camp} ({date}, code `{head}`)", "",
+             "Lanceur `reports/STRAT_etage_defauts_2026-10-21/run_etage_panel.py.txt`. Jugement : plan classé premier contre le meilleur plan "
+             "ELITE du même banc, 3 × 1 000 tirages sur graines neuves, mêmes tirages pour les deux. Chiffres bruts : `cas.json`.", "",
+             "| cas | étage | ±0,005 : SEEL ELITE → final (nm) | arrêts | ΔRMSE² | ±0,010 : SEEL ELITE → final (nm) | arrêts | ΔRMSE² |",
+             "|---|---|---|---|---|---|---|---|"]
+    for key, r in results.items():
+        if r.get("verdict") != "OK" or "0.005" not in r:
+            lines.append(f"| {key} | {r.get('stage', r.get('verdict'))} | — | — | — | — | — | — |")
+            continue
+        a, b = r["0.005"], r["0.01"]
+        lines.append(f"| {key} | {r['stage']} | {a['seel']['elite']:.4f} → {a['seel']['final']:.4f} | {a['stops']['elite']} → {a['stops']['final']} | "
+                     f"{100 * a['rel']:+.1f} % | {b['seel']['elite']:.4f} → {b['seel']['final']:.4f} | {b['stops']['elite']} → {b['stops']['final']} | "
+                     f"{100 * b['rel']:+.1f} % |")
+    lines += ["", "Interprétation : à faire par Claude (ETAT_actions.md, répartition). Ce lanceur ne conclut pas."]
+    (dest / "bilan.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    sh(["git", "worktree", "remove", "--force", wt], cwd=ROOT)
+    print(f"DONE: {dest / 'bilan.md'}", flush=True)
+
+
+if __name__ == "__main__":
+    main()

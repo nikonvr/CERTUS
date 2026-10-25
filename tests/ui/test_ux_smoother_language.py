@@ -29,7 +29,7 @@ FRENCH_ON_SCREEN = ("Faible", "Moyen", "Fort", "Niveau")
 def smoother(qapp):
     from PyQt6.QtCore import Qt
 
-    from certus.utils.certus_curve_smoother import CurveSmootherGUI
+    from certus.ui.certus_curve_smoother import CurveSmootherGUI
 
     win = CurveSmootherGUI()
     win.setAttribute(Qt.WidgetAttribute.WA_DontShowOnScreen, True)

@@ -1,0 +1,786 @@
+{
+ "case": "75c_deep_s101",
+ "presel": [
+  150,
+  5
+ ],
+ "current_reused": false,
+ "seeds": {
+  "search": 7000104,
+  "check": [
+   7100104,
+   7100112
+  ],
+  "confirm": [
+   7200104,
+   7200112
+  ]
+ },
+ "judge_seeds": [
+  20261106001,
+  20261106002,
+  20261106003
+ ],
+ "arms": {
+  "current": {
+   "seconds": 1697.073090699996,
+   "report": {
+    "changes": [
+     "L0 469->450",
+     "L1 469->509",
+     "L2 469->459",
+     "L3 469->450",
+     "L5 469->489",
+     "L9 469->479",
+     "L13 optical@450",
+     "L14 575->595",
+     "L16 575->525",
+     "L17 575->615",
+     "L18 575->605",
+     "L26 662->692",
+     "L29 Rate",
+     "L30 Rate",
+     "L31 662->652",
+     "L34 662->652",
+     "L37 optical@670",
+     "L39 Rate",
+     "L41 Rate",
+     "L43 642->602",
+     "L45 Rate",
+     "L50 Rate",
+     "L53 Rate",
+     "L55 Rate",
+     "L58 552->582",
+     "L62 Rate",
+     "L65 Rate",
+     "L68 Rate",
+     "L72 648->668",
+     "L74 Rate",
+     "L0 450->470",
+     "L1 509->499",
+     "L3 Rate",
+     "L4 469->459",
+     "L7 469->479",
+     "L8 469->529",
+     "L9 479->450",
+     "L10 469->450",
+     "L33 Rate",
+     "L37 Rate",
+     "L39 optical@530",
+     "L41 optical@550",
+     "L50 optical@640",
+     "L53 optical@640",
+     "L54 642->622",
+     "L56 Rate",
+     "L58 582->642",
+     "L60 556->576",
+     "L62 optical@650",
+     "L65 optical@610",
+     "L66 610->650",
+     "L70 648->628"
+    ],
+    "evaluations": 2171,
+    "search_seed": 7000104,
+    "check_seeds": [
+     7100104,
+     7100112
+    ],
+    "accepted": true,
+    "check_relative_gain": -0.5736807149505084,
+    "check_relative_se": 0.014181983562116567,
+    "check_stops": [
+     192,
+     3
+    ],
+    "check_p95": [
+     0.25490364733824994,
+     0.018875611377214333
+    ],
+    "check_guard_stops": [
+     4,
+     1
+    ],
+    "check_guard_p95": [
+     0.014470721390689325,
+     0.01417655568639564
+    ]
+   },
+   "plan": {
+    "strategy_id": 900851051,
+    "origin": "ELITE",
+    "blocks": [
+     {
+      "start": 0,
+      "end": 1,
+      "wavelength": 470.0
+     },
+     {
+      "start": 1,
+      "end": 2,
+      "wavelength": 499.0
+     },
+     {
+      "start": 2,
+      "end": 3,
+      "wavelength": 459.0
+     },
+     {
+      "start": 3,
+      "end": 4,
+      "wavelength": 450.0
+     },
+     {
+      "start": 4,
+      "end": 5,
+      "wavelength": 459.0
+     },
+     {
+      "start": 5,
+      "end": 6,
+      "wavelength": 489.0
+     },
+     {
+      "start": 6,
+      "end": 7,
+      "wavelength": 469.0
+     },
+     {
+      "start": 7,
+      "end": 8,
+      "wavelength": 479.0
+     },
+     {
+      "start": 8,
+      "end": 9,
+      "wavelength": 529.0
+     },
+     {
+      "start": 9,
+      "end": 10,
+      "wavelength": 450.0
+     },
+     {
+      "start": 10,
+      "end": 11,
+      "wavelength": 450.0
+     },
+     {
+      "start": 11,
+      "end": 12,
+      "wavelength": 469.0
+     },
+     {
+      "start": 12,
+      "end": 13,
+      "wavelength": 575.0
+     },
+     {
+      "start": 13,
+      "end": 14,
+      "wavelength": 450.0
+     },
+     {
+      "start": 14,
+      "end": 15,
+      "wavelength": 595.0
+     },
+     {
+      "start": 15,
+      "end": 16,
+      "wavelength": 575.0
+     },
+     {
+      "start": 16,
+      "end": 17,
+      "wavelength": 525.0
+     },
+     {
+      "start": 17,
+      "end": 18,
+      "wavelength": 615.0
+     },
+     {
+      "start": 18,
+      "end": 19,
+      "wavelength": 605.0
+     },
+     {
+      "start": 19,
+      "end": 24,
+      "wavelength": 575.0
+     },
+     {
+      "start": 24,
+      "end": 26,
+      "wavelength": 662.0
+     },
+     {
+      "start": 26,
+      "end": 27,
+      "wavelength": 692.0
+     },
+     {
+      "start": 27,
+      "end": 31,
+      "wavelength": 662.0
+     },
+     {
+      "start": 31,
+      "end": 32,
+      "wavelength": 652.0
+     },
+     {
+      "start": 32,
+      "end": 34,
+      "wavelength": 662.0
+     },
+     {
+      "start": 34,
+      "end": 35,
+      "wavelength": 652.0
+     },
+     {
+      "start": 35,
+      "end": 37,
+      "wavelength": 662.0
+     },
+     {
+      "start": 37,
+      "end": 38,
+      "wavelength": 670.0
+     },
+     {
+      "start": 38,
+      "end": 39,
+      "wavelength": 642.0
+     },
+     {
+      "start": 39,
+      "end": 40,
+      "wavelength": 530.0
+     },
+     {
+      "start": 40,
+      "end": 41,
+      "wavelength": 642.0
+     },
+     {
+      "start": 41,
+      "end": 42,
+      "wavelength": 550.0
+     },
+     {
+      "start": 42,
+      "end": 43,
+      "wavelength": 642.0
+     },
+     {
+      "start": 43,
+      "end": 44,
+      "wavelength": 602.0
+     },
+     {
+      "start": 44,
+      "end": 50,
+      "wavelength": 642.0
+     },
+     {
+      "start": 50,
+      "end": 51,
+      "wavelength": 640.0
+     },
+     {
+      "start": 51,
+      "end": 53,
+      "wavelength": 642.0
+     },
+     {
+      "start": 53,
+      "end": 54,
+      "wavelength": 640.0
+     },
+     {
+      "start": 54,
+      "end": 55,
+      "wavelength": 622.0
+     },
+     {
+      "start": 55,
+      "end": 57,
+      "wavelength": 642.0
+     },
+     {
+      "start": 57,
+      "end": 58,
+      "wavelength": 552.0
+     },
+     {
+      "start": 58,
+      "end": 59,
+      "wavelength": 642.0
+     },
+     {
+      "start": 59,
+      "end": 60,
+      "wavelength": 552.0
+     },
+     {
+      "start": 60,
+      "end": 61,
+      "wavelength": 576.0
+     },
+     {
+      "start": 61,
+      "end": 62,
+      "wavelength": 556.0
+     },
+     {
+      "start": 62,
+      "end": 63,
+      "wavelength": 650.0
+     },
+     {
+      "start": 63,
+      "end": 65,
+      "wavelength": 610.0
+     },
+     {
+      "start": 65,
+      "end": 66,
+      "wavelength": 610.0
+     },
+     {
+      "start": 66,
+      "end": 67,
+      "wavelength": 650.0
+     },
+     {
+      "start": 67,
+      "end": 70,
+      "wavelength": 648.0
+     },
+     {
+      "start": 70,
+      "end": 71,
+      "wavelength": 628.0
+     },
+     {
+      "start": 71,
+      "end": 72,
+      "wavelength": 648.0
+     },
+     {
+      "start": 72,
+      "end": 73,
+      "wavelength": 668.0
+     },
+     {
+      "start": 73,
+      "end": 75,
+      "wavelength": 648.0
+     }
+    ],
+    "rate_layers": [
+     3,
+     12,
+     29,
+     30,
+     33,
+     36,
+     37,
+     45,
+     55,
+     56,
+     68,
+     74
+    ],
+    "witness_reset_layers": [],
+    "monochromator_resolution_nm": 2.0
+   }
+  },
+  "presel": {
+   "seconds": 966.2146463000099,
+   "report": {
+    "changes": [
+     "L0 469->450",
+     "L1 469->509",
+     "L2 469->459",
+     "L3 469->450",
+     "L5 469->489",
+     "L9 469->479",
+     "L13 optical@450",
+     "L15 575->535",
+     "L16 575->535",
+     "L17 575->515",
+     "L19 575->585",
+     "L25 662->712",
+     "L26 662->692",
+     "L27 662->652",
+     "L28 662->632",
+     "L29 662->632",
+     "L31 662->652",
+     "L39 642->622",
+     "L41 Rate",
+     "L45 Rate",
+     "L46 Rate",
+     "L49 642->602",
+     "L52 Rate",
+     "L54 642->622",
+     "L60 556->536",
+     "L65 Rate",
+     "L68 Rate",
+     "L70 648->668",
+     "L72 648->668",
+     "L73 Rate",
+     "L0 450->510",
+     "L1 509->499",
+     "L2 459->499",
+     "L3 Rate",
+     "L8 469->519",
+     "L9 479->539",
+     "L17 515->555",
+     "L19 585->525",
+     "L23 Rate",
+     "L39 622->562",
+     "L41 optical@550",
+     "L49 602->642",
+     "L51 Rate",
+     "L55 Rate",
+     "L66 610->650",
+     "L68 optical@650"
+    ],
+    "evaluations": 551,
+    "search_seed": 7000104,
+    "check_seeds": [
+     7100104,
+     7100112
+    ],
+    "accepted": true,
+    "presel_runs": 150,
+    "presel_keep": 5,
+    "presel_evaluations": 2246,
+    "check_relative_gain": -0.5320285892384309,
+    "check_relative_se": 0.012790348335309915,
+    "check_stops": [
+     192,
+     40
+    ],
+    "check_p95": [
+     0.25490364733824994,
+     0.019066514235204536
+    ],
+    "check_guard_stops": [
+     4,
+     0
+    ],
+    "check_guard_p95": [
+     0.014470721390689325,
+     0.011570291449027884
+    ]
+   },
+   "plan": {
+    "strategy_id": 900851051,
+    "origin": "ELITE",
+    "blocks": [
+     {
+      "start": 0,
+      "end": 1,
+      "wavelength": 510.0
+     },
+     {
+      "start": 1,
+      "end": 2,
+      "wavelength": 499.0
+     },
+     {
+      "start": 2,
+      "end": 3,
+      "wavelength": 499.0
+     },
+     {
+      "start": 3,
+      "end": 4,
+      "wavelength": 450.0
+     },
+     {
+      "start": 4,
+      "end": 5,
+      "wavelength": 469.0
+     },
+     {
+      "start": 5,
+      "end": 6,
+      "wavelength": 489.0
+     },
+     {
+      "start": 6,
+      "end": 8,
+      "wavelength": 469.0
+     },
+     {
+      "start": 8,
+      "end": 9,
+      "wavelength": 519.0
+     },
+     {
+      "start": 9,
+      "end": 10,
+      "wavelength": 539.0
+     },
+     {
+      "start": 10,
+      "end": 12,
+      "wavelength": 469.0
+     },
+     {
+      "start": 12,
+      "end": 13,
+      "wavelength": 575.0
+     },
+     {
+      "start": 13,
+      "end": 14,
+      "wavelength": 450.0
+     },
+     {
+      "start": 14,
+      "end": 15,
+      "wavelength": 575.0
+     },
+     {
+      "start": 15,
+      "end": 16,
+      "wavelength": 535.0
+     },
+     {
+      "start": 16,
+      "end": 17,
+      "wavelength": 535.0
+     },
+     {
+      "start": 17,
+      "end": 18,
+      "wavelength": 555.0
+     },
+     {
+      "start": 18,
+      "end": 19,
+      "wavelength": 575.0
+     },
+     {
+      "start": 19,
+      "end": 20,
+      "wavelength": 525.0
+     },
+     {
+      "start": 20,
+      "end": 24,
+      "wavelength": 575.0
+     },
+     {
+      "start": 24,
+      "end": 25,
+      "wavelength": 662.0
+     },
+     {
+      "start": 25,
+      "end": 26,
+      "wavelength": 712.0
+     },
+     {
+      "start": 26,
+      "end": 27,
+      "wavelength": 692.0
+     },
+     {
+      "start": 27,
+      "end": 28,
+      "wavelength": 652.0
+     },
+     {
+      "start": 28,
+      "end": 29,
+      "wavelength": 632.0
+     },
+     {
+      "start": 29,
+      "end": 30,
+      "wavelength": 632.0
+     },
+     {
+      "start": 30,
+      "end": 31,
+      "wavelength": 662.0
+     },
+     {
+      "start": 31,
+      "end": 32,
+      "wavelength": 652.0
+     },
+     {
+      "start": 32,
+      "end": 38,
+      "wavelength": 662.0
+     },
+     {
+      "start": 38,
+      "end": 39,
+      "wavelength": 642.0
+     },
+     {
+      "start": 39,
+      "end": 40,
+      "wavelength": 562.0
+     },
+     {
+      "start": 40,
+      "end": 41,
+      "wavelength": 642.0
+     },
+     {
+      "start": 41,
+      "end": 42,
+      "wavelength": 550.0
+     },
+     {
+      "start": 42,
+      "end": 49,
+      "wavelength": 642.0
+     },
+     {
+      "start": 49,
+      "end": 50,
+      "wavelength": 642.0
+     },
+     {
+      "start": 50,
+      "end": 54,
+      "wavelength": 642.0
+     },
+     {
+      "start": 54,
+      "end": 55,
+      "wavelength": 622.0
+     },
+     {
+      "start": 55,
+      "end": 57,
+      "wavelength": 642.0
+     },
+     {
+      "start": 57,
+      "end": 60,
+      "wavelength": 552.0
+     },
+     {
+      "start": 60,
+      "end": 61,
+      "wavelength": 536.0
+     },
+     {
+      "start": 61,
+      "end": 63,
+      "wavelength": 556.0
+     },
+     {
+      "start": 63,
+      "end": 66,
+      "wavelength": 610.0
+     },
+     {
+      "start": 66,
+      "end": 67,
+      "wavelength": 650.0
+     },
+     {
+      "start": 67,
+      "end": 68,
+      "wavelength": 648.0
+     },
+     {
+      "start": 68,
+      "end": 69,
+      "wavelength": 650.0
+     },
+     {
+      "start": 69,
+      "end": 70,
+      "wavelength": 648.0
+     },
+     {
+      "start": 70,
+      "end": 71,
+      "wavelength": 668.0
+     },
+     {
+      "start": 71,
+      "end": 72,
+      "wavelength": 648.0
+     },
+     {
+      "start": 72,
+      "end": 73,
+      "wavelength": 668.0
+     },
+     {
+      "start": 73,
+      "end": 75,
+      "wavelength": 648.0
+     }
+    ],
+    "rate_layers": [
+     3,
+     12,
+     23,
+     36,
+     37,
+     45,
+     46,
+     51,
+     52,
+     55,
+     65,
+     73
+    ],
+    "witness_reset_layers": [],
+    "monochromator_resolution_nm": 2.0
+   }
+  }
+ },
+ "judged": {
+  "0.005": {
+   "seel": {
+    "start": 0.24199218572921172,
+    "current": 0.23974297029936492,
+    "presel": 0.21696919263858022
+   },
+   "stops": {
+    "start": 7,
+    "current": 0,
+    "presel": 0
+   },
+   "presel_vs_current": -0.09499247311546732,
+   "ci95": [
+    -0.1076560259798929,
+    -0.08007736847009903
+   ]
+  },
+  "0.01": {
+   "seel": {
+    "start": 1.0111106582479474,
+    "current": 0.272869558958371,
+    "presel": 0.2673815309953341
+   },
+   "stops": {
+    "start": 291,
+    "current": 2,
+    "presel": 50
+   },
+   "presel_vs_current": -0.020112276297826748,
+   "ci95": [
+    -0.030062396761450096,
+    0.005455918832028735
+   ]
+  }
+ }
+}

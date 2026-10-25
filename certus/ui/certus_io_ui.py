@@ -7,6 +7,7 @@ from pathlib import Path
 from PyQt6.QtWidgets import QFileDialog, QMessageBox
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
+from certus.core.certus_ui_strings import CERTUS_UI_STRINGS  # noqa: F401  # re-exported for the UI modules
 from certus.utils.certus_qsettings import certus_settings
 
 DATA_FILE_FILTER = "Data (*.csv *.txt *.xlsx)"
@@ -22,19 +23,6 @@ def read_data_file_robust(*args, **kwargs):
 
     return reader(*args, **kwargs)
 
-CERTUS_UI_STRINGS = {
-    "export": "Export",
-    "export_ok": "Saved file",
-    "export_failed": "Export failed",
-    "no_data": "No data to export.",
-    "copy_logs": "Copy Logs",
-    "logs_copied": "Logs copied to clipboard.",
-    "copy_excel_tsv": "Copy data (Excel)",
-    "copy_excel_ok": "Data copied to clipboard (TSV).",
-    "copy_excel_failed": "No data to copy.",
-    "copy_pub_tsv": "Copy data (Publication TSV)",
-    "copy_pub_ok": "Publication TSV copied to clipboard.",
-}
 
 def get_certus_last_dir() -> str:
     settings = certus_settings(CERTUS_SETTINGS_ORG, CERTUS_SETTINGS_APP)

@@ -404,3 +404,4 @@ class RobustnessContext:
     n_layers_matrix_precomp: np.ndarray | None = None
     strategy_id_namespace_n_blocks: int | None = None
     strategy_id_cursor: RefinementIdCursor | None = None
+    elite_optical_parent_pool: list[dict[str, Any]] | None = None

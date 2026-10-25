@@ -57,7 +57,7 @@ jobs:
             libxcb-xkb1 libx11-xcb1
 
       - name: Installer uv
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
 
       - name: Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
@@ -156,7 +156,7 @@ jobs:
         run: echo "NUMBA_CACHE_DIR=$RUNNER_TEMP/certus_numba_cache" >> "$GITHUB_ENV"
 
       - name: Installer uv
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
 
       - name: Python 3.15
         run: uv python install 3.15

@@ -26,7 +26,15 @@ def _window_ends_with_the_test(qapp, monkeypatch):
 def design_app(qapp):
     from certus.ui.certus_design_ui import CertusDesignApp
 
-    return CertusDesignApp()
+    window = CertusDesignApp()
+    # The window schedules its own refreshes at 0 and 150 ms while it is built (certus_design_ui.py, certus_design_ui_core.py). Let
+    # them run before a test watches a task: on a slow turn of the event loop two of them landed in the same pass and a test
+    # that waits for one call counted two (3.15.1, 2026-10-25, red alone in a serial run).
+    deadline = time.monotonic() + 0.6
+    while time.monotonic() < deadline:
+        qapp.processEvents()
+        time.sleep(0.01)
+    return window
 
 
 def _wait_for(qapp, calls, seconds: float = 5.0) -> None:

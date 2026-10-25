@@ -9,6 +9,8 @@ from typing import Any
 
 import numpy as np
 
+from certus.core.certus_strat_utils import _IdxWrapper
+
 # Import access config
 from certus.utils.certus_data import (
     PerformanceMonitor,
@@ -56,8 +58,6 @@ from certus_physics import (  # STRAT-specific kernels (previously imported from
 )
 
 _validate_phase_a_bridge_lock = threading.Lock()
-
-from certus.core.certus_strat_utils import _IdxWrapper
 
 # Global scientific display configuration
 

@@ -1,0 +1,184 @@
+{
+  "version": "CERTUS_SUITE_26_05",
+  "l0": 500.0,
+  "materials": {
+    "H": {
+      "n4": 2.35,
+      "n7": 2.35,
+      "preset": "Custom"
+    },
+    "L": {
+      "n4": 1.45,
+      "n7": 1.45,
+      "preset": "Custom"
+    },
+    "A": {
+      "n4": 2.05,
+      "n7": 2.0,
+      "preset": "Custom"
+    },
+    "B": {
+      "n4": 1.75,
+      "n7": 1.73,
+      "preset": "Custom"
+    },
+    "C": {
+      "n4": 1.6,
+      "n7": 1.58,
+      "preset": "Custom"
+    },
+    "Substrate": {
+      "n4": 1.52,
+      "n7": 1.52,
+      "preset": "Custom"
+    }
+  },
+  "front": [
+    {
+      "mat": "H",
+      "qw": 0.106042,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.831384,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.329239,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.634499,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.674374,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.295999,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.786412,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.0924,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.97774,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.506209,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.372308,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 2.108857,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.095121,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.60821,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.636079,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.449612,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.600677,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.020385,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.591652,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.381834,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.679674,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.656251,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.660631,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.880095,
+      "var": true
+    }
+  ],
+  "back_en": false,
+  "back_coat": false,
+  "back": [],
+  "targets": [
+    {
+      "on": true,
+      "lmin": 400.0,
+      "lmax": 1200.0,
+      "tmin": 0.5,
+      "tmax": 0.5,
+      "w": 1.0
+    }
+  ],
+  "oblique_mode": false,
+  "optim": {
+    "points_per_target": 108,
+    "n100": 15000,
+    "max_clusters": 100,
+    "max_iter": 100,
+    "mc_n": 1000,
+    "mc_sigma": 0.1,
+    "pre_polish": true,
+    "allow_growth": true,
+    "auto_scale_y": true,
+    "max_layers": 27
+  }
+}

@@ -2,8 +2,9 @@
 
     python reports/DESIGN_bs5050_2026-10-22/tikhonravov/curve/plot_curve.py
 
-For each best_N.json of the sweep (DESIGN, default setting of 2026-10-23, no QWOT ceiling): RMSE of T against 0.5 on
-the fixed 1601-point grid of 400-1200 nm (point), and the mean +/- 2 sigma of the RMSE over 200 seeded draws where
+For each best_N.json of the sweep, placed at N, the layer count the run was allowed (start and max_layers; a hollow
+point when DESIGN kept fewer), DESIGN default setting of 2026-10-23, no QWOT ceiling: RMSE of T against 0.5 on the
+fixed 1601-point grid of 400-1200 nm (point), and the mean +/- 2 sigma of the RMSE over 200 seeded draws where
 every layer gets a Gaussian thickness error whose 2 sigma is 0.1 % of it plus 0.2 nm, evaluated on the article's
 80 points (bar). Their 34-layer design: published RMSE 1.277e-4 (MF 1.2767e-2 on 80 points). T comes from the
 independent oracle tests/oracle/tmm_reference.py (indices constant: 1.45, 2.35, glass 1.52).
@@ -60,7 +61,8 @@ def main() -> None:
         band = rmse_band(lambda ep, n=n, n_sub=n_sub: mse(n, ep, n_sub, article), d, draws=200)
         rows.append({"start_layers": int(path.stem.split("_")[1]), "layers": len(d), "rmse_1601": float(nominal),
                      "mean_80": band.mean, "two_sigma_80": band.two_sigma,
-                     "total_qwot": float(sum(4.0 * k * t / 500.0 for k, t in zip(n, d, strict=True))), "thinnest_nm": float(d.min())})
+                     "total_qwot": float(sum(4.0 * k * t / 500.0 for k, t in zip(n, d, strict=True))), "thinnest_nm": float(d.min()),
+                     "design_file": path.name, "run_row": f"curve.jsonl, label tcurve{path.stem.split('_')[1]}"})
         print(json.dumps(rows[-1]), flush=True)
     with (HERE / "curve.csv").open("w", newline="", encoding="utf-8") as fh:
         w = csv.DictWriter(fh, fieldnames=list(rows[0]))
@@ -71,7 +73,7 @@ def main() -> None:
     fig, ax = plt.subplots(figsize=(8.0, 4.8), dpi=150)
     fig.patch.set_facecolor(surface)
     ax.set_facecolor(surface)
-    x = [r["layers"] for r in rows]
+    x = [r["start_layers"] for r in rows]
     ax.plot(x, [r["rmse_1601"] for r in rows], color=blue, lw=2, marker="o", ms=6, markeredgecolor=surface,
             markeredgewidth=1.2, label="CERTUS DESIGN: RMSE (1601-point grid)", zorder=4)
     lo = [min(r["two_sigma_80"], r["mean_80"] * 0.999) for r in rows]
@@ -83,7 +85,11 @@ def main() -> None:
     ax.plot([34], [ARTICLE_RECOMPUTED_1601], ls="none", marker="D", ms=8, mfc=surface, mec=orange, mew=1.5,
             label="same design, recomputed on 1601 points", zorder=5)
     ax.set_yscale("log")
-    ax.set_xlabel("layers", color=ink, fontsize=9)
+    fewer = [r for r in rows if r["layers"] < r["start_layers"]]
+    if fewer:
+        ax.plot([r["start_layers"] for r in fewer], [r["rmse_1601"] for r in fewer], ls="none", marker="o", ms=6,
+                mfc=surface, mec=blue, mew=1.5, label="DESIGN kept fewer layers than allowed", zorder=5)
+    ax.set_xlabel("layers allowed (max_layers of the run)", color=ink, fontsize=9)
     ax.set_ylabel("RMSE of T against 0.5, 400-1200 nm", color=ink, fontsize=9)
     ax.set_title("50/50 splitter, n 1.45 / 2.35 on glass 1.52: RMSE vs layers", color=ink, fontsize=10, loc="left")
     ax.grid(True, which="major", color=grid, lw=0.8)

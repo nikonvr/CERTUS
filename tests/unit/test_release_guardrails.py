@@ -247,8 +247,11 @@ def test_a_process_that_stays_up_behind_a_dialog_is_refused(tmp_path, rc) -> Non
     # healthy: STRAT passed a "stays up" check for as long as `scripts/` was missing from the build.
     _frozen_folder(tmp_path, rc)
     code = "import ctypes; ctypes.windll.user32.MessageBoxW(0, 'boom', 'Unhandled exception in script', 0)"
+    # In a venv, `sys.executable` is a launcher that starts the real interpreter as a child: the dialog then belongs to
+    # a process the check does not watch (measured 2026-10-25 under 3.15.1: "stopped by itself after 3.5s").
+    interpreter = getattr(sys, "_base_executable", sys.executable)
 
-    errors = rc._process_stays_up([sys.executable, "-c", code], "Frozen module X", 30)
+    errors = rc._process_stays_up([interpreter, "-c", code], "Frozen module X", 30)
 
     assert len(errors) == 1
     assert "opened a dialog" in errors[0]

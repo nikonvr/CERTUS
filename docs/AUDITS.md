@@ -31,7 +31,7 @@ code du 2026-10-19, audit d'arrêt OMS du 2026-10-10 : rapports datés dans `rep
 | UX-17 | Le validateur efface l'info-bulle d'origine, dès l'attachement | `attach_numeric_validator` | ouvert |
 | UX-18 | États vides : mécanisme présent, fonctionnement par table non testé | `_auto_install_empty_states` | à reproduire |
 | UX-19 | Tour STRAT d'un autre logiciel, cible `measurement_table` absente | `_steps_strat` | ouvert |
-| UX-20 | Tours INDEX, INDEX_SPLINE, METAL sans cible ; aucun tour HUB, SMOOTHER, SUBSTRATE ; ni `Esc` ni flèches | `certus_tours_catalog`, `_OnboardingOverlay` | ouvert |
+| UX-20 | Tours INDEX, INDEX_SPLINE, METAL sans cible ; aucun tour HUB, SMOOTHER, SUBSTRATE ; ni `Esc` ni flèches | `certus_tours_catalog`, `_OnboardingOverlay` | ouvert ; mesuré : `Esc` laisse l'aide visible (`pass02.json`, R02) |
 | UX-21 | `ProgressDialog` lit des attributs qu'il n'a pas (U06) | `ProgressDialog.apply_progress_snapshot` | ouvert |
 | UX-22 | RE appelle `apply_progress_snapshot` absent de `DualStageProgressWidget` : `AttributeError` (U10) | `_on_re_worker_progress_snapshot` | ouvert |
 | UX-23 | Fin de calcul en bouton rouge « Done » ; `reset` affiche `status=idle` brut | `DualStageProgressWidget.stop`, `.reset` | ouvert |
@@ -81,13 +81,13 @@ code du 2026-10-19, audit d'arrêt OMS du 2026-10-10 : rapports datés dans `rep
 |---|---|---|---|
 | ALG-01 | Scan Needle divisé par `count`, coût par `sum_w` (classement inchangé si le rapport est constant) | `needle_scan_cached` | ouvert, impact faible |
 | ALG-02 | Évaluateur d'élagage inopérant (D107) | `_prune_to_target._evaluate_test_stack` | ouvert ; correctif sur `claude/alg02-prune-evaluator-0d2a8d` |
-| ALG-03 | Grille oblique densifiée non rendue au worker | `maybe_upgrade_grid_tikhonravov` | à reproduire sur un vrai worker |
+| ALG-03 | Grille oblique densifiée non rendue au worker | `maybe_upgrade_grid_tikhonravov` | ouvert : mesuré, gradient et coût sur 2 points au lieu de 135, RMSE rapporté 0,026 contre 0,175 sur la grille dense (`reports/ARGON_contre_audit_2026-10-16/pass02.json`, R03) ; la voie normale utilise 135 points (R04) |
 | ALG-04 | Le scan Needle ne teste que le premier matériau différent | `NeedleOptimizationStrategy._build_needle_scan_mask` | piste |
 | ALG-05/06/07 | Mode local par PGLOBAL ; raffinement final par gradient normalisé ; prototype Jacobien + TRF | `OptimWorker`, `run_coord_descent_5cycles` | piste |
 | ALG-08 | Moyenne s/p (`Avg`) et factorisation des passes obliques | `_design_compute_oblique_error_and_grad_analytic_common` | piste |
 | ALG-09/10/11 | Sobol/clustering à profiler ; extinction contre consolidation ; Needle analytique, corridors, GD/GDD, couleur | `PGlobalOptimizer` … | piste |
 | ALG-12 | Pénalité `min_d` : coût, coût avec gradient et gradient disent trois choses (`MIN_THICKNESS` = 0,01 nm) | `certus_design_core`, `cost_numba_fast` | latent |
-| ALG-13 | Polissage final : 12 gradients après la demande d'arrêt (R05) | `OptimWorker.run` | à reproduire |
+| ALG-13 | Polissage final : 12 gradients après la demande d'arrêt (R05) | `OptimWorker.run` | ouvert : mesuré, 12 gradients après la demande d'arrêt, bornes PGLOBAL `[0, 3]` ignorées (`pass02.json`, R05) |
 | ALG-14 | Scan Needle avec face arrière sans cache : toute la pile recalculée par position | `needle_scan_cached_backside` (remplace `_run_needle_fallback_scan`) | corrigé ; ×14 à ×39, même aiguille ; suivi au banc `needle_scan_backside` |
 | ALG-15 | L'export écrivait dans le tableau un meilleur résultat d'une autre structure | `ExportManager._sync_export_result_with_best_eval` | corrigé `76349415` |
 | ALG-16 | Le bloc `optim` des fichiers d'exemple était ignoré au chargement | `StateManager._apply_config` | corrigé `a813fa64` |

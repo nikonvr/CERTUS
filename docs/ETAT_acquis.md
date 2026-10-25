@@ -77,7 +77,7 @@ qualifié les deux audits par niveau de preuve : 22 démarrages GUI hors écran,
 0 erreur de sonde ; corps extraits et décorateurs Numba retirés, donc aucune validation complète/JIT ni performance démontrée ([preuves, limites et
 empreintes](../reports/ARGON_contre_audit_2026-10-16/evidence.json), [reproduction](../reports/ARGON_contre_audit_2026-10-16/probe.py.txt)). Le second,
 interrompu le 2026-10-17 quand 👤 a ouvert le sujet « bonne mere », a conservé [cinq observations supplémentaires](../reports/ARGON_contre_audit_2026-10-16/pass02.json)
-(grille oblique non densifiée, bornes et arrêt ignorés au raffinement final), pas encore reportées dans les audits. Défauts prioritaires des audits :
+(grille oblique non densifiée, bornes et arrêt ignorés au raffinement final), reportées dans [les audits](AUDITS.md) (ALG-03, ALG-13, UX-20). Défauts prioritaires des audits :
 snapshot DESIGN et filtre final 5 nm supprimant des couches fixes (corrigé, `bdcae9ed`), précision lambda SMOOTHER, coûts Needle et évaluateur d'élagage
 (celui-ci : D107) ; progression RE incompatible, puis grille oblique à valider en worker. Descriptions fautives retirées : métrique de tri prise pour des états
 vides, accès JSON SPLINE absent, aide/F1 absents, solveur maison, `jac` absent et paramètres/formule PGLOBAL inexacts. Trois contrôles documentaires à 0 ;

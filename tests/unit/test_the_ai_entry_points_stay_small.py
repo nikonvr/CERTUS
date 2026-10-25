@@ -27,13 +27,11 @@ ROOT = Path(__file__).resolve().parents[2]
 CAPS = {
     "CLAUDE.md": 7_900,
     "AGENTS.md": 1_600,
-    "docs/ETAT.md": 80_000,
     "docs/ETAT_actions.md": 16_000,
     "docs/ETAT_acquis.md": 12_500,
     "docs/REGLES_reference.md": 8_600,  # 2026-10-19: CLAUDE.md §1, §2, §5, §7 detail moved here, read on demand
 }
-#: section 0 of docs/ETAT.md alone: the part every session reads
-SECTION_ZERO_CAP = 4_000  # 2026-10-19: history moved to docs/ETAT_acquis.md
+#: docs/ETAT.md, whole or its section 0, has no cap: the owner's decision of 2026-10-25
 #: a root document above this size has to be hidden from the default searches
 BIG_ROOT_DOCUMENT = 20_000
 
@@ -52,19 +50,6 @@ def test_a_document_an_ai_reads_stays_under_its_cap(path):
     assert size <= cap, (
         f"{path} is {size} bytes, its cap is {cap}: it is paid by every AI that opens it. Move reference text to an on-demand file "
         "(docs/REGLES_reference.md, docs/ETAT_acquis.md, docs/ETAT_actions.md), or raise the cap here with a reason."
-    )
-
-
-def test_section_zero_of_the_state_file_stays_under_its_cap():
-    etat = _read("docs/ETAT.md")
-    start, end = re.search(r"^## 0\. ", etat, re.MULTILINE), re.search(r"^## 1\. ", etat, re.MULTILINE)
-    assert start, "docs/ETAT.md has lost its section 0"
-    assert end, "docs/ETAT.md has lost its section 1"
-    assert start.start() < end.start(), "sections 0 and 1 of docs/ETAT.md are out of order"
-    size = len(etat[start.start() : end.start()].encode("utf-8"))
-    assert size <= SECTION_ZERO_CAP, (
-        f"section 0 of docs/ETAT.md is {size} bytes, its cap is {SECTION_ZERO_CAP}: every session reads it whole. "
-        "A paragraph that has become a record belongs in docs/ETAT_acquis.md, an action in docs/ETAT_actions.md."
     )
 
 

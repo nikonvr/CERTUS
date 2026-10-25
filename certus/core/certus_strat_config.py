@@ -13,6 +13,19 @@ import numpy as np
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
 )
+from certus.core.certus_strat_utils import (
+    APP_CONTEXT,
+    SYM_DEFAULT_CONTINUITY_WEIGHT,
+    SYM_DEFAULT_EXTREMA_WINDOW_OT,
+    SYM_DEFAULT_SAME_WL_BONUS,
+    SYM_DEFAULT_SCORING_MODE,
+    SYM_DEFAULT_TIE_EPS_ABS,
+    SYM_DEFAULT_TIE_EPS_REL,
+    SYM_DEFAULT_WEIGHT,
+    _IdxWrapper,
+    get_refractive_clues_vectorized,
+    get_refractive_index,
+)
 from certus.utils.certus_data import (
     PerformanceMonitor,
 )
@@ -56,20 +69,6 @@ if TYPE_CHECKING:
 
 
 _validate_phase_a_bridge_lock = threading.Lock()
-
-from certus.core.certus_strat_utils import (
-    APP_CONTEXT,
-    SYM_DEFAULT_CONTINUITY_WEIGHT,
-    SYM_DEFAULT_EXTREMA_WINDOW_OT,
-    SYM_DEFAULT_SAME_WL_BONUS,
-    SYM_DEFAULT_SCORING_MODE,
-    SYM_DEFAULT_TIE_EPS_ABS,
-    SYM_DEFAULT_TIE_EPS_REL,
-    SYM_DEFAULT_WEIGHT,
-    _IdxWrapper,
-    get_refractive_clues_vectorized,
-    get_refractive_index,
-)
 
 # Global scientific display configuration
 

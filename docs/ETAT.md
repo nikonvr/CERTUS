@@ -13,8 +13,10 @@
 > ([`ETAT_actions.md`](ETAT_actions.md)), acquis ([`ETAT_acquis.md`](ETAT_acquis.md)), registre des audits ([`AUDITS.md`](AUDITS.md),
 > `grep -n "ALG-02" docs/AUDITS.md`), preuves dans `reports/` (le `bilan.md` d'un dossier).
 
-**Branche de travail** : `claude/integration-2026-10-25` (worktree `%TEMP%\int_wt`), locale, ni poussée ni fusionnée dans `master` ; elle
-réunit `gemini/2026-10-21` et `claude/2026-10-22`, séparées du 2026-10-21 au 2026-10-25 ([audit](../reports/AUDIT_travaux_2026-10-21_25/bilan.md)).
+**Branche de travail** : `master`, locale, non poussée. Depuis le 2026-10-25 elle réunit `gemini/2026-10-21` (supprimée) et `claude/2026-10-22`,
+séparées du 2026-10-21 au 2026-10-25 ([audit](../reports/AUDIT_travaux_2026-10-21_25/bilan.md)). Le dossier est en *sparse-checkout* : les 38
+artefacts bruts `reports/**/blocs_vs_plantage_*.json` (427 Mo) sont versionnés mais absents du disque ; `git sparse-checkout disable` les restaure.
+Les fichiers non versionnés (journaux, exports) sont hors de Drive, dans `D:\certus_hors_drive\certus0310\` (manifeste à sa racine).
 
 **STRAT** : réglages par défaut au §3 ; défaut ouvert : à bas bruit, le seuil des points tournants passe sous l'ondulation du biais de
 fente et fabrique de faux points tournants ([analyse](../reports/ANALYSE_claude_2026-10-22/bilan.md)).
@@ -179,12 +181,12 @@ Un défaut corrigé sort de la liste ; son numéro n'est pas réattribué.
 | **le Rate et l'optique pure** | le meilleur plan porte du Rate sous tous les modèles d'arrêt ; le Rate de STRAT n'a ni dérive de la source ni bruit de vitesse (§7) ; A4 : réserver des parents optiques purs à ELITE ne donne aucun plan optique pur au modèle d'arrêt par défaut ([rapport](../reports/ANALYSE_claude_2026-10-22/bilan.md) §4). Dépend de la stabilité réelle de la vitesse (A25, §6) |
 | **comportements** | D108 (lever `ValueError`), D109 (épaisseur ≥ 0 au TMM), D114 (politique des entrées invalides) : changements de comportement, test rouge d'abord |
 | **CI** (D110) | déclarer `pytest-benchmark` et `pytest-xdist` ; ajouter les trois contrôles documentaires à `lint.yml` ; rendre bloquantes les étapes mypy et `bench_kernels` |
-| **branches** | faire de `claude/integration-2026-10-25` la branche de travail et y amener `master` ; reprendre ou abandonner `claude/alg02-prune-evaluator-0d2a8d` (D107) et `claude/dreamy-burnell-85397a` (fenêtre admissible 48c) ; `claude/a5-tours-budgets-2026-10-25` est sans objet (A5 fait le 2026-10-24) |
+| **branches** | reprendre ou abandonner `claude/alg02-prune-evaluator-0d2a8d` (D107) et `claude/dreamy-burnell-85397a` (fenêtre admissible 48c) ; `claude/a5-tours-budgets-2026-10-25` est sans objet (A5 fait le 2026-10-24) |
 | **A9** | refiger le protocole sur la branche de travail (il refuse un code différent de son commit figé), puis donner ou non le GO ; A14, son préalable, est fait |
 | **réglages STRAT** | `elite_rate_moves` (actif, ou `git revert 978b8f04` ; mesures d'A2 dans `ETAT_acquis.md`) ; `rate_rescue_hard` (inactif, sans gain : 35 déposables sur 410) ; `tp_hysteresis_floor` à bas bruit ; armer `strat_local_search_fresh_id` |
 | **modèles** | D71 (continuité de Tauc-Lorentz-Urbach en E = Eg) ; D69 (nouvelle définition de la couverture des noyaux) |
 | **publication** | toute poussée (`git push`), la fusion de la PR #9, la vitrine ; le design publié de Tikhonravov et al. 1996 (`example/example_design/JSON-design-reference-tikhonravov-1996-published-design.json`), versionné « avec l'autorisation des auteurs » : garder cette autorisation par écrit, ou retirer le fichier (CLAUDE.md §1) |
-| **dossier et archives** | 2,5 Go le 2026-10-25, dont `reports/` 1,05 Go pour une limite de 1 Go et un worktree de session de 593 Mo ; seconde copie de l'archive de 8,2 Go |
+| **dossier et archives** | cible de 600 Mo fixée par 👤 le 2026-10-25 : 560 Mo mesurés après le déplacement des non-suivis, `git gc` et le sparse-checkout (`.git` 286 Mo, arbre suivi 260 Mo), contre 2,5 Go avant ; seconde copie de l'archive de 8,2 Go |
 
 ## 6. Chantiers spécifiés, en attente
 

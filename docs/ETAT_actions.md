@@ -40,8 +40,16 @@ python scripts\resumer_artefact_sonde.py reports\blocs_vs_plantage_r75x0.5_deep_
   fichier versionné. Les entrées `.git/worktrees/*` que Drive refuse de supprimer sont normales.
 
 **A9 — 99 couches en une campagne** (demande de 👤 du 2026-10-16). Protocole prêt : `reports/STRAT_99c_A9_protocole_2026-10-17/` (`chain_A9.sh`,
-graines réservées) ; il ne lance rien sans `GO_OWNER.txt` écrit par 👤. *Livrable* : sur plusieurs graines, plans déposables, plantages, SEEL de
+graines réservées) ; il ne lance rien sans `GO_OWNER.txt` écrit par 👤 (A14, préalable demandé, est fait). Il refuse aussi tout code
+différent de son commit figé (`code_frozen`, `sources_sha256.txt`) : depuis le 2026-10-17, le code a changé (garde, A3, règles Rate),
+le protocole est à refiger sur la branche de travail avant le GO. *Livrable* : sur plusieurs graines, plans déposables, plantages, SEEL de
 consensus des plans figés, confirmation indépendante et coût, dans le dossier du protocole. *Ne pas* : lancer sans le GO.
+
+**A16 — Bonne Mère 90 c. : la méthode native sur la branche de travail.** Avec l'étape libre avant la conversion, STRAT natif atteint
+0,2655 nm contre 0,2608 à la main, sur une graine et sans la garde, armée ici ([bilan](../reports/BONNE_MERE_strat_90c_2026-10-23/bilan.md)).
+*Faire*, un banc à la fois : `BM90_COMPONENT=bm90final python reports/BONNE_MERE_strat_90c_2026-10-23/probe_bm90.py deep 0 0 2 0 77`, puis
+graine 202 ; gagnant par `python reports/BONNE_MERE_strat_90c_2026-10-23/extract_winner.py`, jugé par `index_share_bm90.py` (`CORRIDORS=0.010`,
+holdout 20261022201–203). *Fini quand* : deux graines jugées contre 0,2608 nm. *Ne pas* : changer les règles de 👤 ni un défaut.
 
 **A13 — Rendre `strat_local_search` rapide en production** (👤 : « un code ultra performant »). 96 % du temps est dans deux noyaux
 compilés ([profil](../reports/STRAT_A13_profil_2026-10-23/bilan.md)). Présélection des candidats codée, inactive : 75/3 et 150/5 refusées par
@@ -52,6 +60,4 @@ leurs règles ([bilan](../reports/STRAT_A13_preselection_2026-10-23/bilan.md)). 
 en tête sans rien changer d'autre, photos avant/après (`scripts/lint_ns_snapshot.py`). *Livrable* : un commit par module, message avec le nombre
 E402 avant/après et la ligne `VALIDATION=GO` de `python scripts\validate_parallel.py`. *Fini quand* : E402 baisse et la validation passe.
 *Ne pas* : `ruff check --fix`, agrandir `extend-ignore`, lancer `scripts\metrics.py --dette` pour faire passer un test.
-
-**A15 — Reporter cinq observations du contre-audit ARGON** (`reports/ARGON_contre_audit_2026-10-16/pass02.json` : grille oblique non densifiée,
-bornes et arrêt ignorés au raffinement final) dans `UXargon.md` et `designargon.md`, chacune vérifiée par un test avant correction.
+*État* (2026-10-25, branche de travail) : 554 E402 dans 88 fichiers ; faits : `certus_strat_config.py`, `certus_strat_objectives.py` (`6d1aada4`).

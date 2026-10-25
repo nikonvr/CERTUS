@@ -5,48 +5,39 @@
 > [`CLAUDE.md`](../CLAUDE.md). Il se tient **en place** : un fait change, on corrige sa ligne,
 > on ne raconte pas la correction (`git log` s'en charge). Toute mesure porte sa date.
 > Le détail et l'historique sont dans `git`, sans autorité (CLAUDE.md, en-tête).
-> Mis à jour le 2026-10-22.
+> Mis à jour le 2026-10-25.
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
-> Tenir cette section à jour avec le travail : l'état présent seulement, l'historique est dans `git log` et `reports/`. Le reste se lit à la
-> demande : actions ouvertes et protocole de mesure dans [`ETAT_actions.md`](ETAT_actions.md) ; acquis et corrections dans
-> [`ETAT_acquis.md`](ETAT_acquis.md) ; preuves dans `reports/` (le `bilan.md` d'un dossier) ;
-> registre des audits, un constat par ligne : [`AUDITS.md`](AUDITS.md) (`grep -n "ALG-02" docs/AUDITS.md`).
+> L'état présent seulement ; l'historique est dans `git log` et `reports/`. À la demande : actions ouvertes et protocole de mesure
+> ([`ETAT_actions.md`](ETAT_actions.md)), acquis ([`ETAT_acquis.md`](ETAT_acquis.md)), registre des audits ([`AUDITS.md`](AUDITS.md),
+> `grep -n "ALG-02" docs/AUDITS.md`), preuves dans `reports/` (le `bilan.md` d'un dossier).
 
-**Branche de travail** : `claude/2026-10-22` (worktree `~/.codex/worktrees/certus-chatgpt-2026-10-22/certus0310`), ni poussée ni fusionnée.
+**Branche de travail** : `claude/integration-2026-10-25` (worktree `%TEMP%\int_wt`), locale, ni poussée ni fusionnée dans `master` ; elle
+réunit `gemini/2026-10-21` et `claude/2026-10-22`, séparées du 2026-10-21 au 2026-10-25 ([audit](../reports/AUDIT_travaux_2026-10-21_25/bilan.md)).
 
-**STRAT par défaut.** `strat_local_search` (recherche locale appariée du mode et de la λ) cherche et contrôle à ±0,010 d'indice, avec une garde au
-corridor configuré ([bilan](../reports/STRAT_garde_2026-10-22/bilan.md)) ; `tp_hysteresis_floor` vaut 0,000415. Défaut ouvert : le seuil des points
-tournants suit le bruit ; à 0,5× il passe sous l'ondulation du biais de fente et fabrique de faux points tournants ([analyse](../reports/ANALYSE_claude_2026-10-22/bilan.md)).
-Meilleur plan Bonne Mère : [`studies/bonne_mere/README.md`](../studies/bonne_mere/README.md) (dérive de la source non modélisée).
+**STRAT** : réglages par défaut au §3 ; défaut ouvert : à bas bruit, le seuil des points tournants passe sous l'ondulation du biais de
+fente et fabrique de faux points tournants ([analyse](../reports/ANALYSE_claude_2026-10-22/bilan.md)).
 
-**DESIGN (2026-10-23).** Mémétique et relances par défaut (décision de 👤) : séparatrice depuis l'exemple 0,000135 contre 0,0018–0,0042 avant ; bat Tikhonravov et al. 1996 ; Bonne Mère sur silice 1,434 pp ; [`bilan`](../reports/DESIGN_bs5050_2026-10-22/bilan.md), constats ALG-14 à ALG-28 dans `AUDITS.md`.
+**DESIGN** : mémétique et relances par défaut depuis le 2026-10-23 ; séparatrice 400–1200 nm à 0,000135, et 8,6e-5 sur le problème de
+Tikhonravov et al. 1996 contre 1,77e-4 pour leur design ([bilan](../reports/DESIGN_bs5050_2026-10-22/bilan.md)).
 
-**Bonne Mère 90 c. silice (2026-10-24).** Plan sous les règles de 👤 : 15 Rate, SEEL 0,2608 nm ; STRAT natif, règles partout : échec ; `rate_rules_final_only` en mesure ([bilan](../reports/BONNE_MERE_strat_90c_2026-10-23/bilan.md)).
+**Bonne Mère, 90 couches sur silice** : plan à déposer, fait à la main sous les règles de 👤 : 15 Rate, SEEL 0,2608 nm au holdout.
+STRAT natif avec l'étape libre avant la conversion : 0,2655 nm, une graine, sans la garde ; A16 le remesure
+([bilan](../reports/BONNE_MERE_strat_90c_2026-10-23/bilan.md)).
 
-**Branches locales en attente** (ni poussées, ni validées) : `claude/alg02-prune-evaluator-0d2a8d` (`46261901`,
-correctif de D107) et `claude/dreamy-burnell-85397a` (`cc3fe134`, fenêtre admissible 48c) ; reprendre par
-`git worktree add`. Dossier : 580 Mo pour une limite de 1 Go (2026-10-18).
+**Dernière validation complète** : 2026-10-25, `3260c766`, `python scripts\validate_parallel.py` GO ; C1 non remesuré après la fusion.
+Avant de committer du code, la validation de CLAUDE.md §2 en entier : un sous-ensemble a déjà laissé passer une régression
+(`tests/unit/test_the_architecture_debt_only_shrinks.py` ne tourne pas avec les tests voisins).
 
-**Dernière validation complète** (2026-10-23, `e13ed459`) : `python scripts\validate_parallel.py` GO, C1 tenu (9 092 tableaux).
-
-**Avant de committer du code** : la validation de CLAUDE.md §2 en entier ; un sous-ensemble a déjà laissé passer une
-régression (`tests/unit/test_the_architecture_debt_only_shrinks.py` ne tourne pas avec les tests voisins).
-
-**Décisions qui n'appartiennent qu'à 👤 — une IA ne les tranche pas, elle rapporte les mesures.**
-1. D98 : l'attente sans fin (défaut) ou l'arrêt tardif (`oms_arming=1`) — chiffres au §3 et dans `reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`.
-2. `elite_rate_moves` : garder actif (défaut actuel) ou le désarmer (`False`, ou `git revert 978b8f04`) — les mesures de A2 sont résumées dans `ETAT_acquis.md` (« Acquis du Rate »).
-3. `rate_rescue_hard` : inactif, mesuré sans gain (35 plans déposables sur 410) — le garder ou le retirer.
-4. Le Rate et l'optique pure (§5) ; D71 (2) ; l'information D69 (changement de définition d'un indicateur).
-5. Toute poussée (`git push`), toute fusion de la PR #9, toute modification de la vitrine.
-6. Le seuil des points tournants à bas bruit (`tp_hysteresis_floor`) ; armer `strat_local_search_fresh_id` (inactif).
+**Décisions qui n'appartiennent qu'à 👤** : §5. Une IA ne les tranche pas, elle rapporte les mesures.
 
 ## 1. Où en sont les programmes
 
 | programme | état | prochaine action |
 |---|---|---|
-| **Calcul (STRAT)** | étalon : `r75x2` à la fente de 2 nm. Recherche locale finale active avec sa garde au corridor configuré ; sur `r75x2`, −13,3 / −11,1 / neutre / −9,7 % de SEEL selon la graine de banc ([bilan](../reports/STRAT_garde_2026-10-22/bilan.md)). Sans rampes, aucun plan optique pur n'est déposable ; avec le secours Rate, tous les plans de la liste le sont, au modèle de Rate de STRAT (§7) | A9, A13 ([`ETAT_actions.md`](ETAT_actions.md)) |
+| **Calcul (STRAT)** | étalon : `r75x2` à la fente de 2 nm. Recherche locale finale active avec sa garde au corridor configuré ; sur `r75x2`, −13,3 / −11,1 / neutre / −9,7 % de SEEL selon la graine de banc ([bilan](../reports/STRAT_garde_2026-10-22/bilan.md)). Sans rampes, aucun plan optique pur n'est déposable ; avec le secours Rate, tous les plans de la liste le sont, au modèle de Rate de STRAT (§7) | A9, A13, A16 ([`ETAT_actions.md`](ETAT_actions.md)) |
+| **Conception (DESIGN)** | étape globale mémétique, champion sans couche < 5 nm et relances par défaut depuis le 2026-10-23 ; séparatrice 400–1200 nm à 0,000135 depuis l'exemple ([bilan](../reports/DESIGN_bs5050_2026-10-22/bilan.md)) ; le mode oblique calcule sur 2 points au lieu de 135 (ALG-03) | ALG-03, ALG-13 à ALG-28 (`AUDITS.md`) |
 | **RE** | indices tabulés lus en n − ik depuis R148 (2026-10-05) : un RE antérieur sur indices absorbants en incidence oblique est à refaire ; un indice demandé hors de sa table est prolongé par une constante, avec un avertissement | — |
 | **Base de dépôts** | 140 monocouches mesurées au Photon RT (`example/database_depots/`), chargées par INDEX (« Deposit database… ») ; la voie (T ou R) se lit dans la géométrie du détecteur. Onze ajustements certifiés servent de références (`references_index.json`, `scripts\bench_base_depots.py`) : neuf à moins de 2 % d'épaisseur, deux écarts expliqués (`docs/AUDITS.md` IDX-01). RE ne la lit pas (il lui faut un classeur complet) | IDX-01 ; §5 |
 | **Exécutable gelé** | couche OpenMP (D87), 411 Mo (D72), sans les outils de développement ; construit à `dbec2fc1`, « l'exécutable fonctionne » (👤). Licences embarquées dans `licenses/` | D72 |
@@ -155,7 +146,7 @@ Un défaut corrigé sort de la liste ; son numéro n'est pas réattribué.
 |---|---|
 | D11 | **Une fenêtre de module fermée n'est pas détruite** (lambdas et `partial` branchés sur ses signaux, tenus côté C++). Sans effet en production (un processus par module). 44 sites `connect(lambda)`, plafond de la CI à 44 (`tests/unit/test_ci_lambda_connect_audit.py`) : les convertir puis ramener le plafond à 0. Piste : `WA_DeleteOnClose` après avoir retenu les `QThread` actifs (D23) |
 | D23 | À instruire : six `gc.collect()` dans les threads de calcul STRAT peuvent libérer des objets Qt hors du thread GUI ; reproduire avant de toucher au cycle de vie ; avec D11 |
-| D25 | Dette de lint masquée par `extend-ignore` : 8 règles, 1 416 violations hors E501 (2026-10-12 ; E402 555, RUF001 à RUF003, RUF100, RUF022 voulue) ; cliquet `tests/oracle/test_lint_debt_ratchet.py`. E402 : action A8a |
+| D25 | Dette de lint masquée par `extend-ignore` : 8 règles, 1 416 violations hors E501 (2026-10-12 ; E402 554 le 2026-10-25, RUF001 à RUF003, RUF100, RUF022 voulue) ; cliquet `tests/oracle/test_lint_debt_ratchet.py`. E402 : action A8a |
 | D26 | Aucune arête d'import montante (2026-10-23) ; reste un cycle d'imports à l'exécution (le cœur de STRAT) ; `certus.physics.gradient_analytic` ne s'importe pas seul (cycle avec `gradient_utils`) |
 | D50 | Gelé, `loky` ne marche pas (repli sur des fils) et le multigraine est refusé, le message le dit |
 | D68 | La physique lit le silicium (`indices.xlsx`) à l'import par pandas et openpyxl (0,53 s) ; le rendre paresseux touche le chargement de la physique (Numba fige les tableaux) |
@@ -188,7 +179,12 @@ Un défaut corrigé sort de la liste ; son numéro n'est pas réattribué.
 | **le Rate et l'optique pure** | le meilleur plan porte du Rate sous tous les modèles d'arrêt ; le Rate de STRAT n'a ni dérive de la source ni bruit de vitesse (§7) ; A4 : réserver des parents optiques purs à ELITE ne donne aucun plan optique pur au modèle d'arrêt par défaut ([rapport](../reports/ANALYSE_claude_2026-10-22/bilan.md) §4). Dépend de la stabilité réelle de la vitesse (A25, §6) |
 | **comportements** | D108 (lever `ValueError`), D109 (épaisseur ≥ 0 au TMM), D114 (politique des entrées invalides) : changements de comportement, test rouge d'abord |
 | **CI** (D110) | déclarer `pytest-benchmark` et `pytest-xdist` ; ajouter les trois contrôles documentaires à `lint.yml` ; rendre bloquantes les étapes mypy et `bench_kernels` |
-| **dossier et archives** | 580 Mo le 2026-10-18 pour une limite de 1 Go ; seconde copie de l'archive de 8,2 Go ; branches archivées (D107, fenêtre admissible 48c `claude/dreamy-burnell-85397a`) à reprendre ou abandonner |
+| **branches** | faire de `claude/integration-2026-10-25` la branche de travail et y amener `master` ; reprendre ou abandonner `claude/alg02-prune-evaluator-0d2a8d` (D107) et `claude/dreamy-burnell-85397a` (fenêtre admissible 48c) ; `claude/a5-tours-budgets-2026-10-25` est sans objet (A5 fait le 2026-10-24) |
+| **A9** | refiger le protocole sur la branche de travail (il refuse un code différent de son commit figé), puis donner ou non le GO ; A14, son préalable, est fait |
+| **réglages STRAT** | `elite_rate_moves` (actif, ou `git revert 978b8f04` ; mesures d'A2 dans `ETAT_acquis.md`) ; `rate_rescue_hard` (inactif, sans gain : 35 déposables sur 410) ; `tp_hysteresis_floor` à bas bruit ; armer `strat_local_search_fresh_id` |
+| **modèles** | D71 (continuité de Tauc-Lorentz-Urbach en E = Eg) ; D69 (nouvelle définition de la couverture des noyaux) |
+| **publication** | toute poussée (`git push`), la fusion de la PR #9, la vitrine ; le design publié de Tikhonravov et al. 1996 (`example/example_design/JSON-design-reference-tikhonravov-1996-published-design.json`), versionné « avec l'autorisation des auteurs » : garder cette autorisation par écrit, ou retirer le fichier (CLAUDE.md §1) |
+| **dossier et archives** | 2,5 Go le 2026-10-25, dont `reports/` 1,05 Go pour une limite de 1 Go et un worktree de session de 593 Mo ; seconde copie de l'archive de 8,2 Go |
 
 ## 6. Chantiers spécifiés, en attente
 

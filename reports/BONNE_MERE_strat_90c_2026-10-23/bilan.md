@@ -5,7 +5,7 @@ Réglages de 👤 : corridor d'indice ±0,010, monitoring 430–900 nm, fente fi
 couche (ni précouche ni changement de témoin), classement sur le SEEL P95 sans arrêt. STRAT de cet arbre (`9e3887bd`),
 mode deep, budgets de l'étude Bonne Mère ([`make_config.py`](make_config.py)).
 
-## Ce qu'il faut retenir (2026-10-24, 18 h)
+## Ce qu'il faut retenir (2026-10-25)
 
 - **Plan à déposer** : [`modelam_s077_sapphire_rule.json`](modelam_s077_sapphire_rule.json), 15 couches Rate (83 % d'optique),
   SEEL 0,2608 nm et RMSE 0,98 pp au holdout (±0,010 d'indice), 0 arrêt au holdout, 1 sur 9 000 à la confirmation ;
@@ -17,8 +17,14 @@ mode deep, budgets de l'étude Bonne Mère ([`make_config.py`](make_config.py)).
 - **Prix des règles de 👤** : +27 % de SEEL contre le plan libre (0,2046 nm, 61 Rate) ; 69 % du RMSE² vient de l'indice.
 - **STRAT natif, `rate_rules_final_only`** (`ea5c284a`, graine 77, 19 h 35 → 23 h 40) : plan conforme (17 Rate), SEEL **0,3355 nm**
   au holdout contre 0,2608 à la main, 1 arrêt ([`native_final_s077_plan.json`](native_final_s077_plan.json),
-  [`native_final_holdout.json`](native_final_holdout.json)). Écart probable : la main partait du plan libre déjà affiné
-  (0,2046 nm), le mode natif part du gagnant ELITE (0,313 nm).
+  [`native_final_holdout.json`](native_final_holdout.json)). Cause : la conversion partait du gagnant ELITE (73 Rate,
+  56 conversions) sans la recherche libre qui, à la main, menait ce gagnant de 0,313 à 0,210 nm.
+- **Avec l'étape libre avant la conversion** (`5bba4396`, sur `23ce2ed7`, arbre modifié, graine 77, 02 h 33 → 07 h 12 le
+  2026-10-25) : étape libre 7 089 évaluations, 42 changements ; 44 conversions ; plan conforme (16 Rate), SEEL **0,2655 nm**
+  au holdout, 1 arrêt, RMSE² moyen 1,15e-4 contre 0,97e-4 à la main
+  ([`native_free_stage_s077_plan.json`](native_free_stage_s077_plan.json), [`native_free_stage_holdout.json`](native_free_stage_holdout.json) ;
+  gagnant extrait par [`extract_winner.py`](extract_winner.py)). Une graine, sans la garde de la recherche locale : à
+  remesurer sur `claude/integration-2026-10-25`, où la garde est armée.
 
 ## Résultats
 

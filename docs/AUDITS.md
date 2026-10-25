@@ -1,4 +1,4 @@
-# Registre des audits — état au 2026-10-20 (`4c10ce44`)
+# Registre des audits — état au 2026-10-25 (`3260c766`)
 
 Un constat par ligne. Sources : audits UX et algorithmique du 2026-10-16 (anciens `UXargon.md` et `designargon.md`, retirés,
 relire par `git show d4e2b2ba:UXargon.md`), contre-audit du 2026-10-17, audits de la suite du 2026-10-18 (deux passes), audit du
@@ -124,6 +124,7 @@ code du 2026-10-19, audit d'arrêt OMS du 2026-10-10 : rapports datés dans `rep
 | C14 | `__init__.py` hors `certus/domain/` ; un `.tmp` de 1,4 Mo suivi ; objets `tmp_obj_*` orphelins | ouvert |
 | C02/C04/C05/C08/C11/C19 | xdist, pointeur d'archive, chemins longs, `open_file_explorer`, français, audit `connect(lambda)` | corrigés (`f494b9e5`, `36758165`, `e1acab83`, `8610e18d`, `f7edd4a6`, `3a2b443f`) |
 | A14 | Archive de 8,2 Go en une seule copie | ouvert |
-| ARC-01 | 44 `connect(lambda)` (D11), 6 `gc.collect()` STRAT (D23), 20 arêtes montantes et un cycle (D26), silicium lu à l'import (D68), dette de lint (D25) | ouvert, sous cliquet |
+| ARC-01 | 44 `connect(lambda)` (D11), 6 `gc.collect()` STRAT (D23), un cycle d'imports (D26 ; plus aucune arête montante depuis A8b, `tests/architecture_debt.json`), silicium lu à l'import (D68), dette de lint (D25, 554 E402) | ouvert, sous cliquet |
+| C32 | Un sous-processus de `tests/ui/test_ux_no_horizontal_scroll.py` (fenêtre DESIGN sur la vraie plateforme graphique) s'est figé sous la validation parallèle et a résisté à `taskkill /F` ; seul et au rejeu, il passe (2026-10-25) | à reproduire |
 | ARC-02 | Gel : `loky` (D50), taille 411 Mo pour 300 (D72) | ouvert |
 | ARC-03 | RE sans base de dépôts ; importateur n'apparie pas T et R d'un même échantillon (P5.1) | piste |

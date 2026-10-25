@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.14", "3.15"]
+        python-version: ["3.15"]
 
     env:
       # PyQt6 sans serveur X. À poser AVANT toute création de QApplication ;

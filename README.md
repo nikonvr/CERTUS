@@ -16,8 +16,8 @@ reference (`tests/oracle/`): a silent error here is a wrong filter that someone 
 
 ## Run
 
-Python 3.15.1 is the reference (tests, measurements and the frozen build); 3.14.5 or later is declared. Install the locked
-dependencies with `pip install --require-hashes -r requirements.lock`. CERTUS runs from source: there is no build system, and
+Python 3.15.1 or later in the 3.15 series (`requires-python = ">=3.15.1,<3.16"`): tests, measurements and the frozen build run on it
+only. Install the locked dependencies with `pip install --require-hashes -r requirements.lock`. CERTUS runs from source: there is no build system, and
 `pip install .` is not supported.
 
 ```bash

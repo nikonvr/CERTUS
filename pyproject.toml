@@ -5,7 +5,7 @@
 name = "certus-optical-suite"
 version = "26.05.0"
 description = "CERTUS optical thin-film suite (design, strat, RE, index, metal)."
-requires-python = ">=3.14.5"
+requires-python = ">=3.15.1,<3.16"
 license = "GPL-3.0-only"
 authors = [
   { name = "CERTUS Team" }
@@ -14,7 +14,7 @@ classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Science/Research",
   "Topic :: Scientific/Engineering :: Physics",
-  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
   "Operating System :: Microsoft :: Windows",
 ]
 dependencies = [
@@ -50,7 +50,7 @@ freeze = [
 # re-exports (CLAUDE.md, section 3). The ratchet tests/oracle/test_lint_debt_ratchet.py
 # names the remaining rules: none may enter, and a rule that leaves must leave its list.
 [tool.ruff]
-target-version = "py314"
+target-version = "py315"
 line-length = 120
 
 [tool.ruff.lint]
@@ -149,7 +149,7 @@ directory = "htmlcov"
 # ce qu'ils importent est lu, mais ses erreurs sont tues (`follow_imports = "silent"`). `python -m mypy` depuis la racine.
 # Le cliquet des annotations est `tests/architecture_debt.json` (`fonctions_non_annotees`), qui n'a pas besoin de mypy.
 [tool.mypy]
-python_version = "3.14"
+python_version = "3.15"
 files = ["certus/domain", "certus/physics", "certus/core"]
 namespace_packages = true
 explicit_package_bases = true

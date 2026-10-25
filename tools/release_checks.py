@@ -324,8 +324,8 @@ def check_release_structure() -> list[str]:
         errors.append("Missing file: pyproject.toml")
     else:
         py_text = pyproject.read_text(encoding="utf-8")
-        if 'requires-python = ">=3.14.5"' not in py_text:
-            errors.append("pyproject.toml must enforce requires-python >= 3.14.5")
+        if 'requires-python = ">=3.15.1,<3.16"' not in py_text:
+            errors.append("pyproject.toml must enforce requires-python >= 3.15.1,<3.16")
 
     workflow = REPO_ROOT / ".github" / "workflows" / "release-windows.yml"
     if not workflow.exists():

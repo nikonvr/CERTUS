@@ -661,7 +661,7 @@ def lint(racine: Path) -> tuple[dict[str, int | None], dict[str, str]]:
     try:
         r = subprocess.run(
             [*commande, "check", ".", "--isolated", "--select", FAMILLES_LINT, "--ignore", "E501",
-             "--line-length", "120", "--target-version", "py314", "--statistics"],
+             "--line-length", "120", "--target-version", "py315", "--statistics"],
             cwd=racine, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=300,
         )  # fmt: skip
     except (OSError, subprocess.SubprocessError) as exc:

@@ -56,7 +56,7 @@ compilés ([profil](../reports/STRAT_A13_profil_2026-10-23/bilan.md)). Préséle
 leurs règles ([bilan](../reports/STRAT_A13_preselection_2026-10-23/bilan.md)). *Reste* : accélérer un noyau (prouvé au bit par `c1_diff`).
 
 **A8a — Dette de lint E402, module par module** (une heure par module). *Faire* : mesure officielle
-`python -m ruff check . --isolated --select E402 --line-length 120 --target-version py314 --statistics` ; pour un module, déplacer les imports
+`python -m ruff check . --isolated --select E402 --line-length 120 --target-version py315 --statistics` ; pour un module, déplacer les imports
 en tête sans rien changer d'autre, photos avant/après (`scripts/lint_ns_snapshot.py`). *Livrable* : un commit par module, message avec le nombre
 E402 avant/après et la ligne `VALIDATION=GO` de `python scripts\validate_parallel.py`. *Fini quand* : E402 baisse et la validation passe.
 *Ne pas* : `ruff check --fix`, agrandir `extend-ignore`, lancer `scripts\metrics.py --dette` pour faire passer un test.

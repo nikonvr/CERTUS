@@ -73,7 +73,7 @@ def _frozen_folder(
         (folder / "python314.dll").write_bytes(b"runtime")
     if openmp:
         (folder / "numba" / "np" / "ufunc").mkdir(parents=True)
-        (folder / "numba" / "np" / "ufunc" / "omppool.cp314-win_amd64.pyd").write_bytes(b"layer")
+        (folder / "numba" / "np" / "ufunc" / "omppool.cp315-win_amd64.pyd").write_bytes(b"layer")
         (folder / "VCOMP140.DLL").write_bytes(b"runtime")
     for name in rc.FROZEN_REQUIRED_FILES if data else ():
         (folder / name).parent.mkdir(parents=True, exist_ok=True)

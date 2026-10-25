@@ -16,7 +16,7 @@
 **Branche de travail** : `master`, locale, non poussée. Depuis le 2026-10-25 elle réunit `gemini/2026-10-21` (supprimée) et `claude/2026-10-22`,
 séparées du 2026-10-21 au 2026-10-25 ([audit](../reports/AUDIT_travaux_2026-10-21_25/bilan.md)). Le dossier est en *sparse-checkout* : les 38
 artefacts bruts `reports/**/blocs_vs_plantage_*.json` (427 Mo) sont versionnés mais absents du disque ; `git sparse-checkout disable` les restaure.
-Les fichiers non versionnés (journaux, exports) sont hors de Drive, dans `D:\certus_hors_drive\certus0310\` (manifeste à sa racine).
+Les fichiers non versionnés (journaux, exports) sont hors de Drive, dans un dossier à part qui porte leur manifeste (`manifest_2026-10-25.tsv`) ; 👤 en connaît l'emplacement.
 
 **STRAT** : réglages par défaut au §3 ; défaut ouvert : à bas bruit, le seuil des points tournants passe sous l'ondulation du biais de
 fente et fabrique de faux points tournants ([analyse](../reports/ANALYSE_claude_2026-10-22/bilan.md)).

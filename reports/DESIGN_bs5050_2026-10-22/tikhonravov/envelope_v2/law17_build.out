@@ -1,0 +1,19 @@
+50 starts (0.64 s each) {'tried': 56, 'kept': 15, 'lost_layer': 33, 'duplicate': 8} catalogue 15 best 1.4386e-03
+100 starts (0.60 s each) {'tried': 106, 'kept': 27, 'lost_layer': 56, 'duplicate': 23} catalogue 27 best 1.4386e-03
+150 starts (0.58 s each) {'tried': 156, 'kept': 43, 'lost_layer': 77, 'duplicate': 36} catalogue 43 best 1.4386e-03
+200 starts (0.57 s each) {'tried': 206, 'kept': 57, 'lost_layer': 96, 'duplicate': 53} catalogue 57 best 1.4386e-03
+250 starts (0.56 s each) {'tried': 256, 'kept': 73, 'lost_layer': 118, 'duplicate': 65} catalogue 73 best 1.4386e-03
+300 starts (0.57 s each) {'tried': 306, 'kept': 89, 'lost_layer': 139, 'duplicate': 78} catalogue 89 best 1.4386e-03
+350 starts (0.56 s each) {'tried': 356, 'kept': 102, 'lost_layer': 161, 'duplicate': 93} catalogue 102 best 1.4386e-03
+400 starts (0.55 s each) {'tried': 406, 'kept': 115, 'lost_layer': 182, 'duplicate': 109} catalogue 115 best 1.4386e-03
+450 starts (0.54 s each) {'tried': 456, 'kept': 119, 'lost_layer': 210, 'duplicate': 127} catalogue 119 best 1.4386e-03
+500 starts (0.54 s each) {'tried': 506, 'kept': 136, 'lost_layer': 230, 'duplicate': 140} catalogue 136 best 1.4386e-03
+550 starts (0.54 s each) {'tried': 556, 'kept': 146, 'lost_layer': 253, 'duplicate': 157} catalogue 146 best 1.4386e-03
+600 starts (0.53 s each) {'tried': 606, 'kept': 160, 'lost_layer': 275, 'duplicate': 171} catalogue 160 best 1.4386e-03
+650 starts (0.53 s each) {'tried': 656, 'kept': 174, 'lost_layer': 297, 'duplicate': 185} catalogue 174 best 1.4386e-03
+700 starts (0.53 s each) {'tried': 706, 'kept': 191, 'lost_layer': 314, 'duplicate': 201} catalogue 191 best 1.4386e-03
+750 starts (0.53 s each) {'tried': 756, 'kept': 202, 'lost_layer': 337, 'duplicate': 217} catalogue 202 best 1.4386e-03
+800 starts (0.53 s each) {'tried': 806, 'kept': 216, 'lost_layer': 355, 'duplicate': 235} catalogue 216 best 1.4386e-03
+850 starts (0.53 s each) {'tried': 856, 'kept': 228, 'lost_layer': 378, 'duplicate': 250} catalogue 228 best 1.4386e-03
+900 starts (0.53 s each) {'tried': 906, 'kept': 242, 'lost_layer': 398, 'duplicate': 266} catalogue 242 best 1.4386e-03
+end: {'tried': 908, 'kept': 242, 'lost_layer': 399, 'duplicate': 267} catalogue 242

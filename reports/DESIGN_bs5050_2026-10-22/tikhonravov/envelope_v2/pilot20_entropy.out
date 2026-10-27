@@ -1,0 +1,27 @@
+local entropy, random OT errors 0.5 nm; 39 designs x 1000 fresh draws; 409 for harmonic
+all designs: Spearman of the harmonic log volume (higher = wider) with
+   tau 1e-06: -trace   rho +0.96
+   tau 1e-06: -lam_max rho +0.88
+   tau 1e-06: rmse           rho -0.91
+   tau 1e-06: total_qwot     rho -0.59
+   tau 1e-06: thinnest_ot_nm rho -0.12
+   tau 1e-06: stored_energy  rho -0.70
+   tau 1e-05: -trace   rho +1.00
+   tau 1e-05: -lam_max rho +0.94
+   tau 1e-05: rmse           rho -0.89
+   tau 1e-05: total_qwot     rho -0.51
+   tau 1e-05: thinnest_ot_nm rho -0.08
+   tau 1e-05: stored_energy  rho -0.65
+   tau 0.0001: -trace   rho +1.00
+   tau 0.0001: -lam_max rho +0.95
+   tau 0.0001: rmse           rho -0.88
+   tau 0.0001: total_qwot     rho -0.49
+   tau 0.0001: thinnest_ot_nm rho -0.07
+   tau 0.0001: stored_energy  rho -0.63
+39 Monte Carlo designs: Spearman of each local entropy with the robust criteria (soft: lower F = wider; hard: higher log volume = wider)
+   soft tau1e-06  cv +0.70  cvar95 +0.68  yield -0.71  nominal +0.56  | widest: id 118 (best mean is id 130)
+   soft tau1e-05  cv +0.93  cvar95 +0.89  yield -0.82  nominal +0.25  | widest: id 153 (best mean is id 130)
+   soft tau0.0001  cv +0.94  cvar95 +0.91  yield -0.80  nominal +0.17  | widest: id 153 (best mean is id 130)
+   hard eps0.003  cv -0.91  cvar95 -0.85  yield +0.81  nominal -0.28  | widest: id 142 (best mean is id 130)
+   hard eps0.004  cv -0.94  cvar95 -0.91  yield +0.81  nominal -0.18  | widest: id 134 (best mean is id 130)
+   hard eps0.006  cv -0.90  cvar95 -0.87  yield +0.80  nominal -0.11  | widest: id 128 (best mean is id 130)

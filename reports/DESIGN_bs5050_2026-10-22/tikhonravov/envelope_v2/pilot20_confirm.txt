@@ -1,0 +1,51 @@
+confirmation on 2000 fresh draws per design and model; 10 finalists
+id 0 (nominal, curve:curve_foc27-36_free_s2.csv) nominal 4.403e-04
+   OT 0.2nm   selection 1.729e-03 -> fresh 1.729e-03 [1.729e-03,1.729e-03] CVaR95 2.683e-03 yield 0.964 bPOE 0.096
+   OT 0.5nm   selection 4.202e-03 -> fresh 4.203e-03 [4.202e-03,4.203e-03] CVaR95 6.632e-03 yield 0.252 bPOE 1.000
+   OT 1nm     selection 8.369e-03 -> fresh 8.370e-03 [8.367e-03,8.373e-03] CVaR95 1.325e-02 yield 0.009 bPOE 1.000
+   OT 1%      selection 1.162e-02 -> fresh 1.161e-02 [1.160e-02,1.162e-02] CVaR95 2.131e-02 yield 0.004 bPOE 1.000
+id 78 (nominal, hop0.15) nominal 6.587e-04
+   OT 0.2nm   selection 1.731e-03 -> fresh 1.730e-03 [1.730e-03,1.731e-03] CVaR95 2.653e-03 yield 0.986 bPOE 0.041
+   OT 0.5nm   selection 4.056e-03 -> fresh 4.054e-03 [4.053e-03,4.055e-03] CVaR95 6.459e-03 yield 0.350 bPOE 1.000
+   OT 1nm     selection 8.033e-03 -> fresh 8.027e-03 [8.024e-03,8.029e-03] CVaR95 1.287e-02 yield 0.011 bPOE 1.000
+   OT 1%      selection 9.551e-03 -> fresh 9.545e-03 [9.540e-03,9.551e-03] CVaR95 1.712e-02 yield 0.017 bPOE 1.000
+id 101 (nominal, hop0.05) nominal 1.219e-03
+   OT 0.2nm   selection 1.969e-03 -> fresh 1.969e-03 [1.969e-03,1.969e-03] CVaR95 2.708e-03 yield 0.950 bPOE 0.128
+   OT 0.5nm   selection 4.052e-03 -> fresh 4.051e-03 [4.050e-03,4.052e-03] CVaR95 6.158e-03 yield 0.241 bPOE 1.000
+   OT 1nm     selection 7.824e-03 -> fresh 7.818e-03 [7.815e-03,7.821e-03] CVaR95 1.211e-02 yield 0.011 bPOE 1.000
+   OT 1%      selection 9.117e-03 -> fresh 9.125e-03 [9.120e-03,9.129e-03] CVaR95 1.571e-02 yield 0.008 bPOE 1.000
+id 118 (nominal, hop0.15) nominal 5.251e-04
+   OT 0.2nm   selection 1.704e-03 -> fresh 1.704e-03 [1.704e-03,1.704e-03] CVaR95 2.708e-03 yield 0.971 bPOE 0.079
+   OT 0.5nm   selection 4.086e-03 -> fresh 4.086e-03 [4.085e-03,4.087e-03] CVaR95 6.660e-03 yield 0.307 bPOE 1.000
+   OT 1nm     selection 8.120e-03 -> fresh 8.119e-03 [8.117e-03,8.122e-03] CVaR95 1.328e-02 yield 0.008 bPOE 1.000
+   OT 1%      selection 1.164e-02 -> fresh 1.164e-02 [1.163e-02,1.164e-02] CVaR95 2.090e-02 yield 0.007 bPOE 1.000
+id 130 (nominal, hop0.3) nominal 1.219e-03
+   OT 0.2nm   selection 1.967e-03 -> fresh 1.968e-03 [1.968e-03,1.968e-03] CVaR95 2.702e-03 yield 0.951 bPOE 0.130
+   OT 0.5nm   selection 4.047e-03 -> fresh 4.048e-03 [4.048e-03,4.049e-03] CVaR95 6.147e-03 yield 0.260 bPOE 1.000
+   OT 1nm     selection 7.808e-03 -> fresh 7.814e-03 [7.811e-03,7.817e-03] CVaR95 1.211e-02 yield 0.007 bPOE 1.000
+   OT 1%      selection 9.124e-03 -> fresh 9.126e-03 [9.121e-03,9.129e-03] CVaR95 1.551e-02 yield 0.013 bPOE 1.000
+id 134 (nominal, hop0.3) nominal 1.219e-03
+   OT 0.2nm   selection 1.968e-03 -> fresh 1.968e-03 [1.968e-03,1.968e-03] CVaR95 2.735e-03 yield 0.950 bPOE 0.139
+   OT 0.5nm   selection 4.049e-03 -> fresh 4.049e-03 [4.048e-03,4.050e-03] CVaR95 6.236e-03 yield 0.238 bPOE 1.000
+   OT 1nm     selection 7.816e-03 -> fresh 7.816e-03 [7.813e-03,7.820e-03] CVaR95 1.228e-02 yield 0.009 bPOE 1.000
+   OT 1%      selection 9.121e-03 -> fresh 9.123e-03 [9.118e-03,9.126e-03] CVaR95 1.565e-02 yield 0.006 bPOE 1.000
+id 136 (nominal, hop0.05) nominal 1.219e-03
+   OT 0.2nm   selection 1.968e-03 -> fresh 1.968e-03 [1.968e-03,1.968e-03] CVaR95 2.695e-03 yield 0.953 bPOE 0.124
+   OT 0.5nm   selection 4.049e-03 -> fresh 4.049e-03 [4.048e-03,4.050e-03] CVaR95 6.126e-03 yield 0.252 bPOE 1.000
+   OT 1nm     selection 7.815e-03 -> fresh 7.815e-03 [7.812e-03,7.818e-03] CVaR95 1.206e-02 yield 0.009 bPOE 1.000
+   OT 1%      selection 9.120e-03 -> fresh 9.119e-03 [9.114e-03,9.123e-03] CVaR95 1.534e-02 yield 0.009 bPOE 1.000
+id 141 (nominal, hop0.05) nominal 1.219e-03
+   OT 0.2nm   selection 1.968e-03 -> fresh 1.968e-03 [1.968e-03,1.968e-03] CVaR95 2.674e-03 yield 0.948 bPOE 0.141
+   OT 0.5nm   selection 4.049e-03 -> fresh 4.050e-03 [4.049e-03,4.051e-03] CVaR95 6.071e-03 yield 0.244 bPOE 1.000
+   OT 1nm     selection 7.815e-03 -> fresh 7.818e-03 [7.815e-03,7.822e-03] CVaR95 1.195e-02 yield 0.007 bPOE 1.000
+   OT 1%      selection 9.119e-03 -> fresh 9.125e-03 [9.122e-03,9.129e-03] CVaR95 1.528e-02 yield 0.007 bPOE 1.000
+id 142 (nominal, hop0.05) nominal 1.219e-03
+   OT 0.2nm   selection 1.968e-03 -> fresh 1.968e-03 [1.968e-03,1.968e-03] CVaR95 2.768e-03 yield 0.956 bPOE 0.117
+   OT 0.5nm   selection 4.049e-03 -> fresh 4.050e-03 [4.049e-03,4.051e-03] CVaR95 6.328e-03 yield 0.252 bPOE 1.000
+   OT 1nm     selection 7.815e-03 -> fresh 7.818e-03 [7.815e-03,7.821e-03] CVaR95 1.247e-02 yield 0.006 bPOE 1.000
+   OT 1%      selection 9.127e-03 -> fresh 9.128e-03 [9.124e-03,9.132e-03] CVaR95 1.576e-02 yield 0.009 bPOE 1.000
+id 144 (nominal, hop0.05) nominal 1.219e-03
+   OT 0.2nm   selection 1.968e-03 -> fresh 1.969e-03 [1.969e-03,1.969e-03] CVaR95 2.712e-03 yield 0.948 bPOE 0.140
+   OT 0.5nm   selection 4.051e-03 -> fresh 4.052e-03 [4.051e-03,4.053e-03] CVaR95 6.172e-03 yield 0.258 bPOE 1.000
+   OT 1nm     selection 7.819e-03 -> fresh 7.825e-03 [7.821e-03,7.827e-03] CVaR95 1.216e-02 yield 0.017 bPOE 1.000
+   OT 1%      selection 9.135e-03 -> fresh 9.130e-03 [9.126e-03,9.133e-03] CVaR95 1.566e-02 yield 0.013 bPOE 1.000

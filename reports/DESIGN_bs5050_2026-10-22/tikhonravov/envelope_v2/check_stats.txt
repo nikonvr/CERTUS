@@ -1,0 +1,7 @@
+cvar N(0,1): 2.0625 exact 2.0627
+bpoe: discrete cases ok; N(0,1) at CVaR95 -> 0.0500 (exact 0.05)
+control variate: E[quad] 67.5682 vs sample 67.5696; zero variance on a quadratic
+pareto: ok
+partial_rank_corr, cv_r2: ok
+layer_field: shape, zero-thickness case ok
+CHECKS=OK

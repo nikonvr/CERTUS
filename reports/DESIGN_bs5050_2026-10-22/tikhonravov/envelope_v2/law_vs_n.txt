@@ -1,0 +1,10 @@
+random OT errors; robust selection at sigma = 0.5 nm; s = sqrt(S), S = sum_i |dr/dOT_i|^2 (per nm^2)
+ N  designs  robust: nominal    s        MC/pred  S/N       max/mean  top3  | good designs: s min  s median
+10     303   1.17e-02  6.862e-03  1.00     4.71e-06   1.86    0.50  |  5.698e-03  6.355e-03  (10 good)
+14     315   3.58e-03  8.009e-03  1.01     4.58e-06   4.41    0.51  |  7.267e-03  7.886e-03  (15 good)
+17     242   1.44e-03  7.622e-03  1.00     3.42e-06   1.85    0.31  |  7.547e-03  7.908e-03  (19 good)
+20     234   1.22e-03  7.724e-03  0.99     2.98e-06   2.19    0.30  |  8.001e-03  8.796e-03  (9 good)
+24     167   1.38e-04  8.740e-03  1.02     3.18e-06   2.45    0.27  |  8.740e-03  9.524e-03  (15 good)
+28     110   1.45e-04  9.277e-03  1.00     3.07e-06   2.21    0.21  |  9.611e-03  1.014e-02  (5 good)
+fit S ~ N^a (robust design): a = 0.51  (a = 1: every layer contributes the same)
+fit S ~ N^a (min over good designs): a = 0.95  (a = 1: every layer contributes the same)

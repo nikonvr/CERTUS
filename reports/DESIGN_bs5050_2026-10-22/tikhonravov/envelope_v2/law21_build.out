@@ -1,0 +1,7 @@
+50 starts (1.11 s each) {'tried': 56, 'kept': 16, 'lost_layer': 29, 'duplicate': 11} catalogue 16 best 1.9157e-04
+100 starts (1.01 s each) {'tried': 106, 'kept': 31, 'lost_layer': 55, 'duplicate': 20} catalogue 31 best 1.9157e-04
+150 starts (0.98 s each) {'tried': 156, 'kept': 43, 'lost_layer': 79, 'duplicate': 34} catalogue 43 best 1.9157e-04
+200 starts (1.01 s each) {'tried': 206, 'kept': 63, 'lost_layer': 104, 'duplicate': 39} catalogue 63 best 1.9157e-04
+250 starts (0.98 s each) {'tried': 256, 'kept': 79, 'lost_layer': 129, 'duplicate': 48} catalogue 79 best 1.9157e-04
+300 starts (0.97 s each) {'tried': 306, 'kept': 101, 'lost_layer': 147, 'duplicate': 58} catalogue 101 best 1.9157e-04
+end: {'tried': 315, 'kept': 103, 'lost_layer': 150, 'duplicate': 62} catalogue 103

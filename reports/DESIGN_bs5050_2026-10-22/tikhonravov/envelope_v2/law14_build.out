@@ -1,0 +1,24 @@
+50 starts (0.42 s each) {'tried': 56, 'kept': 26, 'lost_layer': 13, 'duplicate': 17} catalogue 26 best 3.5840e-03
+100 starts (0.44 s each) {'tried': 106, 'kept': 37, 'lost_layer': 36, 'duplicate': 33} catalogue 37 best 3.5840e-03
+150 starts (0.42 s each) {'tried': 156, 'kept': 51, 'lost_layer': 55, 'duplicate': 50} catalogue 51 best 3.5840e-03
+200 starts (0.42 s each) {'tried': 206, 'kept': 69, 'lost_layer': 70, 'duplicate': 67} catalogue 69 best 3.5840e-03
+250 starts (0.41 s each) {'tried': 256, 'kept': 86, 'lost_layer': 86, 'duplicate': 84} catalogue 86 best 3.5840e-03
+300 starts (0.40 s each) {'tried': 306, 'kept': 97, 'lost_layer': 106, 'duplicate': 103} catalogue 97 best 3.5840e-03
+350 starts (0.40 s each) {'tried': 356, 'kept': 112, 'lost_layer': 124, 'duplicate': 120} catalogue 112 best 3.5840e-03
+400 starts (0.40 s each) {'tried': 406, 'kept': 121, 'lost_layer': 145, 'duplicate': 140} catalogue 121 best 3.5840e-03
+450 starts (0.40 s each) {'tried': 456, 'kept': 134, 'lost_layer': 165, 'duplicate': 157} catalogue 134 best 3.5840e-03
+500 starts (0.40 s each) {'tried': 506, 'kept': 145, 'lost_layer': 186, 'duplicate': 175} catalogue 145 best 3.5840e-03
+550 starts (0.40 s each) {'tried': 556, 'kept': 160, 'lost_layer': 206, 'duplicate': 190} catalogue 160 best 3.5840e-03
+600 starts (0.40 s each) {'tried': 606, 'kept': 169, 'lost_layer': 229, 'duplicate': 208} catalogue 169 best 3.5840e-03
+650 starts (0.40 s each) {'tried': 656, 'kept': 179, 'lost_layer': 249, 'duplicate': 228} catalogue 179 best 3.5840e-03
+700 starts (0.41 s each) {'tried': 706, 'kept': 191, 'lost_layer': 268, 'duplicate': 247} catalogue 191 best 3.5840e-03
+750 starts (0.41 s each) {'tried': 756, 'kept': 206, 'lost_layer': 285, 'duplicate': 265} catalogue 206 best 3.5840e-03
+800 starts (0.41 s each) {'tried': 806, 'kept': 221, 'lost_layer': 300, 'duplicate': 285} catalogue 221 best 3.5840e-03
+850 starts (0.41 s each) {'tried': 856, 'kept': 235, 'lost_layer': 318, 'duplicate': 303} catalogue 235 best 3.5840e-03
+900 starts (0.40 s each) {'tried': 906, 'kept': 245, 'lost_layer': 338, 'duplicate': 323} catalogue 245 best 3.5840e-03
+950 starts (0.41 s each) {'tried': 956, 'kept': 258, 'lost_layer': 354, 'duplicate': 344} catalogue 258 best 3.5840e-03
+1000 starts (0.41 s each) {'tried': 1006, 'kept': 268, 'lost_layer': 373, 'duplicate': 365} catalogue 268 best 3.5840e-03
+1050 starts (0.41 s each) {'tried': 1056, 'kept': 280, 'lost_layer': 390, 'duplicate': 386} catalogue 280 best 3.5840e-03
+1100 starts (0.41 s each) {'tried': 1106, 'kept': 294, 'lost_layer': 410, 'duplicate': 402} catalogue 294 best 3.5840e-03
+1150 starts (0.40 s each) {'tried': 1156, 'kept': 304, 'lost_layer': 432, 'duplicate': 420} catalogue 304 best 3.5840e-03
+end: {'tried': 1197, 'kept': 315, 'lost_layer': 447, 'duplicate': 435} catalogue 315

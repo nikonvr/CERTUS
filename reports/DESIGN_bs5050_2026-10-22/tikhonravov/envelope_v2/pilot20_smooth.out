@@ -1,0 +1,15 @@
+1 smooth<-nominal 41.5 s: nominal 7.468e-04 SAA 3.985e-03; kept 1, best SAA 3.9853e-03
+2 smooth<-random 35.0 s: nominal 8.230e-02 SAA 8.255e-02; kept 2, best SAA 3.9853e-03
+3 smooth<-nominal 21.0 s: nominal 2.175e-03 SAA 4.377e-03; kept 3, best SAA 3.9853e-03
+4 smooth<-random 50.7 s: nominal 4.640e-02 SAA 4.710e-02; kept 4, best SAA 3.9853e-03
+5 smooth<-nominal 36.8 s: nominal 1.409e-03 SAA 3.901e-03; kept 5, best SAA 3.9014e-03
+6 smooth<-random 58.8 s: nominal 4.283e-02 SAA 4.321e-02; kept 6, best SAA 3.9014e-03
+7 smooth<-nominal 38.6 s: nominal 7.468e-04 SAA 3.985e-03; kept 6, best SAA 3.9014e-03
+8 smooth<-random 54.3 s: nominal 6.271e-02 SAA 6.297e-02; kept 7, best SAA 3.9014e-03
+9 smooth<-nominal 41.4 s: nominal 7.468e-04 SAA 3.985e-03; kept 7, best SAA 3.9014e-03
+10 smooth<-random 57.4 s: nominal 4.388e-02 SAA 4.429e-02; kept 8, best SAA 3.9014e-03
+11 smooth<-nominal 42.4 s: nominal 7.468e-04 SAA 3.985e-03; kept 8, best SAA 3.9014e-03
+12 smooth<-random 53.5 s: nominal 4.366e-02 SAA 4.407e-02; kept 9, best SAA 3.9014e-03
+13 smooth<-nominal 43.9 s: nominal 1.409e-03 SAA 3.901e-03; kept 9, best SAA 3.9014e-03
+14 smooth<-random 55.2 s: nominal 3.116e-02 SAA 3.163e-02; kept 10, best SAA 3.9014e-03
+end: 14 starts, kept 10

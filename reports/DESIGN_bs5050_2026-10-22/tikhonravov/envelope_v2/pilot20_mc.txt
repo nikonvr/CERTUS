@@ -1,0 +1,300 @@
+409 designs; Spearman rank correlation with the predicted robust cost (OT 0.5nm):
+   descriptor     rho      partial rho (nominal RMSE held fixed)
+   rmse           +0.99 (p 0.0e+00)  +nan
+   thinnest_ot_nm +0.04 (p 4.3e-01)  +0.07
+   n_ot_under_10nm +0.02 (p 6.9e-01)  -0.05
+   total_qwot     +0.65 (p 2.4e-51)  +0.05
+   h_share        +nan (p nan)  +0.03
+   stored_energy  +0.72 (p 5.0e-66)  +0.06
+   field_max      +0.36 (p 6.3e-14)  -0.05
+   log10_cond     -0.27 (p 2.7e-08)  -0.17
+   all descriptors together, linear model on ranks: 5-fold R^2 0.98
+ranking stability across error models (Spearman of predicted robust costs):
+   OT 0.5nm vs OT 0.2nm   rho +1.00
+   OT 0.5nm vs OT 1nm     rho +1.00
+   OT 0.5nm vs OT 1%      rho +0.99
+Pareto front (nominal, predicted OT 0.5nm): 10 designs
+winner of each error model (lowest predicted robust cost):
+   OT 0.2nm  id 118 (nominal) nominal 5.25e-04 pred 1.70e-03 TOT 20.8 thinnest OT 10.8 nm
+   OT 0.5nm  id 130 (nominal) nominal 1.22e-03 pred 4.05e-03 TOT 18.8 thinnest OT 19.0 nm
+   OT 1nm    id 130 (nominal) nominal 1.22e-03 pred 7.82e-03 TOT 18.8 thinnest OT 19.0 nm
+   OT 1%     id 149 (nominal) nominal 1.18e-03 pred 9.02e-03 TOT 18.4 thinnest OT 9.8 nm
+399 nominal minima, 10 smoothed designs; Monte Carlo (200 draws, bootstrap 90 % intervals) on 39; SPEC max|T-0.5| < 0.01
+id 130 [pareto, hop0.3] nominal 1.219e-03 TOT 18.8 thinnest OT 19.0 nm cond 1e4.6 H3 rho(field in layer, |J_i|^2) +0.22
+   OT 0.2nm   pred 1.97e-03 | MC 1.99e-03 [1.95e-03,2.02e-03] | CV 1.97e-03 [1.97e-03,1.97e-03] | CVaR95 2.69e-03 [2.58e-03,2.77e-03] | yield 0.96 [0.94,0.98] | bPOE 0.09 [0.04,0.14]
+   OT 0.5nm   pred 4.05e-03 | MC 4.10e-03 [3.98e-03,4.21e-03] | CV 4.05e-03 [4.04e-03,4.05e-03] | CVaR95 6.10e-03 [5.82e-03,6.32e-03] | yield 0.23 [0.18,0.28] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 1.01e-09 [8.70e-10,1.18e-09] lambda2/1 5.77e-01 share(1) 0.40 share(3) 0.80 |cos(v1, JtJ v1)| 0.97 v1 layers #14(H,49.6nm) #10(H,12.1nm) #8(H,8.5nm)
+   OT 1nm     pred 7.82e-03 | MC 7.93e-03 [7.68e-03,8.16e-03] | CV 7.81e-03 [7.79e-03,7.82e-03] | CVaR95 1.20e-02 [1.14e-02,1.24e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 9.13e-03 | MC 9.14e-03 [8.78e-03,9.47e-03] | CV 9.12e-03 [9.11e-03,9.14e-03] | CVaR95 1.54e-02 [1.42e-02,1.62e-02] | yield 0.02 [0.01,0.04] | bPOE 1.00 [1.00,1.00]
+   (3.7 s for this design)
+id 120 [best predicted OT 0.5nm, hop0.15] nominal 1.219e-03 TOT 18.8 thinnest OT 19.0 nm cond 1e4.6 H3 rho(field in layer, |J_i|^2) +0.22
+   OT 0.2nm   pred 1.97e-03 | MC 1.97e-03 [1.93e-03,2.01e-03] | CV 1.97e-03 [1.97e-03,1.97e-03] | CVaR95 2.70e-03 [2.59e-03,2.78e-03] | yield 0.94 [0.91,0.96] | bPOE 0.16 [0.10,0.21]
+   OT 0.5nm   pred 4.05e-03 | MC 4.06e-03 [3.95e-03,4.17e-03] | CV 4.05e-03 [4.05e-03,4.05e-03] | CVaR95 6.14e-03 [5.84e-03,6.35e-03] | yield 0.29 [0.24,0.35] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 9.72e-10 [8.18e-10,1.16e-09] lambda2/1 5.54e-01 share(1) 0.40 share(3) 0.80 |cos(v1, JtJ v1)| 0.98 v1 layers #14(H,49.6nm) #10(H,12.1nm) #8(H,8.5nm)
+   OT 1nm     pred 7.82e-03 | MC 7.85e-03 [7.61e-03,8.08e-03] | CV 7.82e-03 [7.81e-03,7.83e-03] | CVaR95 1.21e-02 [1.15e-02,1.25e-02] | yield 0.01 [0.00,0.03] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 9.13e-03 | MC 9.26e-03 [8.92e-03,9.60e-03] | CV 9.13e-03 [9.12e-03,9.14e-03] | CVaR95 1.48e-02 [1.37e-02,1.60e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   (3.5 s for this design)
+id 134 [pareto, hop0.3] nominal 1.219e-03 TOT 18.8 thinnest OT 19.0 nm cond 1e4.6 H3 rho(field in layer, |J_i|^2) +0.22
+   OT 0.2nm   pred 1.97e-03 | MC 1.97e-03 [1.94e-03,2.01e-03] | CV 1.97e-03 [1.97e-03,1.97e-03] | CVaR95 2.59e-03 [2.50e-03,2.65e-03] | yield 0.94 [0.92,0.96] | bPOE 0.15 [0.09,0.21]
+   OT 0.5nm   pred 4.05e-03 | MC 4.06e-03 [3.96e-03,4.17e-03] | CV 4.05e-03 [4.05e-03,4.05e-03] | CVaR95 5.83e-03 [5.58e-03,6.00e-03] | yield 0.23 [0.18,0.28] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 9.94e-10 [8.56e-10,1.15e-09] lambda2/1 5.54e-01 share(1) 0.41 share(3) 0.80 |cos(v1, JtJ v1)| 0.98 v1 layers #10(H,12.1nm) #14(H,49.6nm) #8(H,8.4nm)
+   OT 1nm     pred 7.82e-03 | MC 7.85e-03 [7.62e-03,8.06e-03] | CV 7.82e-03 [7.81e-03,7.83e-03] | CVaR95 1.14e-02 [1.10e-02,1.18e-02] | yield 0.01 [0.00,0.03] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 9.13e-03 | MC 9.18e-03 [8.82e-03,9.51e-03] | CV 9.12e-03 [9.11e-03,9.13e-03] | CVaR95 1.56e-02 [1.45e-02,1.65e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   (3.5 s for this design)
+id 136 [pareto, hop0.05] nominal 1.219e-03 TOT 18.8 thinnest OT 19.0 nm cond 1e4.6 H3 rho(field in layer, |J_i|^2) +0.22
+   OT 0.2nm   pred 1.97e-03 | MC 1.99e-03 [1.94e-03,2.03e-03] | CV 1.97e-03 [1.97e-03,1.97e-03] | CVaR95 2.75e-03 [2.60e-03,2.89e-03] | yield 0.95 [0.93,0.97] | bPOE 0.14 [0.09,0.20]
+   OT 0.5nm   pred 4.05e-03 | MC 4.10e-03 [3.98e-03,4.22e-03] | CV 4.05e-03 [4.05e-03,4.05e-03] | CVaR95 6.30e-03 [5.87e-03,6.68e-03] | yield 0.23 [0.18,0.28] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 1.04e-09 [8.94e-10,1.21e-09] lambda2/1 4.62e-01 share(1) 0.42 share(3) 0.78 |cos(v1, JtJ v1)| 0.99 v1 layers #14(H,49.6nm) #10(H,12.1nm) #8(H,8.4nm)
+   OT 1nm     pred 7.82e-03 | MC 7.93e-03 [7.67e-03,8.18e-03] | CV 7.82e-03 [7.81e-03,7.82e-03] | CVaR95 1.24e-02 [1.16e-02,1.32e-02] | yield 0.02 [0.01,0.04] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 9.13e-03 | MC 9.12e-03 [8.72e-03,9.52e-03] | CV 9.12e-03 [9.11e-03,9.13e-03] | CVaR95 1.63e-02 [1.45e-02,1.81e-02] | yield 0.01 [0.00,0.03] | bPOE 1.00 [1.00,1.00]
+   (3.5 s for this design)
+id 142 [pareto, hop0.05] nominal 1.219e-03 TOT 18.8 thinnest OT 19.0 nm cond 1e4.6 H3 rho(field in layer, |J_i|^2) +0.22
+   OT 0.2nm   pred 1.97e-03 | MC 2.00e-03 [1.96e-03,2.04e-03] | CV 1.97e-03 [1.97e-03,1.97e-03] | CVaR95 2.73e-03 [2.58e-03,2.86e-03] | yield 0.94 [0.91,0.96] | bPOE 0.17 [0.10,0.23]
+   OT 0.5nm   pred 4.05e-03 | MC 4.14e-03 [4.03e-03,4.27e-03] | CV 4.05e-03 [4.05e-03,4.05e-03] | CVaR95 6.21e-03 [5.81e-03,6.58e-03] | yield 0.23 [0.18,0.28] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 1.01e-09 [8.61e-10,1.16e-09] lambda2/1 5.47e-01 share(1) 0.41 share(3) 0.79 |cos(v1, JtJ v1)| 0.96 v1 layers #14(H,49.6nm) #10(H,12.1nm) #13(L,93.1nm)
+   OT 1nm     pred 7.82e-03 | MC 8.01e-03 [7.77e-03,8.26e-03] | CV 7.82e-03 [7.81e-03,7.82e-03] | CVaR95 1.22e-02 [1.14e-02,1.30e-02] | yield 0.01 [0.01,0.03] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 9.13e-03 | MC 9.41e-03 [9.08e-03,9.74e-03] | CV 9.13e-03 [9.12e-03,9.14e-03] | CVaR95 1.55e-02 [1.46e-02,1.63e-02] | yield 0.01 [0.00,0.03] | bPOE 1.00 [1.00,1.00]
+   (3.7 s for this design)
+id 141 [pareto, hop0.05] nominal 1.219e-03 TOT 18.8 thinnest OT 19.0 nm cond 1e4.6 H3 rho(field in layer, |J_i|^2) +0.22
+   OT 0.2nm   pred 1.97e-03 | MC 1.94e-03 [1.91e-03,1.98e-03] | CV 1.97e-03 [1.97e-03,1.97e-03] | CVaR95 2.61e-03 [2.49e-03,2.71e-03] | yield 0.96 [0.94,0.98] | bPOE 0.12 [0.07,0.17]
+   OT 0.5nm   pred 4.05e-03 | MC 3.98e-03 [3.87e-03,4.08e-03] | CV 4.05e-03 [4.05e-03,4.05e-03] | CVaR95 5.90e-03 [5.55e-03,6.16e-03] | yield 0.28 [0.23,0.34] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 8.48e-10 [7.43e-10,9.64e-10] lambda2/1 5.56e-01 share(1) 0.38 share(3) 0.77 |cos(v1, JtJ v1)| 0.96 v1 layers #14(H,49.6nm) #10(H,12.1nm) #13(L,93.1nm)
+   OT 1nm     pred 7.82e-03 | MC 7.67e-03 [7.45e-03,7.88e-03] | CV 7.82e-03 [7.81e-03,7.82e-03] | CVaR95 1.16e-02 [1.09e-02,1.21e-02] | yield 0.01 [0.00,0.02] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 9.13e-03 | MC 9.09e-03 [8.73e-03,9.43e-03] | CV 9.12e-03 [9.11e-03,9.13e-03] | CVaR95 1.54e-02 [1.42e-02,1.65e-02] | yield 0.01 [0.00,0.03] | bPOE 1.00 [1.00,1.00]
+   (3.5 s for this design)
+id 171 [pareto, hop0.05] nominal 1.219e-03 TOT 18.8 thinnest OT 19.0 nm cond 1e4.7 H3 rho(field in layer, |J_i|^2) +0.20
+   OT 0.2nm   pred 1.97e-03 | MC 1.99e-03 [1.95e-03,2.03e-03] | CV 1.97e-03 [1.97e-03,1.97e-03] | CVaR95 2.75e-03 [2.64e-03,2.83e-03] | yield 0.94 [0.91,0.96] | bPOE 0.14 [0.08,0.19]
+   OT 0.5nm   pred 4.05e-03 | MC 4.11e-03 [3.99e-03,4.22e-03] | CV 4.05e-03 [4.05e-03,4.05e-03] | CVaR95 6.29e-03 [5.99e-03,6.52e-03] | yield 0.23 [0.18,0.28] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 9.98e-10 [8.56e-10,1.19e-09] lambda2/1 6.36e-01 share(1) 0.40 share(3) 0.81 |cos(v1, JtJ v1)| 0.97 v1 layers #14(H,49.6nm) #10(H,12.1nm) #8(H,8.3nm)
+   OT 1nm     pred 7.82e-03 | MC 7.95e-03 [7.70e-03,8.18e-03] | CV 7.82e-03 [7.82e-03,7.83e-03] | CVaR95 1.24e-02 [1.18e-02,1.29e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 9.13e-03 | MC 8.71e-03 [8.39e-03,9.00e-03] | CV 9.14e-03 [9.13e-03,9.15e-03] | CVaR95 1.38e-02 [1.32e-02,1.44e-02] | yield 0.01 [0.00,0.03] | bPOE 1.00 [1.00,1.00]
+   (3.5 s for this design)
+id 144 [pareto, hop0.05] nominal 1.219e-03 TOT 18.8 thinnest OT 19.0 nm cond 1e4.7 H3 rho(field in layer, |J_i|^2) +0.20
+   OT 0.2nm   pred 1.97e-03 | MC 1.92e-03 [1.89e-03,1.96e-03] | CV 1.97e-03 [1.97e-03,1.97e-03] | CVaR95 2.62e-03 [2.47e-03,2.77e-03] | yield 0.97 [0.95,0.99] | bPOE 0.07 [0.03,0.12]
+   OT 0.5nm   pred 4.05e-03 | MC 3.91e-03 [3.80e-03,4.03e-03] | CV 4.05e-03 [4.05e-03,4.05e-03] | CVaR95 5.90e-03 [5.50e-03,6.32e-03] | yield 0.34 [0.28,0.40] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 6.56e-10 [6.13e-10,7.79e-10] lambda2/1 8.56e-01 share(1) 0.31 share(3) 0.77 |cos(v1, JtJ v1)| 0.97 v1 layers #14(H,49.6nm) #10(H,12.1nm) #16(H,90.2nm)
+   OT 1nm     pred 7.82e-03 | MC 7.53e-03 [7.29e-03,7.77e-03] | CV 7.82e-03 [7.81e-03,7.83e-03] | CVaR95 1.16e-02 [1.08e-02,1.24e-02] | yield 0.01 [0.00,0.03] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 9.13e-03 | MC 8.90e-03 [8.56e-03,9.23e-03] | CV 9.13e-03 [9.12e-03,9.15e-03] | CVaR95 1.53e-02 [1.41e-02,1.62e-02] | yield 0.01 [0.00,0.03] | bPOE 1.00 [1.00,1.00]
+   (3.6 s for this design)
+id 101 [best predicted OT 0.5nm, hop0.05] nominal 1.219e-03 TOT 18.8 thinnest OT 18.6 nm cond 1e4.7 H3 rho(field in layer, |J_i|^2) +0.22
+   OT 0.2nm   pred 1.97e-03 | MC 1.98e-03 [1.95e-03,2.02e-03] | CV 1.97e-03 [1.97e-03,1.97e-03] | CVaR95 2.65e-03 [2.54e-03,2.78e-03] | yield 0.95 [0.93,0.97] | bPOE 0.12 [0.06,0.17]
+   OT 0.5nm   pred 4.05e-03 | MC 4.10e-03 [3.99e-03,4.22e-03] | CV 4.05e-03 [4.05e-03,4.05e-03] | CVaR95 6.02e-03 [5.71e-03,6.37e-03] | yield 0.27 [0.21,0.32] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 9.92e-10 [8.53e-10,1.15e-09] lambda2/1 5.79e-01 share(1) 0.40 share(3) 0.82 |cos(v1, JtJ v1)| 0.95 v1 layers #14(H,49.6nm) #10(H,12.1nm) #13(L,93.1nm)
+   OT 1nm     pred 7.83e-03 | MC 7.92e-03 [7.69e-03,8.17e-03] | CV 7.82e-03 [7.81e-03,7.83e-03] | CVaR95 1.19e-02 [1.12e-02,1.26e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 9.13e-03 | MC 9.57e-03 [9.23e-03,9.95e-03] | CV 9.12e-03 [9.10e-03,9.13e-03] | CVaR95 1.59e-02 [1.50e-02,1.65e-02] | yield 0.01 [0.00,0.03] | bPOE 1.00 [1.00,1.00]
+   (3.5 s for this design)
+id 78 [pareto, hop0.15] nominal 6.587e-04 TOT 20.1 thinnest OT 15.7 nm cond 1e2.8 H3 rho(field in layer, |J_i|^2) +0.15
+   OT 0.2nm   pred 1.73e-03 | MC 1.73e-03 [1.69e-03,1.77e-03] | CV 1.73e-03 [1.73e-03,1.73e-03] | CVaR95 2.56e-03 [2.42e-03,2.67e-03] | yield 1.00 [1.00,1.00] | bPOE 0.00 [0.00,0.00]
+   OT 0.5nm   pred 4.05e-03 | MC 4.05e-03 [3.94e-03,4.16e-03] | CV 4.06e-03 [4.05e-03,4.06e-03] | CVaR95 6.24e-03 [5.88e-03,6.52e-03] | yield 0.36 [0.31,0.42] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 1.36e-09 [1.12e-09,1.59e-09] lambda2/1 2.21e-01 share(1) 0.58 share(3) 0.82 |cos(v1, JtJ v1)| 0.99 v1 layers #14(H,62.1nm) #13(L,52.7nm) #10(H,15.1nm)
+   OT 1nm     pred 8.03e-03 | MC 8.02e-03 [7.80e-03,8.24e-03] | CV 8.03e-03 [8.03e-03,8.04e-03] | CVaR95 1.25e-02 [1.17e-02,1.30e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 9.54e-03 | MC 9.58e-03 [9.18e-03,9.97e-03] | CV 9.55e-03 [9.53e-03,9.57e-03] | CVaR95 1.71e-02 [1.55e-02,1.83e-02] | yield 0.01 [0.00,0.03] | bPOE 1.00 [1.00,1.00]
+   (3.6 s for this design)
+id 128 [best predicted OT 0.5nm, hop0.3] nominal 1.219e-03 TOT 18.8 thinnest OT 16.0 nm cond 1e4.7 H3 rho(field in layer, |J_i|^2) +0.25
+   OT 0.2nm   pred 1.97e-03 | MC 1.99e-03 [1.95e-03,2.03e-03] | CV 1.97e-03 [1.97e-03,1.97e-03] | CVaR95 2.84e-03 [2.65e-03,2.99e-03] | yield 0.96 [0.94,0.98] | bPOE 0.11 [0.06,0.15]
+   OT 0.5nm   pred 4.06e-03 | MC 4.13e-03 [4.00e-03,4.25e-03] | CV 4.06e-03 [4.06e-03,4.06e-03] | CVaR95 6.52e-03 [6.02e-03,6.94e-03] | yield 0.27 [0.22,0.32] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 1.04e-09 [8.56e-10,1.25e-09] lambda2/1 5.59e-01 share(1) 0.41 share(3) 0.80 |cos(v1, JtJ v1)| 0.99 v1 layers #10(H,12.0nm) #14(H,49.6nm) #8(H,7.9nm)
+   OT 1nm     pred 7.84e-03 | MC 7.98e-03 [7.73e-03,8.22e-03] | CV 7.84e-03 [7.83e-03,7.85e-03] | CVaR95 1.29e-02 [1.18e-02,1.38e-02] | yield 0.01 [0.00,0.02] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 9.14e-03 | MC 9.02e-03 [8.71e-03,9.33e-03] | CV 9.13e-03 [9.12e-03,9.14e-03] | CVaR95 1.47e-02 [1.38e-02,1.55e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   (3.5 s for this design)
+id 153 [best predicted OT 0.5nm, hop0.05] nominal 1.219e-03 TOT 18.8 thinnest OT 15.8 nm cond 1e4.7 H3 rho(field in layer, |J_i|^2) +0.25
+   OT 0.2nm   pred 1.97e-03 | MC 1.96e-03 [1.92e-03,2.00e-03] | CV 1.97e-03 [1.97e-03,1.97e-03] | CVaR95 2.78e-03 [2.64e-03,2.90e-03] | yield 0.93 [0.90,0.95] | bPOE 0.17 [0.10,0.22]
+   OT 0.5nm   pred 4.06e-03 | MC 4.02e-03 [3.90e-03,4.15e-03] | CV 4.05e-03 [4.05e-03,4.06e-03] | CVaR95 6.34e-03 [5.96e-03,6.67e-03] | yield 0.28 [0.23,0.34] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 8.83e-10 [7.22e-10,1.07e-09] lambda2/1 6.71e-01 share(1) 0.38 share(3) 0.80 |cos(v1, JtJ v1)| 0.95 v1 layers #14(H,49.6nm) #13(L,93.2nm) #10(H,12.0nm)
+   OT 1nm     pred 7.84e-03 | MC 7.75e-03 [7.49e-03,8.00e-03] | CV 7.82e-03 [7.81e-03,7.84e-03] | CVaR95 1.25e-02 [1.17e-02,1.31e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 9.14e-03 | MC 9.11e-03 [8.69e-03,9.52e-03] | CV 9.12e-03 [9.11e-03,9.14e-03] | CVaR95 1.64e-02 [1.47e-02,1.77e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   (3.5 s for this design)
+id 152 [best predicted OT 0.5nm, hop0.15] nominal 1.219e-03 TOT 18.8 thinnest OT 15.3 nm cond 1e4.7 H3 rho(field in layer, |J_i|^2) +0.24
+   OT 0.2nm   pred 1.97e-03 | MC 1.97e-03 [1.93e-03,2.01e-03] | CV 1.97e-03 [1.97e-03,1.97e-03] | CVaR95 2.69e-03 [2.53e-03,2.84e-03] | yield 0.93 [0.90,0.96] | bPOE 0.19 [0.12,0.25]
+   OT 0.5nm   pred 4.06e-03 | MC 4.06e-03 [3.94e-03,4.17e-03] | CV 4.06e-03 [4.06e-03,4.06e-03] | CVaR95 6.09e-03 [5.66e-03,6.51e-03] | yield 0.28 [0.23,0.33] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 8.07e-10 [7.29e-10,9.43e-10] lambda2/1 8.62e-01 share(1) 0.34 share(3) 0.80 |cos(v1, JtJ v1)| 0.96 v1 layers #14(H,49.6nm) #10(H,12.0nm) #2(H,14.5nm)
+   OT 1nm     pred 7.84e-03 | MC 7.83e-03 [7.59e-03,8.05e-03] | CV 7.84e-03 [7.83e-03,7.85e-03] | CVaR95 1.20e-02 [1.11e-02,1.28e-02] | yield 0.03 [0.01,0.04] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 9.14e-03 | MC 9.24e-03 [8.90e-03,9.55e-03] | CV 9.12e-03 [9.11e-03,9.13e-03] | CVaR95 1.46e-02 [1.39e-02,1.52e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   (3.5 s for this design)
+id 124 [best predicted OT 0.5nm, hop0.05] nominal 1.219e-03 TOT 18.8 thinnest OT 15.1 nm cond 1e4.7 H3 rho(field in layer, |J_i|^2) +0.24
+   OT 0.2nm   pred 1.97e-03 | MC 1.97e-03 [1.93e-03,2.01e-03] | CV 1.97e-03 [1.97e-03,1.97e-03] | CVaR95 2.77e-03 [2.61e-03,2.92e-03] | yield 0.92 [0.89,0.95] | bPOE 0.15 [0.10,0.21]
+   OT 0.5nm   pred 4.06e-03 | MC 4.06e-03 [3.94e-03,4.17e-03] | CV 4.06e-03 [4.06e-03,4.06e-03] | CVaR95 6.34e-03 [5.90e-03,6.73e-03] | yield 0.24 [0.20,0.29] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 7.71e-10 [6.83e-10,9.09e-10] lambda2/1 8.16e-01 share(1) 0.33 share(3) 0.77 |cos(v1, JtJ v1)| 0.94 v1 layers #14(H,49.6nm) #10(H,12.0nm) #8(H,7.6nm)
+   OT 1nm     pred 7.85e-03 | MC 7.84e-03 [7.59e-03,8.07e-03] | CV 7.84e-03 [7.83e-03,7.85e-03] | CVaR95 1.25e-02 [1.16e-02,1.33e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 9.14e-03 | MC 8.84e-03 [8.46e-03,9.22e-03] | CV 9.13e-03 [9.12e-03,9.15e-03] | CVaR95 1.58e-02 [1.43e-02,1.73e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   (3.6 s for this design)
+id 126 [best predicted OT 0.5nm, hop0.15] nominal 1.219e-03 TOT 18.8 thinnest OT 14.8 nm cond 1e4.7 H3 rho(field in layer, |J_i|^2) +0.24
+   OT 0.2nm   pred 1.97e-03 | MC 1.96e-03 [1.92e-03,2.00e-03] | CV 1.97e-03 [1.97e-03,1.97e-03] | CVaR95 2.85e-03 [2.61e-03,3.04e-03] | yield 0.95 [0.93,0.98] | bPOE 0.12 [0.07,0.17]
+   OT 0.5nm   pred 4.07e-03 | MC 4.03e-03 [3.89e-03,4.16e-03] | CV 4.07e-03 [4.06e-03,4.07e-03] | CVaR95 6.54e-03 [5.88e-03,7.07e-03] | yield 0.24 [0.20,0.29] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 8.63e-10 [7.36e-10,1.04e-09] lambda2/1 6.17e-01 share(1) 0.37 share(3) 0.78 |cos(v1, JtJ v1)| 0.99 v1 layers #14(H,49.6nm) #10(H,12.0nm) #8(H,7.4nm)
+   OT 1nm     pred 7.85e-03 | MC 7.77e-03 [7.50e-03,8.04e-03] | CV 7.85e-03 [7.85e-03,7.86e-03] | CVaR95 1.29e-02 [1.16e-02,1.39e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 9.14e-03 | MC 8.92e-03 [8.53e-03,9.28e-03] | CV 9.14e-03 [9.13e-03,9.16e-03] | CVaR95 1.57e-02 [1.43e-02,1.71e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   (3.7 s for this design)
+id 399 [best smoothed, smooth<-nominal] nominal 7.468e-04 TOT 20.5 thinnest OT 10.2 nm cond 1e3.4 H3 rho(field in layer, |J_i|^2) +0.10
+   OT 0.2nm   pred 1.77e-03 | MC 1.75e-03 [1.70e-03,1.80e-03] | CV 1.77e-03 [1.77e-03,1.77e-03] | CVaR95 2.63e-03 [2.43e-03,2.81e-03] | yield 0.98 [0.96,0.99] | bPOE 0.06 [0.01,0.09]
+   OT 0.5nm   pred 4.08e-03 | MC 4.03e-03 [3.91e-03,4.15e-03] | CV 4.08e-03 [4.08e-03,4.09e-03] | CVaR95 6.29e-03 [5.75e-03,6.80e-03] | yield 0.41 [0.35,0.46] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 1.37e-09 [1.18e-09,1.63e-09] lambda2/1 3.88e-01 share(1) 0.55 share(3) 0.87 |cos(v1, JtJ v1)| 1.00 v1 layers #14(H,36.2nm) #16(H,107.0nm) #10(H,8.3nm)
+   OT 1nm     pred 8.06e-03 | MC 7.95e-03 [7.72e-03,8.19e-03] | CV 8.07e-03 [8.06e-03,8.07e-03] | CVaR95 1.25e-02 [1.14e-02,1.36e-02] | yield 0.01 [0.00,0.02] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 1.15e-02 | MC 1.09e-02 [1.04e-02,1.13e-02] | CV 1.15e-02 [1.15e-02,1.15e-02] | CVaR95 1.86e-02 [1.73e-02,1.98e-02] | yield 0.01 [0.01,0.03] | bPOE 1.00 [1.00,1.00]
+   (3.6 s for this design)
+id 118 [pareto, hop0.15] nominal 5.251e-04 TOT 20.8 thinnest OT 10.8 nm cond 1e3.3 H3 rho(field in layer, |J_i|^2) +0.08
+   OT 0.2nm   pred 1.70e-03 | MC 1.73e-03 [1.67e-03,1.78e-03] | CV 1.70e-03 [1.70e-03,1.70e-03] | CVaR95 2.64e-03 [2.46e-03,2.84e-03] | yield 0.96 [0.94,0.98] | bPOE 0.10 [0.04,0.14]
+   OT 0.5nm   pred 4.09e-03 | MC 4.15e-03 [4.01e-03,4.29e-03] | CV 4.09e-03 [4.08e-03,4.09e-03] | CVaR95 6.49e-03 [6.04e-03,7.01e-03] | yield 0.35 [0.30,0.41] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 1.61e-09 [1.34e-09,1.92e-09] lambda2/1 3.12e-01 share(1) 0.59 share(3) 0.87 |cos(v1, JtJ v1)| 1.00 v1 layers #14(H,36.8nm) #16(H,108.1nm) #10(H,9.1nm)
+   OT 1nm     pred 8.12e-03 | MC 8.26e-03 [7.97e-03,8.53e-03] | CV 8.12e-03 [8.11e-03,8.13e-03] | CVaR95 1.29e-02 [1.20e-02,1.40e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 1.16e-02 | MC 1.20e-02 [1.14e-02,1.26e-02] | CV 1.16e-02 [1.16e-02,1.17e-02] | CVaR95 2.19e-02 [2.00e-02,2.35e-02] | yield 0.02 [0.01,0.04] | bPOE 1.00 [1.00,1.00]
+   (3.5 s for this design)
+id 403 [best smoothed, smooth<-nominal] nominal 1.409e-03 TOT 19.1 thinnest OT 7.4 nm cond 1e3.5 H3 rho(field in layer, |J_i|^2) +0.12
+   OT 0.2nm   pred 2.11e-03 | MC 2.18e-03 [2.13e-03,2.23e-03] | CV 2.11e-03 [2.11e-03,2.11e-03] | CVaR95 3.12e-03 [2.93e-03,3.32e-03] | yield 0.93 [0.90,0.96] | bPOE 0.18 [0.12,0.27]
+   OT 0.5nm   pred 4.18e-03 | MC 4.39e-03 [4.25e-03,4.54e-03] | CV 4.18e-03 [4.18e-03,4.18e-03] | CVaR95 6.99e-03 [6.46e-03,7.43e-03] | yield 0.26 [0.21,0.31] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 1.25e-09 [1.09e-09,1.49e-09] lambda2/1 6.88e-01 share(1) 0.41 share(3) 0.84 |cos(v1, JtJ v1)| 0.92 v1 layers #14(H,50.6nm) #13(L,90.3nm) #10(H,12.3nm)
+   OT 1nm     pred 8.00e-03 | MC 8.43e-03 [8.14e-03,8.75e-03] | CV 8.00e-03 [7.99e-03,8.01e-03] | CVaR95 1.37e-02 [1.27e-02,1.46e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 9.23e-03 | MC 9.88e-03 [9.46e-03,1.03e-02] | CV 9.22e-03 [9.20e-03,9.23e-03] | CVaR95 1.79e-02 [1.62e-02,1.92e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   (3.6 s for this design)
+id 0 [pareto, curve:curve_foc27-36_free_s2.csv] nominal 4.403e-04 TOT 21.2 thinnest OT 9.4 nm cond 1e2.9 H3 rho(field in layer, |J_i|^2) -0.06
+   OT 0.2nm   pred 1.73e-03 | MC 1.70e-03 [1.66e-03,1.75e-03] | CV 1.73e-03 [1.73e-03,1.73e-03] | CVaR95 2.56e-03 [2.39e-03,2.70e-03] | yield 0.94 [0.91,0.96] | bPOE 0.12 [0.07,0.17]
+   OT 0.5nm   pred 4.20e-03 | MC 4.14e-03 [4.02e-03,4.25e-03] | CV 4.20e-03 [4.20e-03,4.20e-03] | CVaR95 6.31e-03 [5.88e-03,6.67e-03] | yield 0.28 [0.23,0.33] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 1.57e-09 [1.33e-09,1.81e-09] lambda2/1 3.23e-01 share(1) 0.56 share(3) 0.88 |cos(v1, JtJ v1)| 0.99 v1 layers #14(H,70.1nm) #13(L,57.2nm) #16(H,115.2nm)
+   OT 1nm     pred 8.37e-03 | MC 8.24e-03 [8.00e-03,8.47e-03] | CV 8.37e-03 [8.36e-03,8.38e-03] | CVaR95 1.26e-02 [1.17e-02,1.33e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 1.16e-02 | MC 1.13e-02 [1.07e-02,1.18e-02] | CV 1.16e-02 [1.16e-02,1.16e-02] | CVaR95 2.12e-02 [1.85e-02,2.36e-02] | yield 0.01 [0.00,0.02] | bPOE 1.00 [1.00,1.00]
+   (3.6 s for this design)
+id 58 [best nominal, hop0.3] nominal 5.199e-04 TOT 19.8 thinnest OT 20.6 nm cond 1e3.9 H3 rho(field in layer, |J_i|^2) -0.09
+   OT 0.2nm   pred 1.80e-03 | MC 1.80e-03 [1.75e-03,1.85e-03] | CV 1.80e-03 [1.80e-03,1.80e-03] | CVaR95 2.76e-03 [2.53e-03,2.93e-03] | yield 0.95 [0.92,0.97] | bPOE 0.14 [0.08,0.21]
+   OT 0.5nm   pred 4.34e-03 | MC 4.33e-03 [4.20e-03,4.46e-03] | CV 4.34e-03 [4.33e-03,4.34e-03] | CVaR95 6.80e-03 [6.21e-03,7.23e-03] | yield 0.21 [0.17,0.26] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 1.59e-09 [1.36e-09,1.87e-09] lambda2/1 3.50e-01 share(1) 0.54 share(3) 0.84 |cos(v1, JtJ v1)| 0.99 v1 layers #14(H,64.5nm) #10(H,19.3nm) #16(H,115.5nm)
+   OT 1nm     pred 8.63e-03 | MC 8.61e-03 [8.34e-03,8.87e-03] | CV 8.62e-03 [8.61e-03,8.63e-03] | CVaR95 1.36e-02 [1.24e-02,1.45e-02] | yield 0.01 [0.00,0.02] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 1.18e-02 | MC 1.17e-02 [1.12e-02,1.22e-02] | CV 1.17e-02 [1.17e-02,1.18e-02] | CVaR95 2.01e-02 [1.85e-02,2.18e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   (3.7 s for this design)
+id 87 [best nominal, hop0.15] nominal 9.548e-04 TOT 19.5 thinnest OT 18.0 nm cond 1e2.8 H3 rho(field in layer, |J_i|^2) -0.12
+   OT 0.2nm   pred 1.96e-03 | MC 2.02e-03 [1.97e-03,2.07e-03] | CV 1.96e-03 [1.96e-03,1.96e-03] | CVaR95 3.05e-03 [2.84e-03,3.21e-03] | yield 0.86 [0.82,0.90] | bPOE 0.33 [0.25,0.40]
+   OT 0.5nm   pred 4.39e-03 | MC 4.55e-03 [4.41e-03,4.69e-03] | CV 4.39e-03 [4.39e-03,4.39e-03] | CVaR95 7.30e-03 [6.77e-03,7.72e-03] | yield 0.10 [0.07,0.13] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 1.23e-09 [1.09e-09,1.50e-09] lambda2/1 6.78e-01 share(1) 0.36 share(3) 0.76 |cos(v1, JtJ v1)| 1.00 v1 layers #14(H,28.7nm) #13(L,108.4nm) #10(H,18.3nm)
+   OT 1nm     pred 8.63e-03 | MC 8.94e-03 [8.67e-03,9.23e-03] | CV 8.62e-03 [8.61e-03,8.63e-03] | CVaR95 1.45e-02 [1.34e-02,1.54e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 9.75e-03 | MC 1.01e-02 [9.70e-03,1.04e-02] | CV 9.72e-03 [9.70e-03,9.74e-03] | CVaR95 1.69e-02 [1.54e-02,1.81e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   (3.6 s for this design)
+id 378 [best nominal, hop0.05] nominal 8.419e-04 TOT 20.0 thinnest OT 8.4 nm cond 1e3.3 H3 rho(field in layer, |J_i|^2) +0.19
+   OT 0.2nm   pred 1.93e-03 | MC 1.99e-03 [1.93e-03,2.05e-03] | CV 1.93e-03 [1.93e-03,1.93e-03] | CVaR95 3.21e-03 [3.00e-03,3.40e-03] | yield 0.81 [0.76,0.84] | bPOE 0.47 [0.39,0.56]
+   OT 0.5nm   pred 4.42e-03 | MC 4.58e-03 [4.41e-03,4.76e-03] | CV 4.43e-03 [4.42e-03,4.43e-03] | CVaR95 7.79e-03 [7.24e-03,8.28e-03] | yield 0.24 [0.20,0.29] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 2.96e-09 [2.54e-09,3.47e-09] lambda2/1 4.55e-01 share(1) 0.59 share(3) 0.93 |cos(v1, JtJ v1)| 0.99 v1 layers #10(H,4.3nm) #16(H,105.9nm) #12(H,32.9nm)
+   OT 1nm     pred 8.73e-03 | MC 9.05e-03 [8.70e-03,9.40e-03] | CV 8.73e-03 [8.72e-03,8.74e-03] | CVaR95 1.55e-02 [1.44e-02,1.65e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 1.10e-02 | MC 1.10e-02 [1.05e-02,1.14e-02] | CV 1.10e-02 [1.10e-02,1.10e-02] | CVaR95 1.93e-02 [1.77e-02,2.07e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   (3.7 s for this design)
+id 157 [best nominal, hop0.15] nominal 5.705e-04 TOT 21.1 thinnest OT 10.7 nm cond 1e2.8 H3 rho(field in layer, |J_i|^2) -0.23
+   OT 0.2nm   pred 1.85e-03 | MC 1.84e-03 [1.79e-03,1.90e-03] | CV 1.85e-03 [1.85e-03,1.85e-03] | CVaR95 2.78e-03 [2.62e-03,2.92e-03] | yield 0.87 [0.83,0.91] | bPOE 0.34 [0.26,0.42]
+   OT 0.5nm   pred 4.44e-03 | MC 4.41e-03 [4.27e-03,4.55e-03] | CV 4.43e-03 [4.43e-03,4.43e-03] | CVaR95 6.82e-03 [6.41e-03,7.18e-03] | yield 0.23 [0.18,0.28] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 1.97e-09 [1.71e-09,2.22e-09] lambda2/1 3.05e-01 share(1) 0.55 share(3) 0.83 |cos(v1, JtJ v1)| 1.00 v1 layers #14(H,41.0nm) #8(H,22.8nm) #12(H,89.4nm)
+   OT 1nm     pred 8.81e-03 | MC 8.76e-03 [8.48e-03,9.04e-03] | CV 8.80e-03 [8.78e-03,8.81e-03] | CVaR95 1.35e-02 [1.27e-02,1.43e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 1.05e-02 | MC 1.05e-02 [1.01e-02,1.08e-02] | CV 1.05e-02 [1.04e-02,1.05e-02] | CVaR95 1.71e-02 [1.61e-02,1.79e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   (4.1 s for this design)
+id 380 [best nominal, hop0.15] nominal 8.813e-04 TOT 19.8 thinnest OT 15.7 nm cond 1e2.7 H3 rho(field in layer, |J_i|^2) +0.08
+   OT 0.2nm   pred 1.95e-03 | MC 1.95e-03 [1.89e-03,2.00e-03] | CV 1.95e-03 [1.95e-03,1.95e-03] | CVaR95 2.94e-03 [2.74e-03,3.10e-03] | yield 0.89 [0.84,0.93] | bPOE 0.32 [0.22,0.40]
+   OT 0.5nm   pred 4.45e-03 | MC 4.42e-03 [4.28e-03,4.57e-03] | CV 4.44e-03 [4.44e-03,4.45e-03] | CVaR95 7.05e-03 [6.52e-03,7.50e-03] | yield 0.17 [0.12,0.21] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 1.63e-09 [1.34e-09,1.88e-09] lambda2/1 3.70e-01 share(1) 0.54 share(3) 0.83 |cos(v1, JtJ v1)| 0.99 v1 layers #14(H,36.7nm) #13(L,89.5nm) #16(H,89.3nm)
+   OT 1nm     pred 8.76e-03 | MC 8.71e-03 [8.42e-03,9.00e-03] | CV 8.75e-03 [8.74e-03,8.76e-03] | CVaR95 1.40e-02 [1.29e-02,1.49e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 9.75e-03 | MC 9.83e-03 [9.41e-03,1.02e-02] | CV 9.75e-03 [9.73e-03,9.77e-03] | CVaR95 1.71e-02 [1.54e-02,1.87e-02] | yield 0.01 [0.00,0.02] | bPOE 1.00 [1.00,1.00]
+   (3.7 s for this design)
+id 195 [best nominal, hop0.15] nominal 5.550e-04 TOT 20.2 thinnest OT 10.0 nm cond 1e2.6 H3 rho(field in layer, |J_i|^2) -0.08
+   OT 0.2nm   pred 1.87e-03 | MC 1.81e-03 [1.76e-03,1.87e-03] | CV 1.87e-03 [1.87e-03,1.87e-03] | CVaR95 2.76e-03 [2.56e-03,2.93e-03] | yield 0.94 [0.92,0.97] | bPOE 0.16 [0.10,0.23]
+   OT 0.5nm   pred 4.50e-03 | MC 4.35e-03 [4.22e-03,4.49e-03] | CV 4.50e-03 [4.50e-03,4.50e-03] | CVaR95 6.79e-03 [6.28e-03,7.22e-03] | yield 0.28 [0.23,0.34] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 1.64e-09 [1.38e-09,1.93e-09] lambda2/1 4.55e-01 share(1) 0.46 share(3) 0.85 |cos(v1, JtJ v1)| 1.00 v1 layers #14(H,16.9nm) #18(H,84.1nm) #12(H,70.8nm)
+   OT 1nm     pred 8.96e-03 | MC 8.64e-03 [8.37e-03,8.92e-03] | CV 8.95e-03 [8.94e-03,8.96e-03] | CVaR95 1.35e-02 [1.25e-02,1.44e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 1.02e-02 | MC 9.90e-03 [9.56e-03,1.03e-02] | CV 1.02e-02 [1.02e-02,1.02e-02] | CVaR95 1.60e-02 [1.50e-02,1.69e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   (3.6 s for this design)
+id 401 [best smoothed, smooth<-nominal] nominal 2.175e-03 TOT 18.5 thinnest OT 10.0 nm cond 1e3.8 H3 rho(field in layer, |J_i|^2) +0.14
+   OT 0.2nm   pred 2.69e-03 | MC 2.68e-03 [2.65e-03,2.72e-03] | CV 2.69e-03 [2.69e-03,2.69e-03] | CVaR95 3.37e-03 [3.25e-03,3.48e-03] | yield 0.89 [0.84,0.92] | bPOE 0.29 [0.21,0.36]
+   OT 0.5nm   pred 4.53e-03 | MC 4.47e-03 [4.36e-03,4.58e-03] | CV 4.53e-03 [4.53e-03,4.53e-03] | CVaR95 6.48e-03 [6.13e-03,6.81e-03] | yield 0.18 [0.14,0.23] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 9.88e-10 [8.49e-10,1.14e-09] lambda2/1 7.03e-01 share(1) 0.43 share(3) 0.87 |cos(v1, JtJ v1)| 0.86 v1 layers #14(H,62.6nm) #10(H,32.1nm) #13(L,72.5nm)
+   OT 1nm     pred 8.23e-03 | MC 8.11e-03 [7.88e-03,8.34e-03] | CV 8.23e-03 [8.22e-03,8.24e-03] | CVaR95 1.23e-02 [1.16e-02,1.29e-02] | yield 0.01 [0.01,0.03] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 1.02e-02 | MC 1.00e-02 [9.63e-03,1.04e-02] | CV 1.02e-02 [1.02e-02,1.02e-02] | CVaR95 1.70e-02 [1.58e-02,1.81e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   (3.6 s for this design)
+id 210 [best nominal, hop0.15] nominal 8.330e-04 TOT 19.8 thinnest OT 9.6 nm cond 1e3.8 H3 rho(field in layer, |J_i|^2) -0.08
+   OT 0.2nm   pred 2.01e-03 | MC 2.03e-03 [1.97e-03,2.09e-03] | CV 2.01e-03 [2.00e-03,2.01e-03] | CVaR95 3.09e-03 [2.93e-03,3.17e-03] | yield 0.73 [0.68,0.79] | bPOE 0.67 [0.56,0.77]
+   OT 0.5nm   pred 4.63e-03 | MC 4.70e-03 [4.55e-03,4.86e-03] | CV 4.63e-03 [4.63e-03,4.64e-03] | CVaR95 7.48e-03 [7.07e-03,7.69e-03] | yield 0.14 [0.10,0.18] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 1.90e-09 [1.66e-09,2.22e-09] lambda2/1 6.29e-01 share(1) 0.45 share(3) 0.87 |cos(v1, JtJ v1)| 0.98 v1 layers #14(H,29.2nm) #9(L,23.4nm) #8(H,42.7nm)
+   OT 1nm     pred 9.16e-03 | MC 9.29e-03 [8.99e-03,9.61e-03] | CV 9.15e-03 [9.14e-03,9.16e-03] | CVaR95 1.49e-02 [1.41e-02,1.53e-02] | yield 0.01 [0.00,0.02] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 1.02e-02 | MC 1.04e-02 [9.93e-03,1.09e-02] | CV 1.02e-02 [1.02e-02,1.03e-02] | CVaR95 1.96e-02 [1.72e-02,2.21e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   (3.6 s for this design)
+id 160 [best nominal, hop0.3] nominal 5.940e-04 TOT 19.6 thinnest OT 18.0 nm cond 1e2.6 H3 rho(field in layer, |J_i|^2) -0.48
+   OT 0.2nm   pred 1.96e-03 | MC 1.96e-03 [1.90e-03,2.02e-03] | CV 1.96e-03 [1.96e-03,1.96e-03] | CVaR95 3.08e-03 [2.89e-03,3.24e-03] | yield 0.77 [0.71,0.81] | bPOE 0.61 [0.51,0.70]
+   OT 0.5nm   pred 4.70e-03 | MC 4.71e-03 [4.56e-03,4.85e-03] | CV 4.71e-03 [4.70e-03,4.71e-03] | CVaR95 7.59e-03 [7.10e-03,7.99e-03] | yield 0.14 [0.10,0.18] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 2.39e-09 [2.08e-09,2.90e-09] lambda2/1 3.61e-01 share(1) 0.54 share(3) 0.85 |cos(v1, JtJ v1)| 1.00 v1 layers #14(H,55.6nm) #12(H,91.8nm) #8(H,25.0nm)
+   OT 1nm     pred 9.35e-03 | MC 9.37e-03 [9.06e-03,9.65e-03] | CV 9.36e-03 [9.34e-03,9.37e-03] | CVaR95 1.52e-02 [1.42e-02,1.60e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 1.08e-02 | MC 1.09e-02 [1.04e-02,1.13e-02] | CV 1.08e-02 [1.08e-02,1.09e-02] | CVaR95 1.87e-02 [1.74e-02,1.98e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   (3.6 s for this design)
+id 244 [best nominal, hop0.3] nominal 8.509e-04 TOT 19.2 thinnest OT 15.5 nm cond 1e2.3 H3 rho(field in layer, |J_i|^2) -0.36
+   OT 0.2nm   pred 2.09e-03 | MC 2.14e-03 [2.08e-03,2.20e-03] | CV 2.09e-03 [2.09e-03,2.09e-03] | CVaR95 3.29e-03 [3.02e-03,3.48e-03] | yield 0.76 [0.70,0.81] | bPOE 0.58 [0.48,0.68]
+   OT 0.5nm   pred 4.85e-03 | MC 4.97e-03 [4.82e-03,5.13e-03] | CV 4.85e-03 [4.84e-03,4.85e-03] | CVaR95 7.98e-03 [7.26e-03,8.48e-03] | yield 0.07 [0.04,0.10] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 2.61e-09 [2.23e-09,2.93e-09] lambda2/1 3.69e-01 share(1) 0.51 share(3) 0.82 |cos(v1, JtJ v1)| 0.99 v1 layers #17(L,10.7nm) #5(L,33.2nm) #4(H,49.7nm)
+   OT 1nm     pred 9.59e-03 | MC 9.83e-03 [9.51e-03,1.01e-02] | CV 9.57e-03 [9.55e-03,9.59e-03] | CVaR95 1.58e-02 [1.44e-02,1.68e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 9.81e-03 | MC 9.82e-03 [9.46e-03,1.02e-02] | CV 9.79e-03 [9.77e-03,9.81e-03] | CVaR95 1.64e-02 [1.46e-02,1.87e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   (3.6 s for this design)
+id 115 [best nominal, hop0.3] nominal 9.497e-04 TOT 19.2 thinnest OT 23.4 nm cond 1e2.4 H3 rho(field in layer, |J_i|^2) -0.22
+   OT 0.2nm   pred 2.13e-03 | MC 2.19e-03 [2.12e-03,2.25e-03] | CV 2.13e-03 [2.13e-03,2.13e-03] | CVaR95 3.48e-03 [3.22e-03,3.72e-03] | yield 0.72 [0.68,0.77] | bPOE 0.70 [0.59,0.80]
+   OT 0.5nm   pred 4.86e-03 | MC 5.02e-03 [4.84e-03,5.19e-03] | CV 4.86e-03 [4.85e-03,4.86e-03] | CVaR95 8.43e-03 [7.75e-03,9.05e-03] | yield 0.15 [0.11,0.20] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 2.62e-09 [2.22e-09,3.01e-09] lambda2/1 5.02e-01 share(1) 0.51 share(3) 0.87 |cos(v1, JtJ v1)| 0.99 v1 layers #5(L,16.1nm) #17(L,16.9nm) #6(H,53.5nm)
+   OT 1nm     pred 9.58e-03 | MC 9.89e-03 [9.51e-03,1.02e-02] | CV 9.55e-03 [9.53e-03,9.57e-03] | CVaR95 1.68e-02 [1.54e-02,1.80e-02] | yield 0.01 [0.00,0.01] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 9.86e-03 | MC 1.00e-02 [9.59e-03,1.04e-02] | CV 9.85e-03 [9.83e-03,9.87e-03] | CVaR95 1.67e-02 [1.58e-02,1.76e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   (3.6 s for this design)
+id 1 [best nominal, curve:curve_abl_t0k1_free_s1.csv] nominal 4.455e-04 TOT 19.8 thinnest OT 20.2 nm cond 1e2.8 H3 rho(field in layer, |J_i|^2) -0.14
+   OT 0.2nm   pred 2.02e-03 | MC 1.99e-03 [1.93e-03,2.06e-03] | CV 2.02e-03 [2.02e-03,2.02e-03] | CVaR95 3.21e-03 [2.91e-03,3.51e-03] | yield 0.83 [0.79,0.88] | bPOE 0.41 [0.33,0.49]
+   OT 0.5nm   pred 4.95e-03 | MC 4.87e-03 [4.71e-03,5.04e-03] | CV 4.95e-03 [4.94e-03,4.95e-03] | CVaR95 7.95e-03 [7.21e-03,8.68e-03] | yield 0.17 [0.12,0.21] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 3.69e-09 [3.13e-09,4.40e-09] lambda2/1 2.50e-01 share(1) 0.63 share(3) 0.89 |cos(v1, JtJ v1)| 1.00 v1 layers #10(H,32.6nm) #9(L,37.3nm) #8(H,55.4nm)
+   OT 1nm     pred 9.86e-03 | MC 9.71e-03 [9.40e-03,1.00e-02] | CV 9.86e-03 [9.84e-03,9.87e-03] | CVaR95 1.58e-02 [1.44e-02,1.73e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 1.15e-02 | MC 1.12e-02 [1.08e-02,1.16e-02] | CV 1.15e-02 [1.14e-02,1.15e-02] | CVaR95 1.84e-02 [1.71e-02,1.97e-02] | yield 0.01 [0.00,0.03] | bPOE 1.00 [1.00,1.00]
+   (3.6 s for this design)
+id 216 [best nominal, hop0.15] nominal 7.103e-04 TOT 19.0 thinnest OT 22.8 nm cond 1e3.4 H3 rho(field in layer, |J_i|^2) -0.23
+   OT 0.2nm   pred 2.20e-03 | MC 2.17e-03 [2.11e-03,2.24e-03] | CV 2.20e-03 [2.20e-03,2.20e-03] | CVaR95 3.44e-03 [3.24e-03,3.57e-03] | yield 0.84 [0.80,0.89] | bPOE 0.41 [0.32,0.49]
+   OT 0.5nm   pred 5.26e-03 | MC 5.19e-03 [5.01e-03,5.36e-03] | CV 5.26e-03 [5.26e-03,5.26e-03] | CVaR95 8.44e-03 [7.93e-03,8.81e-03] | yield 0.12 [0.09,0.16] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 4.42e-09 [3.74e-09,5.15e-09] lambda2/1 3.58e-01 share(1) 0.59 share(3) 0.89 |cos(v1, JtJ v1)| 1.00 v1 layers #8(H,47.5nm) #7(L,23.3nm) #14(H,24.0nm)
+   OT 1nm     pred 1.04e-02 | MC 1.03e-02 [9.95e-03,1.06e-02] | CV 1.04e-02 [1.04e-02,1.05e-02] | CVaR95 1.68e-02 [1.58e-02,1.76e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 1.20e-02 | MC 1.20e-02 [1.15e-02,1.24e-02] | CV 1.20e-02 [1.20e-02,1.20e-02] | CVaR95 1.99e-02 [1.87e-02,2.09e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   (3.6 s for this design)
+id 408 [best smoothed, smooth<-random] nominal 3.116e-02 TOT 20.5 thinnest OT 1.4 nm cond 1e5.8 H3 rho(field in layer, |J_i|^2) -0.09
+   OT 0.2nm   pred 3.12e-02 | MC 3.12e-02 [3.12e-02,3.12e-02] | CV 3.12e-02 [3.12e-02,3.12e-02] | CVaR95 3.14e-02 [3.13e-02,3.14e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 0.5nm   pred 3.16e-02 | MC 3.16e-02 [3.16e-02,3.16e-02] | CV 3.16e-02 [3.16e-02,3.16e-02] | CVaR95 3.25e-02 [3.22e-02,3.28e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 5.77e-09 [4.92e-09,6.79e-09] lambda2/1 5.29e-01 share(1) 0.57 share(3) 0.97 |cos(v1, JtJ v1)| 0.99 v1 layers #14(H,104.6nm) #2(H,17.0nm) #4(H,80.3nm)
+   OT 1nm     pred 3.30e-02 | MC 3.28e-02 [3.27e-02,3.30e-02] | CV 3.28e-02 [3.28e-02,3.29e-02] | CVaR95 3.60e-02 [3.51e-02,3.70e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 3.51e-02 | MC 3.46e-02 [3.43e-02,3.49e-02] | CV 3.47e-02 [3.47e-02,3.48e-02] | CVaR95 4.17e-02 [4.02e-02,4.34e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   (3.8 s for this design)
+id 404 [best smoothed, smooth<-random] nominal 4.283e-02 TOT 23.6 thinnest OT 19.1 nm cond 1e3.3 H3 rho(field in layer, |J_i|^2) +0.47
+   OT 0.2nm   pred 4.29e-02 | MC 4.29e-02 [4.29e-02,4.29e-02] | CV 4.29e-02 [4.29e-02,4.29e-02] | CVaR95 4.30e-02 [4.30e-02,4.31e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 0.5nm   pred 4.32e-02 | MC 4.32e-02 [4.32e-02,4.33e-02] | CV 4.32e-02 [4.32e-02,4.32e-02] | CVaR95 4.42e-02 [4.39e-02,4.43e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 1.50e-08 [1.26e-08,1.77e-08] lambda2/1 1.52e-01 share(1) 0.81 share(3) 0.96 |cos(v1, JtJ v1)| 1.00 v1 layers #17(H,8.1nm) #19(H,21.6nm) #18(L,246.3nm)
+   OT 1nm     pred 4.45e-02 | MC 4.44e-02 [4.43e-02,4.45e-02] | CV 4.43e-02 [4.42e-02,4.43e-02] | CVaR95 4.80e-02 [4.70e-02,4.85e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 4.64e-02 | MC 4.61e-02 [4.58e-02,4.65e-02] | CV 4.59e-02 [4.59e-02,4.60e-02] | CVaR95 5.53e-02 [5.31e-02,5.73e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   (3.6 s for this design)
+id 407 [best smoothed, smooth<-random] nominal 4.366e-02 TOT 22.9 thinnest OT 1.7 nm cond 1e4.5 H3 rho(field in layer, |J_i|^2) +0.65
+   OT 0.2nm   pred 4.37e-02 | MC 4.37e-02 [4.37e-02,4.37e-02] | CV 4.37e-02 [4.37e-02,4.37e-02] | CVaR95 4.38e-02 [4.38e-02,4.38e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 0.5nm   pred 4.41e-02 | MC 4.40e-02 [4.40e-02,4.41e-02] | CV 4.40e-02 [4.40e-02,4.40e-02] | CVaR95 4.46e-02 [4.45e-02,4.47e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 8.67e-09 [7.70e-09,1.02e-08] lambda2/1 2.70e-01 share(1) 0.69 share(3) 0.93 |cos(v1, JtJ v1)| 0.96 v1 layers #19(H,10.5nm) #9(H,11.2nm) #17(H,81.3nm)
+   OT 1nm     pred 4.52e-02 | MC 4.51e-02 [4.50e-02,4.52e-02] | CV 4.50e-02 [4.50e-02,4.51e-02] | CVaR95 4.73e-02 [4.69e-02,4.76e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 4.87e-02 | MC 4.77e-02 [4.74e-02,4.80e-02] | CV 4.77e-02 [4.75e-02,4.79e-02] | CVaR95 5.56e-02 [5.39e-02,5.69e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   (4.4 s for this design)
+id 406 [best smoothed, smooth<-random] nominal 4.388e-02 TOT 24.3 thinnest OT 2.4 nm cond 1e2.8 H3 rho(field in layer, |J_i|^2) +0.35
+   OT 0.2nm   pred 4.39e-02 | MC 4.39e-02 [4.39e-02,4.39e-02] | CV 4.39e-02 [4.39e-02,4.39e-02] | CVaR95 4.41e-02 [4.40e-02,4.41e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 0.5nm   pred 4.43e-02 | MC 4.42e-02 [4.42e-02,4.43e-02] | CV 4.42e-02 [4.42e-02,4.42e-02] | CVaR95 4.49e-02 [4.48e-02,4.51e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 1.00e-08 [8.92e-09,1.17e-08] lambda2/1 3.05e-01 share(1) 0.69 share(3) 0.95 |cos(v1, JtJ v1)| 0.97 v1 layers #7(H,34.2nm) #13(H,19.0nm) #9(H,20.4nm)
+   OT 1nm     pred 4.54e-02 | MC 4.53e-02 [4.52e-02,4.54e-02] | CV 4.53e-02 [4.53e-02,4.53e-02] | CVaR95 4.79e-02 [4.73e-02,4.84e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 4.80e-02 | MC 4.75e-02 [4.72e-02,4.78e-02] | CV 4.75e-02 [4.74e-02,4.76e-02] | CVaR95 5.42e-02 [5.31e-02,5.49e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   (4.8 s for this design)
+id 402 [best smoothed, smooth<-random] nominal 4.640e-02 TOT 17.3 thinnest OT 20.2 nm cond 1e4.4 H3 rho(field in layer, |J_i|^2) +0.25
+   OT 0.2nm   pred 4.65e-02 | MC 4.65e-02 [4.65e-02,4.65e-02] | CV 4.65e-02 [4.65e-02,4.65e-02] | CVaR95 4.68e-02 [4.67e-02,4.69e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 0.5nm   pred 4.71e-02 | MC 4.70e-02 [4.69e-02,4.71e-02] | CV 4.70e-02 [4.70e-02,4.70e-02] | CVaR95 4.88e-02 [4.83e-02,4.94e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 5.60e-08 [4.49e-08,6.75e-08] lambda2/1 1.11e-01 share(1) 0.86 share(3) 0.98 |cos(v1, JtJ v1)| 1.00 v1 layers #7(H,8.6nm) #17(H,19.5nm) #5(H,34.9nm)
+   OT 1nm     pred 4.92e-02 | MC 4.87e-02 [4.85e-02,4.90e-02] | CV 4.87e-02 [4.86e-02,4.87e-02] | CVaR95 5.55e-02 [5.36e-02,5.72e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 4.98e-02 | MC 4.92e-02 [4.89e-02,4.95e-02] | CV 4.90e-02 [4.89e-02,4.91e-02] | CVaR95 5.75e-02 [5.53e-02,5.94e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   (3.9 s for this design)
+id 405 [best smoothed, smooth<-random] nominal 6.271e-02 TOT 23.4 thinnest OT 1.4 nm cond 1e4.2 H3 rho(field in layer, |J_i|^2) +0.09
+   OT 0.2nm   pred 6.28e-02 | MC 6.27e-02 [6.27e-02,6.28e-02] | CV 6.27e-02 [6.27e-02,6.27e-02] | CVaR95 6.28e-02 [6.28e-02,6.28e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 0.5nm   pred 6.30e-02 | MC 6.30e-02 [6.29e-02,6.30e-02] | CV 6.30e-02 [6.29e-02,6.30e-02] | CVaR95 6.34e-02 [6.33e-02,6.34e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 6.65e-09 [5.71e-09,7.52e-09] lambda2/1 4.22e-01 share(1) 0.58 share(3) 0.91 |cos(v1, JtJ v1)| 0.88 v1 layers #16(H,115.9nm) #17(L,56.0nm) #14(H,66.6nm)
+   OT 1nm     pred 6.40e-02 | MC 6.37e-02 [6.36e-02,6.38e-02] | CV 6.37e-02 [6.37e-02,6.37e-02] | CVaR95 6.53e-02 [6.50e-02,6.56e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 6.60e-02 | MC 6.52e-02 [6.50e-02,6.54e-02] | CV 6.51e-02 [6.50e-02,6.52e-02] | CVaR95 6.95e-02 [6.85e-02,7.03e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   (3.7 s for this design)
+id 400 [best smoothed, smooth<-random] nominal 8.230e-02 TOT 24.8 thinnest OT 1.4 nm cond 1e3.2 H3 rho(field in layer, |J_i|^2) +0.37
+   OT 0.2nm   pred 8.24e-02 | MC 8.23e-02 [8.23e-02,8.23e-02] | CV 8.23e-02 [8.23e-02,8.23e-02] | CVaR95 8.24e-02 [8.24e-02,8.24e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 0.5nm   pred 8.26e-02 | MC 8.25e-02 [8.25e-02,8.25e-02] | CV 8.25e-02 [8.25e-02,8.25e-02] | CVaR95 8.29e-02 [8.29e-02,8.30e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   active subspace OT 0.5nm: lambda1 1.22e-08 [1.03e-08,1.40e-08] lambda2/1 3.65e-01 share(1) 0.66 share(3) 0.95 |cos(v1, JtJ v1)| 0.99 v1 layers #17(H,26.5nm) #18(L,71.3nm) #19(H,94.6nm)
+   OT 1nm     pred 8.36e-02 | MC 8.32e-02 [8.31e-02,8.33e-02] | CV 8.32e-02 [8.32e-02,8.33e-02] | CVaR95 8.48e-02 [8.45e-02,8.51e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   OT 1%      pred 8.57e-02 | MC 8.45e-02 [8.43e-02,8.47e-02] | CV 8.45e-02 [8.43e-02,8.46e-02] | CVaR95 9.02e-02 [8.87e-02,9.16e-02] | yield 0.00 [0.00,0.00] | bPOE 1.00 [1.00,1.00]
+   (3.7 s for this design)
+winner of each error model by Monte Carlo (control-variate estimate, selection draws):
+   OT 0.2nm  id 118 1.70e-03 [1.70e-03,1.70e-03], id 0 1.73e-03 [1.73e-03,1.73e-03], id 78 1.73e-03 [1.73e-03,1.73e-03]
+   OT 0.5nm  id 130 4.05e-03 [4.04e-03,4.05e-03], id 134 4.05e-03 [4.05e-03,4.05e-03], id 136 4.05e-03 [4.05e-03,4.05e-03]
+   OT 1nm    id 130 7.81e-03 [7.79e-03,7.82e-03], id 136 7.82e-03 [7.81e-03,7.82e-03], id 142 7.82e-03 [7.81e-03,7.82e-03]
+   OT 1%     id 101 9.12e-03 [9.10e-03,9.13e-03], id 141 9.12e-03 [9.11e-03,9.13e-03], id 136 9.12e-03 [9.11e-03,9.13e-03]

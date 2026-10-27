@@ -1,0 +1,6 @@
+50 starts (1.12 s each) {'tried': 50, 'kept': 2, 'lost_layer': 48, 'duplicate': 0} catalogue 2 best 5.2491e-02
+100 starts (1.10 s each) {'tried': 100, 'kept': 14, 'lost_layer': 81, 'duplicate': 5} catalogue 14 best 2.2385e-02
+150 starts (1.08 s each) {'tried': 150, 'kept': 28, 'lost_layer': 109, 'duplicate': 13} catalogue 28 best 2.2385e-02
+200 starts (1.07 s each) {'tried': 200, 'kept': 36, 'lost_layer': 139, 'duplicate': 25} catalogue 36 best 2.2385e-02
+250 starts (1.05 s each) {'tried': 250, 'kept': 42, 'lost_layer': 170, 'duplicate': 38} catalogue 42 best 2.2385e-02
+300 starts (1.04 s each) {'tried': 300, 'kept': 51, 'lost_layer': 196, 'duplicate': 53} catalogue 51 best 2.2385e-02

@@ -1,0 +1,76 @@
+{
+  "version": "CERTUS_SUITE_26_05",
+  "l0": 500.0,
+  "materials": {
+    "H": {
+      "n4": 2.35,
+      "n7": 2.35,
+      "preset": "Custom"
+    },
+    "L": {
+      "n4": 1.45,
+      "n7": 1.45,
+      "preset": "Custom"
+    },
+    "Substrate": {
+      "n4": 1.52,
+      "n7": 1.52,
+      "preset": "Custom"
+    }
+  },
+  "front": [
+    {
+      "mat": "H",
+      "qw": 3.8622144081543386,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.711393200294113,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.4481058873257229,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.3473594752776719,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.2594871486016785,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.34387143729754593,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.9421533850503845,
+      "var": true
+    }
+  ],
+  "back_en": false,
+  "back_coat": false,
+  "back": [],
+  "targets": [
+    {
+      "on": true,
+      "lmin": 400.0,
+      "lmax": 1200.0,
+      "tmin": 0.5,
+      "tmax": 0.5,
+      "w": 1.0
+    }
+  ],
+  "oblique_mode": false,
+  "optim": {
+    "points_per_target": 108,
+    "max_layers": 7
+  }
+}

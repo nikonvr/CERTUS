@@ -1,0 +1,51 @@
+{
+  "version": "CERTUS_SUITE_26_05",
+  "l0": 500.0,
+  "materials": {
+    "H": {
+      "n4": 2.35,
+      "n7": 2.35,
+      "preset": "Custom"
+    },
+    "L": {
+      "n4": 1.45,
+      "n7": 1.45,
+      "preset": "Custom"
+    },
+    "Substrate": {
+      "n4": 1.52,
+      "n7": 1.52,
+      "preset": "Custom"
+    }
+  },
+  "front": [
+    {
+      "mat": "L",
+      "qw": 2.32827,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.296994,
+      "var": true
+    }
+  ],
+  "back_en": false,
+  "back_coat": false,
+  "back": [],
+  "targets": [
+    {
+      "on": true,
+      "lmin": 400.0,
+      "lmax": 1200.0,
+      "tmin": 0.5,
+      "tmax": 0.5,
+      "w": 1.0
+    }
+  ],
+  "oblique_mode": false,
+  "optim": {
+    "points_per_target": 108,
+    "max_layers": 2
+  }
+}

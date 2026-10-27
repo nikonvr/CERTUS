@@ -22,20 +22,27 @@ Les fichiers non versionnés (journaux, exports) sont hors de Drive, dans un dos
 fente et fabrique de faux points tournants ([analyse](../reports/ANALYSE_claude_2026-10-22/bilan.md)).
 
 **DESIGN** : mémétique et relances par défaut depuis le 2026-10-23 ; séparatrice 400–1200 nm à 0,000135, et 8,6e-5 sur le problème de
-Tikhonravov et al. 1996 contre 1,77e-4 pour leur design ([bilan](../reports/DESIGN_bs5050_2026-10-22/bilan.md)).
+Tikhonravov et al. 1996 contre 1,77e-4 pour leur design ([bilan](../reports/DESIGN_bs5050_2026-10-22/bilan.md)). Enveloppe hors fenêtre du 2026-10-26 :
+3,53e-5 à 34 couches libres, 4,03e-5 à 31 couches ≥ 5 nm ([README](../reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_free/README.md)). Travail
+d'Antigravity Argon du 2026-10-26 vérifié puis corrigé ([vérification](../reports/VERIFICATION_argon_2026-10-26/bilan.md)) : noyaux rapides actifs
+(ALG-08/25/30), ALG-02 corrigé ; Gauss-Newton, fusion N+2 → N, alternance HL/LH, repolissage après 5 nm : inactifs par défaut
+(`DESIGN_OPTIONAL_STEPS`).
 
 **Bonne Mère, 90 couches sur silice** : plan à déposer, fait à la main sous les règles de 👤 : 15 Rate, SEEL 0,2608 nm au holdout.
 STRAT natif avec l'étape libre avant la conversion : 0,2655 nm, une graine, sans la garde ; A16 le remesure
 ([bilan](../reports/BONNE_MERE_strat_90c_2026-10-23/bilan.md)).
 
-**Python de référence : 3.15.1** (depuis le 2026-10-25) ; les mesures antérieures sont sous 3.14.8. Dépendances : `pip install --require-hashes -r requirements.lock`
+**Python de référence : 3.15.2** (depuis le 2026-10-27 ; 3.15.1 du 2026-10-25 au 2026-10-26) ; les mesures antérieures sont sous 3.14.8. Dépendances : `pip install --require-hashes -r requirements.lock`
 (numba 0.68.0, llvmlite 0.50.0 ; les anciens pins n'avaient pas de roue 3.15). Même banc (`48c` premium, graine 42) sous 3.14.8 et 3.15.1 : mêmes 2 653
 stratégies, même meilleur plan, SEEL 0,15313 nm ; scores à 10⁻¹⁴ près (relatif médian), aucun identique au bit. Exécutable gelé construit et contrôlé sous 3.15.1.
 
-**Dernière validation complète** : 2026-10-25, `83ef201f`, sous 3.15.1 : `python scripts\validate_parallel.py` GO, en série (oracle 1 159, unit 5 706, ui 1 342,
-rest 321, performance 40) ; C1 non remesuré après la fusion.
+**Dernière validation complète** : 2026-10-27, arbre corrigé du travail d'Argon, sous 3.15.2, en série : ruff propre, oracle 1 163, unit 5 725,
+ui 1 342, rest 350, 0 failed ; coherence_md, check_claude_md, check_docs à 0 ; `c1_diff HEAD` C1 TENU (9 092 tableaux).
 Avant de committer du code, la validation de CLAUDE.md §2 en entier : un sous-ensemble a déjà laissé passer une régression
 (`tests/unit/test_the_architecture_debt_only_shrinks.py` ne tourne pas avec les tests voisins).
+
+**Contrôle GUI ciblé** : 2026-10-25, `687ebe0b`, sous 3.15.1 : suite UI sans échec et onze interfaces affichées sur Qt Windows ;
+portée, exclusions et captures dans le [bilan](../reports/VERIFICATION_GUI_python3151_2026-10-25/bilan.md). Ne remplace pas la validation complète.
 
 **Décisions qui n'appartiennent qu'à 👤** : §5. Une IA ne les tranche pas, elle rapporte les mesures.
 

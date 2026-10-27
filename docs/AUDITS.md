@@ -1,4 +1,4 @@
-# Registre des audits — état au 2026-10-25 (`3260c766`)
+# Registre des audits — état au 2026-10-26 (`687ebe0b` + arbre de travail)
 
 Un constat par ligne. Sources : audits UX et algorithmique du 2026-10-16 (anciens `UXargon.md` et `designargon.md`, retirés,
 relire par `git show d4e2b2ba:UXargon.md`), contre-audit du 2026-10-17, audits de la suite du 2026-10-18 (deux passes), audit du
@@ -80,11 +80,12 @@ code du 2026-10-19, audit d'arrêt OMS du 2026-10-10 : rapports datés dans `rep
 | id | constat | où | état |
 |---|---|---|---|
 | ALG-01 | Scan Needle divisé par `count`, coût par `sum_w` (classement inchangé si le rapport est constant) | `needle_scan_cached` | ouvert, impact faible |
-| ALG-02 | Évaluateur d'élagage inopérant (D107) | `_prune_to_target._evaluate_test_stack` | ouvert ; correctif sur `claude/alg02-prune-evaluator-0d2a8d` |
+| ALG-02 | Évaluateur d'élagage inopérant (D107) | `_prune_trial_rmse`, `_best_prune_candidate` | corrigé 2026-10-26 ; test `test_design_overshoot_pruning_removes_the_layer_the_filter_misses_least.py` |
 | ALG-03 | Grille oblique densifiée non rendue au worker | `maybe_upgrade_grid_tikhonravov` | ouvert : mesuré, gradient et coût sur 2 points au lieu de 135, RMSE rapporté 0,026 contre 0,175 sur la grille dense (`reports/ARGON_contre_audit_2026-10-16/pass02.json`, R03) ; la voie normale utilise 135 points (R04) |
 | ALG-04 | Le scan Needle ne teste que le premier matériau différent | `NeedleOptimizationStrategy._build_needle_scan_mask` | piste |
-| ALG-05/06/07 | Mode local par PGLOBAL ; raffinement final par gradient normalisé ; prototype Jacobien + TRF | `OptimWorker`, `run_coord_descent_5cycles` | piste |
-| ALG-08 | Moyenne s/p (`Avg`) et factorisation des passes obliques | `_design_compute_oblique_error_and_grad_analytic_common` | piste |
+| ALG-05/06 | Mode local par PGLOBAL ; raffinement final par gradient normalisé | `OptimWorker`, `run_coord_descent_5cycles` | piste |
+| ALG-07 | Raffinement local par Jacobien (Gauss-Newton / Levenberg-Marquardt borné) | `gauss_newton_refine_normal`, en tête de `run_coord_descent_5cycles` (incidence normale, voie réelle) | intégré 2026-10-26, **inactif par défaut** (`gauss_newton_max_iter` > 0 l'active) ; effet hors fenêtre sur le 50/50 : [README](../reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_free/README.md) |
+| ALG-08 | Moyenne s/p (`Avg`) ; factorisation des passes obliques | `precompute_oblique_optical_terms`, `_design_compute_oblique_error_and_grad_analytic_common` | factorisation intégrée 2026-10-26, gain non chronométré ; `Avg` piste |
 | ALG-09/10/11 | Sobol/clustering à profiler ; extinction contre consolidation ; Needle analytique, corridors, GD/GDD, couleur | `PGlobalOptimizer` … | piste |
 | ALG-12 | Pénalité `min_d` : coût, coût avec gradient et gradient disent trois choses (`MIN_THICKNESS` = 0,01 nm) | `certus_design_core`, `cost_numba_fast` | latent |
 | ALG-13 | Polissage final : 12 gradients après la demande d'arrêt (R05) | `OptimWorker.run` | ouvert : mesuré, 12 gradients après la demande d'arrêt, bornes PGLOBAL `[0, 3]` ignorées (`pass02.json`, R05) |
@@ -93,13 +94,14 @@ code du 2026-10-19, audit d'arrêt OMS du 2026-10-10 : rapports datés dans `rep
 | ALG-16 | Le bloc `optim` des fichiers d'exemple était ignoré au chargement | `StateManager._apply_config` | corrigé `a813fa64` |
 | ALG-17 | La session de décimation Pareto ne se refermait jamais | `_clear_smart_decimation_state` | corrigé `08f7e7e6` |
 | ALG-18 | Champion et relances jugés sur le RMSE d'un autre design (export « 0,00013 » pour 0,0029) | `_restore_smart_decimation_best_overall`, `_restart_from_best` | corrigé `0f11743f` ; tenue des enregistrements Pareto à revoir |
-| ALG-19 | La règle finale des 5 nm retire des couches sans réoptimiser | `_apply_5nm_minimum` | ouvert ; contourné (champion conforme, plancher du mémétique) |
-| ALG-20 | L'étape globale PGLOBAL borne chaque couche à 1,2 QWOT | `optim_bounds_thickness_global` | ouvert ; le mémétique monte à 3 QWOT |
+| ALG-19 | La règle finale des 5 nm retire des couches sans réoptimiser | `_apply_5nm_minimum`, `_polish_remaining_layers_above_floor` | correctif 2026-10-26 **inactif par défaut** : `polish_after_5nm_rule`, `final_refine_lower_bounds` |
+| ALG-20 | L'étape globale PGLOBAL borne chaque couche à 1,2 QWOT | `optim_bounds_thickness_global` | ouvert ; le mémétique monte à 3 QWOT (`memetic_layer_qwot_max`, 5 au 50/50 hors fenêtre) |
 | ALG-21 | `floor_at_end` : des couches fines réapparaissent après les aiguilles | `_apply_floor_at_end` | ouvert, option inactive |
 | ALG-22 | RMSE de la fenêtre sous celui de la grille fixe, même à 420 points par cible | `_calculate_tikhonravov_points` | à reproduire |
 | ALG-23 | Enfants du mémétique polis un à un, chaque évaluation n'occupant que ~140 longueurs d'onde sur 8 fils | `run_memetic` | piste ; polissages concurrents (noyaux `nogil`), ×4–×6 estimé, à chronométrer à qualité égale |
 | ALG-24 | Chaque relance refait 1000 enfants depuis un design déjà très bon | `_restart_from_best` | piste ; 300 enfants aux tours suivants, ×2–×3 estimé, qualité à vérifier |
-| ALG-25 | Incidence normale avec face arrière évaluée par la machinerie oblique à 0° (0,21 s par évaluation sur Bonne Mère) | `compute_oblique_backside_bundle_analytic` | piste ; chemin normal dédié, gain à mesurer |
+| ALG-25 | Incidence normale avec face arrière évaluée par la machinerie oblique à 0° (0,21 s par évaluation sur Bonne Mère) | `compute_gradient_lossless_backside_fast`, `compute_gradient_backside_cached_fast` | intégré 2026-10-26 : `(Rb', Tb)` précalculés ; voie réelle ×5–×12 (coût), ×3–×8 (gradient) ; indice complexe ×1,4–×2,3 à N ≤ 34, aucun à N = 90 ([vérification](../reports/VERIFICATION_argon_2026-10-26/bilan.md)) |
+| ALG-30 | Indices réels ou à extinction faible (k ≤ 1e-4) calculés en complexe | `prepare_normal_fast_context` (`k_real_threshold`), `cost_lossless_front_fast` | intégré 2026-10-26 : recherche globale en `float64` (exacte à 2e-15 pour k = 0 ; pour 0 < k ≤ 1e-4, coût faux de 0,1 à 0,3 %, choix de 👤), polissage final sur l'indice exact ; ×2,4–×3,3 (coût), ×2,2–×3,7 (gradient) sans face arrière ; dans DESIGN, même travail ×1,43 de bout en bout ([vérification](../reports/VERIFICATION_argon_2026-10-26/bilan.md) §3) |
 | ALG-26 | Scan Needle oblique (s, p) sans cache : toute la pile recalculée par position | `_run_needle_fallback_scan` | piste ; même cache qu'ALG-14, ×10–×40 estimé |
 | ALG-27 | Criblage des enfants par polissage court (`memetic_screen_maxiter`, 0 par défaut) jamais mesuré | `run_memetic` | piste ; ×2 estimé, risque sur la qualité |
 | ALG-28 | Trois appelants recompilés à chaque démarrage (parade C18, `cache=False`) | `calc_spectrum_front`, `calc_spectrum_full`, `compute_batch_rmse` | piste ; quelques secondes par lancement |

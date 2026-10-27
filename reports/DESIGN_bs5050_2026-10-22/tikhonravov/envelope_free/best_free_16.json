@@ -1,0 +1,121 @@
+{
+  "version": "CERTUS_SUITE_26_05",
+  "l0": 500.0,
+  "materials": {
+    "H": {
+      "n4": 2.35,
+      "n7": 2.35,
+      "preset": "Custom"
+    },
+    "L": {
+      "n4": 1.45,
+      "n7": 1.45,
+      "preset": "Custom"
+    },
+    "Substrate": {
+      "n4": 1.52,
+      "n7": 1.52,
+      "preset": "Custom"
+    }
+  },
+  "front": [
+    {
+      "mat": "H",
+      "qw": 0.25886245604313834,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.8094348887088084,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.6467403705885058,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.3187349114752296,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 3.63569594646619,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.375157128542623,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.7551773617200227,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.9817895651627125,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.6860736317083963,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.773652170000571,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.6706847289409726,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.4806732455455893,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.7758810449575742,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.906651655838358,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 2.0395474106223794,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.9663250314735438,
+      "var": true
+    }
+  ],
+  "back_en": false,
+  "back_coat": false,
+  "back": [],
+  "targets": [
+    {
+      "on": true,
+      "lmin": 400.0,
+      "lmax": 1200.0,
+      "tmin": 0.5,
+      "tmax": 0.5,
+      "w": 1.0
+    }
+  ],
+  "oblique_mode": false,
+  "optim": {
+    "points_per_target": 108,
+    "max_layers": 16
+  }
+}

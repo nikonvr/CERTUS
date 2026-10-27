@@ -1,0 +1,131 @@
+{
+  "version": "CERTUS_SUITE_26_05",
+  "l0": 500.0,
+  "materials": {
+    "H": {
+      "n4": 2.35,
+      "n7": 2.35,
+      "preset": "Custom"
+    },
+    "L": {
+      "n4": 1.45,
+      "n7": 1.45,
+      "preset": "Custom"
+    },
+    "Substrate": {
+      "n4": 1.52,
+      "n7": 1.52,
+      "preset": "Custom"
+    }
+  },
+  "front": [
+    {
+      "mat": "H",
+      "qw": 0.214733,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.833408,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.419445,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.612825,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.646122,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.765423,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.424373,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 3.898606,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.974765,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.991475,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.902257,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.936538,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.681647,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.234379,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.238242,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.40944,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.804247,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.045557,
+      "var": true
+    }
+  ],
+  "back_en": false,
+  "back_coat": false,
+  "back": [],
+  "targets": [
+    {
+      "on": true,
+      "lmin": 400.0,
+      "lmax": 1200.0,
+      "tmin": 0.5,
+      "tmax": 0.5,
+      "w": 1.0
+    }
+  ],
+  "oblique_mode": false,
+  "optim": {
+    "points_per_target": 108,
+    "max_layers": 18
+  }
+}

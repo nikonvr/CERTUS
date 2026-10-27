@@ -1,0 +1,166 @@
+{
+  "version": "CERTUS_SUITE_26_05",
+  "l0": 500.0,
+  "materials": {
+    "H": {
+      "n4": 2.35,
+      "n7": 2.35,
+      "preset": "Custom"
+    },
+    "L": {
+      "n4": 1.45,
+      "n7": 1.45,
+      "preset": "Custom"
+    },
+    "Substrate": {
+      "n4": 1.52,
+      "n7": 1.52,
+      "preset": "Custom"
+    }
+  },
+  "front": [
+    {
+      "mat": "L",
+      "qw": 0.489467,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.133034,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.003244,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.299222,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.723159,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.642028,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.345526,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.614218,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.079074,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.194492,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.491173,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.42803,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.494855,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.094019,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.026071,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.673035,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.460894,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.708164,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.990092,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.595392,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.393294,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.691966,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.645773,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.657746,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.893792,
+      "var": true
+    }
+  ],
+  "back_en": false,
+  "back_coat": false,
+  "back": [],
+  "targets": [
+    {
+      "on": true,
+      "lmin": 400.0,
+      "lmax": 1200.0,
+      "tmin": 0.5,
+      "tmax": 0.5,
+      "w": 1.0
+    }
+  ],
+  "oblique_mode": false,
+  "optim": {
+    "points_per_target": 108,
+    "max_layers": 25
+  }
+}

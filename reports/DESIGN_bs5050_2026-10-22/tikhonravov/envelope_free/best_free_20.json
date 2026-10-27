@@ -1,0 +1,141 @@
+{
+  "version": "CERTUS_SUITE_26_05",
+  "l0": 500.0,
+  "materials": {
+    "H": {
+      "n4": 2.35,
+      "n7": 2.35,
+      "preset": "Custom"
+    },
+    "L": {
+      "n4": 1.45,
+      "n7": 1.45,
+      "preset": "Custom"
+    },
+    "Substrate": {
+      "n4": 1.52,
+      "n7": 1.52,
+      "preset": "Custom"
+    }
+  },
+  "front": [
+    {
+      "mat": "H",
+      "qw": 0.1619957588113258,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.7944037129231422,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.41909437101187524,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.520173308999906,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.889994774042217,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.1922595925215937,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 2.82872905321782,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.3653426887936678,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.0424549360585684,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.43220776855986537,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.6129851606051093,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.5708770189370533,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.0513812102818454,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.381248026883876,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.6246616837916803,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.392876567485896,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 2.1049726209770334,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.653932698482072,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.7391791075189365,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.0042639415095216,
+      "var": true
+    }
+  ],
+  "back_en": false,
+  "back_coat": false,
+  "back": [],
+  "targets": [
+    {
+      "on": true,
+      "lmin": 400.0,
+      "lmax": 1200.0,
+      "tmin": 0.5,
+      "tmax": 0.5,
+      "w": 1.0
+    }
+  ],
+  "oblique_mode": false,
+  "optim": {
+    "points_per_target": 108,
+    "max_layers": 20
+  }
+}

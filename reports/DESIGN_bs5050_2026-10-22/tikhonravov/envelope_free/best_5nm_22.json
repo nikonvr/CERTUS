@@ -1,0 +1,151 @@
+{
+  "version": "CERTUS_SUITE_26_05",
+  "l0": 500.0,
+  "materials": {
+    "H": {
+      "n4": 2.35,
+      "n7": 2.35,
+      "preset": "Custom"
+    },
+    "L": {
+      "n4": 1.45,
+      "n7": 1.45,
+      "preset": "Custom"
+    },
+    "Substrate": {
+      "n4": 1.52,
+      "n7": 1.52,
+      "preset": "Custom"
+    }
+  },
+  "front": [
+    {
+      "mat": "H",
+      "qw": 0.096337,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.746909,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.30008,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.623722,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.649918,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.273399,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 2.880502,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.464462,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.478626,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 2.209957,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.232315,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.386422,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.392715,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.458819,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.560002,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.972988,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.620781,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.345149,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.921835,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.545345,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.58288,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.937472,
+      "var": true
+    }
+  ],
+  "back_en": false,
+  "back_coat": false,
+  "back": [],
+  "targets": [
+    {
+      "on": true,
+      "lmin": 400.0,
+      "lmax": 1200.0,
+      "tmin": 0.5,
+      "tmax": 0.5,
+      "w": 1.0
+    }
+  ],
+  "oblique_mode": false,
+  "optim": {
+    "points_per_target": 108,
+    "max_layers": 22
+  }
+}

@@ -1,0 +1,126 @@
+{
+  "version": "CERTUS_SUITE_26_05",
+  "l0": 500.0,
+  "materials": {
+    "H": {
+      "n4": 2.35,
+      "n7": 2.35,
+      "preset": "Custom"
+    },
+    "L": {
+      "n4": 1.45,
+      "n7": 1.45,
+      "preset": "Custom"
+    },
+    "Substrate": {
+      "n4": 1.52,
+      "n7": 1.52,
+      "preset": "Custom"
+    }
+  },
+  "front": [
+    {
+      "mat": "L",
+      "qw": 3.7143572921883945,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.11009881425836922,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.5053724162526503,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.39712941426318554,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.5395612226796853,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.4713013383295823,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.33612328032204547,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.7266601321314972,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.2506705011271648,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 2.222657208759693,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.9023332674209114,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.011051010570469,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.172948372596769,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 2.3600723593702697,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.629810409001185,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.907266500796095,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.006041824228131,
+      "var": true
+    }
+  ],
+  "back_en": false,
+  "back_coat": false,
+  "back": [],
+  "targets": [
+    {
+      "on": true,
+      "lmin": 400.0,
+      "lmax": 1200.0,
+      "tmin": 0.5,
+      "tmax": 0.5,
+      "w": 1.0
+    }
+  ],
+  "oblique_mode": false,
+  "optim": {
+    "points_per_target": 108,
+    "max_layers": 17
+  }
+}

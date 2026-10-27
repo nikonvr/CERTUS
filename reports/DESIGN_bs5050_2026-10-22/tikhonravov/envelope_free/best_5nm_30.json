@@ -1,0 +1,191 @@
+{
+  "version": "CERTUS_SUITE_26_05",
+  "l0": 500.0,
+  "materials": {
+    "H": {
+      "n4": 2.35,
+      "n7": 2.35,
+      "preset": "Custom"
+    },
+    "L": {
+      "n4": 1.45,
+      "n7": 1.45,
+      "preset": "Custom"
+    },
+    "Substrate": {
+      "n4": 1.52,
+      "n7": 1.52,
+      "preset": "Custom"
+    }
+  },
+  "front": [
+    {
+      "mat": "H",
+      "qw": 0.095542,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.821189,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.310929,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.691235,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.645733,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.363632,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.194451,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.184922,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.079972,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.473599,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.405866,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 2.899238,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.389722,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.379792,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 2.354192,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.40161,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.56095,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 2.539261,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.666584,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.075381,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.063931,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.439756,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 1.693476,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.228522,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.278315,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.463217,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.753705,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 0.087289,
+      "var": true
+    },
+    {
+      "mat": "H",
+      "qw": 0.953795,
+      "var": true
+    },
+    {
+      "mat": "L",
+      "qw": 1.065303,
+      "var": true
+    }
+  ],
+  "back_en": false,
+  "back_coat": false,
+  "back": [],
+  "targets": [
+    {
+      "on": true,
+      "lmin": 400.0,
+      "lmax": 1200.0,
+      "tmin": 0.5,
+      "tmax": 0.5,
+      "w": 1.0
+    }
+  ],
+  "oblique_mode": false,
+  "optim": {
+    "points_per_target": 108,
+    "max_layers": 30
+  }
+}

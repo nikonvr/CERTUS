@@ -8,6 +8,7 @@ from typing import Any
 import numpy as np
 
 from certus.core.certus_core import APP_SUITE_VERSION, CFG
+from certus.core.certus_design_workers_dto import DESIGN_OPTIONAL_STEPS
 from certus.ui.certus_qt_widgets import QCheckBox
 from certus.ui.certus_ui import show_toast
 from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
@@ -206,6 +207,7 @@ class StateManager:
                           ("min_layer_ot_nm", "_min_layer_ot_nm"), ("floor_at_end", "_floor_at_end")):
             if getattr(self.ui, attr, None):
                 cfg["optimization"][key] = getattr(self.ui, attr)
+        cfg["optimization"].update(getattr(self.ui, "_design_optional_steps", None) or {})
 
         return cfg
 
@@ -355,6 +357,8 @@ class StateManager:
         self.ui._min_layer_ot_nm = float(opt["min_layer_ot_nm"]) if opt.get("min_layer_ot_nm") else None
         # Apply the thickness floor only at the end of the workflow (owner's practice); off unless the file asks.
         self.ui._floor_at_end = bool(opt.get("floor_at_end", False))
+        # Optional steps of 2026-10-26, off unless the file names them (DESIGN_OPTIONAL_STEPS).
+        self.ui._design_optional_steps = {k: opt[k] for k in DESIGN_OPTIONAL_STEPS if k in opt}
 
     def config_load_problems(self, c: dict) -> list[str]:
         """What `c` names that this window cannot reproduce (D88): loading it would compute with something else.

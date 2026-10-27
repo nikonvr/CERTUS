@@ -36,6 +36,18 @@ class DesignParamsDTO(BaseModel):
     d_back: Any | None = None
 
 
+# Optional DESIGN steps added on 2026-10-26, each read from the file's `optimization` block. The defaults are the
+# behaviour before them (C1): a file that names none of them computes exactly as before.
+DESIGN_OPTIONAL_STEPS: dict[str, Any] = {
+    "gauss_newton_max_iter": 0,  # > 0: bounded Gauss-Newton before the final coordinate descent (normal incidence)
+    "memetic_layer_qwot_max": 3.0,  # upper bound of every memetic layer, in quarter waves
+    "memetic_merge_shift_every": 0,  # > 0: one memetic child in this many is a thin-layer removal (N+2 -> N)
+    "final_refine_lower_bounds": False,  # the final refinement keeps every layer at or above the search floor
+    "restart_flip_alternation": False,  # an automatic restart may shift the stack by one layer (HL <-> LH)
+    "polish_after_5nm_rule": False,  # re-polish above the floor after the 5 nm rule removed layers
+}
+
+
 def _copy_legacy_cfg(cfg: dict[str, Any] | None) -> dict[str, Any]:
     if not isinstance(cfg, dict):
         return {}

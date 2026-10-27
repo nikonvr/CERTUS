@@ -207,6 +207,12 @@ class OptimWorker(QObject):
         kwargs.pop('self')
         return self.design_strat._prepare_pglobal_inputs(self, **kwargs)
 
+    def _optional_step(self, name: str) -> Any:
+        """The file's value of an optional DESIGN step, or its default (the behaviour before the step existed)."""
+        from certus.core.certus_design_workers_dto import DESIGN_OPTIONAL_STEPS
+
+        return self.cfg.get(name, DESIGN_OPTIONAL_STEPS[name])
+
     def _run_memetic_global(self, *, bounds, x0_start, var_idx, stack, mats, l0, children, gradient_func, callback) -> Any:
         """Global stage by the memetic search (``memetic_children`` > 0); returns an object with ``x`` and ``y``.
 
@@ -221,7 +227,7 @@ class OptimWorker(QObject):
         from certus.core.certus_design_memetic import run_memetic, widen_upper_bounds
 
         qwot_nm = np.array([float(l0) / (4.0 * float(mats[stack[int(i)].mat].n4)) for i in var_idx])
-        wide = widen_upper_bounds(bounds, qwot_nm, float(self.cfg.get('memetic_layer_qwot_max', 3.0)))
+        wide = widen_upper_bounds(bounds, qwot_nm, float(self._optional_step('memetic_layer_qwot_max')))
         ot_min = self.cfg.get('memetic_min_ot_nm')
         if ot_min:
             # The file states the floor as an optical thickness n4 * d (min_layer_ot_nm): one floor per material.
@@ -230,6 +236,8 @@ class OptimWorker(QObject):
             floor_nm = np.full(len(var_idx), float(self.cfg.get('memetic_floor_nm', 5.0) or 0.0))
         # Every layer kept at its floor or more: no layer can vanish, and the cost has no jump at the final rule.
         wide[:, 0] = np.maximum(wide[:, 0], floor_nm)
+        if self._optional_step('final_refine_lower_bounds'):
+            bounds[:, 0] = wide[:, 0]  # the floor also reaches the starts and the final refinement
         population = int(self.cfg.get('memetic_population', 30))
         logging.getLogger('CERTUS').info(f'[OPTIM] Memetic global stage: population={population}, children={children}, dim={len(var_idx)}')
         # A layer under MIN_THICKNESS costs 1e30 in the shared gradient: that cliff stops L-BFGS-B line
@@ -255,7 +263,8 @@ class OptimWorker(QObject):
 
         result = run_memetic(cost_and_grad, wide, x0=x0_start, population=population, children=children,
                              seed=self.cfg.get('memetic_seed'), screen_maxiter=int(self.cfg.get('memetic_screen_maxiter', 0)),
-                             stop_event=self._stop_event, on_improve=callback, init_bounds=bounds)
+                             stop_event=self._stop_event, on_improve=callback, init_bounds=bounds,
+                             merge_shift_every=int(self._optional_step('memetic_merge_shift_every')))
         result.x = np.where(result.x < min_d, 0.0, result.x)
         logging.getLogger('CERTUS').info(f'[OPTIM] Memetic global stage done: best cost={result.y:.6e}, cost calls={result.evaluations}')
         return result
@@ -375,14 +384,56 @@ class OptimWorker(QObject):
                 ep_current[var_idx] = best_sample_overall.x
                 best_cost = best_sample_overall.y
                 from certus.core.certus_design_worker_utils import maybe_upgrade_grid_tikhonravov
+                from certus.physics.design_fast_kernels import prepare_normal_fast_context
+                had_weak_k = bool(getattr(self, "_normal_fast_ctx", None) and self._normal_fast_ctx.get("has_weak_k"))
+                wls_prev_len = len(wls)
                 wls, n_sub, n_layers_T, n_back_T, tgt_vals, tgt_weights = maybe_upgrade_grid_tikhonravov(ep_current=ep_current, mats=mats, stack=stack, tgts=tgts, oblique_mode=oblique_mode, oblique_tgts=oblique_tgts, wls=wls, float_dtype=float_dtype, complex_dtype=complex_dtype, has_back_stack=has_back_stack, stack_back=stack_back, ep_back=ep_back, n_sub=n_sub, n_layers_T=n_layers_T, n_back_T=n_back_T, tgt_vals=tgt_vals, tgt_weights=tgt_weights)
+                if not oblique_mode:
+                    self._wls = wls
+                    self._n_sub = n_sub
+                    self._n_layers_T = n_layers_T
+                    self._n_back_T = n_back_T
+                    self._tgt_vals = tgt_vals
+                    self._tgt_weights = tgt_weights
+                    self._normal_fast_ctx = prepare_normal_fast_context(
+                        wls=wls,
+                        n_layers_T=n_layers_T,
+                        n_sub=n_sub,
+                        has_back_calc=has_back_calc,
+                        n_back_T=n_back_T,
+                        d_back=d_back,
+                        k_real_threshold=1e-14,
+                    )
+                    if had_weak_k or len(wls) != wls_prev_len:
+                        best_cost = float(
+                            self._evaluate_thicknesses(
+                                ep_current,
+                                oblique_mode=oblique_mode,
+                                compute_oblique_error=compute_oblique_error,
+                                n_layers_T=n_layers_T,
+                                n_sub=n_sub,
+                                wls=wls,
+                                tgt_vals=tgt_vals,
+                                tgt_weights=tgt_weights,
+                                has_back_calc=has_back_calc,
+                                n_back_T=n_back_T,
+                                d_back=d_back,
+                            )
+                        )
+                        if had_weak_k and hasattr(self, "best_rmse_final"):
+                            self.best_rmse_final = float("inf")
                 try:
                     self.signals.progress_snapshot.emit(build_progress_snapshot(message='Final refinement (5x coordinate descent)...', display_ratio=0.95, progress_ratio=0.95, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='DESIGN', phase='FINAL_REFINEMENT'))
                 except RuntimeError:
                     logging.debug('OptimWorker: signals already deleted, aborting final refinement.')
                     return
                 refine_progress = build_progress_callback(self.signals.progress_snapshot.emit, "DESIGN", "FINAL_REFINEMENT")
-                ep_current, best_cost, self.best_rmse_seen = run_coord_descent_5cycles(ep_current=ep_current, best_cost=best_cost, var_idx=var_idx, oblique_mode=oblique_mode, compute_oblique_error=compute_oblique_error, compute_oblique_error_and_grad_analytic=compute_oblique_error_and_grad_analytic, n_layers_T=n_layers_T, n_sub=n_sub, wls=wls, tgt_vals=tgt_vals, tgt_weights=tgt_weights, has_back_calc=has_back_calc, n_back_T=n_back_T, d_back=d_back, cfg=self.cfg, evaluate_thicknesses=self._evaluate_thicknesses, get_gradient_analytic=self._get_gradient_analytic, progress_emit=refine_progress, best_rmse_seen=self.best_rmse_seen)
+                lower_bounds = (
+                    bounds[:, 0]
+                    if self._optional_step('final_refine_lower_bounds') and np.any(bounds[:, 0] > CFG.MIN_THICKNESS)
+                    else None
+                )
+                ep_current, best_cost, self.best_rmse_seen = run_coord_descent_5cycles(ep_current=ep_current, best_cost=best_cost, var_idx=var_idx, oblique_mode=oblique_mode, compute_oblique_error=compute_oblique_error, compute_oblique_error_and_grad_analytic=compute_oblique_error_and_grad_analytic, n_layers_T=n_layers_T, n_sub=n_sub, wls=wls, tgt_vals=tgt_vals, tgt_weights=tgt_weights, has_back_calc=has_back_calc, n_back_T=n_back_T, d_back=d_back, cfg=self.cfg, evaluate_thicknesses=self._evaluate_thicknesses, get_gradient_analytic=self._get_gradient_analytic, progress_emit=refine_progress, best_rmse_seen=self.best_rmse_seen, lower_bounds=lower_bounds, normal_fast_ctx=getattr(self, "_normal_fast_ctx", None))
                 self._finalize_and_emit_optimization_result(ep_current, best_cost)
             else:
                 self.signals.finished.emit(OptimWorkerResult.failure(

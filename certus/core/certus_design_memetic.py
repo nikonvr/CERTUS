@@ -47,6 +47,7 @@ def run_memetic(
     stop_event: Event | None = None,
     on_improve: Callable[[SimpleNamespace], None] | None = None,
     init_bounds: np.ndarray | None = None,
+    merge_shift_every: int = 0,
 ) -> MemeticResult:
     """Run the memetic search inside ``bounds`` (one (low, high) row per variable layer).
 
@@ -98,8 +99,11 @@ def run_memetic(
             break
         i, j = rng.choice(len(pop), 2, replace=False)
         child = pop[i][0].copy()
-        cut_lo, cut_hi = sorted(rng.choice(np.arange(1, dim), 2, replace=False)) if dim > 2 else (1, 2)
-        child[cut_lo:cut_hi] = pop[j][0][cut_lo:cut_hi]
+        if merge_shift_every > 0 and dim >= 4 and gen % merge_shift_every == 0:
+            child = _prune_merge_shift_child(child, lo_b, hi_b, init_lo, init_hi, rng)
+        else:
+            cut_lo, cut_hi = sorted(rng.choice(np.arange(1, dim), 2, replace=False)) if dim > 2 else (1, 2)
+            child[cut_lo:cut_hi] = pop[j][0][cut_lo:cut_hi]
         child *= 1.0 + jitter * rng.standard_normal(dim)
         worst = int(np.argmax([m[1] for m in pop]))
         if screen_maxiter:
@@ -117,6 +121,34 @@ def run_memetic(
         return MemeticResult(x=np.asarray(x0 if x0 is not None else lo_b, dtype=np.float64), y=np.inf,
                              evaluations=calls["n"])
     return MemeticResult(x=best["x"], y=float(best["y"]), evaluations=calls["n"], generation=int(best["gen"]))
+
+
+def _prune_merge_shift_child(
+    parent: np.ndarray,
+    lo_b: np.ndarray,
+    hi_b: np.ndarray,
+    init_lo: np.ndarray,
+    init_hi: np.ndarray,
+    rng: np.random.Generator,
+) -> np.ndarray:
+    """Delete one of the thinnest interior layers, merge its identical-material neighbours, and shift by two indices."""
+    dim = len(parent)
+    interior = np.arange(1, dim - 1)
+    span = np.maximum(init_hi[interior] - lo_b[interior], 1e-12)
+    rank = np.argsort((parent[interior] - lo_b[interior]) / span)
+    k = int(interior[rank[rng.integers(0, min(3, len(interior)))]])
+    merged = min(float(hi_b[k - 1]), float(parent[k - 1] + parent[k + 1]))
+    child = parent.copy()
+    if rng.random() < 0.5:
+        child[2 : k + 1] = parent[0 : k - 1]
+        child[k + 1] = merged
+        child[0] = rng.uniform(lo_b[0], lo_b[0] + 0.25 * (init_hi[0] - init_lo[0]))
+        child[1] = rng.uniform(init_lo[1], min(hi_b[1], init_lo[1] + 2.2 * (init_hi[1] - init_lo[1])))
+    else:
+        child[k - 1] = merged
+        child[k : dim - 2] = parent[k + 2 : dim]
+        child[dim - 2 : dim] = rng.uniform(init_lo[dim - 2 : dim], init_hi[dim - 2 : dim])
+    return child
 
 
 def widen_upper_bounds(bounds: np.ndarray, qwot_nm: np.ndarray, layer_qwot_max: float) -> np.ndarray:

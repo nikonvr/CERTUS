@@ -745,6 +745,8 @@ def run_coord_descent_5cycles(
     cfg: dict[str, Any],
     evaluate_thicknesses: Any,
     get_gradient_analytic: Any,
+    lower_bounds: np.ndarray | None = None,
+    normal_fast_ctx: dict[str, Any] | None = None,
     progress_emit: Callable[..., Any],
     best_rmse_seen: float,
 ) -> tuple[np.ndarray, float, float]:
@@ -753,6 +755,38 @@ def run_coord_descent_5cycles(
     cycle_no_gain = 0
     cycle_rel_gain_min = float(cfg.get("cycle_rel_gain_min", 2e-4))
     cycle_no_gain_patience = int(cfg.get("cycle_no_gain_patience", 1))
+    min_d_var = (
+        np.maximum(CFG.MIN_THICKNESS, np.asarray(lower_bounds, dtype=get_float_dtype()))
+        if lower_bounds is not None
+        else None
+    )
+
+    from certus.core.certus_design_workers_dto import DESIGN_OPTIONAL_STEPS
+
+    gn_max_iter = int(cfg.get("gauss_newton_max_iter", DESIGN_OPTIONAL_STEPS["gauss_newton_max_iter"]))
+    if gn_max_iter > 0 and not oblique_mode and normal_fast_ctx is not None and normal_fast_ctx.get("use_real_approx"):
+        try:
+            from certus.physics.design_fast_kernels import gauss_newton_refine_normal
+
+            lb_gn = (
+                min_d_var
+                if min_d_var is not None
+                else np.full(len(var_idx), float(CFG.MIN_THICKNESS), dtype=np.float64)
+            )
+            ep_gn, cost_gn = gauss_newton_refine_normal(
+                ep_current,
+                ctx=normal_fast_ctx,
+                tgt_vals=tgt_vals,
+                tgt_weights=tgt_weights,
+                var_idx=var_idx,
+                lower_bounds=lb_gn,
+                max_iter=gn_max_iter,
+            )
+            if cost_gn < best_cost:
+                ep_current = ep_gn
+                best_cost = float(cost_gn)
+        except (ValueError, RuntimeError, np.linalg.LinAlgError) as gn_err:
+            logging.debug(f"Gauss-Newton refinement skipped: {gn_err}")
 
     for cycle in range(5):
         cycle_start_best = float(best_cost)
@@ -782,6 +816,8 @@ def run_coord_descent_5cycles(
                     )
                     if cost_curr < best_cost:
                         best_cost = cost_curr
+                    if min_d_var is not None:
+                        grad = np.where((ep_current[var_idx] <= min_d_var) & (grad > 0.0), 0.0, grad)
                     grad_norm = np.linalg.norm(grad)
                     if grad_norm < 1e-8:
                         break
@@ -792,7 +828,8 @@ def run_coord_descent_5cycles(
                         ep_trial = ep_current.copy()
                         for i, v_idx in enumerate(var_idx):
                             ep_trial[v_idx] += alpha * direction[i]
-                            ep_trial[v_idx] = max(CFG.MIN_THICKNESS, ep_trial[v_idx])
+                            lo_i = CFG.MIN_THICKNESS if min_d_var is None else float(min_d_var[i])
+                            ep_trial[v_idx] = max(lo_i, ep_trial[v_idx])
                         cost_trial = evaluate_thicknesses(
                             ep_trial,
                             oblique_mode=oblique_mode,
@@ -827,7 +864,8 @@ def run_coord_descent_5cycles(
                         continue
                     original_val = ep_current[v_idx]
                     step = steps[i]
-                    ep_current[v_idx] = max(CFG.MIN_THICKNESS, original_val + step)
+                    lo_i = CFG.MIN_THICKNESS if min_d_var is None else float(min_d_var[i])
+                    ep_current[v_idx] = max(lo_i, original_val + step)
                     cost_plus = evaluate_thicknesses(
                         ep_current,
                         oblique_mode=oblique_mode,
@@ -846,7 +884,7 @@ def run_coord_descent_5cycles(
                         steps[i] *= 1.2
                         improved = True
                         continue
-                    ep_current[v_idx] = max(CFG.MIN_THICKNESS, original_val - step)
+                    ep_current[v_idx] = max(lo_i, original_val - step)
                     cost_minus = evaluate_thicknesses(
                         ep_current,
                         oblique_mode=oblique_mode,

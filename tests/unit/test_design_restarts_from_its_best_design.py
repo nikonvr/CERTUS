@@ -66,3 +66,30 @@ def test_no_restart_when_turned_off(design_app) -> None:
 
     assert not _finish_round(design_app, 0.000189, 80.0)
     assert _restarts(design_app) == []
+
+
+def test_restart_tries_the_opposite_alternation_when_a_boundary_layer_sits_near_the_floor(design_app) -> None:
+    """When layer 0 sits near the 5 nm floor on an H-first stack, the restart shifts it to L-first (N+1 -> N)."""
+    design_app._design_optional_steps = {"restart_flip_alternation": True}  # optional step, off by default
+    initial_mats = [layer.mat for layer in design_app._get_front_stack()]
+    assert initial_mats[0] == "H"
+    assert initial_mats[1] == "L"
+    ep = np.full(len(initial_mats), 80.0)
+    ep[0] = 5.2  # layer 0 (H on substrate) is pinned near the 5 nm floor
+    design_app.ep_current = ep.copy()
+    design_app._workflow_best_rmse = 0.005
+    design_app.optimization_manager._true_rmse = lambda table, e: 0.005
+
+    assert design_app.optimization_manager._restart_from_best()
+
+    flipped_mats = [layer.mat for layer in design_app._get_front_stack()]
+    assert len(flipped_mats) == len(initial_mats)
+    assert flipped_mats[0] == "L"
+    assert flipped_mats[1] == "H"
+    # If the flipped round turns out worse, _restart_from_best restores the original H-first table and thicknesses.
+    design_app.optimization_manager._true_rmse = lambda table, e: 0.008
+    design_app._workflow_best_rmse = 0.008
+    assert not design_app.optimization_manager._restart_from_best()
+    restored_mats = [layer.mat for layer in design_app._get_front_stack()]
+    assert restored_mats == initial_mats
+    assert np.allclose(design_app.ep_current, ep)

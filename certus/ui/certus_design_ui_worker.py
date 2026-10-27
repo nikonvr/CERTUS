@@ -569,6 +569,7 @@ class WorkerManager:
         self.ui._initialize_run_optim_progress_state(cfg, keep_history)
 
         self._apply_floor_at_end_settings(cfg, mode)
+        cfg.update(getattr(self.ui, "_design_optional_steps", None) or {})  # the steps the file switched on
 
         if kwargs:
             cfg.update(kwargs)

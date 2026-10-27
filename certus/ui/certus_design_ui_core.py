@@ -719,6 +719,7 @@ class CoreManager:
         if not getattr(self.ui, "_restarting", False):  # a run started by the operator, not an automatic restart
             self.ui._restart_rounds = 0
             self.ui._restart_best = None
+            self.ui._tried_flipped_alternation = False
         self.ui._restarting = False
         self.ui._layer_floor_active = None  # floor_at_end: every run starts free
 

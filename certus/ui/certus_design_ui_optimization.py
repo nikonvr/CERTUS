@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import time
 from typing import Any
 
@@ -693,6 +694,7 @@ class OptimizationManager:
             self.ui._restart_best = (float(rmse), self._save_table_state(), np.asarray(self.ui.ep_current, dtype=float).copy())
         if improved and rounds < max_rounds:
             self.ui._restart_rounds = rounds + 1
+            self._maybe_flip_boundary_alternation()
             self.ui.log(f"[RESTART] Round {rounds + 1}/{max_rounds} from the design at RMSE {rmse:.6f}", "INFO")
             self.ui._restarting = True
             self.ui.orchestrator._schedule_task(50, lambda: self.ui.run_optim("global"))
@@ -710,6 +712,46 @@ class OptimizationManager:
         else:
             self.ui.log(f"[RESTART] Stopped after {rounds} round(s): RMSE {rmse:.6f}", "INFO")
         return False
+
+    def _optional_step(self, name: str) -> Any:
+        """The file's value of an optional DESIGN step, or its default (off)."""
+        from certus.core.certus_design_workers_dto import DESIGN_OPTIONAL_STEPS
+
+        return (getattr(self.ui, "_design_optional_steps", None) or {}).get(name, DESIGN_OPTIONAL_STEPS[name])
+
+    def _maybe_flip_boundary_alternation(self) -> None:
+        """When a boundary layer sits near its floor (or layers were lost), shift by one layer to test the opposite alternation."""
+        if not self._optional_step("restart_flip_alternation"):
+            return
+        if getattr(self.ui, "_tried_flipped_alternation", False) or self._fixed_rows():
+            return
+        table = self._save_table_state()
+        ep = np.asarray(self.ui.ep_current, dtype=float) if self.ui.ep_current is not None else np.zeros(0)
+        if len(table) < 2 or len(ep) != len(table) or len({r["mat"] for r in table}) != 2:
+            return
+        floor = self._current_min_layer_thickness(len(ep))
+        cap = getattr(self.ui, "_max_layers_cap", None)
+        lost_layers = isinstance(cap, int) and len(ep) < cap
+        thin_boundary = ep[0] <= 1.5 * floor[0] or ep[-1] <= 1.5 * floor[-1]
+        if not (thin_boundary or lost_layers):
+            return
+        self.ui._tried_flipped_alternation = True
+        mats = self.ui._get_materials()
+        l0 = float(self.ui.l0_spin.value()) if hasattr(self.ui, "l0_spin") else 500.0
+        if ep[0] <= ep[-1]:
+            next_mat = table[-2]["mat"]
+            new_table = [*table[1:], {"mat": next_mat, "qw": 1.0, "var": True, "del": False}]
+            new_ep = np.append(ep[1:], l0 / (4.0 * float(mats[next_mat].n4)))
+        else:
+            first_mat = table[1]["mat"]
+            new_table = [{"mat": first_mat, "qw": 1.0, "var": True, "del": False}, *table[:-1]]
+            new_ep = np.insert(ep[:-1], 0, l0 / (4.0 * float(mats[first_mat].n4)))
+        self._restore_table_state(new_table)
+        self.ui._update_qwot_from_ep(new_ep)
+        self.ui._update_thickness_display()
+        self.ui.ep_current = new_ep.copy()
+        self.ui._use_exact_ep = True
+        self.ui.log(f"[RESTART] Testing opposite substrate alternation ({new_table[0]['mat']}..{new_table[-1]['mat']})", "INFO")
 
     def _heal_after_5nm_rule(self, removed: int) -> bool:
         """Re-optimize once (healing, then local polish) after the 5 nm rule removed layers; True if started.
@@ -779,6 +821,7 @@ class OptimizationManager:
         self.ui._update_thickness_display()
 
         # Update target layer count to new reality
+        self._polish_remaining_layers_above_floor()
         self.ui.orchestrator._target_layer_count = self.ui.front_table.rowCount()
         self.ui.log(
             f"[5nm rule] Final design: {self.ui.orchestrator._target_layer_count} layers, "
@@ -790,6 +833,75 @@ class OptimizationManager:
         self.ui._workflow_best_rmse = float("inf")
         # Pareto update is deferred to `_on_eval_finished` which will recalculate the true RMSE.
         return len(thin_layers)
+
+    def _polish_remaining_layers_above_floor(self) -> None:
+        """Re-polish variable layers with L-BFGS-B above their thickness floor after thin layers were removed."""
+        if not self._optional_step("polish_after_5nm_rule") or getattr(self.ui, "oblique_mode", False):
+            return
+        try:
+            import scipy.optimize
+
+            from certus.core.certus_core import get_complex_dtype, get_float_dtype
+            from certus.core.certus_design_worker_utils import (
+                optim_backside_flags_from_cfg,
+                optim_prepare_stack_nk_back,
+            )
+            from certus_physics import compute_gradient_all_layers_analytic, prepare_targets_vectorized
+
+            stack = self.ui._get_front_stack()
+            ep = np.asarray(self.ui.ep_current, dtype=np.float64) if self.ui.ep_current is not None else np.zeros(0)
+            if len(stack) == 0 or len(ep) != len(stack):
+                return
+            var_idx = np.array([i for i, layer in enumerate(stack) if getattr(layer, "var", True)], dtype=np.int64)
+            if len(var_idx) == 0:
+                return
+            wls = np.asarray(self.ui._get_optim_wls(), dtype=np.float64)
+            tgts = [t for t in self.ui._get_tgts() if t.valid()]
+            if len(wls) == 0 or not tgts:
+                return
+            has_back_stack, has_back_calc, back_stack = optim_backside_flags_from_cfg(
+                {
+                    "back": self.ui.back_check.isChecked(),
+                    "use_back_coat": self.ui.back_coat_check.isChecked(),
+                    "stack_back": self.ui._get_back_stack(),
+                }
+            )
+            ep_back = np.asarray(self.ui.ep_back_current) if self.ui.ep_back_current is not None else np.array([])
+            _mats_nk, n_sub, n_layers_T, n_back_T, d_back = optim_prepare_stack_nk_back(
+                self.ui._get_materials(),
+                stack,
+                wls,
+                stack_back=back_stack,
+                ep_back=ep_back,
+                has_back_stack=has_back_stack,
+                complex_dtype=get_complex_dtype(),
+                float_dtype=get_float_dtype(),
+            )
+            tgt_vals, tgt_weights = prepare_targets_vectorized(wls, tgts)
+            floor = np.maximum(self._current_min_layer_thickness(len(ep)), 0.01)
+            x0 = np.maximum(ep[var_idx], floor[var_idx])
+            bounds = [(float(floor[i]), float(max(ep[i] * 2.0, 2000.0))) for i in var_idx]
+            full = ep.copy()
+
+            def cost_and_grad(x_var: np.ndarray) -> tuple[float, np.ndarray]:
+                full[var_idx] = x_var
+                c, g = compute_gradient_all_layers_analytic(
+                    full, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, 0.01, has_back_calc, n_back_T, d_back, var_idx
+                )
+                return float(c), np.asarray(g, dtype=np.float64)
+
+            c0, _ = cost_and_grad(x0)
+            res = scipy.optimize.minimize(
+                cost_and_grad, x0, method="L-BFGS-B", jac=True, bounds=bounds, options={"maxiter": 150, "ftol": 1e-12}
+            )
+            if res.fun < c0:
+                full[var_idx] = res.x
+                self.ui._update_qwot_from_ep(full)
+                self.ui._update_thickness_display()
+                self.ui.ep_current = full.copy()
+                self.ui._use_exact_ep = True
+        except Exception:
+            logging.getLogger("CERTUS").debug("5nm rule re-polish skipped", exc_info=True)
 
     def _save_table_state(self) -> list:
         """Save front_table state (material + QWOT + var) for checkpoint."""
@@ -1014,14 +1126,108 @@ class OptimizationManager:
 
         return removed_count
 
+    def _prune_trial_rmse(self, ep_test: np.ndarray, stack_test: list) -> float:
+        """RMSE a candidate stack reaches after a short polish (L-BFGS-B, analytic gradient, 50 iterations at most).
+
+        The inputs are the ones `OptimWorker` gives the same gradient (`optim_backside_flags_from_cfg`,
+        `optim_prepare_stack_nk_back`, `prepare_targets_vectorized`), so the number is the merit being minimised.
+        Raises when the stack cannot be evaluated: `_best_prune_candidate` reports that, it is not a bad merit.
+        """
+        import scipy.optimize
+
+        from certus.core.certus_core import get_complex_dtype, get_float_dtype
+        from certus.core.certus_design_worker_utils import optim_backside_flags_from_cfg, optim_prepare_stack_nk_back
+        from certus_physics import compute_gradient_all_layers_analytic, prepare_targets_vectorized
+
+        wls = self.ui._get_optim_wls()
+        has_back_stack, has_back_calc, back_stack = optim_backside_flags_from_cfg(
+            {
+                "back": self.ui.back_check.isChecked(),
+                "use_back_coat": self.ui.back_coat_check.isChecked(),
+                "stack_back": self.ui._get_back_stack(),
+            }
+        )
+        ep_back = np.asarray(self.ui.ep_back_current) if self.ui.ep_back_current is not None else np.array([])
+        _mats_nk, n_sub, n_layers_T, n_back_T, d_back = optim_prepare_stack_nk_back(
+            self.ui._get_materials(),
+            stack_test,
+            wls,
+            stack_back=back_stack,
+            ep_back=ep_back,
+            has_back_stack=has_back_stack,
+            complex_dtype=get_complex_dtype(),
+            float_dtype=get_float_dtype(),
+        )
+        tgt_vals, tgt_weights = prepare_targets_vectorized(wls, [t for t in self.ui._get_tgts() if t.valid()])
+        var_idx = np.arange(len(ep_test), dtype=np.int64)
+
+        def cost_and_gradient(x):
+            return compute_gradient_all_layers_analytic(
+                x, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, 0.01, has_back_calc, n_back_T, d_back, var_idx
+            )
+
+        res = scipy.optimize.minimize(
+            cost_and_gradient,
+            ep_test,
+            method="L-BFGS-B",
+            jac=True,
+            bounds=[(0.01, 2000.0)] * len(ep_test),
+            options={"maxiter": 50, "ftol": 1e-6},
+        )
+        return float(np.sqrt(max(res.fun, 0.0))) if res.fun < 1e20 else float("inf")
+
+    def _best_prune_candidate(self, ep: np.ndarray, candidates: np.ndarray) -> tuple[int, float]:
+        """The row of `candidates` whose removal leaves the filter closest to its targets, and the RMSE it leaves.
+
+        A trial removes the row, merges the layers that become adjacent and polishes the thicknesses
+        (`_prune_trial_rmse`). When no trial can be evaluated the first candidate, the thinnest layer, is returned
+        and the log says why.
+        """
+        best_idx, best_rmse = int(candidates[0]), float("inf")
+        stack = self.ui._get_front_stack()
+        if len(stack) != len(ep):
+            self.ui.log(
+                "Prune: the front stack and its thicknesses differ in length, removing the thinnest layer.", "WARNING"
+            )
+            return best_idx, best_rmse
+
+        failures: list[str] = []
+        for idx in candidates:
+            kept_ep: list[float] = []
+            kept_stack: list = []
+            for i, layer in enumerate(stack):
+                if i == idx:
+                    continue
+                if kept_stack and kept_stack[-1].mat == layer.mat:  # the neighbours of the removed layer merge
+                    kept_ep[-1] += ep[i]
+                else:
+                    kept_stack.append(layer)
+                    kept_ep.append(ep[i])
+            try:
+                rmse = self._prune_trial_rmse(np.array(kept_ep), kept_stack)
+            except Exception as exc:
+                logging.getLogger("CERTUS").debug("Prune: the trial of layer %d failed", idx, exc_info=True)
+                failures.append(f"{type(exc).__name__}: {exc}")
+                continue
+            if rmse < best_rmse:
+                best_idx, best_rmse = int(idx), rmse
+
+        if failures:
+            self.ui.log(
+                f"Prune: {len(failures)} of {len(candidates)} trials failed, the first with {failures[0]}", "WARNING"
+            )
+        if not np.isfinite(best_rmse):
+            self.ui.log("Prune: no candidate could be evaluated, removing the thinnest layer.", "WARNING")
+        return best_idx, best_rmse
+
     def _prune_to_target(self, target_count: int) -> int:
         """
 
-        Overshoot & Prune: remove thinnest layers to reach target count.
+        Overshoot & Prune: remove the layers the filter misses least to reach target count.
 
         After growing beyond the target via Needle, prune back by removing
 
-        the thinnest layers first (they contribute least to the design).
+        the layer whose loss the filter feels least among the 20% thinnest (`_best_prune_candidate`).
 
         Removes ONE layer at a time, then merges adjacent identical materials
 
@@ -1068,60 +1274,6 @@ class OptimizationManager:
 
         total_removed = 0
 
-        def _evaluate_test_stack(ep_test, stack_test):
-            try:
-                from certus.core.certus_core import get_complex_dtype, get_float_dtype
-                from certus.core.certus_design_worker_utils import optim_prepare_stack_nk_back
-                from certus_physics import compute_gradient_all_layers_analytic
-                mats = self.ui._get_materials()
-                wls = self.ui._get_optim_wls()
-                tgts = [t for t in self.ui._get_tgts() if t.valid()]
-                back_stack = self.ui._get_back_stack()
-                has_back_stack = len(back_stack) > 0
-                ep_back = np.asarray(self.ui.ep_back_current) if self.ui.ep_back_current is not None else np.array([])
-                
-                n_layers_T, n_sub, has_back_calc, n_back_T, d_back = optim_prepare_stack_nk_back(
-                    mats=mats,
-                    stack=stack_test,
-                    wls=wls,
-                    stack_back=back_stack,
-                    ep_back=ep_back,
-                    has_back_stack=has_back_stack,
-                    complex_dtype=get_complex_dtype(),
-                    float_dtype=get_float_dtype()
-                )
-                
-                tgt_vals = np.array([t.val for t in tgts])
-                tgt_weights = np.array([t.weight for t in tgts])
-                
-                if not getattr(self.ui, "oblique_mode", False):
-                    import scipy.optimize
-                    var_idx = np.arange(len(ep_test), dtype=np.int32)
-                    
-                    def obj_func(x):
-                        # compute_gradient_all_layers_analytic returns (cost, grad)
-                        # but scipy.optimize expects float64.
-                        c, g = compute_gradient_all_layers_analytic(x, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, 0.01, has_back_calc, n_back_T, d_back, var_idx)
-                        return c, g
-
-                    # Bounds: minimum thickness 0.01, max 2000
-                    bounds = [(0.01, 2000.0) for _ in range(len(ep_test))]
-                    
-                    res = scipy.optimize.minimize(
-                        fun=obj_func,
-                        x0=ep_test,
-                        method='L-BFGS-B',
-                        jac=True,
-                        bounds=bounds,
-                        options={'maxiter': 50, 'ftol': 1e-6}
-                    )
-                    
-                    return np.sqrt(res.fun) if res.fun < 1e20 else float('inf')
-                else:
-                    return float('inf') # fallback
-            except Exception:
-                return float('inf')
-
         while self.ui.front_table.rowCount() > target_count:
             current_count = self.ui.front_table.rowCount()
             ep = self.ui.ep_current if self.ui.ep_current is not None else np.array([])
@@ -1132,42 +1284,22 @@ class OptimizationManager:
                     self.ui.log("Prune: ep_current mismatch, stopping.", "WARNING")
                     break
 
-            # Identify candidates (20% thinnest layers)
+            # Candidates: the 20% thinnest layers; the one whose removal the filter feels least goes
             k_candidates = max(1, int(len(ep) * 0.2))
             candidate_indices = np.argsort(ep)[:k_candidates]
-            
-            best_idx = candidate_indices[0]
-            best_rmse = float('inf')
-            
-            # Fast test for each candidate
+
+            drop_idx, trial_rmse = int(candidate_indices[0]), float("inf")
             if not getattr(self.ui, "oblique_mode", False) and len(ep) > 0:
-                current_stack = self.ui._get_front_stack()
-                if len(current_stack) == len(ep):
-                    for idx in candidate_indices:
-                        test_ep = np.delete(ep, idx)
-                        test_stack = current_stack[:idx] + current_stack[idx+1:]
-                        
-                        # Simulate merge
-                        merged_ep = []
-                        merged_stack = []
-                        for i in range(len(test_stack)):
-                            if len(merged_stack) > 0 and merged_stack[-1].mat == test_stack[i].mat:
-                                merged_ep[-1] += test_ep[i]
-                            else:
-                                merged_stack.append(test_stack[i])
-                                merged_ep.append(test_ep[i])
-                        
-                        rmse = _evaluate_test_stack(np.array(merged_ep), merged_stack)
-                        if rmse < best_rmse:
-                            best_rmse = rmse
-                            best_idx = idx
+                drop_idx, trial_rmse = self._best_prune_candidate(ep, candidate_indices)
 
-            thinnest_idx = int(best_idx)
-
-            self.ui.log(f"  Prune: layer {thinnest_idx} ({ep[thinnest_idx]:.2f} nm)", "INFO")
+            self.ui.log(
+                f"  Prune: layer {drop_idx} ({ep[drop_idx]:.2f} nm), "
+                f"RMSE after removal {optim_rmse_display_string(trial_rmse)}",
+                "INFO",
+            )
 
             self.ui.front_table.blockSignals(True)
-            self.ui.front_table.removeRow(thinnest_idx)
+            self.ui.front_table.removeRow(drop_idx)
             self.ui.front_table.blockSignals(False)
 
             # Merge adjacent identical materials (may remove additional layers)

@@ -1,0 +1,2 @@
+N=30: max|T64 - T50digits| = 1.05e-15  RMSE(200 wl) float64 1.767409e-05 mp 1.767409e-05  cond(J) = 9.97e+04  sigma_min = 9.09e-08
+N=36: max|T64 - T50digits| = 1.44e-15  RMSE(200 wl) float64 1.513119e-05 mp 1.513119e-05  cond(J) = 4.05e+10  sigma_min = 4.29e-13

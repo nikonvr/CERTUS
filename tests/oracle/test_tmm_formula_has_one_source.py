@@ -23,7 +23,8 @@ ROOT = Path(__file__).resolve().parents[2]
 PACKAGES = ("certus", "certus_physics")
 
 ALLOWED = {
-    "certus/physics/certus_opt_tmm.py::compute_RT_from_matrix": "the single source",
+    "certus/physics/certus_opt_tmm.py::reflection_amplitudes": "the single source (compute_RT_from_matrix calls it)",
+    "certus/physics/certus_opt_tmm.py::reflection_amplitude_derivatives": "its derivative, next to it",
     # Copies that exist today. The oblique kernels work on the admittance eta = n cos(theta); the one in
     # certus_tmm_single_layer.py is the single-layer helper.
     "certus/physics/certus_tmm_oblique.py::_calc_spectrum_oblique_parallel": "copy (oblique, admittance)",
@@ -58,15 +59,26 @@ def _own_binops(function: ast.FunctionDef | ast.AsyncFunctionDef):
 
 
 def functions_with_the_reflection_pair(source: str) -> list[str]:
-    """Qualified names of the functions that hold both `E*P + Q` and `E*P - Q` (same E, P and Q)."""
+    """Qualified names of the functions that hold both `E*P + Q` and `E*P - Q` (same E, P and Q).
+
+    Also the disguised form `Y = E*P + Q` then `Y - 2*Q`, which is `E*P - Q` (found in a kernel on 2026-10-26).
+    """
     found: list[str] = []
     stack: list[str] = []
+
+    def _twice(node: ast.AST) -> str | None:
+        """dump(Q) when `node` is `2*Q` or `2.0*Q`."""
+        if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mult):
+            if isinstance(node.left, ast.Constant) and node.left.value == 2:
+                return ast.dump(node.right)
+        return None
 
     class Visitor(ast.NodeVisitor):
         def _function(self, node) -> None:
             stack.append(node.name)
             plus: set[tuple[str, str]] = set()
             minus: set[tuple[str, str]] = set()
+            minus_twice: set[str] = set()
             for op in _own_binops(node):
                 if isinstance(op.left, ast.BinOp) and isinstance(op.left.op, ast.Mult):
                     key = (ast.dump(op.left), ast.dump(op.right))
@@ -74,7 +86,9 @@ def functions_with_the_reflection_pair(source: str) -> list[str]:
                         plus.add(key)
                     elif isinstance(op.op, ast.Sub):
                         minus.add(key)
-            if plus & minus:
+                if isinstance(op.op, ast.Sub) and (q := _twice(op.right)) is not None:
+                    minus_twice.add(q)
+            if plus & minus or {q for _, q in plus} & minus_twice:
                 found.append(".".join(stack))
             self.generic_visit(node)
             stack.pop()
@@ -107,7 +121,9 @@ def test_the_scanner_finds_a_copy_under_any_names_and_nothing_else() -> None:
     intermediate = "def rt(n_inc, B, C):\n    y = n_inc * B + C\n    return (n_inc * B - C) / y\n"
     unrelated = "def f(a, b, c, d):\n    return a * b + c, a * d - c\n"  # different operands: not the pair
     nested = "def outer(x):\n    def rt(eta, b, c):\n        return (eta * b - c) / (eta * b + c)\n    return rt\n"
+    disguised = "def rt(eta, b, c):\n    den = eta * b + c\n    num = den - 2.0 * c\n    return num / den\n"
 
+    assert functions_with_the_reflection_pair(disguised) == ["rt"]
     assert functions_with_the_reflection_pair(renamed) == ["rt"]
     assert functions_with_the_reflection_pair(intermediate) == ["rt"]
     assert functions_with_the_reflection_pair(unrelated) == []

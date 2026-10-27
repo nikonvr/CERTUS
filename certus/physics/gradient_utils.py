@@ -19,6 +19,26 @@ SMALL_EPSILON = 1e-12
 FASTMATH_SAFE = {"nsz", "arcp", "contract", "afn", "reassoc"}
 
 
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def reduce_per_wavelength(
+    err_per_wl: np.ndarray, weight_per_wl: np.ndarray, grad_per_wl: np.ndarray
+) -> tuple[float, np.ndarray, float]:
+    """Sum the per-wavelength error, weight and gradient rows of a parallel kernel, in wavelength order."""
+    n_wls, n_vars = grad_per_wl.shape
+    err_sum = 0.0
+    weight_sum = 0.0
+    for i in range(n_wls):
+        err_sum += err_per_wl[i]
+        weight_sum += weight_per_wl[i]
+    grad_raw = np.zeros(n_vars, dtype=np.float64)
+    for v in range(n_vars):
+        s = 0.0
+        for i in range(n_wls):
+            s += grad_per_wl[i, v]
+        grad_raw[v] = s
+    return err_sum, grad_raw, weight_sum
+
+
 @njit(cache=True, fastmath=FASTMATH_SAFE, parallel=True, nogil=True, error_model="numpy")
 def compute_mse_vectorized(
     calc_values: np.ndarray, target_values: np.ndarray, weights: np.ndarray

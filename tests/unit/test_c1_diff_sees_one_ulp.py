@@ -137,7 +137,7 @@ def test_the_default_corpus_reaches_the_cached_callers_without_a_refusal() -> No
 # =============================================================================
 
 #: `compute_RT_from_matrix` is the single TMM source: one ulp added to R there moves the whole suite.
-ANCHOR = "    r = (n_inc * B - C) / Y_sys\n\n    R = abs(r) ** 2\n"
+ANCHOR = "        return 0.0, 0.0\n\n    R = abs(r) ** 2\n"
 PLANTED = ANCHOR.replace("R = abs(r) ** 2", "R = abs(r) ** 2 * (1.0 + 2.220446049250313e-16)")
 
 

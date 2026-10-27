@@ -72,6 +72,15 @@ from certus.core.certus_design_worker_utils import (
     optim_calc_oblique_selected,
 )
 from certus.physics.certus_substrate_absorption import apply_plate_loss
+from certus.physics.design_fast_kernels import (
+    compute_gradient_backside_cached_fast,
+    compute_gradient_lossless_backside_fast,
+    compute_gradient_lossless_front_fast,
+    compute_oblique_backside_contrib_precomputed,
+    compute_oblique_gradient_contrib_precomputed,
+    cost_lossless_backside_fast,
+    cost_lossless_front_fast,
+)
 from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
 
 # --- 4. DATA (IO, Reporting) ---
@@ -127,6 +136,11 @@ calc_spectrum_front = calc_spectrum_front_wrapper
 calc_spectrum_full = calc_spectrum_full_wrapper
 
 calc_spectrum_full_exact = calc_spectrum_full_exact_wrapper
+
+_ORIG_COST_NUMBA_FAST = cost_numba_fast
+_ORIG_GRAD_ANALYTIC = compute_gradient_all_layers_analytic
+_ORIG_OBL_CONTRIB = compute_oblique_gradient_contrib_analytic
+_ORIG_OBL_RT_GRADS = compute_oblique_rt_and_grads_analytic
 
 # =========================================================================================
 
@@ -187,6 +201,30 @@ def _design_objective_wrapper_common(app: Any, x: np.ndarray) -> Any:
 
     if app._oblique_mode:
         return app._compute_oblique_error(ep_buffer)
+
+    fast_ctx = getattr(app, "_normal_fast_ctx", None)
+    if fast_ctx is not None and cost_numba_fast is _ORIG_COST_NUMBA_FAST and fast_ctx.get("use_real_approx"):
+        if app._has_back_calc:
+            return cost_lossless_backside_fast(
+                ep_buffer,
+                fast_ctx["n_layers_real"],
+                fast_ctx["inv_n_layers_real"],
+                fast_ctx["n_sub_real"],
+                fast_ctx["k0_wls"],
+                fast_ctx["rb_prime"],
+                fast_ctx["tb"],
+                app._tgt_vals,
+                app._tgt_weights,
+            )
+        return cost_lossless_front_fast(
+            ep_buffer,
+            fast_ctx["n_layers_real"],
+            fast_ctx["inv_n_layers_real"],
+            fast_ctx["n_sub_real"],
+            fast_ctx["k0_wls"],
+            app._tgt_vals,
+            app._tgt_weights,
+        )
 
     return cost_numba_fast(
         ep_buffer,
@@ -271,6 +309,46 @@ def _design_gradient_func_pglobal_common(app: Any, x: np.ndarray) -> Any:
     if app._oblique_mode:
         return app._compute_oblique_error_and_grad_analytic(ep_full)
 
+    fast_ctx = getattr(app, "_normal_fast_ctx", None)
+    if fast_ctx is not None and compute_gradient_all_layers_analytic is _ORIG_GRAD_ANALYTIC:
+        if fast_ctx.get("use_real_approx"):
+            if app._has_back_calc:
+                return compute_gradient_lossless_backside_fast(
+                    ep_full,
+                    fast_ctx["n_layers_real"],
+                    fast_ctx["inv_n_layers_real"],
+                    fast_ctx["n_sub_real"],
+                    fast_ctx["k0_wls"],
+                    fast_ctx["rb_prime"],
+                    fast_ctx["tb"],
+                    app._tgt_vals,
+                    app._tgt_weights,
+                    app._var_idx,
+                )
+            return compute_gradient_lossless_front_fast(
+                ep_full,
+                fast_ctx["n_layers_real"],
+                fast_ctx["inv_n_layers_real"],
+                fast_ctx["n_sub_real"],
+                fast_ctx["k0_wls"],
+                app._tgt_vals,
+                app._tgt_weights,
+                app._var_idx,
+            )
+        if app._has_back_calc:
+            return compute_gradient_backside_cached_fast(
+                ep_full,
+                app._n_layers_T,
+                app._n_sub,
+                app._wls,
+                fast_ctx["rb_prime"],
+                fast_ctx["tb"],
+                app._tgt_vals,
+                app._tgt_weights,
+                app._var_idx,
+                CFG.MIN_THICKNESS,
+            )
+
     cost, grad_var = compute_gradient_all_layers_analytic(
         ep_full,
         app._n_layers_T,
@@ -298,6 +376,37 @@ def _design_compute_oblique_error_and_grad_analytic_common(app: Any, ep_test: np
     grad_raw = np.zeros(len(app._var_idx), dtype=np.float64)
 
     for config in app._oblique_configs:
+        precomp_list = config.get("precomputed_targets")
+        if (
+            precomp_list is not None
+            and compute_oblique_gradient_contrib_analytic is _ORIG_OBL_CONTRIB
+            and compute_oblique_rt_and_grads_analytic is _ORIG_OBL_RT_GRADS
+        ):
+            for precomp in precomp_list:
+                if precomp is None:
+                    continue
+                if app._has_back_calc:
+                    err_sum, grad_contrib, weight_sum = compute_oblique_backside_contrib_precomputed(
+                        ep_test,
+                        precomp["pre"],
+                        precomp["tgt_vals"],
+                        precomp["tgt_w"],
+                        precomp["is_reflectance"],
+                        app._var_idx,
+                    )
+                else:
+                    err_sum, grad_contrib, weight_sum = compute_oblique_gradient_contrib_precomputed(
+                        ep_test,
+                        precomp["pre"],
+                        precomp["tgt_vals"],
+                        precomp["tgt_w"],
+                        precomp["is_reflectance"],
+                        app._var_idx,
+                    )
+                total_err += err_sum
+                total_weight += weight_sum
+                grad_raw += grad_contrib
+            continue
         wls_cfg = config["wls_config"]
         n_layers_cfg = config["n_layers_T_config"]
         n_sub_cfg = config["n_sub_config"]

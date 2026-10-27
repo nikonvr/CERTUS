@@ -16,7 +16,7 @@ from certus.domain.constants import TWO_PI
 from certus.physics.certus_inputs import check_incidence_angle
 from certus.physics.certus_oblique_substrate import oblique_exit_admittance
 from certus.physics.certus_substrate_absorption import DEFAULT_SUBSTRATE_THICKNESS_NM, apply_plate_loss
-from certus.physics.gradient_utils import SMALL_EPSILON, compute_mse_vectorized
+from certus.physics.gradient_utils import SMALL_EPSILON, compute_mse_vectorized, reduce_per_wavelength
 
 from .gradient_analytic import _compute_gradient_analytic_kernel
 
@@ -432,26 +432,7 @@ def _make_oblique_gradient_contrib_kernel(absorbing_substrate: bool) -> Callable
 
                 grad_per_wl[i_wl, i_var] += w * diff * dy
 
-        err_sum = 0.0
-
-        weight_sum = 0.0
-
-        for i in range(n_wls):
-            err_sum += err_per_wl[i]
-
-            weight_sum += weight_per_wl[i]
-
-        grad_raw = np.zeros(n_vars, dtype=np.float64)
-
-        for v in range(n_vars):
-            s = 0.0
-
-            for i in range(n_wls):
-                s += grad_per_wl[i, v]
-
-            grad_raw[v] = s
-
-        return err_sum, grad_raw, weight_sum
+        return reduce_per_wavelength(err_per_wl, weight_per_wl, grad_per_wl)
 
     return kernel
 

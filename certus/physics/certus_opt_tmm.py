@@ -110,6 +110,36 @@ def compute_TMM_generic(
     return compute_RT_from_matrix(M00, M01, M10, M11, n_inc, n_sub)
 
 
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def reflection_amplitudes(eta_inc: complex, B: complex, C: complex) -> tuple[complex, complex, complex]:
+    """(Y, r, t) with Y = η_inc·B + C, r = (η_inc·B − C) / Y, t = 2·η_inc / Y (Macleod eq. 2.96).
+
+    The single source of the reflection formula: `compute_RT_from_matrix` and the analytic-gradient kernels of
+    `design_fast_normal` / `design_fast_oblique`, which need the complex amplitudes, take them from here.
+    |Y| < 1e-14 means no transmitted field: r and t come back as 0 and the caller tests |Y| (as before the helper).
+    """
+    Y_sys = eta_inc * B + C
+    if abs(Y_sys) < 1e-14:
+        return Y_sys, 0j, 0j
+    r = (eta_inc * B - C) / Y_sys
+    t = (2.0 * eta_inc) / Y_sys
+    return Y_sys, r, t
+
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def reflection_amplitude_derivatives(
+    eta_inc: complex, dB: complex, dC: complex, Y_sys: complex, r: complex, t: complex
+) -> tuple[complex, complex]:
+    """(dr, dt) for a change (dB, dC) of [B; C], from `reflection_amplitudes`' Y, r and t (η_inc fixed).
+
+    dY = η_inc·dB + dC, dr = ((η_inc·dB − dC) − r·dY) / Y, dt = −t·dY / Y.
+    """
+    dY = eta_inc * dB + dC
+    dr = ((eta_inc * dB - dC) - r * dY) / Y_sys
+    dt = -t * dY / Y_sys
+    return dr, dt
+
+
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def compute_RT_from_matrix(
     M00: complex,
@@ -155,12 +185,10 @@ def compute_RT_from_matrix(
 
     C = M10 + M11 * n_exit
 
-    Y_sys = n_inc * B + C
+    Y_sys, r, _t = reflection_amplitudes(n_inc, B, C)
 
     if abs(Y_sys) < 1e-14:
         return 0.0, 0.0
-
-    r = (n_inc * B - C) / Y_sys
 
     R = abs(r) ** 2
 

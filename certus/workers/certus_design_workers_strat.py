@@ -19,6 +19,15 @@ from certus.core.certus_design_worker_utils import (
     run_pglobal_restart_loop,
 )
 from certus.core.certus_design_workers_dto import OptimWorkerResult
+from certus.physics.design_fast_kernels import (
+    compute_gradient_backside_cached_fast,
+    compute_gradient_lossless_backside_fast,
+    compute_gradient_lossless_front_fast,
+    cost_lossless_backside_fast,
+    cost_lossless_front_fast,
+    precompute_oblique_optical_terms,
+    prepare_normal_fast_context,
+)
 from certus.utils.certus_progress_tracker import StepState, build_progress_callback, build_progress_snapshot
 from certus_physics import (
     PGlobalConfig,
@@ -163,6 +172,30 @@ class DesignOptimizationStrategy:
         """Evaluate a thickness configuration."""
         if oblique_mode:
             return compute_oblique_error(ep_test)
+        fast_ctx = getattr(worker, "_normal_fast_ctx", None)
+        if fast_ctx is not None and fast_ctx.get("use_real_approx") and len(wls) == len(fast_ctx["wls"]):
+            if not np.any((ep_test > 1e-12) & (ep_test < CFG.MIN_THICKNESS)):
+                if has_back_calc:
+                    return cost_lossless_backside_fast(
+                        ep_test,
+                        fast_ctx["n_layers_real"],
+                        fast_ctx["inv_n_layers_real"],
+                        fast_ctx["n_sub_real"],
+                        fast_ctx["k0_wls"],
+                        fast_ctx["rb_prime"],
+                        fast_ctx["tb"],
+                        tgt_vals,
+                        tgt_weights,
+                    )
+                return cost_lossless_front_fast(
+                    ep_test,
+                    fast_ctx["n_layers_real"],
+                    fast_ctx["inv_n_layers_real"],
+                    fast_ctx["n_sub_real"],
+                    fast_ctx["k0_wls"],
+                    tgt_vals,
+                    tgt_weights,
+                )
         return cost_numba_fast(ep_test, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, CFG.MIN_THICKNESS, has_back_calc, n_back_T, d_back)
 
     @staticmethod
@@ -171,6 +204,46 @@ class DesignOptimizationStrategy:
         """Compute cost and analytic gradient for refinement."""
         if oblique_mode:
             return compute_oblique_error_and_grad_analytic(ep_test)
+        fast_ctx = getattr(worker, "_normal_fast_ctx", None)
+        if fast_ctx is not None and len(wls) == len(fast_ctx["wls"]):
+            if not np.any((ep_test > 1e-12) & (ep_test < CFG.MIN_THICKNESS)):
+                if fast_ctx.get("use_real_approx"):
+                    if has_back_calc:
+                        return compute_gradient_lossless_backside_fast(
+                            ep_test,
+                            fast_ctx["n_layers_real"],
+                            fast_ctx["inv_n_layers_real"],
+                            fast_ctx["n_sub_real"],
+                            fast_ctx["k0_wls"],
+                            fast_ctx["rb_prime"],
+                            fast_ctx["tb"],
+                            tgt_vals,
+                            tgt_weights,
+                            var_idx,
+                        )
+                    return compute_gradient_lossless_front_fast(
+                        ep_test,
+                        fast_ctx["n_layers_real"],
+                        fast_ctx["inv_n_layers_real"],
+                        fast_ctx["n_sub_real"],
+                        fast_ctx["k0_wls"],
+                        tgt_vals,
+                        tgt_weights,
+                        var_idx,
+                    )
+                if has_back_calc:
+                    return compute_gradient_backside_cached_fast(
+                        ep_test,
+                        n_layers_T,
+                        n_sub,
+                        wls,
+                        fast_ctx["rb_prime"],
+                        fast_ctx["tb"],
+                        tgt_vals,
+                        tgt_weights,
+                        var_idx,
+                        CFG.MIN_THICKNESS,
+                    )
         cost, grad = compute_gradient_all_layers_analytic(ep_test, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, CFG.MIN_THICKNESS, has_back_calc, n_back_T, d_back, var_idx)
         return (cost, grad)
 
@@ -413,6 +486,58 @@ class DesignOptimizationStrategy:
                 logging.warning('Fixed layer violates MIN_THICKNESS')
         worker.cost_func = worker._objective_wrapper
         worker._last_cost_func = worker._objective_wrapper
+        mode_run = str(getattr(worker, "cfg", {}).get("mode", "global"))
+        k_thresh = float(getattr(worker, "cfg", {}).get("k_real_threshold", 1e-4 if mode_run == "global" else 1e-14))
+        if not oblique_mode:
+            worker._normal_fast_ctx = prepare_normal_fast_context(
+                wls=wls,
+                n_layers_T=n_layers_T,
+                n_sub=n_sub,
+                has_back_calc=has_back_calc,
+                n_back_T=n_back_T,
+                d_back=d_back,
+                k_real_threshold=k_thresh,
+            )
+        else:
+            worker._normal_fast_ctx = None
+            if oblique_configs is not None:
+                for config in oblique_configs:
+                    wls_cfg = config["wls_config"]
+                    n_layers_cfg = config["n_layers_T_config"]
+                    n_sub_cfg = config["n_sub_config"]
+                    sw_cfg = config["sw_cfg"]
+                    angle = float(config["angle"])
+                    is_s_pol = bool(config["is_s_pol"])
+                    precomp_targets = []
+                    for tgt_data in config["targets"]:
+                        loc = tgt_data["local_positions"]
+                        if loc.size == 0:
+                            precomp_targets.append(None)
+                            continue
+                        n_back_sel = (
+                            n_back_T[config["all_clues"], :][loc, :]
+                            if (has_back_calc and has_back_stack)
+                            else None
+                        )
+                        pre = precompute_oblique_optical_terms(
+                            wls=wls_cfg[loc],
+                            n_layers_T=n_layers_cfg[loc, :],
+                            n_sub=n_sub_cfg[loc],
+                            angle_deg=angle,
+                            is_s_pol=is_s_pol,
+                            has_back_calc=has_back_calc,
+                            n_back_T=n_back_sel,
+                            d_back=d_back if (has_back_calc and has_back_stack) else None,
+                        )
+                        precomp_targets.append(
+                            {
+                                "pre": pre,
+                                "tgt_vals": np.asarray(tgt_data["tgt_vals"], dtype=np.float64),
+                                "tgt_w": sw_cfg[loc] * float(tgt_data["weight"]),
+                                "is_reflectance": bool(tgt_data["target_type"] == "R"),
+                            }
+                        )
+                    config["precomputed_targets"] = precomp_targets
 
     @staticmethod
 

@@ -20,7 +20,7 @@ from certus.ui.certus_spectrum_eval_ui import (
 )
 from certus.ui.certus_ui import CertusTheme, confirm_stop_with_timeout, plot_widget_plot_finite
 from certus.utils.errors import safe_ui_action
-from certus.workers.certus_design_workers import ColorWorker, OptimWorker
+from certus.workers.certus_design_workers import ColorWorker, OptimWorker, SpectralMCWorker
 from certus_physics import calc_spectrum_oblique_vectorized, delta_e_2000, lab_to_rgb
 
 
@@ -777,6 +777,105 @@ class WorkerManager:
         self.ui.col_thread.finished.connect(self.ui.col_thread.deleteLater)
 
         self.ui.col_thread.start()
+
+    @safe_ui_action
+    def run_spectral_mc(self) -> None:
+        """Start the spectral Monte Carlo of the RMSE of the current design (normal incidence, front face)."""
+        if not self.ui.last_result:
+            self.ui.log("Please evaluate first.", "WARNING")
+            return
+        if getattr(self.ui, "oblique_mode", False):
+            self.ui.log("Spectral Monte Carlo: normal incidence only.", "WARNING")
+            return
+        tgts = [t for t in self.ui._get_tgts() if t.valid()]
+        if not tgts:
+            self.ui.log("Spectral Monte Carlo: no valid target.", "WARNING")
+            return
+        threshold = self.ui.mc_rmse_threshold_spin.value()
+        cfg = {
+            "ep": self.ui.last_result["ep"],
+            "stack": self.ui._get_front_stack(),
+            "mats": self.ui._get_materials(),
+            "wls": np.asarray(self.ui._get_optim_wls(), dtype=np.float64),
+            "tgts": tgts,
+            "draws": self.ui.mc_n_spin.value(),
+            "sigma_abs_nm": self.ui.mc_sigma_spin.value(),
+            "sigma_rel": self.ui.mc_sigma_rel_spin.value() / 100.0,
+            "sigma_ot_nm": self.ui.mc_sigma_ot_spin.value(),
+            "rmse_threshold": threshold if threshold > 0 else None,
+            "l0": self.ui.l0_spin.value(),
+            "seed": int(getattr(self.ui, "run_seed", 0) or 0),
+        }
+        self.ui.log(
+            f"Spectral Monte Carlo: {cfg['draws']} draws, errors {cfg['sigma_abs_nm']:g} nm + "
+            f"{100 * cfg['sigma_rel']:g} % + {cfg['sigma_ot_nm']:g} nm of optical thickness (index at "
+            f"{cfg['l0']:g} nm)...", "INFO")
+        if hasattr(self.ui, "progress_widget"):
+            self.ui.progress_widget.start(phase="MONTE_CARLO")
+        self.ui._set_busy(True)
+        self.ui.smc_worker = SpectralMCWorker(cfg)
+        self.ui.smc_thread = QThread()
+        self.ui.smc_worker.moveToThread(self.ui.smc_thread)
+        self.ui.smc_thread.started.connect(self.ui.smc_worker.run)
+        self.ui.smc_worker.signals.finished.connect(self.ui.smc_thread.quit)
+        self.ui.smc_worker.signals.finished.connect(self._on_spectral_mc_done)
+        self.ui.smc_worker.signals.finished.connect(self.ui.smc_worker.deleteLater)
+        self.ui.smc_worker.signals.error.connect(self.ui.smc_thread.quit)
+        self.ui.smc_worker.signals.error.connect(self.ui._on_error)
+        self.ui.smc_worker.signals.error.connect(self.ui.smc_worker.deleteLater)
+        self.ui.smc_thread.finished.connect(self.ui.smc_thread.deleteLater)
+        self.ui.smc_thread.start()
+
+    @safe_ui_action
+    def run_robust_n(self) -> None:
+        """Log the second-order robust RMSE of every Pareto record (one per layer count) and the layer count to build.
+
+        Errors: the absolute, relative and optical-thickness sigmas of the MC section (all zero: nothing to do).
+        """
+        from certus.core.certus_design_tolerance import design_residual_function, error_alpha, second_order_robust_rmse
+        from certus_physics import Layer
+
+        s_abs, s_rel = self.ui.mc_sigma_spin.value(), self.ui.mc_sigma_rel_spin.value() / 100.0
+        s_ot, l0 = self.ui.mc_sigma_ot_spin.value(), self.ui.l0_spin.value()
+        records = getattr(self.ui, "pareto_history", {}) or {}
+        tgts = [t for t in self.ui._get_tgts() if t.valid()]
+        if getattr(self.ui, "oblique_mode", False) or not tgts or not records:
+            self.ui.log("Robust N: needs targets, Pareto records (run an optimization) and normal incidence.", "WARNING")
+            return
+        mats, wls = self.ui._get_materials(), np.asarray(self.ui._get_optim_wls(), dtype=np.float64)
+        rows = []
+        for n, rec in sorted(records.items()):
+            ep, table = rec.get("ep_rmse"), rec.get("table_rmse")
+            if ep is None or not table or len(table) != len(ep):
+                continue
+            stack = [Layer(row["mat"], row["qw"], row["var"]) for row in table]
+            ep = np.asarray(ep, dtype=np.float64)
+            n_real = np.array([float(np.real(mats[layer.mat].get_nk(np.array([l0]))[0])) for layer in stack])
+            alpha = error_alpha(ep, n_real, s_abs, s_rel, s_ot)
+            nominal, robust = second_order_robust_rmse(design_residual_function(mats, stack, wls, tgts), ep, alpha)
+            rows.append((n, nominal, robust))
+        if not rows:
+            self.ui.log("Robust N: no usable Pareto record.", "WARNING")
+            return
+        best = min(rows, key=lambda r: r[2])
+        self.ui.log(f"Robust N (second order, errors {s_abs:g} nm + {100 * s_rel:g} % + {s_ot:g} nm OT; Tikhonravov "
+                    f"et al. 2003, Eq. 5 with alpha = sigma):", "INFO")
+        for n, nominal, robust in rows:
+            self.ui.log(f"   N={n}: RMSE nominal {nominal:.4g}, expected under errors {robust:.4g}"
+                        + ("   <- recommended" if n == best[0] else ""), "INFO")
+
+    def _on_spectral_mc_done(self, d: dict) -> None:
+        """Log the spectral Monte Carlo summary."""
+        if hasattr(self.ui, "progress_widget"):
+            self.ui.progress_widget.stop("Done")
+        self.ui._set_busy(False)
+        if not d.get("ok"):
+            return
+        line = (f"Spectral Monte Carlo ({d['draws']} draws): RMSE nominal {d['nominal']:.4g} | mean {d['mean']:.4g} | "
+                f"sqrt(E[MSE]) {d['rms']:.4g} | 95th percentile {d['p95']:.4g} | CVaR95 {d['cvar95']:.4g}")
+        if d.get("yield_fraction") is not None:
+            line += f" | yield {100 * d['yield_fraction']:.1f} %"
+        self.ui.log(line, "SUCCESS")
 
     def _on_needle_progress(self, val: int, msg: str) -> None:
         """Callback for needle progress update"""

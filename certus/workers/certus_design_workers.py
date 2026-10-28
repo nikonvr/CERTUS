@@ -498,6 +498,53 @@ class ColorWorker(QObject):
             logging.error(f'Color optimization worker error: {e}')
             self.signals.error.emit(traceback.format_exc())
 
+class SpectralMCWorker(QObject):
+    """Worker for the spectral Monte Carlo of the RMSE (absolute, relative and optical-thickness errors).
+
+    Front face at normal incidence, with the cost kernel of DESIGN (``design_cost_function``); the result dict holds
+    the fields of ``SpectralMonteCarlo``.
+    """
+
+    def __init__(self, cfg: dict[str, Any]) -> None:
+        super().__init__()
+        self.cfg = dict(cfg)
+        self.signals = WorkerSignals()
+
+    def isInterruptionRequested(self) -> bool:
+        return QThread.currentThread().isInterruptionRequested()
+
+    def run(self) -> None:
+        from certus.core.certus_design_tolerance import design_cost_function, spectral_monte_carlo
+
+        try:
+            cfg = self.cfg
+            mats, stack = cfg["mats"], cfg["stack"]
+            wls = np.asarray(cfg["wls"], dtype=np.float64)
+            ep = np.asarray(cfg["ep"], dtype=np.float64)
+            l0 = float(cfg.get("l0", 550.0))
+            n_real = np.array([float(np.real(mats[layer.mat].get_nk(np.array([l0]))[0])) for layer in stack])
+            draws = int(cfg.get("draws", 1000))
+
+            def progress(done: int, total: int) -> None:
+                if done % max(1, total // 20) == 0:
+                    self.signals.progress_snapshot.emit(build_progress_snapshot(
+                        message=f"Spectral Monte Carlo: {done}/{total}", display_ratio=done / total,
+                        progress_ratio=done / total, eta_seconds=None, confidence=0.25, state=StepState.RUNNING,
+                        module='DESIGN', phase='MONTE_CARLO', metadata={'sample': done, 'total_samples': total}))
+
+            mc = spectral_monte_carlo(
+                design_cost_function(mats, stack, wls, cfg["tgts"]), ep, n_real=n_real,
+                sigma_abs_nm=float(cfg.get("sigma_abs_nm", 0.0)), sigma_rel=float(cfg.get("sigma_rel", 0.0)),
+                sigma_ot_nm=float(cfg.get("sigma_ot_nm", 0.0)), draws=draws, seed=int(cfg.get("seed", 0)),
+                rmse_threshold=cfg.get("rmse_threshold"), progress=progress, stop=self.isInterruptionRequested)
+            self.signals.finished.emit({"ok": True, "nominal": mc.nominal, "mean": mc.mean, "rms": mc.rms,
+                                        "p95": mc.p95, "cvar95": mc.cvar95, "yield_fraction": mc.yield_fraction,
+                                        "draws": mc.draws, "samples": mc.samples, "l0": l0})
+        except (*NUMERICAL_FAULT_EXCEPTIONS, KeyError) as e:
+            logging.error(f'Spectral Monte Carlo worker error: {e}')
+            self.signals.error.emit(traceback.format_exc())
+
+
 class NeedleWorker(QObject):
     """Worker for layer insertion (Needle algorithm)"""
 

@@ -252,6 +252,12 @@ class CertusDesignApp(
     def run_colorimetry(self) -> None:
         self.worker_manager.run_colorimetry()
 
+    def run_spectral_mc(self) -> None:
+        self.worker_manager.run_spectral_mc()
+
+    def run_robust_n(self) -> None:
+        self.worker_manager.run_robust_n()
+
     def _on_needle_progress(self, val: int, msg: str) -> None:
         self.worker_manager._on_needle_progress(val, msg)
 

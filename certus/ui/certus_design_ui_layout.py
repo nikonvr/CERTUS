@@ -519,6 +519,43 @@ class LayoutManager:
 
         opt_grid.addWidget(self.ui.mc_sigma_spin, row, 1)
 
+        # Spectral Monte Carlo only (the colorimetric analysis uses the absolute sigma above)
+        row += 1
+        self.ui.mc_sigma_rel_spin = QDoubleSpinBox()
+        self.ui.mc_sigma_rel_spin.setRange(0.0, 10.0)
+        self.ui.mc_sigma_rel_spin.setDecimals(2)
+        self.ui.mc_sigma_rel_spin.setValue(0.0)
+        self.ui.mc_sigma_rel_spin.setToolTip(
+            "Spectral Monte Carlo: relative random error of each physical thickness (%),\n"
+            "added to the absolute sigma above."
+        )
+        opt_grid.addWidget(QLabel("Sigma rel. (%):"), row, 0)
+        opt_grid.addWidget(self.ui.mc_sigma_rel_spin, row, 1)
+
+        row += 1
+        self.ui.mc_sigma_ot_spin = QDoubleSpinBox()
+        self.ui.mc_sigma_ot_spin.setRange(0.0, 20.0)
+        self.ui.mc_sigma_ot_spin.setDecimals(2)
+        self.ui.mc_sigma_ot_spin.setValue(0.0)
+        self.ui.mc_sigma_ot_spin.setToolTip(
+            "Spectral Monte Carlo: random error of each optical thickness n*d (nm),\n"
+            "n taken at the reference wavelength. Added to the errors above."
+        )
+        opt_grid.addWidget(QLabel("Sigma OT (nm):"), row, 0)
+        opt_grid.addWidget(self.ui.mc_sigma_ot_spin, row, 1)
+
+        row += 1
+        self.ui.mc_rmse_threshold_spin = QDoubleSpinBox()
+        self.ui.mc_rmse_threshold_spin.setRange(0.0, 1.0)
+        self.ui.mc_rmse_threshold_spin.setDecimals(5)
+        self.ui.mc_rmse_threshold_spin.setSingleStep(0.001)
+        self.ui.mc_rmse_threshold_spin.setValue(0.0)
+        self.ui.mc_rmse_threshold_spin.setToolTip(
+            "Spectral Monte Carlo: RMSE threshold for the yield (share of draws at or below it); 0 = no yield."
+        )
+        opt_grid.addWidget(QLabel("Yield RMSE max:"), row, 0)
+        opt_grid.addWidget(self.ui.mc_rmse_threshold_spin, row, 1)
+
         return opt_group
 
     def _build_action_buttons(self) -> QVBoxLayout:
@@ -629,6 +666,31 @@ class LayoutManager:
         self.ui.color_btn.clicked.connect(self.ui.run_colorimetry)
 
         action_layout.addWidget(self.ui.color_btn)
+
+        # Spectral Monte Carlo of the RMSE
+        self.ui.spectral_mc_btn = QPushButton("Spectral Monte Carlo")
+        self.ui.spectral_mc_btn.setObjectName(OBJ.PRIMARY_BUTTON)
+        self.ui.spectral_mc_btn.setIcon(self.ui.style().standardIcon(QStyle.StandardPixmap.SP_CommandLink))
+        self.ui.spectral_mc_btn.setMinimumHeight(32)
+        self.ui.spectral_mc_btn.setToolTip(
+            "Monte Carlo of the RMSE of the current design under random thickness errors\n"
+            "(absolute, relative and optical-thickness sigmas of the MC section).\n"
+            "Logs nominal, mean, sqrt(E[MSE]), 95th percentile, CVaR95 and yield. Normal incidence."
+        )
+        self.ui.spectral_mc_btn.clicked.connect(self.ui.run_spectral_mc)
+        action_layout.addWidget(self.ui.spectral_mc_btn)
+
+        # Robust number of layers (second-order criterion on the Pareto records)
+        self.ui.robust_n_btn = QPushButton("Robust N")
+        self.ui.robust_n_btn.setObjectName(OBJ.PRIMARY_BUTTON)
+        self.ui.robust_n_btn.setIcon(self.ui.style().standardIcon(QStyle.StandardPixmap.SP_CommandLink))
+        self.ui.robust_n_btn.setMinimumHeight(32)
+        self.ui.robust_n_btn.setToolTip(
+            "For each layer count of the Pareto records, the RMSE expected under the random errors of the MC section\n"
+            "(second order, one Jacobian, no Monte Carlo), and the layer count with the lowest one. Normal incidence."
+        )
+        self.ui.robust_n_btn.clicked.connect(self.ui.run_robust_n)
+        action_layout.addWidget(self.ui.robust_n_btn)
 
         # Stack Info Button
 

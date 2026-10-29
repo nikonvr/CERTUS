@@ -68,6 +68,16 @@ errors, or alpha_i = sigma_OT / n_i for errors in optical thickness. Cite Tikhon
 - **Worker:** a worker in `certus/workers/` calls it.
 - **Test:** the oracle-computed RMSE of a perturbed design equals the kernel's.
 
+## Candidates from 2026-10-28/29 (to measure before planning)
+
+Measured in `envelope_v2/gradual.py`, not yet in DESIGN; each would be an option, off by default (C1):
+- gradual evolution at imposed TOT, with Trubetskov 2020's step (one layer thickened to its next one-parameter
+  minimum, `GRAD_GROW`): verdict of `campaign24.sh` pending;
+- deep needle search (K candidates refined, best kept): better than classical from the same start;
+- thin-layer cleaning after each convergence (`GRAD_CLEAN`): -25 to -30 % MF and about 20 fewer layers near a good
+  basin, no gain from poor starts;
+- one OpenBLAS thread per process with a process pool.
+
 ## Order, size and files
 
 1. Feature 3 first: small, and it is the judge of the other two.

@@ -14,8 +14,13 @@ But de 👤 : CERTUS meilleur que Tikhonravov et Trubetskov sur chaque problème
 | ≈ 06:50 | EF1–EF10 : robustesse, erreurs aléatoires d'épaisseur optique 1 et 2 nm | Table 4 (rendements) | `ef2012_analyse.txt` |
 | ≈ 08:30 | 50/50 : diagnostics H1–H3 | — | `diag5050_*` |
 
+Résultats (programme fini à 06:30 ; détail et preuves : `AUDIT_2026-10-28.md`, section 7) : trajectoires jusqu'à
+11 300 nm, 0,126 ; cissoïde 0,182 ; 51 couches 0,875 avec leur procédure, puis 0,6062 et, repris le 29, 0,4597 ;
+miroir chaud = leurs designs A et B ; quart d'onde à 11 000 nm 0,338 ; EF : rendements accordés à leur fabrication ;
+50/50 H2 : la convergence n'est pas en cause.
+
 Déjà acquis le 28/10 au soir :
 - cible exacte de la cissoïde : 2a = 100 nm, arrondie à 4 décimales ; leur design d'exemple redonne MF 0,89721320429466 (14 chiffres) ;
 - définition de la Table 3 des EF : 45° seul, moyenne commune de R et T (rapport 0,976 ± 0,012) ;
 - sensibilité du trois raies à la grille : sur 270 points ou 263 points, nos designs perdent 20 à 30 % de MF.
-  La grille de 2012 n'est pas fixée, donc la comparaison à 0,191 reste à interpréter.
+  La grille a depuis été fixée à 277 points (29/10, `grid_test.py`).

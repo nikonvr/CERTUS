@@ -13,6 +13,8 @@ recoupé par l'oracle indépendant. Leviers, commandes et mesures : [`journal.md
 | DESIGN, même problème, courbe de 1 à 34 couches | 0,229 (1 c.) → 0,0151 (10 c.) → **0,000090** (34 c.) ; sous leur design dès 28 couches | sans plafond de QWOT | 1 min – 2 h 16 par point |
 | Enveloppe globale hors fenêtre (2026-10-26, HL + LH, N ± p, Gauss-Newton) | libre : **3,53e-5** (34 c.), 3,72e-5 (31 c.) ; d ≥ 5 nm : **4,03e-5** (31 c.), 7,98e-5 (28 c.) ; sous leur design dès 23 couches | 29,8 QWOT à 34 c. | scripts de `tikhonravov/envelope_free/` ([README](tikhonravov/envelope_free/README.md)) |
 
+- Autres problèmes publiés de Tikhonravov et Trubetskov (trois raies, miroir chaud, EF, cissoïde ; 2026-10-26 → 29) :
+  [`tikhonravov/envelope_v2/README.md`](tikhonravov/envelope_v2/README.md) et son audit.
 - Face à la littérature : MF 8,53e-3 contre 1,2767e-2 publié, écart max 0,024 % contre 0,193 % ;
   [`tikhonravov/README.md`](tikhonravov/README.md), courbe RMSE = f(couches) dans `tikhonravov/curve/`.
 - Tolérance : sous des erreurs d'épaisseur de 0,1 % + 0,2 nm à 2σ, le RMSE moyen est d'environ 0,003 (± 0,0015) quel

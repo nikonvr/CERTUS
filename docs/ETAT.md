@@ -26,7 +26,13 @@ Tikhonravov et al. 1996 contre 1,77e-4 pour leur design ([bilan](../reports/DESI
 3,53e-5 à 34 couches libres, 4,03e-5 à 31 couches ≥ 5 nm ([README](../reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_free/README.md)). Travail
 d'Antigravity Argon du 2026-10-26 vérifié puis corrigé ([vérification](../reports/VERIFICATION_argon_2026-10-26/bilan.md)) : noyaux rapides actifs
 (ALG-08/25/30), ALG-02 corrigé ; Gauss-Newton, fusion N+2 → N, alternance HL/LH, repolissage après 5 nm : inactifs par défaut
-(`DESIGN_OPTIONAL_STEPS`).
+(`DESIGN_OPTIONAL_STEPS`). Outils de robustesse (« Spectral Monte Carlo », « Robust N ») commités le 2026-10-28 (`7f849f42`).
+Comparaisons aux cas publiés de Tikhonravov et Trubetskov (50/50, trois raies, miroir chaud, antireflet robuste, EF1–EF10,
+cissoïde OIC 2016 B1) : [README](../reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/README.md) et
+[audit du 2026-10-28](../reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/AUDIT_2026-10-28.md). Bilan au 2026-10-29
+(audit, section 7) : battus sur le 50/50, l'antireflet robuste et les 51 couches (0,4597 contre 0,464) ; égalité sur le miroir chaud ;
+perdu sur le trois raies libre de 2020 (0,0182 contre 0,0128) : nos aiguilles gonflent N au lieu de restructurer. Calcul en parallèle :
+`OPENBLAS_NUM_THREADS=1` par processus, sinon les fils OpenBLAS saturent les cœurs.
 
 **Bonne Mère, 90 couches sur silice** : plan à déposer, fait à la main sous les règles de 👤 : 15 Rate, SEEL 0,2608 nm au holdout.
 STRAT natif avec l'étape libre avant la conversion : 0,2655 nm, une graine, sans la garde ; A16 le remesure
@@ -36,8 +42,9 @@ STRAT natif avec l'étape libre avant la conversion : 0,2655 nm, une graine, san
 (numba 0.68.0, llvmlite 0.50.0 ; les anciens pins n'avaient pas de roue 3.15). Même banc (`48c` premium, graine 42) sous 3.14.8 et 3.15.1 : mêmes 2 653
 stratégies, même meilleur plan, SEEL 0,15313 nm ; scores à 10⁻¹⁴ près (relatif médian), aucun identique au bit. Exécutable gelé construit et contrôlé sous 3.15.1.
 
-**Dernière validation complète** : 2026-10-27, arbre corrigé du travail d'Argon, sous 3.15.2, en série : ruff propre, oracle 1 163, unit 5 725,
-ui 1 342, rest 350, 0 failed ; coherence_md, check_claude_md, check_docs à 0 ; `c1_diff HEAD` C1 TENU (9 092 tableaux).
+**Dernière validation complète** : 2026-10-28, avant `7f849f42`, sous 3.15.2, en série : ruff propre, oracle 1 163, unit 5 734 et 1 échec
+(`==` entre flottants dans un test neuf, corrigé, fichier repassé : 6 passed), ui 1 345, rest 350 ; coherence_md, check_claude_md, check_docs
+sans erreur ; `c1_diff HEAD` C1 TENU (9 092 tableaux).
 Avant de committer du code, la validation de CLAUDE.md §2 en entier : un sous-ensemble a déjà laissé passer une régression
 (`tests/unit/test_the_architecture_debt_only_shrinks.py` ne tourne pas avec les tests voisins).
 

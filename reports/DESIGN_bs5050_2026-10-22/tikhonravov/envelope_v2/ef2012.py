@@ -172,8 +172,8 @@ def check() -> None:
         d = np.array(d)
         ti, si = d[0::2].sum(), d[1::2].sum()
         assert len(d) == TABLE3_N[name], name
-        assert abs(ti - SUMS[name][0]) < 0.02, (name, ti, SUMS[name])
-        assert abs(si - SUMS[name][1]) < 0.02, (name, si, SUMS[name])
+        assert abs(ti - SUMS[name][0]) < 0.1, (name, ti, SUMS[name])  # table values rounded to 0.01 nm
+        assert abs(si - SUMS[name][1]) < 0.1, (name, si, SUMS[name])
     print("Tables 1-2: layer counts and TiO2 / SiO2 sums match the paper")
     d = np.array(DESIGNS["EF1"])
     for flip in (False, True):
@@ -210,6 +210,17 @@ def check() -> None:
         err[flip] = float(np.mean([abs(v - TABLE3_MF[k]) for k, v in mf.items()]))
         print(f"flip={flip}: MF " + " ".join(f"{k} {v:.2f}({TABLE3_MF[k]})" for k, v in mf.items())
               + f"  mean |MF - Table 3| {err[flip]:.3f}")
+    # 2026-10-28: Table 3 is matched by the MF at 45 deg only, R and T points pooled in one mean (not Eq. 2 at 43, 45
+    # and 47 deg with one mean per zone)
+    FLIP = False
+    t3 = {}
+    for nm_, dd in DESIGNS.items():
+        dd = np.array(dd)
+        sq = np.sum((100 * (rt(dd, W_R, 45.0)[0] - 1)) ** 2) + np.sum((100 * (rt(dd, W_T, 45.0)[1] - 1)) ** 2)
+        t3[nm_] = float(np.sqrt(sq / (len(W_R) + len(W_T))))
+    ratio = np.array([t3[k] / TABLE3_MF[k] for k in t3])
+    print("MF at 45 deg, pooled mean: " + " ".join(f"{k} {v:.2f}({TABLE3_MF[k]})" for k, v in t3.items())
+          + f"  ratio to Table 3 {ratio.mean():.3f} +- {ratio.std():.3f}")
     best = min(err, key=err.get)
     ok = err[best] < 0.05
     (HERE / "ef2012_flip.txt").write_text(("flip" if best else "noflip") + (" OK" if ok else " MISMATCH") + "\n",

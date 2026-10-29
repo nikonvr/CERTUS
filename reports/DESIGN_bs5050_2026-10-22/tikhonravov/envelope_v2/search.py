@@ -18,6 +18,7 @@ import json
 import os
 import sys
 import time
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 from typing import ClassVar
 
@@ -48,6 +49,9 @@ N_MAX = 40
 THICKEN = os.environ.get("SEARCH_THICKEN", "1") == "1"
 KEEP = int(os.environ.get("SEARCH_KEEP", "6"))  # elites kept per N (1 = a single trajectory per N)
 DEAD = 1.0
+#: env SEARCH_WORKERS (2026-10-28): processes polishing the moves of one N (and the starts) in parallel; 1 = serial.
+#: The moves are drawn before they are evaluated and are archived in the same order: same result as serial.
+WORKERS = int(os.environ.get("SEARCH_WORKERS", "1"))
 TAG = "v3_" if THICKEN and KEEP == 6 else f"abl_t{int(THICKEN)}k{KEEP}_"  # v2 (first night): curve_{kind}_s1.csv
 #: focus (2026-10-27): only parents with N in [lo, hi] are explored, e.g. SEARCH_FOCUS=27-36; every child is archived.
 FOCUS = tuple(int(v) for v in os.environ["SEARCH_FOCUS"].split("-")) if os.environ.get("SEARCH_FOCUS") else None
@@ -57,6 +61,9 @@ if FOCUS:
 #: and Trubetskov, AO 59, A75 (2020), Fig. 5: T = 1 at 445-455, 505-515, 635-645 nm, T = 0 at 400-440, 460-500,
 #: 520-630, 650-700 nm, 1 nm step, uniform weights (their MF in % = 100 x RMSE), same materials and substrate.
 TARGET = os.environ.get("SEARCH_TARGET", "bs5050")
+#: starts of a target other than the 50/50: SEARCH_STARTS = random (default), bare (one layer, grown by the moves),
+#: qw (quarter-wave stacks with random half- or full-wave cavities) or none (CSV designs only)
+STARTS = os.environ.get("SEARCH_STARTS", "random")
 if TARGET == "threeline":
     _bands = [(445, 455, 1.0), (505, 515, 1.0), (635, 645, 1.0), (400, 440, 0.0), (460, 500, 0.0), (520, 630, 0.0),
               (650, 700, 0.0)]
@@ -67,7 +74,19 @@ if TARGET == "threeline":
     NSUB = np.full(len(WLS), N_SUB)
     ZB, OB = np.zeros(len(WLS)), np.ones(len(WLS))
     N_MAX = int(os.environ.get("SEARCH_NMAX", "120"))
-    TAG = "3line_" + (f"foc{FOCUS[0]}-{FOCUS[1]}_" if FOCUS else "")
+    TAG ="3line_" + ("" if STARTS == "random" else f"{STARTS}_") + (f"foc{FOCUS[0]}-{FOCUS[1]}_" if FOCUS else "")
+    TAG += f"tot{os.environ['SEARCH_TOT']}_" if os.environ.get("SEARCH_TOT") else ""
+#: SEARCH_TARGET=hotmirror (2026-10-28): the hot mirror of Tikhonravov & Trubetskov, AO 51, 7319 (2012), Sec. 2:
+#: T = 1 at 400-690 nm and T = 0 at 710-1200 nm, 2 nm step, uniform weights, same materials and substrate.
+elif TARGET == "hotmirror":
+    WLS = np.concatenate([np.arange(400.0, 691.0, 2.0), np.arange(710.0, 1201.0, 2.0)])
+    TGT = np.concatenate([np.ones(146), np.zeros(246)])
+    K0 = 2.0 * np.pi / WLS
+    SQW = np.full(len(WLS), np.sqrt(1.0 / len(WLS)))
+    NSUB = np.full(len(WLS), N_SUB)
+    ZB, OB = np.zeros(len(WLS)), np.ones(len(WLS))
+    N_MAX = int(os.environ.get("SEARCH_NMAX", "60"))
+    TAG = "hot_"
 #: SEARCH_TARGET=ar: the antireflection problem of Tikhonravov & Trubetskov, AO 51, 7319 (2012), Sec. 4: R = 0 at
 #: 380-720 nm, 2 nm step, same materials and substrate, no absorption, so R = 1 - T and the target is T = 1.
 elif TARGET == "ar":
@@ -142,19 +161,31 @@ def rmse(seq: str, d: np.ndarray) -> float:
     return float(np.sqrt(np.sum(res * res)))
 
 
+#: env SEARCH_TOT (2026-10-28): every polish runs at this imposed total optical thickness (nm), one extra residual row
+#: of weight TOT_W as in gradual.py; the starts are scaled to it. Unset: TOT free, as before.
+TOT_FIX = float(os.environ["SEARCH_TOT"]) if os.environ.get("SEARCH_TOT") else None
+TOT_W = 100.0
+
+
 def polish(seq: str, d: np.ndarray, floor: float, max_nfev: int = 400) -> tuple[np.ndarray, float]:
     st = Stack.of(seq)
     memo: dict = {}
+    n_ot = np.array([N_IDX[m] for m in seq])
 
     def both(x):
         key = x.tobytes()
         if key not in memo:
             memo.clear()
             r, j, _c = st.res_jac(x)
+            if TOT_FIX:
+                r = np.append(r, TOT_W * (n_ot @ x - TOT_FIX) / TOT_FIX)
+                j = np.vstack([j, TOT_W * n_ot / TOT_FIX])
             memo[key] = (r, j)
         return memo[key]
 
     x0 = np.maximum(np.asarray(d, dtype=np.float64), floor)
+    if TOT_FIX:
+        x0 = np.maximum(x0 * (TOT_FIX / float(n_ot @ x0)), floor)
     sol = least_squares(lambda x: both(x)[0], x0, jac=lambda x: both(x)[1], bounds=(floor, np.inf), method="trf",
                         x_scale="jac", ftol=1e-15, xtol=1e-15, gtol=1e-15, max_nfev=max_nfev)
     x = np.maximum(sol.x, floor)
@@ -253,6 +284,23 @@ def moves(seq: str, d: np.ndarray, floor: float, rng: np.random.Generator):
     yield seq, d * float(rng.uniform(1.03, 1.10))
 
 
+def start_eval(task):
+    """Polish of one start: (rmse before, thicknesses, rmse after)."""
+    seq, d, floor = task
+    x, r = polish(seq, d, floor)
+    return rmse(seq, d), x, r
+
+
+def move_eval(task):
+    """Polish of one move, dead layers dropped, re-polish if the sequence changed: (sequence, thicknesses, rmse)."""
+    s2, d2, floor = task
+    x, r = polish(s2, d2, floor)
+    s3, x3 = normalize(s2, x, max(floor, DEAD))
+    if s3 != s2:
+        x3, r = polish(s3, x3, floor)
+    return s3, x3, r
+
+
 def main() -> None:
     kind, minutes = sys.argv[1], float(sys.argv[2])
     seed = int(sys.argv[3]) if len(sys.argv) > 3 else 1
@@ -279,22 +327,43 @@ def main() -> None:
 
     if TARGET == "bs5050":
         starts = load_old(kind)
-    else:  # random alternating stacks: N = 30..100, total optical thickness 5000-14000 nm
+    elif STARTS == "random":  # random alternating stacks: N = 30..100, total optical thickness 5000-14000 nm
+        # env SEARCH_RANDOM="nlo-nhi:totlo-tothi:per" (2026-10-28), default 30-100:5000-14000:3 as before
+        (n_lo, n_hi), (t_lo, t_hi), per = (tuple(float(v) for v in part.split("-")) if "-" in part else int(part)
+                                           for part in os.environ.get("SEARCH_RANDOM", "30-100:5000-14000:3").split(":"))
         starts = []
-        for n in range(30, 101, 5):
-            for _ in range(3):
+        for n in range(int(n_lo), int(n_hi) + 1, 5):
+            for _ in range(per):
                 first = "HL"[int(rng.integers(2))]
                 seq = "".join(first if i % 2 == 0 else other(first) for i in range(n))
-                ot = rng.uniform(5000.0, 14000.0) / n * np.exp(0.4 * rng.standard_normal(n))
+                ot = rng.uniform(t_lo, t_hi) / n * np.exp(0.4 * rng.standard_normal(n))
                 starts.append((seq, ot / np.array([N_IDX[m] for m in seq])))
+    elif STARTS == "bare":  # gradual-evolution-like: one layer on the substrate, the moves grow the design
+        starts = [("H", np.array([L0 / (4 * N_IDX["H"])])), ("L", np.array([L0 / (4 * N_IDX["L"])]))]
+    elif STARTS == "none":  # 2026-10-28: only the designs of the CSV files given after the seed
+        starts = []
+    else:  # "qw": quarter-wave stacks at a random wavelength with random half- or full-wave cavities
+        # env SEARCH_QW="nlo-nhi:per" (2026-10-28), default 45-85:4 as before
+        (q_lo, q_hi), q_per = (tuple(int(v) for v in part.split("-")) if "-" in part else int(part)
+                               for part in os.environ.get("SEARCH_QW", "45-85:4").split(":"))
+        starts = []
+        for n in range(q_lo, q_hi + 1, 5):
+            for _ in range(q_per):
+                first = "HL"[int(rng.integers(2))]
+                seq = "".join(first if i % 2 == 0 else other(first) for i in range(n))
+                qw = np.ones(n)
+                qw[rng.choice(n, size=int(rng.integers(3, 10)), replace=False)] = rng.choice([2.0, 4.0], size=1)[0]
+                lam = rng.uniform(450.0, 650.0)
+                starts.append((seq, qw * lam / (4 * np.array([N_IDX[m] for m in seq]))))
     for prev in sys.argv[4:]:
         with (HERE / prev).open(encoding="utf-8") as f:
             starts += [(r["seq"], np.array([float(v) for v in r["d_nm"].split()])) for r in csv.DictReader(f)]
-    for seq, d in starts:
-        r0 = rmse(seq, d)
+    pool = ProcessPoolExecutor(WORKERS) if WORKERS > 1 else None
+    mapper = (lambda f, tasks: pool.map(f, tasks, chunksize=1)) if pool else map
+    for (seq, d), (r0, x, r) in zip(starts, mapper(start_eval, [(seq, d, floor) for seq, d in starts]), strict=True):
         old[len(seq)] = min(r0, old.get(len(seq), np.inf))
-        arch.add(seq, d, r0)
-        x, r = polish(seq, d, floor)
+        if not TOT_FIX:  # at imposed TOT, only designs polished at that TOT enter the archive
+            arch.add(seq, d, r0)
         arch.add(seq, x, r)
         front_add(seq, x, r)
     say(f"start {kind} seed={seed}: " + " ".join(f"{n}:{arch.best(n)[0]:.4e}" for n in sorted(arch.by_n)))
@@ -308,18 +377,15 @@ def main() -> None:
             if FOCUS and not FOCUS[0] <= n <= FOCUS[1]:
                 continue
             lst = arch.by_n.get(n, [])
-            for _r0, seq, d in list(lst[:3]):
-                for s2, d2 in moves(seq, d, floor, rng):
-                    if len(s2) == 0 or len(s2) > N_MAX:
-                        continue
-                    x, r = polish(s2, d2, floor)
-                    s3, x3 = normalize(s2, x, max(floor, DEAD))
-                    if s3 != s2:
-                        x3, r = polish(s3, x3, floor)
-                    front_add(s3, x3, r)
-                    if arch.add(s3, x3, r):
-                        say(f"r{rounds} N={len(s3)} {r:.5e} (was {old.get(len(s3), np.nan):.5e}) {s3[0]}..{s3[-1]}")
+            tasks = [(s2, d2, floor) for _r0, seq, d in list(lst[:3]) for s2, d2 in moves(seq, d, floor, rng)
+                     if 0 < len(s2) <= N_MAX]
+            for s3, x3, r in mapper(move_eval, tasks):
+                front_add(s3, x3, r)
+                if arch.add(s3, x3, r):
+                    say(f"r{rounds} N={len(s3)} {r:.5e} (was {old.get(len(s3), np.nan):.5e}) {s3[0]}..{s3[-1]}")
     say(f"end after {rounds} rounds")
+    if pool:
+        pool.shutdown()
 
     rows = []
     for n in sorted(arch.by_n):

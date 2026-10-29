@@ -1,0 +1,37 @@
+pass 1: 19 improvements; points still above their left neighbour: [19, 22, 34, 40]
+pass 2: 1 improvements; points still above their left neighbour: [19, 22, 34, 40]
+pass 3: 1 improvements; points still above their left neighbour: [19, 22, 34, 40]
+pass 4: 1 improvements; points still above their left neighbour: [19, 22, 34, 40]
+pass 5: 1 improvements; points still above their left neighbour: [19, 22, 34, 40]
+pass 6: 1 improvements; points still above their left neighbour: [19, 22, 34]
+N=10 1.1669e-02 -> 1.1669e-02
+N=11 1.0827e-02 -> 1.0827e-02
+N=12 7.9909e-03 -> 7.9909e-03
+N=13 3.5921e-03 -> 3.5921e-03
+N=14 3.5840e-03 -> 3.5840e-03
+N=15 2.2135e-03 -> 2.2135e-03
+N=16 1.9452e-03 -> 1.9452e-03
+N=17 1.4386e-03 -> 1.4386e-03
+N=18 6.9983e-04 -> 6.9983e-04
+N=19 8.7933e-04 -> 6.9984e-04
+N=20 4.4027e-04 -> 4.4027e-04
+N=21 1.9157e-04 -> 1.9157e-04
+N=22 2.3769e-04 -> 1.9522e-04
+N=23 1.4399e-04 -> 1.4399e-04
+N=24 1.3775e-04 -> 1.3775e-04
+N=25 1.1245e-04 -> 1.1245e-04
+N=26 4.9576e-05 -> 4.9576e-05
+N=27 6.8359e-05 -> 4.7974e-05
+N=28 3.2733e-05 -> 3.2733e-05
+N=29 3.1536e-05 -> 3.1536e-05
+N=30 1.5778e-05 -> 1.5778e-05
+N=31 1.5739e-05 -> 1.5739e-05
+N=32 1.4586e-05 -> 1.4586e-05
+N=33 8.0369e-06 -> 8.0369e-06
+N=34 1.1751e-05 -> 8.1995e-06
+N=35 6.7436e-06 -> 6.4568e-06
+N=36 6.2945e-06 -> 6.2945e-06
+N=37 5.6064e-06 -> 5.4935e-06
+N=38 6.1569e-06 -> 5.4527e-06
+N=39 1.5225e-05 -> 5.4519e-06
+N=40 2.1109e-05 -> 5.4516e-06

@@ -1,0 +1,5 @@
+S*: N 101 MF 0.0128
+seed gradual_classic_cont_seed_up14k_N60.csv seed_layers 60 seed_mf 0.24224681132994091 final_layers 134.0000 final_mf 0.0629 final_tot 13800.0000 distance_to_star_pct 27.2031
+seed gradual_classic_cont_seed_up14k_N70.csv seed_layers 69 seed_mf 0.1509666920031266 final_layers 155.0000 final_mf 0.0555 final_tot 14000.0000 distance_to_star_pct 27.4060
+seed gradual_classic_cont_seed_up14k_N80.csv seed_layers 79 seed_mf 0.06858504130636435 final_layers 148.0000 final_mf 0.0597 final_tot 14200.0000 distance_to_star_pct 25.6124
+seed gradual_classic_cont_seed_up14k_N90.csv seed_layers 89 seed_mf 0.06439563919386299 final_layers 136.0000 final_mf 0.0341 final_tot 14200.0000 distance_to_star_pct 18.1079

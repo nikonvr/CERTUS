@@ -1,0 +1,8 @@
+S*: N 101 MF 0.0128
+seed gradual_classic_cont_seed_deep2020_N20.csv seed_layers 19 seed_mf 8.105206029098651 final_layers 59.0000 final_mf 2.6752 final_tot 5799.9992 distance_to_star_pct 83.8321
+seed gradual_classic_cont_seed_deep2020_N30.csv seed_layers 29 seed_mf 3.077100568402878 final_layers 63.0000 final_mf 1.0071 final_tot 7200.0005 distance_to_star_pct 66.8304
+seed gradual_classic_cont_seed_deep2020_N40.csv seed_layers 39 seed_mf 1.7357262029974025 final_layers 67.0000 final_mf 0.7599 final_tot 7800.0001 distance_to_star_pct 59.0341
+seed gradual_classic_cont_seed_deep2020_N50.csv seed_layers 49 seed_mf 0.8481450361364449 final_layers 66.0000 final_mf 0.6511 final_tot 8899.9999 distance_to_star_pct 48.2074
+seed gradual_classic_cont_seed_deep2020_N60.csv seed_layers 60 seed_mf 0.24224681132994091 final_layers 82.0000 final_mf 0.2164 final_tot 11099.9999 distance_to_star_pct 43.1444
+seed gradual_classic_cont_seed_deep2020_N70.csv seed_layers 69 seed_mf 0.1509666920031266 final_layers 117.0000 final_mf 0.1028 final_tot 12200.0000 distance_to_star_pct 29.2510
+seed gradual_classic_cont_seed_deep2020_N80.csv seed_layers 79 seed_mf 0.06858504130636435 final_layers 93.0000 final_mf 0.0660 final_tot 12200.0000 distance_to_star_pct 24.0818

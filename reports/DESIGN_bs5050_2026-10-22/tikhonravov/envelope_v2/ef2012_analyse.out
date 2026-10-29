@@ -1,0 +1,16 @@
+EF1   N=29 MF 1.366 nominal pass True | sigma 1.0: R 1.466 yield 0.923 | sigma 2.0: R 1.732 yield 0.420 | paper BBM OL 95 LZH 80
+EF2   N=27 MF 2.039 nominal pass True | sigma 1.0: R 2.094 yield 0.830 | sigma 2.0: R 2.253 yield 0.432 | paper BBM OL 38 LZH 40
+EF3   N=27 MF 1.487 nominal pass True | sigma 1.0: R 1.561 yield 0.979 | sigma 2.0: R 1.765 yield 0.570 | paper BBM OL 52 LZH 50
+EF4   N=30 MF 0.887 nominal pass True | sigma 1.0: R 0.991 yield 0.954 | sigma 2.0: R 1.253 yield 0.393 | paper BBM OL 75 LZH 70
+EF5   N=28 MF 1.150 nominal pass True | sigma 1.0: R 1.212 yield 0.953 | sigma 2.0: R 1.382 yield 0.487 | paper BBM OL 67 LZH 50
+EF6   N=29 MF 2.154 nominal pass True | sigma 1.0: R 2.277 yield 0.656 | sigma 2.0: R 2.609 yield 0.221 | paper BBM OL 45 LZH 25
+EF7   N=28 MF 1.479 nominal pass True | sigma 1.0: R 1.523 yield 0.987 | sigma 2.0: R 1.646 yield 0.648 | paper BBM OL 100 LZH 100
+EF8   N=29 MF 1.047 nominal pass True | sigma 1.0: R 1.111 yield 0.966 | sigma 2.0: R 1.283 yield 0.489 | paper BBM OL 100 LZH 100
+EF9   N=21 MF 1.411 nominal pass True | sigma 1.0: R 1.458 yield 0.581 | sigma 2.0: R 1.591 yield 0.318 | paper BBM OL 35 LZH 50
+EF10  N=24 MF 1.995 nominal pass True | sigma 1.0: R 2.066 yield 0.495 | sigma 2.0: R 2.267 yield 0.220 | paper BBM OL 25 LZH 15
+sigma 1.0: Spearman with BBM OL yield: -R rho +0.53 (p 0.12); MC yield rho +0.82 (p 0.00)
+sigma 1.0: Spearman with BBM LZH yield: -R rho +0.67 (p 0.03); MC yield rho +0.76 (p 0.01)
+sigma 1.0: Spearman -R against our MC yield: +0.38
+sigma 2.0: Spearman with BBM OL yield: -R rho +0.57 (p 0.08); MC yield rho +0.69 (p 0.03)
+sigma 2.0: Spearman with BBM LZH yield: -R rho +0.71 (p 0.02); MC yield rho +0.67 (p 0.03)
+sigma 2.0: Spearman -R against our MC yield: +0.36

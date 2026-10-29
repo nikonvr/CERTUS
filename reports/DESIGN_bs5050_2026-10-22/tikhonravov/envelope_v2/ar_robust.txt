@@ -1,0 +1,32 @@
+robust AR (Tikhonravov & Trubetskov 2012, Sec. 4): errors 1 nm + 1 % (physical); E(MF) = mean of MF in %
+their Table 3: AR-6 0.263/0.343, AR-10 0.135/0.295, AR-14 0.129/0.372, AR-robust (N=9) 0.169/0.277
+N= 5 best nominal MF 0.298  predicted sqrt(E[MF^2]) 0.333  MC: E(MF) 0.371  sqrt(E[MF^2]) 0.375  (10000 draws)  TOT 987.9 nm  thinnest 11.7 nm
+N= 5 robust       MF 0.299  predicted sqrt(E[MF^2]) 0.333  MC: E(MF) 0.370  sqrt(E[MF^2]) 0.374  (10000 draws)  TOT 987.3 nm  thinnest 11.7 nm
+      (523 catalogue designs, 10 polished, 2 s)
+N= 6 best nominal MF 0.263  predicted sqrt(E[MF^2]) 0.314  MC: E(MF) 0.356  sqrt(E[MF^2]) 0.364  (10000 draws)  TOT 463.8 nm  thinnest 6.0 nm
+N= 6 robust       MF 0.265  predicted sqrt(E[MF^2]) 0.312  MC: E(MF) 0.352  sqrt(E[MF^2]) 0.359  (10000 draws)  TOT 466.6 nm  thinnest 4.7 nm
+      (455 catalogue designs, 10 polished, 2 s)
+N= 7 best nominal MF 0.238  predicted sqrt(E[MF^2]) 0.286  MC: E(MF) 0.335  sqrt(E[MF^2]) 0.345  (10000 draws)  TOT 986.1 nm  thinnest 4.2 nm
+N= 7 robust       MF 0.240  predicted sqrt(E[MF^2]) 0.284  MC: E(MF) 0.332  sqrt(E[MF^2]) 0.339  (10000 draws)  TOT 983.7 nm  thinnest 3.0 nm
+      (476 catalogue designs, 9 polished, 2 s)
+N= 8 best nominal MF 0.152  predicted sqrt(E[MF^2]) 0.228  MC: E(MF) 0.310  sqrt(E[MF^2]) 0.329  (10000 draws)  TOT 946.1 nm  thinnest 13.1 nm
+N= 8 robust       MF 0.155  predicted sqrt(E[MF^2]) 0.225  MC: E(MF) 0.305  sqrt(E[MF^2]) 0.323  (10000 draws)  TOT 941.2 nm  thinnest 12.8 nm
+      (393 catalogue designs, 10 polished, 2 s)
+N= 9 best nominal MF 0.150  predicted sqrt(E[MF^2]) 0.219  MC: E(MF) 0.296  sqrt(E[MF^2]) 0.311  (10000 draws)  TOT 1152.4 nm  thinnest 11.8 nm
+N= 9 robust       MF 0.152  predicted sqrt(E[MF^2]) 0.217  MC: E(MF) 0.293  sqrt(E[MF^2]) 0.308  (10000 draws)  TOT 1153.0 nm  thinnest 11.8 nm
+      (653 catalogue designs, 10 polished, 2 s)
+N=10 best nominal MF 0.135  predicted sqrt(E[MF^2]) 0.207  MC: E(MF) 0.286  sqrt(E[MF^2]) 0.302  (10000 draws)  TOT 966.6 nm  thinnest 7.2 nm
+N=10 robust       MF 0.138  predicted sqrt(E[MF^2]) 0.203  MC: E(MF) 0.272  sqrt(E[MF^2]) 0.283  (10000 draws)  TOT 971.6 nm  thinnest 5.2 nm
+      (648 catalogue designs, 10 polished, 4 s)
+N=11 best nominal MF 0.133  predicted sqrt(E[MF^2]) 0.212  MC: E(MF) 0.299  sqrt(E[MF^2]) 0.319  (10000 draws)  TOT 1171.9 nm  thinnest 7.0 nm
+N=11 robust       MF 0.135  predicted sqrt(E[MF^2]) 0.206  MC: E(MF) 0.285  sqrt(E[MF^2]) 0.300  (10000 draws)  TOT 996.1 nm  thinnest 6.3 nm
+      (825 catalogue designs, 1 polished, 4 s)
+N=12 best nominal MF 0.132  predicted sqrt(E[MF^2]) 0.221  MC: E(MF) 0.329  sqrt(E[MF^2]) 0.352  (10000 draws)  TOT 1059.2 nm  thinnest 3.2 nm
+N=12 robust       MF 0.139  predicted sqrt(E[MF^2]) 0.206  MC: E(MF) 0.278  sqrt(E[MF^2]) 0.289  (10000 draws)  TOT 974.9 nm  thinnest 3.6 nm
+      (615 catalogue designs, 7 polished, 5 s)
+N=13 best nominal MF 0.116  predicted sqrt(E[MF^2]) 0.209  MC: E(MF) 0.343  sqrt(E[MF^2]) 0.372  (10000 draws)  TOT 1579.0 nm  thinnest 7.8 nm
+N=13 robust       MF 0.126  predicted sqrt(E[MF^2]) 0.204  MC: E(MF) 0.295  sqrt(E[MF^2]) 0.311  (10000 draws)  TOT 1492.5 nm  thinnest 1.1 nm
+      (677 catalogue designs, 10 polished, 4 s)
+N=14 best nominal MF 0.120  predicted sqrt(E[MF^2]) 0.218  MC: E(MF) 0.356  sqrt(E[MF^2]) 0.383  (10000 draws)  TOT 1289.1 nm  thinnest 7.1 nm
+N=14 robust       MF 0.124  predicted sqrt(E[MF^2]) 0.211  MC: E(MF) 0.334  sqrt(E[MF^2]) 0.357  (10000 draws)  TOT 1287.8 nm  thinnest 6.3 nm
+      (686 catalogue designs, 10 polished, 5 s)

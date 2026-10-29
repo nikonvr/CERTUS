@@ -1,0 +1,9 @@
+Tables 1-2: layer counts and TiO2 / SiO2 sums match the paper
+flip=False: CERTUS oblique kernel = oracle at 620 nm, 0 and 45 deg, s and p
+flip=True: CERTUS oblique kernel = oracle at 620 nm, 0 and 45 deg, s and p
+flip=False: plate R,T at 45 deg (600, 690 nm) script [0.999108 0.044591], [4.52000e-04 9.55409e-01] oracle [0.999108 0.044591], [4.52000e-04 9.55409e-01]
+flip=True: plate R,T at 45 deg (600, 690 nm) script [0.999002 0.107126], [4.05000e-04 8.92874e-01] oracle [0.999002 0.107126], [4.05000e-04 8.92874e-01]
+flip=False: MF EF1 1.37(0.43) EF2 2.04(0.85) EF3 1.49(0.47) EF4 0.89(0.29) EF5 1.15(0.55) EF6 2.15(0.47) EF7 1.48(0.61) EF8 1.05(0.46) EF9 1.41(0.73) EF10 2.00(0.77)  mean |MF - Table 3| 0.938
+flip=True: MF EF1 10.06(0.43) EF2 10.93(0.85) EF3 9.73(0.47) EF4 9.95(0.29) EF5 9.31(0.55) EF6 9.69(0.47) EF7 10.78(0.61) EF8 9.27(0.46) EF9 9.44(0.73) EF10 8.84(0.77)  mean |MF - Table 3| 9.238
+MF at 45 deg, pooled mean: EF1 0.42(0.43) EF2 0.85(0.85) EF3 0.46(0.47) EF4 0.28(0.29) EF5 0.54(0.55) EF6 0.45(0.47) EF7 0.60(0.61) EF8 0.45(0.46) EF9 0.70(0.73) EF10 0.75(0.77)  ratio to Table 3 0.976 +- 0.012
+layer order: no flip; reproduction MISMATCH (stop)

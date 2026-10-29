@@ -1,0 +1,27 @@
+superset N 55 (A 51, B 51), MF A 0.6062 B 0.4646 (check: designs alone 0.6062 0.4646)
+straight path: max MF 36.6211, barrier 36.0149
+iter 500: images max MF 28.9089 at s 0.62
+iter 1000: images max MF 28.6281 at s 0.62
+iter 1500: images max MF 27.5252 at s 0.62
+iter 2000: images max MF 27.0793 at s 0.62
+iter 2500: images max MF 26.3363 at s 0.62
+iter 3000: images max MF 25.5571 at s 0.62
+iter 3500: images max MF 25.1315 at s 0.62
+iter 4000: images max MF 24.7490 at s 0.62
+iter 4500: images max MF 24.4651 at s 0.62
+iter 5000: images max MF 24.2812 at s 0.62
+iter 5500: images max MF 24.1577 at s 0.62
+iter 6000: images max MF 23.2649 at s 0.62
+iter 6500: images max MF 21.9388 at s 0.62
+iter 7000: images max MF 21.9071 at s 0.44
+iter 7500: images max MF 21.9891 at s 0.44
+iter 8000: images max MF 22.0558 at s 0.44
+iter 8500: images max MF 22.1212 at s 0.44
+iter 9000: images max MF 22.1651 at s 0.44
+iter 9500: images max MF 21.8809 at s 0.44
+iter 10000: images max MF 21.6863 at s 0.44
+iter 10500: images max MF 21.5074 at s 0.44
+iter 11000: images max MF 21.5100 at s 0.44
+iter 11500: images max MF 21.5218 at s 0.44
+iter 12000: images max MF 21.5194 at s 0.44
+string: max MF 22.8028 at s 0.645, barrier 22.1966 (from A 22.1966, from B 22.3382); total variation 88.6547; local minima on the string 35

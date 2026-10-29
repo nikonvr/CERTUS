@@ -1,0 +1,15 @@
+start free seed=99: 75:1.9975e-01 80:2.8095e-01 85:1.9962e-01 90:2.5509e-01 95:2.0199e-01
+r1 N=95 1.99484e-01 (was 3.46677e-01) L..L
+r1 N=93 1.91154e-01 (was nan) L..L
+r1 N=95 1.99336e-01 (was 3.46677e-01) L..L
+r1 N=97 1.99736e-01 (was nan) L..L
+r1 N=97 1.99548e-01 (was nan) L..L
+r1 N=96 1.99709e-01 (was nan) H..L
+r1 N=96 1.99580e-01 (was nan) L..H
+r1 N=97 1.90665e-01 (was nan) L..L
+r1 N=96 1.99463e-01 (was nan) H..L
+r1 N=91 3.38889e-01 (was nan) L..L
+r1 N=92 2.81851e-01 (was nan) L..H
+r1 N=91 2.76479e-01 (was nan) L..L
+end after 1 rounds
+written

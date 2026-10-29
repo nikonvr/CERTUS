@@ -1,0 +1,31 @@
+== ruff
+All checks passed!
+== oracle
+........................................................................ [ 99%]
+...........                                                              [100%]
+1163 passed in 105.92s (0:01:45)
+== unit
+=========================== short test summary info ===========================
+FAILED tests/unit/test_design_spectral_monte_carlo.py::test_zero_sigma_gives_the_nominal_rmse_on_every_draw
+1 failed, 5734 passed, 8 skipped, 1 xfailed, 3950 warnings in 3800.65s (1:03:20)
+== ui
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1345 passed, 12 skipped, 2 xfailed, 2771 warnings in 1828.84s (0:30:28)
+== rest
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+350 passed, 2 skipped, 381 warnings in 1334.26s (0:22:14)
+== coherence
+     comprend pas le francais, il rapproche un mot et un nombre.
+================================================================================================
+== claude_md
+Zero ici ne veut PAS dire zero contradiction : ce script ne juge aucune phrase.
+==============================================================================
+== docs
+Zero ici ne veut PAS dire zero contradiction : ce script ne juge aucune phrase.
+==================================================================================
+== c1_diff
+strat.turning                   180          0         -            -
+
+C1 TENU : 9092 tableaux, tous identiques au bit

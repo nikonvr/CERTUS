@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Thin-layer cleaning in gradual evolution (2026-10-29 15:20, GRAD_CLEAN): the seed test showed needles inflating the
+# Thin-layer cleaning in gradual evolution (2026-10-29 17:02, GRAD_CLEAN): the seed test showed needles inflating the
 # designs (124-155 layers against 101 for Trubetskov 2020, layers of 0.5 nm). One change (cleaning), 7 trajectories:
 # the N89 seed in deep 2 with thresholds 2/5/10 nm and deep 3 at 5 nm, the N79 seed at 5 nm, our own race starts at 5 nm.
 cd "$(dirname "$0")" || exit 1

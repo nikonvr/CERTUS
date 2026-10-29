@@ -53,6 +53,12 @@ POOL = None  # created in main() when WORKERS > 1
 CLEAN = float(os.environ.get("GRAD_CLEAN", "0"))
 if CLEAN > 0:
     TAG += f"_clean{CLEAN:g}"
+#: env GRAD_GROW=1 (2026-10-29): evolution step of Trubetskov 2020 (one layer thickened to the next minimum of the
+#: one-parameter MF, see grow()) instead of the stretch / outer layer at TOT + DTOT; 0 = off.
+GROW = os.environ.get("GRAD_GROW", "0") == "1"
+GROW_STEP, GROW_MAX = 2.0, 400.0  # nm optical: scan step and largest thickness increase of one layer
+if GROW:
+    TAG += "_grow"
 
 
 def p_function(seq: str, d: np.ndarray):
@@ -144,6 +150,27 @@ def needles(seq: str, d: np.ndarray, r: float, deadline: float, tot: float):
     return seq, d, r
 
 
+def grow(seq: str, d: np.ndarray):
+    """Evolution step of Trubetskov, AO 59, A75 (2020), Sec. 2: the thickness of each layer alone is increased until
+    the next local minimum of the one-parameter MF; the DEEP candidates with the lowest MF (at least 1) are returned
+    as (seq, d, TOT), each at its own new TOT (the TOT step is not fixed). Empty when no layer has such a minimum."""
+    out = []
+    for i, m in enumerate(seq):
+        steps = np.arange(GROW_STEP, GROW_MAX + GROW_STEP / 2, GROW_STEP) / s.N_IDX[m]
+        mf = []
+        for dz in steps:
+            x = d.copy()
+            x[i] += dz
+            mf.append(s.rmse(seq, x))
+            # the first local minimum along the layer thickness (MF has risen, then turns up again)
+            if len(mf) >= 3 and mf[-2] < mf[-3] and mf[-2] <= mf[-1]:
+                x[i] -= GROW_STEP / s.N_IDX[m]
+                out.append((mf[-2], seq, x))
+                break
+    out.sort(key=lambda t: t[0])
+    return [(q, x, s.total_ot(q, x)) for _r, q, x in out[: max(1, DEEP)]]
+
+
 def clean(seq: str, d: np.ndarray, r: float, deadline: float, tot: float):
     """Remove thin layers (all under CLEAN at once, then the thinnest alone), re-settle and re-needle at the same TOT;
     keep the result when MF is not worse. Repeats while it helps."""
@@ -203,6 +230,19 @@ def main() -> None:
     seq, d, r = clean(seq, d, r, deadline, tot)
     record(seq, d, r)
     while time.time() < deadline and tot < tot_max:
+        if GROW:
+            best = None
+            for s2, d2, t2 in grow(seq, d):
+                s2, d2, r2 = settle(s2, d2, t2)
+                s2, d2, r2 = needles(s2, d2, r2, deadline, t2)
+                if best is None or r2 < best[2]:
+                    best = (s2, d2, r2, t2)
+            if best is None:
+                break
+            tot = best[3]
+            seq, d, r = clean(*best[:3], deadline, tot)
+            record(seq, d, r)
+            continue
         tot0, tot = tot, tot + DTOT
         starts = [(seq, d * (tot / tot0))]  # stretch only
         top = s.other(seq[-1])

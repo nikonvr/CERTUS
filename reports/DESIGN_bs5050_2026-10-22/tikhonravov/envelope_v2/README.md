@@ -91,6 +91,14 @@ Chiffres et preuves : `AUDIT_2026-10-28.md` (sections 1, 2 et 7) et `campaign.lo
   700 nm), 2a = 100 nm, |R − 0,5| = 0,3 à s = 50 nm, arrondie à 4 décimales (`cissoid_target_b1.csv`). Ajustée sur le
   tracé vectoriel de la Fig. B.1 de l'énoncé, elle redonne la MF de leur design d'exemple à 14 chiffres (0,89721320429466).
   À battre : 0,0139 (Trubetskov, vainqueur du concours, 3 diélectriques et 2 métaux) et 0,0238 (Trubetskov 2020).
+  Article des résultats (Kruschwitz et al., AO 56, C151, 2017, Table 10) : designs **non publiés**, seulement MF,
+  couches, matériaux, épaisseur. Trubetskov 0,0139, 50 couches, 3D/2M, 8 056 nm physiques ; Bolshakov 0,0294
+  (50, 3/2, 5 688 nm) ; Sato 0,0369 (50, 6/2) ; Southwell 0,0397 (49, 2/2). Tout diélectrique : 0,267–0,355
+  (Pinkerton 0,2672, 50 couches, 2 matériaux). « 3/2 » compte des **matériaux** (3 diélectriques, 2 métaux
+  différents), pas des couches : le nombre de couches métalliques n'est pas publié. Fig. 12 : |R − R'| du gagnant
+  ≤ 6e-4, pics aux points anguleux (450, 550, 650 nm), les points les plus durs selon le jury ; « aucune similitude
+  de couches ni d'épaisseur entre les trois premiers ». Leur remarque : les métaux rendent les transitions plus
+  raides et suppriment l'ondulation rapide entre les points anguleux (réf. Turner 1950, Gamble et Lissberger 1989).
 - **Miroir chaud** (2012, Sec. 2) : T = 100 % à 400–690 nm, 0 % à 710–1200 nm, pas de 2 nm (392 points), 40 couches
   d'épaisseur optique 100–350 nm : design A 0,865, design B 0,913.
 

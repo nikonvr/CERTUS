@@ -47,6 +47,10 @@ STEP, DROP, FLOOR, N_MAX = 2.0, 0.05, 3.0, 50
 HI_METAL, HI_DIEL = 100.0, 3000.0  # a metal above 100 nm is opaque; bounds keep the kernel finite
 K = int(os.environ.get("CISSOID_K", "7"))
 WORKERS = int(os.environ.get("CISSOID_WORKERS", "7"))
+#: 2026-10-29 (owner's strategy, `cissoid_grow.py`): materials tried as needles, and the most metal layers a design may
+#: hold (None = no cap). Defaults keep the 2026-10-28 behaviour: every material, no cap.
+NEEDLE_MATS = list(MATS)
+MAX_METALS: int | None = None
 
 
 def res_jac(mats: list[str], d: np.ndarray):
@@ -105,7 +109,10 @@ def polish(task):
 def p_function(mats, d):
     """[(dMF^2/d(delta), material, layer, z)] for zero layers of every material, z from the substrate-side face."""
     out = []
-    for cand in MATS:
+    metals = sum(np.iscomplex(MATS[m]) for m in mats)
+    for cand in NEEDLE_MATS:
+        if MAX_METALS is not None and np.iscomplex(MATS[cand]) and metals >= MAX_METALS:
+            continue
         m2, d2, where = [], [], []
         for i, m in enumerate(mats):
             zs = [0.0, *list(np.arange(STEP / 2, d[i], STEP))] if m != cand else [0.0]

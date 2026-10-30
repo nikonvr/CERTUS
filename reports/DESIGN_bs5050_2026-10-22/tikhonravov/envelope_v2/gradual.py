@@ -59,6 +59,11 @@ GROW = os.environ.get("GRAD_GROW", "0") == "1"
 GROW_STEP, GROW_MAX = 2.0, 400.0  # nm optical: scan step and largest thickness increase of one layer
 if GROW:
     TAG += "_grow"
+#: env GRAD_FREE=1 (2026-10-29, with GRAD_GROW): refinements leave the TOT free, as in a classical refinement; the TOT
+#: of each step is that of the refined design. 0 = off (TOT imposed by an extra residual row).
+FREE = os.environ.get("GRAD_FREE", "0") == "1"
+if FREE:
+    TAG += "_free"
 
 
 def p_function(seq: str, d: np.ndarray):
@@ -103,7 +108,7 @@ def polish_tot(seq: str, d: np.ndarray, tot: float, max_nfev: int = 300):
         if key not in memo:
             memo.clear()
             r, j, _c = st.res_jac(x)
-            memo[key] = (np.append(r, TOT_W * (n @ x - tot) / tot), np.vstack([j, TOT_W * n / tot]))
+            memo[key] = (r, j) if FREE else (np.append(r, TOT_W * (n @ x - tot) / tot), np.vstack([j, TOT_W * n / tot]))
         return memo[key]
 
     sol = s.least_squares(lambda x: both(x)[0], np.maximum(d, 0.0), jac=lambda x: both(x)[1], bounds=(0.0, np.inf),
@@ -236,7 +241,7 @@ def main() -> None:
                 s2, d2, r2 = settle(s2, d2, t2)
                 s2, d2, r2 = needles(s2, d2, r2, deadline, t2)
                 if best is None or r2 < best[2]:
-                    best = (s2, d2, r2, t2)
+                    best = (s2, d2, r2, s.total_ot(s2, d2) if FREE else t2)
             if best is None:
                 break
             tot = best[3]

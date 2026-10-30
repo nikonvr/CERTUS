@@ -845,6 +845,13 @@ class LayoutManager:
         )
         self.ui.plot_tabs.addTab(self.ui.plot_rmse_layers, "RMSE vs layers")
 
+        # Distance between two designs and RMSE barrier between them (certus/ui/certus_design_ui_compare.py)
+        from certus.ui.certus_design_ui_compare import build_compare_tab, refresh_on_tab_shown
+
+        compare_tab = build_compare_tab(self.ui)
+        self.ui.plot_tabs.addTab(compare_tab, "Compare")
+        self.ui.plot_tabs.currentChanged.connect(functools.partial(refresh_on_tab_shown, self.ui, compare_tab))
+
         # "Why CERTUS?" marketing content moved out of scientific plot tabs (Option A)
 
         v_lay.addWidget(plot_container)

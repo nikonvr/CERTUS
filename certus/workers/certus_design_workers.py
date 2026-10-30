@@ -545,6 +545,49 @@ class SpectralMCWorker(QObject):
             self.signals.error.emit(traceback.format_exc())
 
 
+class BarrierWorker(QObject):
+    """Worker for the RMSE barrier between two designs along their aligned path (``certus_design_landscape``).
+
+    ``cfg``: mats, wls, tgts, the superset ``materials``, ``ep_a`` and ``ep_b`` (physical nm), ``images`` and
+    ``iterations``. Front face at normal incidence, DESIGN's cost. The result dict holds the fields of ``Barrier``.
+    """
+
+    def __init__(self, cfg: dict[str, Any]) -> None:
+        super().__init__()
+        self.cfg = dict(cfg)
+        self.signals = WorkerSignals()
+
+    def isInterruptionRequested(self) -> bool:
+        return QThread.currentThread().isInterruptionRequested()
+
+    def run(self) -> None:
+        from certus.core.certus_design_landscape import design_residual_jacobian, mf_barrier
+
+        try:
+            cfg = self.cfg
+            rj = design_residual_jacobian(cfg["mats"], cfg["materials"], np.asarray(cfg["wls"], dtype=np.float64),
+                                          cfg["tgts"])
+            iterations = int(cfg.get("iterations", 3000))
+
+            def progress(done: int, total: int) -> None:
+                if done % max(1, total // 50) == 0:
+                    self.signals.progress_snapshot.emit(build_progress_snapshot(
+                        message=f"Barrier: string iteration {done}/{total}", display_ratio=done / total,
+                        progress_ratio=done / total, eta_seconds=None, confidence=0.25, state=StepState.RUNNING,
+                        module='DESIGN', phase='BARRIER', metadata={'iteration': done, 'total_iterations': total}))
+
+            b = mf_barrier(rj, np.asarray(cfg["ep_a"], dtype=np.float64), np.asarray(cfg["ep_b"], dtype=np.float64),
+                           images=int(cfg.get("images", 33)), iterations=iterations, progress=progress,
+                           stop=self.isInterruptionRequested)
+            self.signals.finished.emit({"ok": True, "rmse_a": b.rmse_a, "rmse_b": b.rmse_b,
+                                        "rmse_straight": b.rmse_straight, "rmse_string": b.rmse_string,
+                                        "barrier": b.barrier, "total_variation": b.total_variation,
+                                        "local_minima": b.local_minima, "iterations": b.iterations})
+        except (*NUMERICAL_FAULT_EXCEPTIONS, KeyError, StopIteration) as e:
+            logging.error(f'Barrier worker error: {e}')
+            self.signals.error.emit(traceback.format_exc())
+
+
 class NeedleWorker(QObject):
     """Worker for layer insertion (Needle algorithm)"""
 

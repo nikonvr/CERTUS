@@ -54,16 +54,29 @@ def removal(mats, d, pool):
     return min(pool.map(co.polish, tasks), key=lambda t: t[2])
 
 
+def _p_one(task):
+    """P-function of one material, in a worker (the main process stays free; same list as `co.p_function`)."""
+    mats, d, cand = task
+    keep = co.NEEDLE_MATS
+    co.NEEDLE_MATS = [cand]
+    try:
+        return co.p_function(mats, d)
+    finally:
+        co.NEEDLE_MATS = keep
+
+
 def cycle(mats, d, pool):
     """One needle-removal cycle; returns the best feasible design it reached (may be worse than the input)."""
-    p = sorted(co.p_function(mats, d))
-    # a needle inside a metal layer splits it in two metal layers (2026-10-30: an "ANN" design under MAX_METALS 2)
-    full = co.MAX_METALS is not None and sum(map(is_metal, mats)) >= co.MAX_METALS
+    p = sorted(g for part in pool.map(_p_one, [(mats, d, c) for c in co.NEEDLE_MATS]) for g in part)
+    # a needle inside a metal layer splits it in two metal layers (2026-10-30: "ANN" under MAX_METALS 2, "NNNUNAN"
+    # under 6): count the metal layers after the insertion
+    base = sum(map(is_metal, mats))
     cands, used = [], set()
     for g, cand, i, z in p:
         if g >= 0 or len(cands) >= co.K:
             break
-        if full and i < len(mats) and is_metal(mats[i]) and z > 0:
+        split = z > 0 and i < len(mats) and is_metal(mats[i]) and mats[i] != cand
+        if co.MAX_METALS is not None and base + is_metal(cand) + split > co.MAX_METALS:
             continue
         if (cand, i) not in used:
             used.add((cand, i))

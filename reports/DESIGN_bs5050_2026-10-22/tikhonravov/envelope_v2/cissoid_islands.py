@@ -36,6 +36,7 @@ SEED = int(os.environ.get("CISSOID_SEED", "1"))
 STALL = int(os.environ.get("CISSOID_STALL", "60"))
 MIGRATE = int(os.environ.get("CISSOID_MIGRATE", "25"))
 DEEP_EVERY = int(os.environ.get("CISSOID_DEEP_EVERY", "10"))
+DEEP_CYCLES = int(os.environ.get("CISSOID_DEEP_CYCLES", "3"))  # most needle-removal cycles per deep round
 TAG = os.environ.get("CISSOID_TAG", "")
 OUT = "cissoid_islands" + (f"_{TAG}" if TAG else "")
 is_metal = fx.is_metal
@@ -73,6 +74,13 @@ def main() -> None:
     for k in range(ISLANDS):
         islands.append(new_island())
         log(f"island {k} epoch 0: best {desc(islands[k]['pop'][0])}")
+    # env CISSOID_SEEDS: csv specs as in `cissoid_fixedN.py` ("file.csv:k"), polished into island 0 (worst replaced)
+    for spec in filter(None, os.environ.get("CISSOID_SEEDS", "").split(",")):
+        seed = mm.polish_feasible(mm.tidy(*fx.start_design(spec), rng))
+        pop0 = islands[0]["pop"]
+        pop0[-1] = seed
+        pop0.sort(key=lambda t: t[2])
+        log(f"seed {spec} into island 0: {desc(seed)}")
 
     def archive_add(k):
         m, x, r = islands[k]["pop"][0]
@@ -117,11 +125,15 @@ def main() -> None:
                 pop.sort(key=lambda t: t[2])
         if isl["gen"] % DEEP_EVERY == 0 and pop[0][2] != isl["deep_done"]:
             m, x, r = pop[0]
-            for _ in range(3):
+            t0, n_cyc = time.time(), 0
+            for _ in range(DEEP_CYCLES):
                 got = fx.cycle(m, x, pool)
+                n_cyc += 1
                 if got is None or got[2] >= r * (1 - 1e-4):
                     break
                 m, x, r = got
+            log(f"island {k} gen {isl['gen']}: deep {pop[0][2]:.5f} -> {r:.5f} ({n_cyc} cycles, "
+                f"{time.time() - t0:.0f} s, metals {metals_of(m)})")
             isl["deep_done"] = r
             if r < pop[0][2]:
                 pop[0] = (m, x, r)

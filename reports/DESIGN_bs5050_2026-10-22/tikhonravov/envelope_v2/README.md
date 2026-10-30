@@ -20,6 +20,7 @@ Juge : oracle indépendant `tests/oracle/tmm_reference.py` ; résidus et jacobie
 | `diag5050.py` | pourquoi l'évolution graduelle perd sur le 50/50 (H1 axes, H2 convergence, H3 reprise) |
 | `constrained.py` | N fixé, épaisseurs optiques bornées à 100–350 nm : trois raies à 51 couches, miroir chaud à 40 couches (2012, Sec. 2), leur procédure stochastique ; `CONSTRAINED_RESUME` (reprise d'un csv) |
 | `cissoid_opt.py` | OIC 2016 B1 (cissoïde), aiguilles sur 9 matériaux dont 3 métaux, nettoyage ≤ 50 couches ≥ 3 nm ; cible `cissoid_target_b1.csv` |
+| `cissoid_memetic.py`, `cissoid_islands.py` | cissoïde : recherche mémétique aux règles du concours (métaux comme gènes), puis la même sur îlots avec redémarrages |
 | `ef2012.py` | EF1–EF10 (Amotchkina 2012) : reproduction de la Table 3, robustesse |
 | `catalog.py`, `ar_robust.py` | antireflet robuste aux erreurs aléatoires d'épaisseur optique (hors bilan de l'article : problèmes trop simples, décision de 👤) |
 | `monotone.py`, `check6401.py` | réparation de RMSE*(N) non monotone ; contrôle sur 6401 points |
@@ -99,6 +100,10 @@ Chiffres et preuves : `AUDIT_2026-10-28.md` (sections 1, 2 et 7) et `campaign.lo
   ≤ 6e-4, pics aux points anguleux (450, 550, 650 nm), les points les plus durs selon le jury ; « aucune similitude
   de couches ni d'épaisseur entre les trois premiers ». Leur remarque : les métaux rendent les transitions plus
   raides et suppriment l'ondulation rapide entre les points anguleux (réf. Turner 1950, Gamble et Lissberger 1989).
+  Nos résultats aux règles du concours (oracle) : croissance puis nettoyage 0,1499 (1 Ni) ; recherche mémétique
+  (F, M, H, pop. 40, 2 h, `cissoid_memetic_fmh_m2_s1.csv`) **0,10087**, 50 couches, Ag + Ni + Ni, 5 160 nm ; la
+  population entière est tombée dans ce bassin dès la génération 440 (meilleur = médiane = pire), d'où les îlots avec
+  redémarrages (`cissoid_islands.py`, campagne 28).
 - **Miroir chaud** (2012, Sec. 2) : T = 100 % à 400–690 nm, 0 % à 710–1200 nm, pas de 2 nm (392 points), 40 couches
   d'épaisseur optique 100–350 nm : design A 0,865, design B 0,913.
 

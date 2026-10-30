@@ -30,7 +30,10 @@ import numpy as np
 
 _DIEL = os.environ.get("CISSOID_DIELECTRICS", "FMH")
 DIELECTRICS = [m for m, n in co.MATS.items() if not np.iscomplex(n) and (_DIEL == "all" or m in _DIEL)]
-METALS = [m for m, n in co.MATS.items() if np.iscomplex(n)]
+# env CISSOID_METALS (letters A Ag, U Au, N Ni), default all three; the owner (2026-10-30): restrict to Au and Ni if
+# the searches confirm them
+_MET = os.environ.get("CISSOID_METALS", "AUN")
+METALS = [m for m, n in co.MATS.items() if np.iscomplex(n) and m in _MET]
 co.NEEDLE_MATS = DIELECTRICS + METALS
 co.MAX_METALS = int(os.environ.get("CISSOID_MAX_METALS", "2"))
 KICK_SIGMA = 0.05
@@ -54,10 +57,14 @@ def removal(mats, d, pool):
 def cycle(mats, d, pool):
     """One needle-removal cycle; returns the best feasible design it reached (may be worse than the input)."""
     p = sorted(co.p_function(mats, d))
+    # a needle inside a metal layer splits it in two metal layers (2026-10-30: an "ANN" design under MAX_METALS 2)
+    full = co.MAX_METALS is not None and sum(map(is_metal, mats)) >= co.MAX_METALS
     cands, used = [], set()
     for g, cand, i, z in p:
         if g >= 0 or len(cands) >= co.K:
             break
+        if full and i < len(mats) and is_metal(mats[i]) and z > 0:
+            continue
         if (cand, i) not in used:
             used.add((cand, i))
             cands.append((cand, i, z))

@@ -103,7 +103,11 @@ Chiffres et preuves : `AUDIT_2026-10-28.md` (sections 1, 2 et 7) et `campaign.lo
   Nos résultats aux règles du concours (oracle) : croissance puis nettoyage 0,1499 (1 Ni) ; recherche mémétique
   (F, M, H, pop. 40, 2 h, `cissoid_memetic_fmh_m2_s1.csv`) **0,10087**, 50 couches, Ag + Ni + Ni, 5 160 nm ; la
   population entière est tombée dans ce bassin dès la génération 440 (meilleur = médiane = pire), d'où les îlots avec
-  redémarrages (`cissoid_islands.py`, campagne 28).
+  redémarrages (`cissoid_islands.py`) : campagne 28 (≤ 6 couches métalliques, 35 min) 0,08521 ; campagne 29 (≤ 12,
+  semée du 0,08521, 3 h, `cissoid_islands_m12_s3.csv`) **0,03212**, 50 couches dont 12 métalliques (Ag, Au, Ni : le
+  plafond), 8 658 nm ; les îlots convergent tous vers ce bassin par migration. Mini-campagnes de 45 min (`mini.sh`) :
+  **0,02407** à l'oracle, 49 couches, Ni, Ag, F, H, M, 2e rang du concours (`cissoid_quintet.csv`) ; chronologie et méthode dans
+  `REPRISE_2026-10-30.md`.
 - **Miroir chaud** (2012, Sec. 2) : T = 100 % à 400–690 nm, 0 % à 710–1200 nm, pas de 2 nm (392 points), 40 couches
   d'épaisseur optique 100–350 nm : design A 0,865, design B 0,913.
 

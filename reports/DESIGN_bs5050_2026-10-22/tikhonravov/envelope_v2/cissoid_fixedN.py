@@ -49,8 +49,18 @@ def feasible(mats, d):
     return co.polish((m2, d2, co.FLOOR))
 
 
+#: env CISSOID_REMOVAL_SCREEN (2026-10-30): > 0 polishes every removal with SCREEN_NFEV evaluations first, and fully only
+#: the CISSOID_REMOVAL_SCREEN best (campaign29: the removal step, twice N + 1 full polishes, took most of a cycle of
+#: 40-70 s); 0 = every removal polished fully, as before
+REMOVAL_SCREEN = int(os.environ.get("CISSOID_REMOVAL_SCREEN", "0"))
+SCREEN_NFEV = 30
+
+
 def removal(mats, d, pool):
     tasks = [(*co.normalize(mats[:i] + mats[i + 1:], np.delete(d, i), 0.0), 0.0) for i in range(len(mats))]
+    if REMOVAL_SCREEN > 0:
+        quick = sorted(pool.map(co.polish, [(*t, SCREEN_NFEV) for t in tasks]), key=lambda t: t[2])
+        tasks = [(m, x, 0.0) for m, x, _r in quick[:REMOVAL_SCREEN]]
     return min(pool.map(co.polish, tasks), key=lambda t: t[2])
 
 
@@ -93,6 +103,32 @@ def cycle(mats, d, pool):
     return min(pool.map(feasible, [m for m, _ in out], [x for _, x in out]), key=lambda t: t[2])
 
 
+#: env CISSOID_OVERSHOOT (2026-10-30, owner: go up to 60-70 layers before cleaning back to 50): layer count reached by
+#: `overshoot`, or several separated by commas, used in turn; 0 = off
+OVERSHOOT = [int(v) for v in os.environ.get("CISSOID_OVERSHOOT", "0").split(",") if int(v)]
+_overshoots = [0]
+
+
+def overshoot(mats, d, pool):
+    """Needle cycles without the layer limit up to the next OVERSHOOT, then the removal step down to N_MAX, then a feasible
+    polish; returns the design reached (it may be worse than the input)."""
+    keep = co.N_MAX
+    top = OVERSHOOT[_overshoots[0] % len(OVERSHOOT)]
+    _overshoots[0] += 1
+    co.N_MAX = top
+    try:
+        while len(mats) < top:
+            got = cycle(mats, d, pool)
+            if got is None or len(got[0]) <= len(mats):
+                break
+            mats, d = got[0], got[1]
+    finally:
+        co.N_MAX = keep
+    while len(mats) > co.N_MAX:
+        mats, d, _r = removal(mats, d, pool)
+    return feasible(mats, d)
+
+
 def kick(mats, d, rng):
     mats, d = list(mats), d.copy()
     kind = rng.integers(3)
@@ -115,7 +151,8 @@ def start_design(spec: str):
         return co.start_design("example")
     name, _, k = spec.partition(":")
     rows = list(csv.DictReader((co.s.HERE / name).open(encoding="utf-8")))
-    rows = sorted((r for r in rows if int(r["layers"]) <= co.N_MAX), key=lambda r: float(r["mf_kernel"]))
+    # a csv of a reduced-grid search (CISSOID_GRID) ranks by its mf_full column, the contest's 301 points
+    rows = sorted((r for r in rows if int(r["layers"]) <= co.N_MAX), key=lambda r: float(r.get("mf_full") or r["mf_kernel"]))
     r = rows[int(k or 0)]
     return r["mats"].split(), np.array([float(v) for v in r["d_nm"].split()])
 

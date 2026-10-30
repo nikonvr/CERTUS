@@ -24,7 +24,9 @@ outputs: cissoid_opt_{start}.csv (every stage), cissoid_opt_{start}.log
 from __future__ import annotations
 
 import csv
+import functools
 import os
+import re
 import sys
 import time
 from concurrent.futures import ProcessPoolExecutor
@@ -43,6 +45,35 @@ W = c.WLS
 TGT = np.loadtxt(s.HERE / "cissoid_target_b1.csv", delimiter=",", skiprows=1)[:, 1]
 SCALE = 1.0 / (0.01 * np.sqrt(len(W)))
 NSUB = np.full(len(W), 1.52 + 0j)
+W_FULL, TGT_FULL, NSUB_FULL, SCALE_FULL = W, TGT, NSUB, SCALE  # the contest's 301 points: the judge
+SCALE_J = SCALE
+
+
+def search_grid(spec: str):
+    """Indices of the 301-point grid kept for the search, and the number of 301-grid points each one stands for.
+
+    env CISSOID_GRID (2026-10-30, owner: search on a reduced, logarithmic grid, then a fine polish on the true grid):
+    "full" (default) or "logKcC", K points uniform in 1/lambda from 400 to 700 nm snapped to the 1 nm grid, plus every
+    point within C nm of the corners 450, 550 and 650 nm (a spline in 1/lambda cannot follow the V of a corner: without
+    them the error reached 300 %). log130c8 keeps 159 points: on 15 designs of campaigns 28-29 its MF is within 0.5 %
+    (median, 1.6 % max) of the 301-point MF, and the record repolished on it gives 0.03244 on the full grid (0.03212).
+    """
+    if spec == "full":
+        return np.arange(len(W_FULL)), np.ones(len(W_FULL))
+    k, cn = (int(v) for v in re.fullmatch(r"log(\d+)c(\d+)", spec).groups())
+    x = 1.0 / np.linspace(1.0 / 700.0, 1.0 / 400.0, k)
+    corners = np.concatenate([np.arange(cc - cn, cc + cn + 1.0) for cc in (450.0, 550.0, 650.0)])
+    sel = np.unique(np.clip(np.round(np.concatenate([x, corners]) - W_FULL[0]).astype(int), 0, len(W_FULL) - 1))
+    owner = sel[np.argmin(np.abs(sel[None, :] - np.arange(len(W_FULL))[:, None]), axis=1)]
+    return sel, np.array([np.sum(owner == j) for j in sel], dtype=float)
+
+
+GRID = os.environ.get("CISSOID_GRID", "full")
+if GRID != "full":
+    _sel, _weight = search_grid(GRID)
+    W, TGT, NSUB = W_FULL[_sel], TGT_FULL[_sel], NSUB_FULL[_sel]
+    SCALE = np.sqrt(_weight / len(W_FULL)) / 0.01
+    SCALE_J = SCALE[:, None]
 STEP, DROP, FLOOR, N_MAX = 2.0, 0.05, 3.0, 50
 HI_METAL, HI_DIEL = 100.0, 3000.0  # a metal above 100 nm is opaque; bounds keep the kernel finite
 K = int(os.environ.get("CISSOID_K", "7"))
@@ -56,17 +87,28 @@ MAX_METALS: int | None = None
 def res_jac(mats: list[str], d: np.ndarray):
     nm = np.column_stack([np.full(len(W), MATS[m], dtype=complex) for m in mats])
     r, _t, dr, _dt = compute_oblique_rt_and_grads_analytic(d, nm, NSUB, W, np.arange(len(d)), 0.0, True)
-    return (r - TGT) * SCALE, dr * SCALE
+    return (r - TGT) * SCALE, dr * SCALE_J
+
+
+def res_jac_full(mats: list[str], d: np.ndarray):
+    """`res_jac` on the contest's 301 points, whatever CISSOID_GRID."""
+    nm = np.column_stack([np.full(len(W_FULL), MATS[m], dtype=complex) for m in mats])
+    r, _t, dr, _dt = compute_oblique_rt_and_grads_analytic(d, nm, NSUB_FULL, W_FULL, np.arange(len(d)), 0.0, True)
+    return (r - TGT_FULL) * SCALE_FULL, dr * SCALE_FULL
 
 
 def mf(mats, d) -> float:
     return float(np.linalg.norm(res_jac(mats, d)[0]))
 
 
+def mf_full(mats, d) -> float:
+    return float(np.linalg.norm(res_jac_full(mats, d)[0]))
+
+
 def oracle_mf(mats, d) -> float:
     n = [complex(MATS[m]) for m in mats]
-    r = np.array([oracle.rt_stack(w, n, np.asarray(d), complex(1.0), complex(1.52))[0] for w in W])
-    return float(np.sqrt(np.mean(((r - TGT) / 0.01) ** 2)))
+    r = np.array([oracle.rt_stack(w, n, np.asarray(d), complex(1.0), complex(1.52))[0] for w in W_FULL])
+    return float(np.sqrt(np.mean(((r - TGT_FULL) / 0.01) ** 2)))
 
 
 def normalize(mats: list[str], d: np.ndarray, drop: float):
@@ -82,15 +124,19 @@ def normalize(mats: list[str], d: np.ndarray, drop: float):
     return m2, np.array(d2)
 
 
-def polish(task):
-    mats, d, lo = task
+def polish(task, rj=None):
+    """task (mats, d, lo) or (mats, d, lo, max_nfev); max_nfev defaults to 300. ``rj`` (default `res_jac`, the search
+    grid) gives the residuals; `polish_full` polishes on the contest's 301 points."""
+    mats, d, lo, *rest = task
+    max_nfev = rest[0] if rest else 300
+    res = rj or res_jac
     memo: dict = {}
 
     def both(x):
         key = x.tobytes()
         if key not in memo:
             memo.clear()
-            memo[key] = res_jac(mats, x)
+            memo[key] = res(mats, x)
             r, jac = memo[key]
             if not (np.isfinite(r).all() and np.isfinite(jac).all()):
                 print(f"non-finite kernel output: {''.join(mats)} {np.round(x, 3).tolist()}", file=sys.stderr, flush=True)
@@ -99,11 +145,14 @@ def polish(task):
 
     hi = np.array([HI_METAL if np.iscomplex(MATS[m]) else HI_DIEL for m in mats])
     sol = least_squares(lambda x: both(x)[0], np.clip(d, lo, hi), jac=lambda x: both(x)[1], bounds=(lo, hi),
-                        method="trf", x_scale="jac", ftol=1e-15, xtol=1e-15, gtol=1e-15, max_nfev=300)
+                        method="trf", x_scale="jac", ftol=1e-15, xtol=1e-15, gtol=1e-15, max_nfev=max_nfev)
     x = np.maximum(sol.x, lo)
     if lo < FLOOR:
         mats, x = normalize(mats, x, DROP)
-    return mats, x, mf(mats, x)
+    return mats, x, (mf(mats, x) if rj is None else float(np.linalg.norm(rj(mats, x)[0])))
+
+
+polish_full = functools.partial(polish, rj=res_jac_full)
 
 
 def p_function(mats, d):

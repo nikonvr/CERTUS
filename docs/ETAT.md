@@ -13,6 +13,10 @@
 > ([`ETAT_actions.md`](ETAT_actions.md)), acquis ([`ETAT_acquis.md`](ETAT_acquis.md)), registre des audits ([`AUDITS.md`](AUDITS.md),
 > `grep -n "ALG-02" docs/AUDITS.md`), preuves dans `reports/` (le `bilan.md` d'un dossier).
 
+**Reprise en cours (2026-10-30)** : changement d'ordinateur ; lire d'abord
+[`REPRISE_2026-10-30.md`](../reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/REPRISE_2026-10-30.md). Cissoïde OIC 2016 :
+0,02407 (oracle), quintet Ni, Ag, F, H, M, 49 couches ; à battre 0,0139. Portage DESIGN non commité, validation à refaire.
+
 **Branche de travail** : `master`, locale, non poussée. Depuis le 2026-10-25 elle réunit `gemini/2026-10-21` (supprimée) et `claude/2026-10-22`,
 séparées du 2026-10-21 au 2026-10-25 ([audit](../reports/AUDIT_travaux_2026-10-21_25/bilan.md)). Le dossier est en *sparse-checkout* : les 38
 artefacts bruts `reports/**/blocs_vs_plantage_*.json` (427 Mo) sont versionnés mais absents du disque ; `git sparse-checkout disable` les restaure.
@@ -161,6 +165,9 @@ dépendant de T ou de λ, grenaille, bruit multiplicatif ou corrélé. Seul un r
 - Publication : rien à purger dans l'historique ; les œuvres de tiers vont dans les avis de tiers ; `certus_re` sous CC BY 4.0.
 - Toute fusion dans `master` se redemande à 👤 ; le dépôt reste dans Google Drive ; sauvegarde des commits locaux en bundle hors dépôt.
 - Sobriété de lecture (2026-10-18) : plafonds dans `tests/unit/test_the_ai_entry_points_stay_small.py`, à baisser librement.
+- Comparaisons à Tikhonravov et Trubetskov (2026-10-30) : le miroir dispersif d'une octave de Trubetskov 2020 ne sera pas
+  traité ; le miroir chaud et les antireflets sortent du champ de l'article ; la cissoïde OIC 2016 doit battre le
+  vainqueur du concours (0,0139), pas seulement 0,0238.
 
 ## 4. Défauts ouverts
 

@@ -1,0 +1,67 @@
+== ruff
+All checks passed!
+== oracle
+........................................................................ [ 98%]
+.............                                                            [100%]
+1165 passed in 21.60s
+== unit
+tests/unit/test_strat_refactoring_guardrails.py: 2 warnings
+tests/unit/test_strat_refuses_a_material_missing_from_the_database.py: 15 warnings
+tests/unit/test_strat_settings_nothing_reads.py: 95 warnings
+tests/unit/test_strat_several_test_glasses_in_the_window.py: 65 warnings
+tests/unit/test_strat_ui_actions_find_their_names.py: 15 warnings
+tests/unit/test_the_tours_reach_every_application.py: 5 warnings
+  C:\Users\Fabien\Google Drive\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\certus\utils\certus_strat_db.py:234: Pandas4Warning: The inplace keyword in DataFrame.rename is deprecated and will be removed in a future version (PDEP-8).
+  See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
+    df.rename(columns=rename_map, inplace=True)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/unit/test_ci_lambda_connect_audit.py::test_no_new_signal_is_connected_to_a_lambda
+FAILED tests/unit/test_ci_lambda_connect_audit.py::test_the_ci_ceiling_is_the_real_count
+2 failed, 5745 passed, 8 skipped, 1 xfailed, 3950 warnings in 3017.80s (0:50:17)
+== ui
+  See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
+    df.rename(columns=rename_map, inplace=True)
+
+tests/ui/test_ux_every_drop_handler_reports_what_happened.py::test_a_loaded_file_is_announced_as_loaded[INDEX SPLINE data]
+  C:\Users\Fabien\Google Drive\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\certus\spline\certus_index_spline_core.py:1217: Pandas4Warning: The inplace keyword in DataFrame.rename is deprecated and will be removed in a future version (PDEP-8).
+  See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
+    out.rename(columns={lam_c: "lambda"}, inplace=True)
+
+tests/ui/test_ux_every_drop_handler_reports_what_happened.py::test_a_loaded_file_is_announced_as_loaded[INDEX SPLINE data]
+  C:\Users\Fabien\Google Drive\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\certus\spline\certus_index_spline_core.py:1222: Pandas4Warning: The inplace keyword in DataFrame.rename is deprecated and will be removed in a future version (PDEP-8).
+  See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
+    out.rename(columns={t_c: "T"}, inplace=True)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1349 passed, 12 skipped, 2 xfailed, 2771 warnings in 1881.79s (0:31:21)
+== rest
+  See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
+    out.rename(columns={lam_c: "lambda"}, inplace=True)
+
+tests/headless/test_spline.py::test_spline_headless
+tests/integration/test_example_pipelines.py::test_index_spline_xlsx_loads_transmission
+tests/integration/test_example_pipelines.py::test_index_spline_total_optimization_converges
+tests/integration/test_tsio2_1700_spline.py::test_tsio2_1700_lambda_window_and_mesh
+tests/integration/test_tsio2_1700_spline.py::test_tsio2_1700_material_preset_is_sio2
+tests/integration/test_tsio2_1700_spline.py::test_tsio2_1700_headless_best_rmse_order_2e_minus_3
+  C:\Users\Fabien\Google Drive\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\certus\spline\certus_index_spline_core.py:1222: Pandas4Warning: The inplace keyword in DataFrame.rename is deprecated and will be removed in a future version (PDEP-8).
+  See https://pandas.pydata.org/docs/dev/whatsnew/v3.1.0.html#deprecation-inplace for more details.
+    out.rename(columns={t_c: "T"}, inplace=True)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+350 passed, 2 skipped, 382 warnings in 1208.29s (0:20:08)
+== coherence_md
+  0 point(s) a instruire.
+  ⚠️ Un signalement n'est PAS une erreur : c'est une phrase a LIRE. L'outil ne
+     comprend pas le francais, il rapproche un mot et un nombre.
+================================================================================================
+== check_claude_md
+CONTRADICTIONS MECANIQUES : 0
+Zero ici ne veut PAS dire zero contradiction : ce script ne juge aucune phrase.
+==============================================================================
+== check_docs
+DEFAUTS MECANIQUES : 0
+Zero ici ne veut PAS dire zero contradiction : ce script ne juge aucune phrase.
+==================================================================================

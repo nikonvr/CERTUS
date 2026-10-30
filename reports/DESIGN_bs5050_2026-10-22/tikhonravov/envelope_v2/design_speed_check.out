@@ -1,0 +1,5 @@
+Numba threads available: 8; 300 calls per caller; 7 parallel callers
+A one caller, 8 threads: 193 calls/s
+B one caller, 1 thread: 120 calls/s
+C 7 callers, 1 thread(s) each: 313 calls/s
+D 7 callers, 8 thread(s) each: 319 calls/s

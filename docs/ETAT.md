@@ -31,9 +31,10 @@ Comparaisons aux cas publiés de Tikhonravov et Trubetskov (50/50, trois raies, 
 cissoïde OIC 2016 B1) : [README](../reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/README.md) et
 [audit du 2026-10-28](../reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/AUDIT_2026-10-28.md). Bilan au 2026-10-29
 (audit, section 7) : battus sur le 50/50 et les 51 couches (0,4597 contre 0,464) ; égalité sur le miroir chaud ;
-perdu sur le trois raies libre de 2020 (0,0145 depuis un germe de leur design, ≈ 0,05 depuis les nôtres, contre 0,0128) et la
-cissoïde OIC 2016 (0,182 contre 0,0238). Cause probable, en test : leur pas d'évolution graduelle diffère du nôtre ; enseignements de
-méthode dans le README d'`envelope_v2`. Calcul en parallèle :
+perdu sur le trois raies libre de 2020 (0,0145 depuis un germe de leur design ; depuis le substrat nu, avec leur pas
+d'évolution graduelle et le nettoyage à 2 nm, 0,0193 à 14 480 nm contre ≈ 0,05 avec notre ancien pas ; eux 0,0128) et la
+cissoïde OIC 2016 (0,182 contre 0,0238). Onglet « Compare » de DESIGN (distance et barrière entre deux designs) commité
+le 2026-10-30 (`02b25ed7`). Enseignements de méthode dans le README d'`envelope_v2`. Calcul en parallèle :
 `OPENBLAS_NUM_THREADS=1` par processus, sinon les fils OpenBLAS saturent les cœurs.
 
 **Bonne Mère, 90 couches sur silice** : plan à déposer, fait à la main sous les règles de 👤 : 15 Rate, SEEL 0,2608 nm au holdout.

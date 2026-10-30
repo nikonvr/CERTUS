@@ -1,0 +1,3 @@
+alignment 0.005 s, cost 1865.9 nm (20.3 % TOT), superset N 55
+MF (100 x RMSE): A 0.4597 B 0.4646; straight max 35.6288; string max 29.5694; total variation 89.9804; local minima 26; 12000 iterations in 223 s
+study (barrier_best_D8_12k.out): A 0.4597 B 0.4646; straight max 35.6288; string max 29.5694; total variation 89.9804; local minima 26

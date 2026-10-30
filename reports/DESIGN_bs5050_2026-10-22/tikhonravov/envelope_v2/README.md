@@ -64,7 +64,9 @@ Chiffres et preuves : `AUDIT_2026-10-28.md` (sections 1, 2 et 7) et `campaign.lo
 2. **Leur pas d'évolution graduelle n'est pas le nôtre.** Trubetskov 2020 (Sec. 2) épaissit **une couche** jusqu'au
    minimum suivant de la MF à un paramètre et garde la moins mauvaise ; le nôtre étirait tout le design ou ajoutait
    une couche extérieure à TOT + 100 nm. Avec leur pas (`GRAD_GROW`), nos points tombent sur les leurs (3 802 nm,
-   6,293 contre 3 804 nm, 6,298 dans leur Fig. 5) ; verdict au-delà de 8 800 nm en cours.
+   6,293 contre 3 804 nm, 6,298 dans leur Fig. 5). Avec le nettoyage à 2 nm, depuis le substrat nu : **0,0193** à
+   14 480 nm, 121 couches (deep 2), contre ≈ 0,054 avec notre ancien pas ; eux 0,0128 (101 couches). Laisser la TOT
+   libre pendant les raffinements (`GRAD_FREE`) est pire partout : N triple (345 couches) et la MF ne descend plus.
 3. **Pas de design de départ chez eux.** 2012 et 2020 partent du substrat nu ; les cavités (couches proches de la
    demi-onde dans un empilement quasi quart d'onde à 550 nm) apparaissent pendant l'évolution. Seules les couches de
    moins de 5 nm sont retirées à la fin (2020) ; une couche fine retirée prend l'indice de sa voisine, TOT inchangée (2007).

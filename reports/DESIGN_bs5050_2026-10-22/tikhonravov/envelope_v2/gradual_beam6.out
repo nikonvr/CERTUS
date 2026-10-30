@@ -1,0 +1,37 @@
+Traceback (most recent call last):
+  File "C:\Users\Fabien\Google Drive\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\reports\DESIGN_bs5050_2026-10-22\tikhonravov\envelope_v2\gradual.py", line 205, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\Fabien\Google Drive\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\reports\DESIGN_bs5050_2026-10-22\tikhonravov\envelope_v2\gradual.py", line 188, in main
+    s2, d2, r2 = needles(s2, d2, r2, deadline, tot)
+                 ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Fabien\Google Drive\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\reports\DESIGN_bs5050_2026-10-22\tikhonravov\envelope_v2\gradual.py", line 133, in needles
+    for s2, d2, r2 in (POOL.map(settle_task, tasks) if POOL else map(settle_task, tasks)):
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Fabien\Google Drive\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\reports\DESIGN_bs5050_2026-10-22\tikhonravov\envelope_v2\gradual.py", line 117, in settle_task
+    return settle(*task)
+  File "C:\Users\Fabien\Google Drive\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\reports\DESIGN_bs5050_2026-10-22\tikhonravov\envelope_v2\gradual.py", line 107, in settle
+    d, r = polish_tot(seq, d, tot)
+           ~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Fabien\Google Drive\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\reports\DESIGN_bs5050_2026-10-22\tikhonravov\envelope_v2\gradual.py", line 98, in polish_tot
+    sol = s.least_squares(lambda x: both(x)[0], np.maximum(d, 0.0), jac=lambda x: both(x)[1], bounds=(0.0, np.inf),
+                          method="trf", x_scale="jac", ftol=1e-15, xtol=1e-15, gtol=1e-15, max_nfev=max_nfev)
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\_lib\_util.py", line 662, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\optimize\_lsq\least_squares.py", line 1019, in least_squares
+    result = trf(vector_fun.fun, vector_fun.jac, x0, f0, J0, lb, ub, ftol, xtol,
+                 gtol, max_nfev, x_scale, loss_function, tr_solver,
+                 tr_options.copy(), verbose, callback=callback_wrapped)
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\optimize\_lsq\trf.py", line 124, in trf
+    return trf_bounds(
+        fun, jac, x0, f0, J0, lb, ub, ftol, xtol, gtol, max_nfev, x_scale,
+        loss_function, tr_solver, tr_options, verbose, callback=callback)
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\optimize\_lsq\trf.py", line 303, in trf_bounds
+    U, s, V = svd(J_augmented, full_matrices=False)
+              ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\linalg\_decomp_svd.py", line 207, in svd
+    _format_emit_errors_warnings(err_lst, lapack_driver)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\linalg\_decomp_svd.py", line 26, in _format_emit_errors_warnings
+    raise LinAlgError(f"SVD did not converge for slice = {num}.")
+numpy.linalg.LinAlgError: SVD did not converge for slice = 0.

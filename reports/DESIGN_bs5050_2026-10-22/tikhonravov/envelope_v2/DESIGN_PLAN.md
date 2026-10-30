@@ -68,21 +68,57 @@ errors, or alpha_i = sigma_OT / n_i for errors in optical thickness. Cite Tikhon
 - **Worker:** a worker in `certus/workers/` calls it.
 - **Test:** the oracle-computed RMSE of a perturbed design equals the kernel's.
 
+## Status and decision of 2026-10-29
+
+Features 2 and 3 are in DESIGN (`7f849f42`). 👤 decided on 2026-10-29 that DESIGN will integrate all the tools of
+this study, so that the article can say they are in the software: feature 1 (envelope), the gradual evolution below,
+the alignment distance (`design_distance.py`) and the barrier (`barrier.py`). Defaults follow 👤's rule of 2026-10-27:
+a gain measured in DESIGN itself is switched on by default, the switch kept to restore the old path, and the commit says
+that C1 changes on purpose.
+
 ## Candidates from 2026-10-28/29 (to measure before planning)
 
-Measured in `envelope_v2/gradual.py`, not yet in DESIGN; each would be an option, off by default (C1):
+Measured in `envelope_v2/gradual.py`, not yet in DESIGN:
 - gradual evolution at imposed TOT, with Trubetskov 2020's step (one layer thickened to its next one-parameter
-  minimum, `GRAD_GROW`): verdict of `campaign24.sh` pending;
+  minimum, `GRAD_GROW`) with cleaning at 2 nm: 0.0193 at 14 480 nm from the bare substrate (old step ≈ 0.054,
+  Trubetskov 0.0128); the TOT must stay imposed during refinements (`GRAD_FREE`: 2-3 times more layers, worse MF);
 - deep needle search (K candidates refined, best kept): better than classical from the same start;
 - thin-layer cleaning after each convergence (`GRAD_CLEAN`): -25 to -30 % MF and about 20 fewer layers near a good
   basin, no gain from poor starts;
 - one OpenBLAS thread per process with a process pool.
 
+## Compute time: what the study's gains mean for DESIGN (read 2026-10-29, not measured)
+
+- **One OpenBLAS thread per process** (×2.5 on a search step in the study) came from `scipy.optimize.least_squares`
+  (trf: QR/SVD in LAPACK) running in 7 processes. DESIGN's hot loops are Numba kernels (cost and gradient, Gauss-Newton
+  with its own Cholesky, cached needle scan); its memetic polish is L-BFGS-B (BLAS level 1 only). Expected direct gain:
+  small. To measure: oversubscription, since `certus_core` sets `OPENBLAS_NUM_THREADS` and the Numba OpenMP threads both
+  to the core count in one process.
+- **Parallelism over candidates** (the study's real gain: 7 single-threaded processes on independent polishes): DESIGN
+  polishes memetic children one by one and parallelizes inside each kernel call, over wavelengths. On small problems
+  (50/50: 1601 wavelengths, 34 layers) that inner parallelism is likely inefficient. Polishing a batch of children in
+  parallel threads (the kernels are `nogil`) could gain a factor of several; it changes the order of replacements,
+  hence the trajectory: a switch, measured in `design_bench`, default per 👤's rule.
+- **Exact P-function from one Jacobian call** (`gradual.py`): DESIGN's cached needle scan is already O(W) per position;
+  the exact P-function removes the probe thickness (accuracy), with no clear time gain.
+- **Early termination of refinements** (Trubetskov 2020, Sec. 3): DESIGN already has a screening polish
+  (`screen_maxiter`); comparing each refinement with stored trajectories could cut deep-search candidates early.
+- Measured 2026-10-30 01:26, machine otherwise idle (`design_speed_check.py 300 7`, `design_speed_check.out`):
+  `compute_gradient_all_layers_analytic` on the 50/50, one caller with 8 Numba threads 193 calls/s, one thread 120/s,
+  7 callers with one thread each 313/s, 7 callers with 8 threads 319/s. Polishing candidates in parallel would give
+  DESIGN about ×1.6 on this call; inner parallelism alone uses the 8 cores at ≈ 20 %.
+
 ## Order, size and files
 
-1. Feature 3 first: small, and it is the judge of the other two.
-2. Feature 2 next (`physics`, `workers`, a few UI widgets).
-3. Feature 1 last (the largest).
+1. Feature 3, then feature 2: done (`7f849f42`).
+2. Gradual evolution at imposed TOT (deep, Trubetskov's step, thin-layer cleaning at 2 nm): verdict given 2026-10-29
+   (best path measured), next to port.
+3. Feature 1 (envelope search with the monotonicity certificate).
+4. Distance and barrier: coded 2026-10-29 (`certus/core/certus_design_landscape.py`, `BarrierWorker`, "Compare" tab in
+   `certus/ui/certus_design_ui_compare.py`; tests `tests/unit/test_design_landscape.py`, `tests/ui/test_design_compare.py`);
+   nothing on the optimization path. Committed `02b25ed7` (2026-10-30): C1 holds; the study's barrier recomputed
+   with the module to every printed digit (string 29.5694, straight 35.6288); full unit suite not rerun after the
+   lambda fix (targeted tests 19 passed).
 
-This is more than three files per feature, so each feature is approved and committed separately (C3). The defaults stay
-off until `design_bench` measures them on the 50/50, the three-line filter and an AR, as the user ruled.
+This is more than three files per feature, so each feature is approved and committed separately (C3). A default is
+switched on only after `design_bench` measures it better on the 50/50, the three-line filter and the hot mirror.

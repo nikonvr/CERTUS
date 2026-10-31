@@ -15,7 +15,7 @@
 
 **Reprise en cours (2026-10-30)** : changement d'ordinateur ; lire d'abord
 [`REPRISE_2026-10-30.md`](../reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/REPRISE_2026-10-30.md). Cissoïde OIC 2016 :
-0,02407 (oracle), quintet Ni, Ag, F, H, M, 49 couches ; à battre 0,0139. Portage DESIGN non commité, validation à refaire.
+0,02407 (oracle), quintet Ni, Ag, F, H, M, 49 couches ; à battre 0,0139. Portage DESIGN commité le 2026-10-31 (`7e386166`, `8d4602a9`).
 
 **Branche de travail** : `master`, locale, non poussée. Depuis le 2026-10-25 elle réunit `gemini/2026-10-21` (supprimée) et `claude/2026-10-22`,
 séparées du 2026-10-21 au 2026-10-25 ([audit](../reports/AUDIT_travaux_2026-10-21_25/bilan.md)). Le dossier est en *sparse-checkout* : les 38
@@ -49,9 +49,10 @@ STRAT natif avec l'étape libre avant la conversion : 0,2655 nm, une graine, san
 (numba 0.68.0, llvmlite 0.50.0 ; les anciens pins n'avaient pas de roue 3.15). Même banc (`48c` premium, graine 42) sous 3.14.8 et 3.15.1 : mêmes 2 653
 stratégies, même meilleur plan, SEEL 0,15313 nm ; scores à 10⁻¹⁴ près (relatif médian), aucun identique au bit. Exécutable gelé construit et contrôlé sous 3.15.1.
 
-**Dernière validation complète** : 2026-10-28, avant `7f849f42`, sous 3.15.2, en série : ruff propre, oracle 1 163, unit 5 734 et 1 échec
-(`==` entre flottants dans un test neuf, corrigé, fichier repassé : 6 passed), ui 1 345, rest 350 ; coherence_md, check_claude_md, check_docs
-sans erreur ; `c1_diff HEAD` C1 TENU (9 092 tableaux).
+**Dernière validation complète** : 2026-10-31, avant `7e386166`, sous 3.15.2, en parallèle (`validate_parallel.py`, 15 workers ;
+`pytest-xdist` hors de `requirements.lock`, à installer à part) : `VALIDATION=GO`, oracle 1 165, unit 5 751 + 3 artefacts, ui 1 349,
+rest 320 + 1 artefact (`test_index_headless`), performance 29 ; `c1_diff HEAD` C1 TENU (9 092 tableaux). Artefact à creuser :
+`test_neutral_parameters_are_bit_identical_to_the_legacy_call` a vu deux résultats différents au bit sous xdist (vert seul, 3 fois sur 3).
 Avant de committer du code, la validation de CLAUDE.md §2 en entier : un sous-ensemble a déjà laissé passer une régression
 (`tests/unit/test_the_architecture_debt_only_shrinks.py` ne tourne pas avec les tests voisins).
 

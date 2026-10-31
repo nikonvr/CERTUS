@@ -14,6 +14,9 @@
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script src="assets/certus_report_init.js"></script>
     <link rel="stylesheet" href="assets/certus_report.css">
+    <style>
+        #current-strat, #strat-current-settings, #strat-current-benchmarks, #strat-current-limits { scroll-margin-top: 180px; }
+    </style>
 </head>
 
 <body>
@@ -59,21 +62,104 @@
         <header>
             <h1>CERTUS-STRAT</h1>
             <p style="font-size: 1.2em; color: #555;">Advanced Optical Monitoring &amp; Error Compensation Logic</p>
-            <p style="font-size: 1.0em; color: #777; font-weight: 300;">Scientific Revision 2026-08-14 — Complete
-                Algorithm Documentation</p>
+            <p style="font-size: 1.0em; color: #777; font-weight: 300;">Scientific status updated: 2026-10-25 &bull;
+                Reference runtime: Python 3.15.1 &bull; Dated campaign notes retained</p>
         </header>
 
 
 
         <div class="abstract">
             <strong>Abstract:</strong> CERTUS-STRAT evaluates optical monitoring strategies by simulating nominal
-            depositions with realistic noise and cumulative error propagation. The objective is to identify strategies
+            depositions with the configured noise model and cumulative error propagation. The objective is to identify strategies
             that remain within specification despite deposition variability.
         </div>
+
+        <section id="current-strat">
+            <h2>Current settings, reference measurements and limits</h2>
+            <p>This update follows the <a href="../docs/ETAT.md">project state of 2026-10-25</a> and the linked campaign
+                summaries. Each benchmark belongs to its component, source revision and physical configuration.
+                The dated results below were not remeasured for this documentation update or under Python 3.15.1.</p>
+
+            <h3 id="strat-current-settings">Delivered monitoring and search settings</h3>
+            <table>
+                <caption>Reference operating profile from project state; distinguish it from bare GUI defaults below</caption>
+                <thead><tr><th scope="col">Setting</th><th scope="col">Current value and meaning</th></tr></thead>
+                <tbody>
+                    <tr><td>Readout noise and smoothing</td><td>Amplitude ±0.05 transmission percentage point
+                        (<code>A = 5e-4</code> in transmission units); <code>reading_smoothing_window = 1</code> in operation.
+                        The frozen readout-chain model separately describes an eight-reading average.</td></tr>
+                    <tr><td>Turning-point detection</td><td><code>tp_hysteresis_factor = 1.66</code> and
+                        <code>tp_hysteresis_floor = 0.000415</code>. The floor was retained on 2026-10-23;
+                        it does not remove the low-noise false-turning-point defect described below.</td></tr>
+                    <tr><td>Selection margin and index uncertainty</td><td><code>phase_a_level_margin_factor = 1.66</code>;
+                        active <code>index_corridor = 0.005</code> in absolute refractive index.</td></tr>
+                    <tr><td>Slit and photometric bias</td><td>Slit bias enabled, nominal width 2 nm;
+                        <code>photometric_curvature_amp = 0.00375</code>. The chosen profile determines whether slit width is searched.</td></tr>
+                    <tr><td>Rate fallback</td><td><code>allow_rate</code>, <code>rate_by_swing</code> and
+                        <code>rate_rescue</code> enabled; <code>rate_rescue_few = 10</code>.
+                        Rate is forbidden on physical layers 0 and 1. Later Rate layers inherit open-loop thickness error.</td></tr>
+                    <tr><td>Final local search</td><td>Enabled with <code>strat_local_search_guard</code> at the configured
+                        index corridor. Source: <code>certus_strat_local_search::is_armed / guard_is_armed</code>.</td></tr>
+                    <tr><td>Search depth: fast / premium / deep</td><td>Robustness draws: 50 / 150 / 300;
+                        screening draws: 10 / 25 / 50; <code>dp_top_k</code>: 20 / 40 / 100.
+                        The selected mode overrides these values from the file. Default mode: premium.</td></tr>
+                    <tr><td>Monitoring wavelength grid</td><td>1 nm step. The machine-cadence sweep remains inactive;
+                        the frozen growth sampling is optimistic about false turning points.</td></tr>
+                </tbody>
+            </table>
+            <p>Profile source: <a href="../docs/ETAT.md">project state, settings and physical rules</a>.
+                Bare GUI defaults differ: <code>default_settings</code> supplies <code>trigger_tolerance = 0.1</code>
+                percentage point and <code>scan_wl_step = 2.0</code> nm. In <code>collect_params</code>, absent profile keys
+                <code>tp_hysteresis_factor</code> and <code>phase_a_level_margin_factor</code> fall back to zero;
+                the hysteresis floor is separate. The selected profile and mode determine the effective run settings.
+                Growth and scoring must use the same perturbation realization (C2); changing the domain used to normalize
+                refractive-index error changes the experiment. A strategy using Rate fallback includes open-loop layers.</p>
+
+            <h3 id="strat-current-benchmarks">Dated reference measurements</h3>
+            <table>
+                <caption>SEEL in nm; these are search results, with conditions retained from their source campaigns</caption>
+                <thead><tr><th scope="col">Component</th><th scope="col">Mode and conditions</th><th scope="col">SEEL</th><th scope="col">Reported crash rate</th></tr></thead>
+                <tbody>
+                    <tr><td>48-layer dichroic</td><td>Premium, 2 nm slit with slit search</td><td>0.172</td><td>0%</td></tr>
+                    <tr><td>Three-cavity bandpass, true 35-layer profile</td><td>Deep, delivered physical settings</td><td>0.4907</td><td>0%</td></tr>
+                    <tr><td>Three-cavity delivered deep profile, 36 layers</td><td>Deep, delivered physical settings</td><td>0.3238</td><td>0%</td></tr>
+                    <tr><td>Random 75-layer stack</td><td>Delivered fast profile, fixed 2 nm slit</td><td>0.2225</td><td>0%</td></tr>
+                    <tr><td>Random stack at twice the thickness, native slit</td><td>Deep, fixed 1 nm slit</td><td>0.5833</td><td>0%</td></tr>
+                    <tr><td>Same thickness scale, delivered ramps</td><td>Deep, fixed 2 nm slit</td><td>0.5092</td><td>0%</td></tr>
+                    <tr><td>Five-cavity bandpass, 99 layers, four witnesses</td>
+                        <td>Fast, 2 nm slit; fixed partition 0–22–42–76–99; spectral-grid index-error domain</td>
+                        <td>Median 0.597; range 0.575–0.670</td><td>0%</td></tr>
+                </tbody>
+            </table>
+            <p>The first six rows come from the <a href="../reports/STRAT_A3_reperes_reprise_2026-10-21/bilan.md">2026-10-21
+                campaign</a>, code <code>85a9e82f</code>, seed 42. The last row comes from the
+                <a href="../reports/STRAT_A3_99c_grille_2026-10-24/bilan.md">2026-10-24 fixed-domain campaign</a>,
+                code <code>339e9cb3</code>, seeds 101, 42 and 202, with <code>index_corridor_fixed_domain</code> enabled.
+                Its 0.300 nm target was not reached. Earlier 99-layer assembly scores invalidated by the C2 checks are not current references.</p>
+            <p><strong>How to read these campaign values:</strong> their SEEL uses 2 × √score, in nm. The GUI calibration is a separate conversion (see §7.5 and §10.6). Compare only the same component,
+                scoring domain and noise model. These rows include slit bias. Search minima are not independent confirmations
+                of fixed plans; a zero crash rate in <code>fast</code> does not establish a validated production strategy.
+                Keep the official <code>RESULT</code> score and <code>RANK00</code> crash statistics separate.</p>
+
+            <h3 id="strat-current-limits">Limits that remain open</h3>
+            <ul>
+                <li><strong>No external validation:</strong> STRAT is checked against simulations and internal consistency.
+                    The real dichroic deposition campaign is no longer planned; no external experimental validation is reported.</li>
+                <li><strong>False turning points at low noise:</strong> the noise-dependent threshold can fall below
+                    slit-bias ripple. The <a href="../reports/ANALYSE_claude_2026-10-22/bilan.md">independent reanalysis</a>
+                    identifies premature stops at the 0.5× noise level. A final-search gain must be judged with that defect in view.</li>
+                <li><strong>Model feasibility:</strong> Rate fallback and multiple witnesses can make a plan feasible in
+                    simulation. They do not establish physical manufacturability or an all-optical monitoring solution.</li>
+            </ul>
+            <p>Open issues are tracked in <a href="../docs/AUDITS.md">the audit register</a>.
+                The technical derivations and dated campaign narratives below retain their original assumptions.
+                Use this section and its Markdown sources for the current defaults and reference measurements.</p>
+        </section>
 
         <div class="toc-nav" style="margin:0 0 34px;border:1px solid #dae1e7;border-radius:8px;padding:16px 20px;background:#f8fafc;">
             <div style="font-weight:700;color:#0284c7;margin:0 0 10px;letter-spacing:0.02em;">Contents</div>
             <ol style="margin:0;padding-left:22px;line-height:1.95;columns:2;column-gap:34px;">
+                <li><a href="#current-strat">Current settings, reference measurements and limits</a></li>
                 <li><a href="#sec-0">Algorithmic overview</a></li>
                 <li><a href="#sec-1">Physical model — transfer matrix method</a></li>
                 <li><a href="#sec-2">Optical monitoring simulation</a></li>
@@ -88,11 +174,11 @@
                 <li><a href="#sec-11">Making it fast</a></li>
             </ol>
             <div style="margin:12px 0 0;padding-top:10px;border-top:1px solid #e2e8f0;font-size:0.94em;">
-                <b>If you are evaluating this for purchase, seven sections carry the results:</b>
+                <b>Historical campaign accounts (retain their original models and conditions):</b>
                 <a href="#sec-10-14">§10.14</a> the measured gain of block monitoring on two reference
                 components, <a href="#sec-10-15">§10.15</a> where the method runs out — a 99-layer
                 five-cavity filter — <a href="#sec-10-16">§10.16</a> how multiple-testglass monitoring
-                makes that same filter manufacturable, <a href="#sec-10-17">§10.17</a> a stack that
+                makes that filter feasible in simulation, <a href="#sec-10-17">§10.17</a> a stack that
                 looked impossible and was not, where the limit turned out to be the search rather than
                 the physics, <a href="#sec-10-18">&sect;10.18</a> the same stack at the nominal 2 nm slit
                 &mdash; and the honest name for what made it work,
@@ -114,15 +200,12 @@
 
         <div style="border:3px solid #b91c1c;border-radius:10px;padding:14px 18px;margin:0 0 20px;background:#fef2f2;">
             <p style="margin:0 0 10px;font-weight:700;color:#7f1d1d;font-size:1.06em;">
-                🔴 SCOPE — a single component is authoritative
-            </p>
-            <p style="margin:0 0 10px;font-style:italic;border-left:4px solid #b91c1c;padding-left:12px;">
-                "Beware, only the 48-layer stack is a valid example!"
-                <br><span style="font-style:normal;">— the physicist, 2026-08-06</span>
+                🔴 SCOPE — component-specific simulation results
             </p>
             <p style="margin:0 0 10px;">
-                <b>Any quantity measured 📏 on this page comes from the 48-layer dichroic</b>,
-                <code>example/example_strat/JSON-strat-example.json</code>. The toy stacks that appear
+                <b>Measured results apply only to their stated component and conditions.</b>
+                The <a href="#strat-current-benchmarks">current reference table</a> includes several components;
+                the dated sections below describe earlier campaigns. The toy stacks that appear
                 in the test suite — eight quarter-wave layers — are used to verify <b>mechanisms</b>
                 (bit-exact identity, noise propagation, sentinel decoding) and <b>no physical conclusion
                 is drawn from them</b>. The figures marked 📖 come from the literature and are
@@ -133,18 +216,15 @@
                 <b>STRAT is currently validated only against itself.</b> The 48-layer dichroic is a
                 <b>coherence testbed</b> — it establishes that the code is stable, reproducible, and that its quantities
                 depend on what they should depend on. <b>It does not establish that the model tells the truth.</b>
-                <br>A published control had been considered — an 8-layer beam splitter deposited four times, whose
-                strategy ranking is known — but it was <b>discarded</b>: it is a foreign component, and
-                the perimeter rule above prevails. <b>External validation therefore no longer has any substitute
-                candidate</b>: it relies entirely on <b>actual depositions of the 48-layer stack</b>. Two
-                strategies deposited with their measured spectra would suffice, the decisive test being <b>ordinal</b> —
-                STRAT must rank them in the right order.
+                <br>The <a href="../docs/ETAT.md">current project state</a> reports no external validation;
+                actual dichroic depositions are no longer planned. An independent deposition comparison would test
+                whether the predicted ranking survives measured spectra, but no such result is claimed here.
             </p>
         </div>
 
         <p>
-            The CERTUS-STRAT algorithm is a three-step pipeline that transforms a nominal thin-film design into a
-            robust optical monitoring strategy.
+            CERTUS-STRAT computes nominal properties, searches per-layer candidates, mines block strategies,
+            then evaluates and refines complete plans, including Rate, slit variants and final local search when enabled.
         </p>
 
         <div class="mermaid">
@@ -157,7 +237,7 @@
 
             START(["User input:<br>design thicknesses d₁…dₙ,<br>materials H/L, substrate,<br>noise tolerance σ"]):::terminal --> S0
 
-            S0["<b>Step 0</b> — Nominal Stack<br><code>calculate_nominal_properties</code><br>Compute T_nominal(λ) via TMM<br>for the perfect stack"]:::process --> S1
+            S0["<b>Step 0</b> — Nominal Stack<br><code>calculate_nominal_properties</code><br>Compute nominal T(λ),<br>sensitivity and SEEL calibration"]:::process --> S1
 
             S1["<b>Step 1</b> — Index Precomputation<br><code>precompute_clues_and_matrices</code><br>Build n(λ) arrays (Complex128)<br>Pre-multiply M_before cache"]:::process --> NUC
 
@@ -169,8 +249,8 @@
             subgraph PHASE_A ["Phase A — Layer-by-Layer Candidate Search"]
             PA["<b>For each layer i = 0…N−1:</b>"]:::decision --> PA1
             PA1["A.1 Dynamics Ranking<br><code>calculate_dynamics_ULTIMATE</code><br>Compute ΔT(λ) for all candidates<br>Sort by |ΔT| descending"]:::process --> PA2
-            PA2["A.2 Safety Filters<br><code>check_level_margin_batch</code><br>Reject: |ΔT| &lt; dyn_threshold,<br>T_min &lt; 10% floor,<br>stop level within 1.66 A of a turning point (in T),<br>insufficient spectral resolution"]:::decision --> PA3
-            PA3["A.3 Monte Carlo Validation<br><code>validate_wavelengths_batch</code> → 4 columns<br>P95(|Δd|) · std · crash rate · compensation gain<br>Cost = P95 + gain × upstream error<br>FORBID λ: crash ≥ 1−(1−5%)^(1/N) or gain &lt; 0<br>crash = miscounted turning points OR level never reached<br>on the NOISY signal when poem_anchor_noise is set"]:::process --> PA4
+            PA2["A.2 Candidate Filters<br>Dynamics threshold, T_min floor,<br>optional turning-point requirement,<br>configured transmission margin"]:::decision --> PA3
+            PA3["A.3 Monte Carlo Validation<br>P95 thickness error, spread,<br>crash rate and compensation gain<br>Admissibility rule, with minimum-crash fallback<br>when no candidate survives"]:::process --> PA4
             PA4["A.4 Select Best λ for layer i<br>Save to strategy + SYM scoring"]:::highlight --> PA5
             PA5["A.5 Error Propagation<br><code>update_run_states_kernel</code><br>Update run_states with<br>simulated thicknesses<br>→ perturbed M_before for layer i+1"]:::process
             PA5 --> PA_NEXT{"More layers?"}:::decision
@@ -181,13 +261,13 @@
 
             subgraph PHASE_B ["Phase B — Block Grouping &amp; Robustness Screening"]
             PB_START["B.0 Collect per-layer best λ<br>and costs from Phase A<br>Build SYM bonus map"]:::process --> PB1
-            PB1["B.1 Dynamic Programming<br><code>mine_strategies_for_block_count</code><br>DP[k][i] = min cost for<br>i layers in k mono blocks<br>3 cost modes: THICKNESS / THICKNESS² / SYM<br>Scan k from N/20 to N/2.5"]:::highlight --> PB1b
-            PB1b["B.1b Elite Candidates<br><code>_generate_elite_candidate_strategies</code><br>Local λ-neighbor mutations<br>+ boundary shifts around top strats"]:::process --> PB2
-            PB2["B.2 Full Monte Carlo<br><code>run_final_simulation_block</code><br>For each candidate strategy:<br>3 noise levels (0.5σ, σ, 2σ)<br>× N_runs gaussian simulations<br>→ spectral RMSE vs nominal"]:::process --> PB3
-            PB3["B.3 Rank by worst-case RMSE P95<br>(max across tested noise levels)<br>Optional: Consensus multi-seed re-scoring"]:::process
+            PB1["B.1 Dynamic Programming<br><code>mine_strategies_for_block_count</code><br>DP[k][i] = min cost for<br>i layers in k mono blocks<br>3 cost modes: THICKNESS / THICKNESS² / SYM<br>Scan configured divider-based block counts<br>plus fixed counts 1, 2 and N"]:::highlight --> PB1b
+            PB2["B.2 Full Monte Carlo<br>Rate and slit variants when enabled<br>Noise levels from configuration<br>Growth and spectral scoring use the same draw"]:::process --> PB3
+            PB3["B.3 Native score: maximum RMSE P95<br>Optional consensus and refinement"]:::process
             end
 
-            PB3 --> OUT(["Best Strategy Output:<br>Per-layer monitoring wavelengths,<br>block grouping, RMSE statistics,<br>min spectral resolution, T_min post-check"]):::terminal
+            PB3 --> LS["Final joint mode / wavelength local search<br>Configured-corridor guard when enabled<br>Accepted refined plan placed first"]:::process
+            LS --> OUT(["Final strategy list and export<br>Wavelengths, blocks, Rate layers, slit,<br>score, crash statistics and resolution report"]):::terminal
         </div>
 
         <div class="algo-step">
@@ -200,9 +280,9 @@
             wavelengths, apply safety filters, validate the survivors using <a href="https://en.wikipedia.org/wiki/Monte_Carlo_method" target="_blank" rel="noopener noreferrer">Monte Carlo</a> simulations, and propagate the
             resulting thickness errors into the TMM matrix cache for the next layer.<br>
             <strong>Phase B (global):</strong> dynamic programming groups layers into monochromatic blocks across three
-            cost modes (THICKNESS, THICKNESS², SYM). Elite candidate mutations refine the top solutions. Each strategy
-            is tested at three noise levels. Optional multi-seed consensus rescoring reduces seed dependence. The
-            strategy with the lowest worst-case RMSE P95 is selected.
+            cost modes (THICKNESS, THICKNESS², SYM). ELITE mutations and optional consensus refine the candidate set.
+            Complete plans are scored at the configured noise levels. Rate and slit variants and the final joint local
+            search extend this search. Native ranking and the final local-search exception are described in §10.6.1.
         </div>
 
         <div class="highlight-box">
@@ -333,13 +413,10 @@
       &mdash; forbidden zone 3&times; wider before a turning point than after.
     </p>
     <p style="margin:0 0 10px;">
-      The kernel now detects <b>two hard failures</b>, penalty 1e6: the targeted level
-      is not bracketed by the actual signal between the start of the layer and the next extremum;
-      and the <b>counted number of extrema diverges</b> between nominal and actual &mdash; in which case the
-      controller anchors POEM on the wrong turning points. This second case requires detecting
-      the extrema on the <b>ACTUAL</b> signal, the one the controller measures, and not on the
-      nominal one: detecting on the nominal one would grant the simulator knowledge that the
-      controller does not have.
+      The current growth model distinguishes unreachable levels, turning-point miscounts,
+      rejected non-monotonic paths and levels crossed before the stop is armed. The cause codes
+      are documented in §2.6. Turning points must be detected on the signal that the controller reads;
+      nominal-only detection would give it information unavailable during deposition.
     </p>
     <p style="margin:0 0 10px;background:#fef3c7;border-left:4px solid #d97706;padding:8px 12px;">
       🔴 <b>OUTDATED FIGURES &mdash; DO NOT USE, measurement to be redone.</b> This table was
@@ -389,7 +466,7 @@
       <code>JSON-strat-example.json</code> file was therefore <b>ten times too noisy</b>.
       <br>⚠️ <b>The repository default is not correct either</b> &mdash; an earlier
       version of this page wrongly asserted it was. <code>0.1</code>
-      (<code>certus_strat_ui_state.py:90</code>) is <b>twice</b> the actual noise, so four
+      (<code>certus_strat_ui_state.py</code>) is <b>twice</b> the actual noise, so four
       times once passed to the model's factor of 2; it is only <i>less</i> wrong than
       <code>0.5</code>. <b>The correct value is <code>0.05</code> in both places</b>: the example
       file <b>and</b> the interface default.
@@ -500,7 +577,7 @@
                 <li>$R_{ext} = \left(\frac{n_s - 1}{n_s + 1}\right)^2$: Fresnel reflectance at the substrate/air
                     interface.</li>
                 <li>$T_{ext} = 1 - R_{ext}$.</li>
-                <li><strong>Validity check:</strong> <code>validate_backside_real_indices</code> warns once per run
+                <li><strong>Validity check:</strong> <code>validate_backside_real_clues</code> warns once per run
                     if $|k_{layer}|$ or $|k_{sub}|$ exceed thresholds (constants
                     <code>K_MAX_LAYER_BACKSIDE</code>, <code>K_MAX_SUBSTRATE_BACKSIDE</code>), since the incoherent
                     approximation degrades for absorbing materials.</li>
@@ -518,10 +595,9 @@
         <p>
             A large $\Delta T$ means the monitoring signal changes significantly during deposition at this
             wavelength, providing a strong trigger signal for the cut-off controller.
-            Candidates for which $T_{min}$ (minimum T over full layer growth) falls below the
-            <strong>minimum transmission floor</strong> (default <strong>10%</strong>, parameter
-            <code>min_transmission_floor</code>) are <strong>strictly excluded</strong>. This strict floor is enforced
-            both during Phase A candidate selection and in a post-check on the final best strategy.
+            <code>min_transmission_floor</code>) are excluded by Phase A candidate selection.
+            This is a sampled growth criterion. The separate best-strategy post-check evaluates nominal end thickness,
+            rather than the minimum along growth, and is not called on every orchestration path (see §4.7).
         </p>
 
         <!-- ================================================================ -->
@@ -619,7 +695,7 @@
                 <tr><td style="border:1px solid #67e8f9;padding:4px 10px;">Deposition rate</td>
                     <td style="border:1px solid #67e8f9;padding:4px 10px;">&asymp; 0.5 nm/s</td></tr>
                 <tr><td style="border:1px solid #67e8f9;padding:4px 10px;">Readout noise</td>
-                    <td style="border:1px solid #67e8f9;padding:4px 10px;">the signal oscillates from 45.50 to 45.55% T &mdash; <b>total width 0.10 points</b>, i.e. &plusmn;0.05</td></tr>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">The archived readout range is 45.50 to 45.55% T — a width of 0.05 percentage point. That range alone does not establish the ±0.05-point model amplitude.</td></tr>
             </table>
 
             <h4 style="margin:14px 0 6px;">What is deduced from it</h4>
@@ -904,10 +980,10 @@
                     Each layer gets a fixed column, ensuring reproducibility regardless of thread ordering.</li>
                 <li><strong>Phase B uses COMMON RANDOM NUMBERS.</strong> The noise matrix depends only on
                     <code>(robustness_seed, noise_idx, num_runs, num_layers)</code> and is served from a cache
-                    (<code>_get_cached_sobol_noise</code>, <code>certus_strat_robustness.py:482-510</code>) — it does
+                    (<code>_get_cached_sobol_noise</code>, <code>certus_strat_robustness.py</code>) — it does
                     <em>not</em> depend on the strategy. The <code>_strat_idx</code> argument of
                     <code>_test_strategy_robustness_task</code> is underscore-prefixed and deliberately unused
-                    (<code>:524</code>).
+                    (<code>_test_strategy_robustness_task</code>).
                     <br>This is the right design and it matters: every strategy faces the <em>same</em> noise
                     realisations, so the comparison between two strategies is <strong>paired</strong> and the noise
                     largely cancels in the difference — which is the only thing a ranking depends on.
@@ -915,7 +991,7 @@
                     <code>seed = robustness_seed + strategy_idx × 10⁵ + noise_idx</code>. That was wrong: it would
                     have given each strategy an independent draw and made the ranking far noisier.
                     <br>The Sobol seed itself is scrambled — <code>base_seed × 2 654 435 761 + noise_idx × 40 503</code>
-                    (<code>:509</code>) — because the naive <code>base_seed + noise_idx</code> made distinct pairs
+                    (<code>_test_strategy_robustness_task</code>) — because the naive <code>base_seed + noise_idx</code> made distinct pairs
                     collide: (seed 42, level 1) and (seed 43, level 0) both gave 43, hence the <em>same</em> noise.</li>
                 <li>The legacy <code>distribution</code> argument is accepted for backward compatibility but
                     intentionally ignored — behavior is always gaussian.</li>
@@ -1024,8 +1100,8 @@
                 <tr style="background:#cffafe;">
                     <th style="border:1px solid #67e8f9;padding:4px 10px;"><code>tp_hysteresis</code></th>
                     <th style="border:1px solid #67e8f9;padding:4px 10px;text-align:left;">Behavior</th></tr>
-                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;"><b>0</b> (default)</td>
-                    <td style="border:1px solid #67e8f9;padding:4px 10px;">Legacy rule: sign change beyond 10⁻¹².</td></tr>
+                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;"><b>0</b> effective threshold</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">Legacy sign-change rule. A zero factor alone is insufficient if the floor is positive.</td></tr>
                 <tr><td style="border:1px solid #67e8f9;padding:4px 10px;"><b>&gt; 0</b></td>
                     <td style="border:1px solid #67e8f9;padding:4px 10px;"><b>Hysteresis</b> detector: it tracks the current extremum and only <b>declares</b> it when the signal has deviated from it by more than the threshold. The returned index is that of the extremum <i>itself</i>, not of the crossing: the machine retains the extreme value read, not the moment it figured it out.</td></tr>
             </table>
@@ -1037,8 +1113,10 @@
                 <b>reads</b>. The reference quantity is the noise, and it is <b>measured</b>.
             </p>
             <p style="margin:0 0 10px;">
-                <code>trigger_tolerance</code> = 0.05 points is a <b>peak-to-peak</b> amplitude $A$: the draw
-                follows $\mathcal{N}(0, A/3)$ clipped at $\pm A$, so $\sigma = 0{,}332\,A$ = <b>0.0166 points</b>.
+                For the reference profile, <code>trigger_tolerance</code> = 0.05 percentage point is the
+                <b>half-width</b> $A$: the draw follows $\mathcal{N}(0,A/3)$ clipped at $\pm A$.
+                In <code>reading_hysteresis</code>, the effective threshold is the maximum of the configured floor
+                and the noise-derived term; both must vanish to recover a zero threshold.
                 Two readings bounded at $\pm A$ can only differ by $2A$ at most, hence a
                 <i>derived</i> bound: beyond $2A$, <b>noise alone can never again fabricate a turning
                 point.</b>
@@ -1063,12 +1141,17 @@
                 agreement obtained between a gut feeling figure and a calculated figure — and it is worth noting
                 after the episode of the 4%, which were twenty times too conservative.
                 <br>📏 <b>Measured effect, and it is partial</b>: hysteresis halves the crash rate at actual &sigma;
-                (1.31% → 0.69%), not by the 11 it would take to meet the 0.107% per layer. It only governs one of
-                the two failure modes — see §2.6.
+                (1.31% → 0.69%), not by the 11 it would take to meet the 0.107% per layer. This historical experiment isolated detection and reachability;
+                the current model also distinguishes non-monotonic rejection and arming (see §2.6).
             </p>
         </div>
-
-        <h3>2.6 The two failure modes, and why they must be counted separately</h3>
+        <h3>2.6 Stop model and crash causes</h3>
+        <p><code>certus_strat_readings::stop_model_flags</code> selects
+            <code>exact_inversion=True</code>, <code>exact_anchors=True</code> and <code>oms_arming=2</code> by default.
+            Production callers pass these flags in Phase A and Phase B; the historical defaults in kernel signatures
+            are not the production defaults. The controller cannot stop at a level crossed before the last extremum
+            is declared: under <code>ARMING_NEVER_STOPS</code>, this is <code>CRASH_NOT_ARMED</code>.</p>
+        <h4>Historical diagnosis before controller arming was added</h4>
         <div style="border:3px solid #b91c1c;border-radius:10px;padding:14px 18px;margin:16px 0;background:#fef2f2;">
             <p style="margin:0 0 10px;">
                 <code>simulate_growth_kernel</code> returned <b>the same value</b> — <code>nominal_th + 1e6</code> —
@@ -1078,10 +1161,10 @@
                 <b>reachability</b>.
             </p>
             <p style="margin:0 0 10px;">
-                The sentinels are now <code>1e6</code>, <code>2e6</code>, <code>3e6</code>:
-                <b>any consumer testing <code>&gt; 1e5</code> counts exactly the same crashes as before</b>
-                — the global rate is bit-for-bit unchanged — and the cause can be read back via
-                <code>val // 1e6</code> without knowing the nominal thickness.
+                Current crash sentinels are the nominal thickness plus <code>1e6</code> (unreachable level),
+                <code>2e6</code> (turning-point miscount), <code>3e6</code> (non-monotonic path rejected), or
+                <code>4e6</code> (stop not armed). <code>_test_strategy_robustness_task</code> decodes these causes;
+                the historical measurements below predate part of this model and are not a rerun of the current flags.
             </p>
             <table style="border-collapse:collapse;margin:0 0 10px;font-size:0.95em;">
                 <tr style="background:#fee2e2;">
@@ -1121,10 +1204,9 @@
             </p>
             <p style="margin:0;">
                 ✅ <b>Observability fallout</b>: <code>_test_strategy_robustness_task</code> returns
-                <code>crash_causes</code> = {<code>p_level_unreachable</code>, <code>p_tp_miscount</code>,
-                <code>p_non_monotonic</code>}. The 👤 three questions of the figure of merit — <i>can we see
-                the turning points? do we risk miscounting them? do we risk never reaching the level?</i> —
-                become <b>three numbers</b> instead of an aggregated scalar.
+                <code>crash_causes</code> with <code>p_level_unreachable</code>, <code>p_tp_miscount</code>,
+                <code>p_non_monotonic</code> and <code>p_not_armed</code>. These distinguish level reachability,
+                detected history, path rejection and controller arming rather than merging them into one diagnostic.
             </p>
         </div>
 
@@ -1134,13 +1216,16 @@
             B -->|No| C["Level unreachable: sentinel 1e6"]
             B -->|Yes| D{"POEM active and turning-point count differs?"}
             D -->|Yes| E["Turning-point miscount: sentinel 2e6"]
-            D -->|No| F["Invert stopping thickness"]
+            D -->|No| AR{"Stop armed before level crossing?"}
+            AR -->|No, arming=2| NA["Not armed: sentinel 4e6"]
+            AR -->|Yes or other arming mode| F["Invert stopping thickness"]
             F --> G{"Non-monotonic path rejected by configuration?"}
             G -->|Yes| H["Non-monotonic: sentinel 3e6"]
             G -->|No| I["Return deposited thickness"]
             C --> J["Count crash and record its cause"]
             E --> J
             H --> J
+            NA --> J
         </div>
 
         <h3>2.7 🟢 The method — how to distinguish a measurement from an artifact</h3>
@@ -1566,26 +1651,23 @@
                 $q = v\,t_{\text{turn}} = 0.125$ nm.
             </p>
             <ul style="margin:0 0 10px;">
-                <li>Layer $j$ of material $M$, deposited <b>under POEM</b>: real thickness
-                    $d^{\text{real}}_j$, so the machine counted $n_j = d^{\text{real}}_j / q$ turns.
-                    <b>But it believes it deposited $d^{\text{nom}}_j$</b> — that is the target it was
-                    aiming at, and nothing tells it otherwise.</li>
-                <li>Its rate estimate is therefore
-                    $\widehat{v}_M = d^{\text{nom}}_j / (n_j t_{\text{turn}}) = v\cdot d^{\text{nom}}_j / d^{\text{real}}_j$.</li>
-                <li>Layer $i$ <b>in rate mode</b>: the machine commands
-                    $n_i = \operatorname{round}\bigl(d^{\text{nom}}_i / (\widehat{v}_M t_{\text{turn}})\bigr)$
-                    turns, hence deposits $d^{\text{real}}_i = n_i q$:</li>
+                <li>For layer $i$, let $J_M$ contain every preceding layer of the same material
+                    (same parity) deposited under optical control. Earlier Rate layers carry no optical measurement
+                    and are excluded from the estimate.</li>
+                <li>The rate estimate uses the mean ratio $a_M = |J_M|^{-1}\sum_{j\in J_M}
+                    d_j^{\mathrm{nom}}/d_j^{\mathrm{real}}$.</li>
+                <li>The number of turns is rounded and bounded below by one:</li>
             </ul>
             <div class="eq-box">
-                $$ \frac{d^{\text{real}}_i}{d^{\text{nom}}_i} \;=\; \frac{d^{\text{real}}_j}{d^{\text{nom}}_j} $$
+                $$n_i=\max\!\left(1,\operatorname{round}\!\left(\frac{d_i^{\mathrm{nom}}}{a_Mq}\right)\right),
+                \qquad d_i^{\mathrm{real}}=n_iq,\qquad q=0.125\ \mathrm{nm}.$$
             </div>
             <p style="margin:10px 0 0;">
-                <b>The relative error is not drawn — it is COPIED.</b> Which settles several things at once:
-                there is <b>no free parameter</b> left, so nothing invented replaces something measured;
-                the question "correlated bias or per-layer draw?" dissolves, because it is neither, it is an
-                <b>equality</b>; and both quantities are <b>already in the kernel</b>
-                (<code>prev_thicknesses_sim[j]</code> and <code>p_thick_nominal[j]</code>, used side by side),
-                so no plumbing is needed.
+                Source: <code>certus_strat_growth::_rate_layer_thickness</code>.
+                There is no independent Rate-error draw: optical thickness errors enter through the averaged ratio,
+                followed by turn quantisation. This does not imply exact equality with the relative error of the
+                last layer. With no valid optical reference of that material, the kernel falls back to optical control.
+                Rate is forbidden on the first two physical layers.
             </p>
             <p style="margin:10px 0 0;">
                 🟢 <b>And it turns $\sigma_{\text{rate}}$ into a PREDICTION</b> — which is the first
@@ -1603,16 +1685,12 @@
 
         <div style="border:3px solid #0d9488;border-radius:10px;padding:14px 18px;margin:16px 0;background:#f0fdfa;">
             <p style="margin:0;">
-                🔴 <b>What rate really costs: the existing error is FROZEN, and the POEM history is lost.</b>
-                A rate layer <b>reproduces</b> the relative error of the last layer of the same material,
-                where POEM would have corrected it. On top of that, the next layer <b>starts over
-                classically</b> — the block's POEM anchors are no longer usable. Deliberately introducing
-                rate on thin or low-dynamics layers of an otherwise promising strategy adds <b>one degree
-                of freedom per layer</b> to the search, and it belongs <b>inside the existing dynamic
-                programming</b>, not in a phase of its own: its cost is a <i>block</i> property, which is
-                exactly what the DP already arbitrates. The trade-off — error repeated on a thin layer
-                against a broken POEM chain — is the kind of arbitration the statistical study exists to
-                settle.
+                <b>Rate uses an open-loop estimate derived from earlier optical measurements.</b>
+                Its error follows the averaged same-material reference ratios and the integer-turn command.
+                The next optical layer starts a new monitoring history; earlier optical references remain available
+                to the Rate estimator. Rate choices are explored through Phase B variants, ELITE moves and final
+                joint local search, according to their configuration. Their cost must be measured on the resulting
+                complete strategy because they also change the optical history seen by later layers.
             </p>
         </div>
 
@@ -1764,9 +1842,9 @@
                     infinitely fine slits. They are not wrong — they answer a different
                     question. Do not compare across that date.
                     <br><br>
-                    Still open: the slit as a <b>search variable</b> (the four widths are not
-                    put in competition), and <code>min_resolution</code> as a <b>criterion</b>
-                    — it breaks ties in the sort but <b>rejects nothing</b>.
+                    The slit is now searched in Phase B when <code>search_resolution</code> is enabled.
+                    <code>_expand_with_resolution_variants</code> filters generated slit variants by the
+                    curvature-based resolution limit, while retaining the baseline strategy.
                 </div>
         <div style="border:3px solid #be123c;border-radius:10px;padding:14px 18px;margin:16px 0;background:#fff1f2;">
             <p style="margin:0 0 10px;">
@@ -1889,9 +1967,9 @@
                 being interpolated, because four estimates do not make a law and a law would authorise
                 settings that do not exist on the machine.
                 <br><br>
-                What remains a <b>post-hoc report</b> is <code>min_resolution</code>: it breaks ties in
-                the sort but <b>selects nothing</b>. Before wiring it as a filter, count what it would
-                actually reject — an inert rule produces no error, it produces a plausible result.
+                <code>min_resolution</code> is reported, and the curvature criterion also filters generated
+                slit variants in Phase B. A variant wider than the limit is skipped; the baseline remains.
+                This is not a blanket rejection of every plan whose nominal slit exceeds the estimated limit.
             </p>
         </div>
 
@@ -1965,8 +2043,8 @@
                 layer), Phase A included, and the winning strategy reports the width it was actually
                 evaluated at. <b>What is still not done</b>: a full spectral convolution inside the
                 Monte-Carlo loop &mdash; the profile is built on the <i>nominal</i> sub-stack, so its
-                systematic part is captured and its draw-to-draw modulation is not &mdash; and
-                <code>min_resolution</code> still ranks without ever rejecting.
+                systematic part is captured and its draw-to-draw modulation is not.
+                The resolution criterion filters generated slit variants, while preserving the baseline.
             </div>
         </div>
 
@@ -2099,18 +2177,16 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
             </div>
         </div>
 
-        <h3>2.13 Non-Monotonic Error Model</h3>
-        <p>
-            Beyond pure trigger noise, the simulation optionally adds a systematic offset via
-            <code>compute_probe_offset_nm_from_ratio</code>. The effective measured thickness incorporates:
-        </p>
+        <h3>2.13 Numerical Probes and Non-Monotonic Paths</h3>
+        <p><code>compute_probe_offset_nm_from_ratio</code> computes a numerical sampling distance in nm,
+            using the wavelength, average index and configured ratio (or the thickness-tolerance path).
+            It places probes for signal inversion; it is not a physical thickness bias from vibration or thermal drift.</p>
         <div class="algo-step">
-            <span class="algo-title">Growth error components:</span>
-            1. <strong>Gaussian trigger noise</strong> $\epsilon \cdot d_{nom}$: spectrophotometer trigger uncertainty.<br>
-            2. <strong>Probe offset</strong> $\delta_{probe}$ (nm): systematic bias from non-monotonic growth
-            (thermal drift, chamber vibrations). Controlled by <code>non_monotonic_error_factor</code>.<br>
-            3. <strong>Two modes</strong> (<code>non_monotonic_mode</code>):
-            <code>NON_MONOTONIC_MODE_ATTENUATE</code> (default) vs <code>NON_MONOTONIC_MODE_REJECT</code>.
+            <span class="algo-title">Implemented error path</span>
+            <code>simulate_growth_kernel</code> constructs the stopping level, applies photometric perturbations,
+            then solves for stopping thickness using exact inversion on the supported branch or probe inversion
+            on its fallback branch. <code>non_monotonic_mode</code> can reject a non-monotonic path;
+            <code>non_monotonic_error_factor</code> no longer scales the returned error.
         </div>
 
         <h3>2.14 Cumulative Error Propagation</h3>
@@ -2121,7 +2197,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
         <div class="algo-step">
             <span class="algo-title">Error Propagation Mechanism:</span>
             <div class="eq-box" style="margin: 10px 0;">
-                $$ \delta d_i^{(r)} = d_{nom,i} \cdot \epsilon^{(r)} + \delta_{probe} $$
+                $$\delta d_i^{(r)} = d_{i,\mathrm{stop}}^{(r)} - d_{i,\mathrm{nom}}$$
             </div>
             1. Layer $i$ is deposited with actual thickness $d_i + \delta d_i^{(r)}$ in run $r$.<br>
             2. The TMM matrix is updated with this <em>real</em> thickness.<br>
@@ -2157,7 +2233,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
         <div class="mermaid">
             flowchart LR
             subgraph "For each layer i"
-            D["Dynamics ΔT(λ)"] --> F["Filter: dyn threshold,<br>T_min floor 10%,<br>extrema, resolution"]
+            D["Dynamics ΔT(λ)"] --> F["Filter: dynamics threshold,<br>T_min floor,<br>configured turning-point and level-margin checks"]
             F --> MC["Monte Carlo<br>validation (gaussian noise)"]
             MC --> BEST["Best λ → cost + SYM bonus"]
             BEST --> PROP["Propagate errors<br>to run_states"]
@@ -2199,13 +2275,13 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 the parabola through the three samples around it (R129). The former thickness check,
                 <code>check_extrema_proximity_batch</code>, and its <code>extrema_exclusion_ratio</code> setting are gone
                 (R131): it ran on zero matrices and rejected nothing — see the box below.</li>
-            <li><strong>Spectral resolution:</strong> Resolution curvature check: the nominal stack must resolve
-                $\Delta\lambda \geq 1$ nm at the candidate — computed from the T(λ) curvature
-                (tolerance tied to <code>trigger_tolerance</code>).</li>
+            <li><strong>Spectral resolution:</strong> no curvature-based resolution rejection is performed by
+                <code>_select_candidates_phase_a</code>. The resolution criterion is applied to generated
+                slit variants after complete strategies exist (see §2.11).</li>
             <li><strong>λ₀ fallback:</strong> The reference wavelength is always included as a candidate,
                 unless it fails the strict T_min floor.</li>
             <li><strong>Scan limit:</strong> Top <code>phase_a_scan_limit</code> (default 300) dynamics-passing
-                candidates are forwarded to extrema/resolution checks.</li>
+                candidates are forwarded to the remaining turning-point and level-margin checks.</li>
         </ul>
         <div class="new-badge">
             Two lines per layer trace the filters: <code>[MARGIN] Layer i: k/n candidate(s) forbidden</code>
@@ -2368,10 +2444,11 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
         <div class="note">
             <p><strong>The crash rate is NOT part of the cost.</strong></p>
             <p>
-                A strategy whose deposition does not terminate is not mediocre, it is unusable. It is
-                <strong>eliminated</strong>, as in Phase B — a candidate is dropped when
-                $\text{crash} \geq 1 - (1-0.05)^{1/N}$ or when $g < 0$ (gain not measurable: the layer does not
-                terminate even at zero noise).
+                A candidate is normally dropped when its observed crash rate reaches the per-layer threshold
+                or when its compensation gain is not measurable. However,
+                <code>_apply_the_admissibility_rule</code> restores all tied minimum-crash candidates if no survivor
+                remains, and logs <code>fallback_on_min_crash</code>. These fallback candidates can reach the DP;
+                retaining them does not certify a safe layer.
             </p>
             <p>
                 🔴 <strong>The per-layer threshold is DERIVED from the per-strategy one, it is not copied into it.</strong>
@@ -2468,15 +2545,15 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 <b>🔴 And the data already exists, thrown away at the last line.</b> Phase A
                 calculates the crash rate <b>per layer and per wavelength</b>
                 (<code>results_fast[idx, 2]</code>, stored in
-                <code>certus_strat_service.py:1081</code>) and only uses it as a <b>binary
+                <code>certus_strat_service.py</code>) and only uses it as a <b>binary
                 threshold</b>: <code>if crash_rate &gt;= crash_tol: eliminated.append(entry)</code>.
                 A &lambda; at 0.001% and one at 0.106% are treated identically, even though they
                 differ by a factor of a hundred on the only quantity that <b>compounds</b>
                 over the height of the stack.
                 <br><code>raw_results_thickness</code> keeps the complete entries
-                (<code>certus/core/certus_strat_objectives.py:313</code>), but the map given to
+                (<code>certus/core/certus_strat_objectives.py</code>), but the map given to
                 the DP only keeps <code>x["cost"]</code>
-                (<code>certus/core/certus_strat_pipeline.py:103</code>).
+                (<code>certus/core/certus_strat_pipeline.py</code>).
                 <br><b>Fix:</b> a parallel map <code>crash_map[layer][&lambda;]</code>
                 and the objective $\min \sum_\ell -\log\left(1 - p(\ell,\lambda)\right)$ — the
                 <b>log of the yield, exactly</b>. It is no longer a proxy: it is a direct
@@ -2485,13 +2562,12 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 share the turning point history. To be <b>measured</b>, not assumed.
             </p>
             <p style="margin:0;">
-                <b>🔴 But the true lever is entirely missing: local search.</b> Since
-                the Monte-Carlo is the judge and the budget is unconstrained, the best
-                generator is not a generator. Start from the survivors and perturb —
-                move a block boundary, change a block's &lambda;, merge, split — by
-                <b>re-evaluating each perturbation at the Monte-Carlo on $P(\text{compliant})$</b>.
-                No proxy, no separability, no correlation problem.
-                <br><code>ELITE</code> comes close and failed twice: it perturbed at
+                <b>Current local search is a separate final stage.</b>
+                <code>certus_strat_workers_local_search::run_local_search</code> jointly refines monitoring mode
+                and wavelength, evaluates moves with the native Monte-Carlo machinery and, when enabled, checks the
+                configured index corridor. It does not optimise an explicitly computed $P(\text{compliant})$.
+                Its accepted plan has a special final-ranking rule (§10.6.1).
+                <br>The historical ELITE grid problem below explains why control-grid membership must be checked:
                 <b>&plusmn;1 nm</b>, i.e. <b>below the grid step</b> hence with no physical significance,
                 and it judges on the wrong criterion. It produced the
                 <code>551, 552, 553, 554</code> observed at the top of the ranking.
@@ -2506,7 +2582,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 the control grid. <code>_resolve_monitoring_wavelength_grid</code> now
                 returns only the sweep grid, regardless of the step value —
                 <b>251 &lambda; at a 1 nm step</b> over 450–700 nm since the value was
-                decided. The second failure — judging on the wrong criterion — remains open.
+                decided for that profile. The native P95 score remains a proxy for industrial conformity.
                 <br>⚠️ <b>ATTRIBUTION REFUTED BY MEASUREMENT — and it's my mistake.</b> This fix
                 had changed TWO things at once: the <b>step</b> and the <b>range</b>. I had
                 attributed the 5.7 gain to the shift to 2 nm, arguing that a finer grid would
@@ -2583,7 +2659,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
             </p>
             <p style="margin:0 0 10px;">
                 <b>Yet <code>noise_val_precalc</code> appears ONLY ONCE in the entire
-                kernel</b> (<code>certus_strat_growth.py:433</code>):
+                kernel</b> (<code>certus_strat_growth.py</code>):
                 <code>target_T_noisy = target_level + noise_val_precalc</code>.
                 The "real" signal <code>Ts_r</code> serves three purposes though, and none
                 is noisy:
@@ -2783,7 +2859,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 <li>$j$: optimal cut point (end of block $k-1$).</li>
                 <li>$\text{Cost}(m, \lambda)$: cost of layer $m$ monitored at $\lambda$, as defined in §3.4 —
                     $Q_{0.95}(\Delta d) + w \cdot g \cdot \varepsilon_{\text{prev}}$, <em>not</em> the P95 alone.
-                    Candidates eliminated on crash rate never reach the DP.</li>
+                    The minimum-crash fallback of §3.4 can retain candidates otherwise eliminated on crash rate.</li>
                 <li>The inner minimization loop corresponds to $\text{BlockCost}(j, i)$.</li>
             </ul>
         </div>
@@ -2818,7 +2894,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
             </p>
             <p style="margin:0 0 10px;">
                 <b>1. The cost of a block is the RAW SUM of its layers' costs</b>
-                (<code>certus_strat_dp.py:61</code>), and the DP sums the blocks (<code>:118</code>).
+                (<code>certus_strat_dp.py</code>), and the DP sums the blocks (<code>_dp_kernel</code>).
                 The minimized objective is therefore exactly
                 $\sum_{\ell} \text{Cost}(\ell, \lambda_{\text{block}(\ell)})$.
                 <br>Structural consequence: <b>merging two adjacent blocks at the same
@@ -2837,7 +2913,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
             </p>
             <p style="margin:0 0 10px;">
                 <b>3. Only the top 10 &lambda;s per block enter the DP</b>
-                (<code>certus_strat_dp.py:117</code>, <code>min(10, bl_count)</code>, hardcoded).
+                (<code>certus_strat_dp.py</code>, <code>min(10, bl_count)</code>, hardcoded).
                 Measured on the example (<code>scripts/probe_block_wls.py</code>): the cap bites
                 on 38 out of 40 blocks, throwing away a median of 8 candidates out of 18 available. But
                 <b>what it throws away is the tail</b> — the 10<sup>th</sup> retained one already costs
@@ -2849,14 +2925,14 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
             </p>
             <p style="margin:0 0 10px;">
                 <b>4. A block is only valid if ALL its layers have this &lambda;</b>
-                among their Phase A survivors (<code>:64-66</code>). An elimination on
+                among their Phase A survivors (<code>_compute_valid_blocks_kernel</code>). An elimination on
                 a single layer kills the entire block. The enumeration starts from the
-                <b>most constrained</b> layer (<code>:36-45</code>) — a constraint propagation
+                <b>most constrained</b> layer (<code>_compute_valid_blocks_kernel</code>) — a constraint propagation
                 heuristic, and it's a good choice.
             </p>
             <p style="margin:0;">
                 <b>5. The DP keeps <code>top_k</code>&times;2 paths per state</b>
-                (<code>:93</code>). It is indeed a search for the <i>k</i> best paths,
+                (<code>_dp_kernel</code>). It is indeed a search for the <i>k</i> best paths,
                 not a simple beam search: Bellman optimality is preserved for the given
                 objective. <b>The problem is not the algorithm, it's the objective.</b>
             </p>
@@ -2871,16 +2947,16 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
         </p>
 
         <p>
-            <code>mine_strategies_for_block_count</code> runs three DP passes in parallel (ThreadPoolExecutor) for each
-            block count:
+            <code>mine_strategies_for_block_count</code> submits THICKNESS and THICKNESS² concurrently,
+            waits for both, then runs the optional SYM pass for each block count:
         </p>
         <ul>
-            <li><strong>THICKNESS</strong>: raw P95 RMSE costs.</li>
+            <li><strong>THICKNESS</strong>: raw Phase A costs, including enabled gain and block bonuses.</li>
             <li><strong>THICKNESS²</strong>: normalized squared costs for balanced block weighting.</li>
             <li><strong>SYM</strong>: symmetry-adjusted costs (see §4.3).</li>
         </ul>
-        <p>Up to five top-k strategies per block count and per pass are collected and validated against the
-            <code>_validate_strategy_blocks_contract</code> schema (contiguous coverage, correct n_blocks, valid wavelengths).
+        <p>The returned solutions, controlled by the DP top-k budget, are collected for each pass and validated
+            against the <code>_validate_strategy_blocks_contract</code> schema (contiguous coverage, correct n_blocks, valid wavelengths).
         </p>
 
         <h3>4.2 Elite Candidate Generation</h3>
@@ -2894,7 +2970,9 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     while preserving total layer coverage.</li>
             </ul>
             All elite candidates are validated against the block contract before being added, and duplicates are
-            rejected through block-signature hashing. This step generates up to 120 additional strategies per run.
+            rejected through block-signature hashing. <code>elite_max_candidates</code> defaults to 120 per generation,
+            not per complete run: <code>_apply_elite_refinement_if_enabled</code> can perform multiple rounds,
+            and the orchestration can visit several block counts. Other evaluation and retention budgets also apply.
         </div>
 
         <h3>4.3 SYM — Symmetry-Based Scoring</h3>
@@ -2905,12 +2983,12 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
             </p>
             <p style="margin:0 0 10px;">
                 Name mismatch between producer and consumer. The producer
-                (<code>certus_strat_objectives.py:565-568</code>) emits
+                (<code>certus_strat_objectives.py</code>) emits
                 <code>dist_prev_start</code>, <code>dist_next_start</code>,
                 <code>dist_prev_end</code>, <code>dist_next_end</code>. The consumer
-                (<code>certus_strat_context.py:285-291</code>) reads
+                (<code>certus_strat_context.py</code>) reads
                 <code>ext_prev_start</code>… And <code>_EXT_KEYS</code>
-                (<code>certus_strat_service.py:1030</code>), supposed to bridge the gap, also copies
+                (<code>certus_strat_service.py</code>), supposed to bridge the gap, also copies
                 <code>ext_*</code> keys.
             </p>
             <p style="margin:0 0 10px;">
@@ -2938,7 +3016,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
             that place triggers near extrema, where error propagation is more symmetrical,
             and penalizes useless wavelength changes between adjacent blocks. Only the second term is alive. Parameters
             (default values below are exact, cf.
-            <code>certus_strat_utils.py:49-57</code>; the example file overrides them):</p>
+            <code>certus_strat_utils.py</code>; the example file overrides them):</p>
             <ul>
                 <li><code>sym_enable</code>: enable SYM scoring (default True).</li>
                 <li><code>sym_extrema_window</code>: optical thickness window for extrema proximity (default 12 OT).</li>
@@ -3060,9 +3138,10 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         the passband is 1.7). <b>We then stop judging strategies on a quantity the user never asked for.</b>
                     </p>
                     <p style="margin:0 0 12px;">
-                        ⚠️ <b>If no zone covers the grid, the score is $+\infty$, never 0.</b> Returning 0
-                        would make any strategy look perfect — a zero score is the best possible. That is the
-                        typical silent failure mode of a misentered configuration.
+                        ⚠️ If no target zone covers the scoring grid, the orchestration logs a warning and
+                        falls back to the nominal spectrum with <code>rank_weights=None</code>.
+                        This does not score target compliance. The low-level weighted RMSE returns $+\infty$
+                        for explicitly supplied zero-total weights, but that is a different call path.
                     </p>
                     <p style="margin:0;background:#fff;border:2px solid #b91c1c;border-radius:6px;padding:10px 14px;">
                         🔴 <b>DELIBERATELY UNUSED — physicist's decision, 2026-08-06:</b>
@@ -3083,9 +3162,9 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     </p>
                     <p style="margin:0 0 10px;">
                         Step&nbsp;1.d compares against <code>T_nom</code>, the transmission of the
-                        <b>nominal thicknesses</b> (<code>certus_strat_robustness.py:211</code>),
+                        <b>nominal thicknesses</b> (<code>certus_strat_robustness.py</code>),
                         and it is this array that goes as the <code>T_target</code> argument of
-                        <code>compute_batch_rmse</code> (<code>:706-712</code>). The RMSE is
+                        <code>compute_batch_rmse</code> (<code>_test_strategy_robustness_task</code>). The RMSE is
                         <b>unweighted, at constant step, over the whole range</b>.
                     </p>
                     <p style="margin:0 0 10px;">
@@ -3112,57 +3191,21 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
 
                 <div style="border:2px solid #16a34a;border-radius:8px;padding:14px 18px;margin:18px 0;background:#f0fdf4;">
                     <p style="margin:0 0 10px;font-weight:700;color:#166534;">
-                        2026-08-05 — CVaR95 replaces P95 as the ranking functional
+                        Current ranking functional — P95 retained after the CVaR trial
                     </p>
                     <p style="margin:0 0 10px;">
-                        A quantile is the <b>least efficient</b> functional of a
-                        sample: it is determined by the high tail alone. Number of
-                        points that actually decide a P95:
-                    </p>
-                    <table style="border-collapse:collapse;margin:0 0 10px;font-size:0.95em;">
-                        <tr style="background:#dcfce7;">
-                            <th style="border:1px solid #86efac;padding:4px 10px;">N draws</th>
-                            <th style="border:1px solid #86efac;padding:4px 10px;">points deciding the P95</th>
-                            <th style="border:1px solid #86efac;padding:4px 10px;">resolution on <code>crash_rate</code></th></tr>
-                        <tr><td style="border:1px solid #86efac;padding:4px 10px;"><b>10</b> — <code>fast</code> mode</td>
-                            <td style="border:1px solid #86efac;padding:4px 10px;"><b>only one (the maximum)</b></td>
-                            <td style="border:1px solid #86efac;padding:4px 10px;"><b>10%</b> for a 5% threshold</td></tr>
-                        <tr><td style="border:1px solid #86efac;padding:4px 10px;">25 — <code>premium</code> mode</td>
-                            <td style="border:1px solid #86efac;padding:4px 10px;">one to two</td>
-                            <td style="border:1px solid #86efac;padding:4px 10px;">4%</td></tr>
-                        <tr><td style="border:1px solid #86efac;padding:4px 10px;">50 — <code>deep</code> mode</td>
-                            <td style="border:1px solid #86efac;padding:4px 10px;">two to three</td>
-                            <td style="border:1px solid #86efac;padding:4px 10px;">2%</td></tr>
-                        <tr><td style="border:1px solid #86efac;padding:4px 10px;">150</td>
-                            <td style="border:1px solid #86efac;padding:4px 10px;">about seven</td>
-                            <td style="border:1px solid #86efac;padding:4px 10px;">0.7%</td></tr>
-                    </table>
-                    <p style="margin:0 0 10px;padding:8px 12px;background:#fef9c3;border-left:4px solid #ca8a04;">
-                        <b>Read this as a limit on what FAST may be quoted for.</b> The resolution
-                        column is the <i>quantisation</i> $1/N$: a crash rate screened over 10 draws
-                        can only ever read 0&nbsp;%, 10&nbsp;%, 20&nbsp;%&nbsp;… so a 5&nbsp;%
-                        threshold falls <i>between two representable values</i>. A
-                        <code>crash_rate = 0.0&nbsp;%</code> obtained under FAST therefore means
-                        &ldquo;below 10&nbsp;%&rdquo;, not &ldquo;zero&rdquo;. <b>Quote FAST for
-                        SEEL and for block architecture; quote crash rate from PREMIUM or DEEP.</b>
-                        The screening budget is <code>n_screen_runs</code> = 10 / 25 / 50
-                        (<code>certus_strat_ui_state.py</code>), distinct from the final
-                        Monte-Carlo depth <code>robustness_num_runs</code> = 50 / 150 / 300.
-                    </p>
-                    <p style="margin:0 0 10px;">
-                        The <b>CVaR95</b> — average of the worst 5&nbsp;%, <i>expected
-                        shortfall</i> — keeps exactly the same risk semantics but
-                        <b>averages</b> the tail instead of picking one point from it. At equal N,
-                        the estimator's variance is significantly lower, without a single
-                        additional draw.
+                        <code>_test_strategy_robustness_task</code> computes <code>rmse_p95</code> and
+                        <code>rmse_p99</code>. Its native score is the maximum <code>rmse_p95</code> over the
+                        tested noise levels. CVaR95 was tried and removed; <code>rmse_cvar95</code> and
+                        <code>robustness_score_functional</code> are not the current production controls.
                     </p>
                     <p style="margin:0;">
-                        <code>rmse_cvar95</code> is computed alongside <code>rmse_p95</code>,
-                        which remains in place. <code>robustness_score_functional = "p95"</code>
-                        restores the previous behavior.
-                        <br>⚠️ CVaR95 &ge; P95 by construction: <b>the scores change
-                        scale and the rankings produced by the two are not
-                        comparable.</b>
+                        Screening uses 10 / 25 / 50 draws in fast / premium / deep; final scoring uses
+                        50 / 150 / 300 (<code>certus_strat_ui_state::_MODE_BUDGETS</code>).
+                        An observed crash frequency has increments of $1/N$: zero observed crashes does not
+                        bound the true crash probability below $1/N$. More draws improve sampling precision;
+                        they do not establish external manufacturing validity. Quantile interpolation also means
+                        P95 is not simply the maximum at ten draws.
                     </p>
                 </div>
 
@@ -3171,9 +3214,9 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         🔴 Measured: the DP cost does not predict this score (&rho; = &minus;0.04)
                     </p>
                     <p style="margin:0 0 10px;">
-                        This step is the <b>only</b> one in the pipeline where the spectral response is
-                        actually evaluated. Everything eliminated upstream is cut on
-                        <code>total_cost</code>, a sum of nanometers produced by the DP.
+                        Phase B evaluates the complete perturbed stack spectrum, rather than relying solely on
+                        the additive DP proxy. Nominal properties and other analyses also evaluate spectra.
+                        The experiment below concerns the predictive value of <code>total_cost</code>.
                         <code>scripts/probe_dp_vs_truth.py</code> measured the link between the
                         two, on the full population before any cut:
                     </p>
@@ -3226,11 +3269,14 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
 
                 <h3>4.7 Post-Check: T_min Floor on Best Strategy</h3>
                 <p>
-                    After ranking, the best strategy undergoes a final validation via
-                    <code>_validate_strategy_min_transmission_floor</code>. For every layer, the dynamics are
-                    recomputed at the assigned monitoring wavelength and $T_{min}$ is checked against
-                    <code>min_transmission_floor</code>. Any violation raises a <code>RuntimeError</code> to prevent
-                    acceptance of an invalid strategy.
+                    <code>_validate_strategy_min_transmission_floor</code> evaluates transmission at the
+                    <b>nominal end thickness</b> of each layer, not the minimum over its growth. A wavelength
+                    absent from the cache receives a fallback value of 1.0. In
+                    <code>certus_strat_pipeline::_prepare_block_strategy_phase_b</code>, this conditional check
+                    raises <code>RuntimeError</code> on a reported violation when
+                    <code>enforce_best_strategy_tmin_check</code> is enabled. The full GUI worker pipeline prepares
+                    Phase A separately and does not call this check on that path. It therefore provides neither a
+                    universal final certificate nor a minimum-over-growth guarantee.
                 </p>
 
                 <!-- ================================================================ -->
@@ -3250,7 +3296,10 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     <code>find_nucleation_adaptive_kernel</code> with full noise simulation.<br>
                     &emsp;• If RMSE per layer degrades by more than 40% when adding a layer, stop growing.<br>
                     &emsp;• If RMSE exceeds 1.5 nm/layer, reject the candidate.<br><br>
-                    <strong>Scoring:</strong> $\text{score} = \text{block\_size} \times (1 - \text{RMSE})$.
+                    Scoring in <code>find_robust_nucleation_wavelength_adaptive::score_block</code>:
+                    $\text{score}=\text{size}^{1.5}/(\text{RMSE}+\varepsilon)$, where
+                    $\varepsilon=\operatorname{clip}(0.1\,\operatorname{median}(\text{RMSE}_{&gt;0}),10^{-4},0.1)$;
+                    if no RMSE is positive, the pre-clipped fallback is 0.1.
                     <br><br>
                     <strong>Integration in Phase B:</strong> the nucleation wavelength and size are passed to
                     <code>mine_strategies_for_block_count</code> via <code>apply_nucleation_constraint</code>, which
@@ -3270,7 +3319,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         <li><code>material_db</code>: active material database (RobustMaterialDatabase or MaterialDatabase).</li>
                         <li><code>stats_queue</code> / <code>live_queue</code>: multiprocessing queues for real-time statistics.</li>
                         <li><code>sp_buffer</code>: batched SP emission (flushes every 500 spectra) to reduce queue pressure.</li>
-                        <li><code>indices_cache</code>: per-context wavelength-keyed index cache.</li>
+                        <li><code>clues_cache</code>: per-context index cache.</li>
                     </ul>
                     Contexts are activated via <code>with ctx.activate():</code> for clean scoping. Workers initialize
                     their own sub-context via <code>StratContext.set_current(ctx)</code>. The global
@@ -3279,23 +3328,20 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
 
                 <h3>6.2 RobustMaterialDatabase</h3>
                 <div class="new-badge">
-                    <code>RobustMaterialDatabase</code> (in <code>certus_strat_db.py</code>) wraps the standard
-                    <code>MaterialDatabase</code> with a three-tier fallback strategy for index retrieval:
-                    <ol>
-                        <li>Context-injected database (<code>StratContext</code>).</li>
-                        <li>Global <code>APP_CONTEXT</code> database.</li>
-                        <li>Numeric fallback constants (H: 2.1, L: 1.46, Sub: 1.52). The fallback does not use n = 1.0
-                            because that would produce an incorrect T = 1.0 for a bare substrate.</li>
-                    </ol>
+                    <code>RobustMaterialDatabase</code> in <code>certus/utils/certus_strat_db.py</code> retrieves
+                    tabulated or supported model indices from its own material data. Its
+                    <code>get_refractive_index</code> raises <code>KeyError</code> for an unknown material.
+                    Context and global database selection belong to the smart retrieval helpers below.
+                    Numeric H/L/substrate fallback values belong to
+                    <code>certus_strat_config::_resolve_clues_at_wavelength</code>, not to this database class.
                 </div>
-
                 <h3>6.3 Smart Index Retrieval</h3>
                 <p>
-                    <code>smart_get_refractive_index</code> and <code>smart_get_refractive_indices_vectorized</code>
+                    <code>smart_get_refractive_index</code> and <code>smart_get_refractive_clues_vectorized</code>
                     shadow the physics module counterparts and implement the same four-tier fallback:
                     explicit database argument → StratContext database → APP_CONTEXT database → physics fallback.
                     These are aliased as the module-level <code>get_refractive_index</code> and
-                    <code>get_refractive_indices_vectorized</code>, so all internal code uses the same retrieval path.
+                    <code>get_refractive_clues_vectorized</code>, exposing these helpers to service callers.
                 </p>
 
                 <!-- ================================================================ -->
@@ -3307,7 +3353,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 <p>
                     <code>_calculate_strategy_spectral_resolution</code> sweeps every
                     (layer, monitoring wavelength) pair and computes the curvature-based resolution limit:
-                    $$\text{res\_limit} = \Delta\lambda \cdot \sqrt{T_{tol} / \kappa}$$
+                    $$\text{res\_limit} = \Delta\lambda \cdot \sqrt{3 T_{tol} / \kappa}$$
                     where $\kappa$ is the curvature of T(λ) at the monitoring wavelength and
                     $T_{tol}$ is the trigger tolerance. The worst layer is reported in the output.
                 </p>
@@ -3355,23 +3401,21 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     </p>
                 </div>
 
-                <h3>7.4 Sensitivity Matrix (Legacy)</h3>
-                <p>
-                    <code>calculate_sensitivity_matrix</code> sweeps $\sigma$ from 0 to 3 nm and computes the mean
-                    $|T_{noisy} - T_{nominal}|$ at each wavelength. This produces a two-dimensional heat map showing
-                    which spectral regions are most sensitive to thickness errors.
-                    <br><em>*Note: As of Revision 2026, explicit sensitivity exports have been streamlined;
-                        sensitivity is now evaluated intrinsically during Phase B screening.</em>
-                </p>
+                <h3>7.4 Step 0 Sensitivity Matrix</h3>
+                <p><code>StratStrategyService.run_step_0</code> calls <code>calculate_sensitivity_matrix</code>
+                    separately from Phase B robustness scoring. It perturbs thicknesses and maps spectral sensitivity;
+                    this analysis is still active rather than replaced by the Phase B score.</p>
 
-                <h3>7.5 SEEL Analysis (Legacy)</h3>
-                <p>
-                    <code>calculate_seel_analysis</code> runs 3×50 Monte Carlo batches at 6 different $\sigma$
-                    levels and computes the RMSE for each. The resulting SEEL curve indicates the equivalent random
-                    error per layer that the strategy can tolerate while staying within specification.
-                    <br><em>*Note: SEEL analytical bounds are now integrated directly into the Phase B dynamic
-                        Monte Carlo ranking rather than running as a standalone post-process.</em>
-                </p>
+                <h3>7.5 Step 0 SEEL Calibration</h3>
+                <p><code>calculate_seel_analysis</code> evaluates six thickness-error levels
+                    (0.05, 0.1, 0.3, 0.6, 1.2 and 2.0 nm), with three batches of 50 draws per level.
+                    The current fit uses <code>fit_alpha=1</code>. In
+                    <code>StrategiesTableWindow.update_data::_rmse_to_seel</code>, the GUI converts spectral RMSE
+                    using <code>fit_k * rmse**fit_alpha</code>, with a calibration-interpolation fallback.
+                    The native ranking and the campaign <code>RESULT</code> convention use
+                    <code>2*sqrt(robustness_score)</code>; these are distinct conversions and must be identified
+                    when comparing displayed, exported and campaign values. SEEL is an equivalent random thickness
+                    error, not by itself a guarantee of compliance with a specification.</p>
 
                 <h3>7.6 Detailed Growth Visualization</h3>
                 <p>
@@ -3404,23 +3448,24 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     </tr>
                 </table>
                 <div class="new-badge">
-                    A memory guard is applied during index precomputation: the estimated cache size
-                    (num_layers × num_wls × 2 × 4 × 8 bytes) is compared to adaptive limits (50–150 MB
-                    depending on stack size). If exceeded, the scan step is automatically coarsened to stay
-                    within the limit.
+                    A memory guard compares the estimate <code>num_layers * num_wls * 2 * 4 * 8</code> bytes
+                    with a stack-size-dependent limit (50 / 100 / 150 MB). If exceeded,
+                    <code>_prepare_precompute_wavelength_grid</code>
+                    coarsens the scan grid. It then adds the display grid and λ₀ without rechecking the final union;
+                    the estimate is not a hard bound on the resulting cache.
                 </div>
 
                 <h3>8.2 Parallelism</h3>
                 <ul>
-                    <li><strong>Numba <code>@njit(parallel=True)</code>:</strong> All physics kernels use
-                        <code>prange</code>
-                        for automatic thread-level parallelism (wavelength and run loops).</li>
-                    <li><strong>ThreadPoolExecutor (mining):</strong> The 3 DP passes (THICKNESS / THICKNESS² / SYM)
-                        run concurrently within <code>mine_strategies_for_block_count</code>.</li>
-                    <li><strong>ThreadPoolExecutor (robustness):</strong> Robustness tasks run in parallel
-                        when <code>get_safe_worker_count() > 1</code>, sequential otherwise (frozen builds).</li>
-                    <li><strong>Throughput:</strong> ~10 million deposition scenarios evaluated per second
-                        (Core i9 reference).</li>
+                    <li><strong>Numba:</strong> batch and wavelength kernels can use <code>prange</code>;
+                        scalar growth and helper kernels are not all independently parallel.</li>
+                    <li><strong>Mining pool:</strong> THICKNESS and THICKNESS² run concurrently;
+                        the optional SYM pass is submitted after their results are collected.</li>
+                    <li><strong>Robustness pool:</strong> the strategy evaluator computes its worker count as
+                        <code>max(1, multiprocessing.cpu_count() // 2)</code>. Other stages use
+                        <code>get_safe_worker_count</code>; its frozen-build policy is not universal.</li>
+                    <li><strong>Performance:</strong> measured timings belong to their dated campaigns and hardware.
+                        No current throughput guarantee is established here.</li>
                 </ul>
 
                 <h3>8.3 Key Source Files</h3>
@@ -3431,11 +3476,11 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     </tr>
                     <tr>
                         <td style="padding:8px; border:1px solid #ddd;"><code>CERTUS_STRAT.py</code></td>
-                        <td style="padding:8px; border:1px solid #ddd;">Pipeline orchestrator, GUI, strategy mining, Phase A/B</td>
+                        <td style="padding:8px; border:1px solid #ddd;">Compatibility entry point; implementation lives in core, workers, utils and ui modules</td>
                     </tr>
                     <tr>
                         <td style="padding:8px; border:1px solid #ddd;"><code>_certus_physics_impl.py</code></td>
-                        <td style="padding:8px; border:1px solid #ddd;">All Numba JIT kernels (TMM, dynamics, growth, DP, batch RMSE)</td>
+                        <td style="padding:8px; border:1px solid #ddd;">Shared physics facade; growth and DP kernels live in certus/physics/certus_strat_*, with orchestration in core and workers</td>
                     </tr>
                     <tr>
                         <td style="padding:8px; border:1px solid #ddd;"><code>certus_strat_context.py</code></td>
@@ -3443,7 +3488,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     </tr>
                     <tr>
                         <td style="padding:8px; border:1px solid #ddd;"><code>certus_strat_db.py</code></td>
-                        <td style="padding:8px; border:1px solid #ddd;">RobustMaterialDatabase with 3-tier fallback</td>
+                        <td style="padding:8px; border:1px solid #ddd;">Material data lookup; unknown materials raise an error</td>
                     </tr>
                     <tr>
                         <td style="padding:8px; border:1px solid #ddd;"><code>certus_ui.py</code></td>
@@ -3470,8 +3515,8 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 <p><code>CertusStratApp</code> inherits from <code>CertusBaseApp</code> and uses a horizontal
                     splitter layout with:</p>
                 <ul>
-                    <li><strong>Left panel</strong> (scrollable): 4 tabs — <em>Design</em>, <em>Optimization</em>,
-                        <em>Advanced</em>, <em>Why CERTUS</em>.</li>
+                    <li><strong>Left panel</strong> (scrollable): <em>Design</em>, <em>Strategy Loop</em>,
+                        <em>Advanced</em> and <em>Multi-seed</em> tabs.</li>
                     <li><strong>Right panel</strong>: stacked plot area (WelcomeGuideWidget → main plot) + collapsible
                         log panel (<code>CertusLogPanel</code>).</li>
                     <li><strong>Status bar</strong>: toggle-details button, status label, live stats counter
@@ -3490,9 +3535,10 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 <h3>9.3 Dynamic Processing Feedback</h3>
                 <p>Long-running tasks are isolated in worker threads. The interface uses wait cursors and tooltips
                     to keep the event loop responsive.</p>
-                <p>Numba JIT compilation runs in a background daemon thread at startup (<code>_warmup_numba</code>).
-                    Action buttons remain disabled until compilation completes, and <code>_on_numba_ready_ui</code>
-                    re-enables them on the Qt main thread via <code>QMetaObject.invokeMethod</code>.</p>
+                <p>Numba JIT warmup runs in a background daemon thread. The
+                    <code>sig_numba_ready</code> signal invokes <code>_on_numba_ready_ui</code> on the UI thread.
+                    A fallback timer can also enable the action buttons while JIT is still pending
+                    (<code>_on_jit_fallback_timeout</code>).</p>
 
                 <h3>9.4 Window Management</h3>
                 <ul>
@@ -3518,7 +3564,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         <td style="border:1px solid #cbd5e1;padding:6px 10px;"><strong>Intended Use</strong></td>
                         <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;color:#0284c7;">Rapid interactive prototyping</td>
                         <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;color:#16a34a;">Standard production baseline</td>
-                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;color:#9333ea;">Deep search &amp; critical certification</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;color:#9333ea;">Broader search and additional statistical sampling</td>
                     </tr>
                     <tr>
                         <td style="border:1px solid #cbd5e1;padding:6px 10px;"><strong>Final Monte-Carlo Depth (<code>robustness_num_runs</code>)</strong></td>
@@ -3660,12 +3706,13 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 <h2 id="sec-10">10. What Makes a Good Deposition Strategy</h2>
 
                 <div class="highlight-box">
-                    <strong>How to read this section.</strong> It is written for a future
-                    publication, so every claim carries its <b>register</b>, and the two are never
-                    mixed:
-                    <br>&nbsp;&nbsp;🟢 <b>ESTABLISHED</b> — a number produced by a run that
-                    completed, with the file it came from. It can be re-derived.
-                    <br>&nbsp;&nbsp;🔵 <b>CONJECTURE</b> — a mechanism we believe in, together with
+                    <strong>How to read this section.</strong> These are dated experiments and hypotheses,
+                    not a fresh validation of the current checkout. Later changes to stop arming, exact anchors,
+                    scoring domains and search stages can invalidate transfer of older numerical conclusions.
+                    <br>🟢 <b>Historical measurement</b>: a reported result under its stated conditions.
+                    Some raw files are absent from this checkout or held outside it; a citation does not establish
+                    that the campaign has been reproduced here. 🔵 <b>Conjecture</b>: a proposed mechanism and a
+                    possible refuting experiment, rather than a demonstrated result.
                     <b>the experiment that would refute it</b>. It is not a result.
                     <br><br>
                     Unless stated otherwise, everything below is measured on the <b>same object</b>:
@@ -3676,22 +3723,16 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     particular design.
                 </div>
 
-                <h3>10.1 The quantity being maximised</h3>
-                <p>
-                    There is exactly one, and it absorbs both failure modes. A run that never
-                    terminates and a filter that terminates out of specification are <b>the same
-                    event</b>: no usable part. So the objective is
-                    $P(\text{the part conforms})$, a scalar — which is why no Pareto front is
-                    maintained and why the ranking is not multi-criteria. Every trade-off described
-                    below is an <i>observed consequence</i> of that single number, not a weighting
-                    someone chose.
-                </p>
-                <p>
-                    The reported quantity is the <b>worst</b> of the three noise levels — a
-                    deliberate minimax. The per-strategy figures quoted in this section are at the
-                    <b>nominal</b> level, and the two are never compared.
-                </p>
-
+                <h3>10.1 Industrial objective and implemented decision rule</h3>
+                <p>The industrial objective is a usable part: a completed deposition whose spectrum meets the
+                    specification. The program does not directly maximise a computed probability of that event.
+                    <code>_test_strategy_robustness_task</code> instead scores spectral error, using the worst
+                    P95 over the configured noise levels. Targets can change the reference and weights; without
+                    usable target coverage, the reference is the nominal spectrum.</p>
+                <p>Crash gates, SEEL equivalence classes, critical-layer margin, optional consensus and final
+                    local search also affect selection. These implemented rules are proxies and decision rules,
+                    not an identity with $P(\text{part conforms})$. The archived per-strategy figures below may be
+                    at nominal noise; a native worst-noise score and a nominal-noise figure are different quantities.</p>
                 <h3>10.2 Where the control wavelengths go</h3>
                 <p>
                     The search is free to place every block anywhere on 251 grid points. What it
@@ -3898,8 +3939,9 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     🟢 <b>And the per-layer crash profile turns that wall into a diagnosis</b> —
                     which was impossible while the layer axis was being collapsed. On the seed-77
                     collapse: <b>nothing fails before layer 35</b>, then everything fails from 35 to
-                    47 — the last quarter of the stack. Of 1033 layer-failures, <b>856 (79 %) are
-                    miscounted turning points</b> and only 222 (21 %) are unreachable levels.
+                    47 — the last quarter of the stack. The archived summary quotes 856 miscounted-turning-point
+                    events and 222 unreachable-level events. These sum to 1,078, whereas its stated total was 1,033;
+                    the total and its denominator remain unresolved here, so precise proportions are not certified.
                     <br><br>
                     That is accumulated error read directly off the stack: the index error compounds
                     along the deposition, and by the last quarter the optical thickness has drifted
@@ -4112,9 +4154,9 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     spectral RMSE. It converts a score into nanometres.
                 </p>
                 <p>
-                    🟢 <b>ESTABLISHED — the conversion is linear, and that is measured, not
-                    assumed.</b> Perturbing every layer at six values of $\sigma$ spanning a factor
-                    40, three repeats each:
+                    <b>Historical calibration on this stack.</b> The following fitted coefficient belongs to
+                    that experiment, not to every design or to the separate square-root ranking convention.
+                    Its six thickness-error levels and three repeats produced:
                 </p>
                 <div class="eq-box">
                     $$\text{RMSE} \;=\; \frac{\sigma}{k}, \qquad k = 95.4, \qquad
@@ -4148,13 +4190,15 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
 
                 <h3>10.6.1 Final displayed and exported ranking</h3>
                 <p>
-                    <code>rank_final_results</code> first checks that every strategy ID is unique. It then orders
-                    candidates by SEEL and forms each equivalence class from the smallest SEEL still unranked:
-                    every following candidate at most 0.01 nm above that leader enters the same class. Inside the
-                    class, lower crash rate wins, followed by larger critical-layer transmission margin (clamped to
-                    0&ndash;2 instrument-amplitude units), then lower raw robustness score. This deterministic
-                    order is what the final table and export receive. ELITE parent choice and consensus keep their
-                    internal ranking logic.
+                    <code>rank_final_results</code> checks strategy IDs for uniqueness, then uses
+                    <code>2*sqrt(robustness_score)</code> to form classes within 0.01 nm of the smallest SEEL
+                    still unranked. Within a class: lower crash rate, then larger critical-layer margin
+                    (clamped to 0–2 amplitude units), then lower raw score.
+                    This describes the native ranker. <code>run_local_search</code> can replace it with
+                    <code>rank_refined_first</code>, placing an accepted refined plan first. By default,
+                    <code>strat_local_search_fresh_id=False</code> permits that row to keep its parent ID;
+                    the global uniqueness check is enabled for this final list only with the fresh-ID option.
+                    ELITE, consensus and optional Rate-post processing have their own internal ranking rules.
                 </p>
                 <div class="mermaid">
                     flowchart TD
@@ -4167,7 +4211,12 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     G --> H[Then lower raw robustness score]
                     H --> I{Candidates remain?}
                     I -->|Yes| D
-                    I -->|No| J[Final order shown and exported]
+                    I -->|No| J[Native ranked list]
+                    J --> K{Final local search retained a plan?}
+                    K -->|Yes| L[Place refined plan first; fresh ID optional]
+                    K -->|No| M[Keep native list]
+                    L --> N[Final display and export]
+                    M --> N
                 </div>
                 <p>
                     On the 2026-10-04 <code>fast</code> reference run, the same 194 strategies produced 147 changed
@@ -4755,12 +4804,10 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         against itself. The dichroic is a <b>coherence bench</b>, not an independent
                         referee. The only closure is real deposition: two strategies actually
                         deposited, spectra measured, and STRAT required to rank them in the correct
-                        order — an <b>ordinal</b> test, far weaker than absolute agreement and far
-                        more convincing than self-consistency.</li>
+                        order — an <b>ordinal</b> test. This is a validation requirement, not a planned or completed experiment.</li>
                     <li><b>No conclusion is transferred to another stack.</b> Every figure here is
-                        the 48-layer dichroic. The three-cavity bandpass of §10.9 exists to <i>test</i>
-                        whether a conclusion survives the change of component — never to carry one
-                        across.</li>
+                        tied to the component and model named in its source campaign. The
+                        <a href="#strat-current-benchmarks">current reference table</a> keeps those conditions explicit.</li>
                     <li><b>The spectral target is unweighted, and this is a stated choice.</b> Its
                         consequence must be reported alongside any result: the two bands of this
                         design are <b>the same width</b> — 141 points out of 301 each — so a uniform
@@ -4961,13 +5008,12 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     <b>Three properties of this bonus that the formula above does not show, and that
                     matter to anyone reading the source.</b>
                     <ul style="margin:8px 0 0 18px;">
-                        <li><b>What Phase B sees is $\text{Cost}/\text{streak}$, not
-                            $\text{Cost}/\sqrt{\text{streak}}$.</b> Normalisation squares the cost
-                            afterwards, so the two operations compose: a 9-layer block is favoured by
-                            a factor <b>9</b>, not 3.</li>
-                        <li><b>The local cost is overwritten in place</b>, and the pre-bonus value is
-                            not kept anywhere — the <code>cost_raw</code> field written downstream
-                            already holds the boosted number.</li>
+                        <li><b>Only THICKNESS² squares the boosted cost.</b> With local cost $C$,
+                            streak $s$ and mean boosted cost $\bar C$, that map receives
+                            $C^2/(s\bar C^2)$. The raw THICKNESS and SYM paths retain their own cost definitions.</li>
+                        <li><b>Raw results keep <code>cost_local</code></b> before the block bonus.
+                            The reduced normalized map keeps <code>cost</code> and <code>cost_raw</code>;
+                            its <code>cost_raw</code> already includes the bonus.</li>
                         <li><b>It is not a neutral re-ordering.</b> The bonus runs <i>before</i>
                             normalisation, and the mean used to normalise is computed over the already
                             boosted costs. That mean drops, so candidates that received <i>no</i>
@@ -5105,7 +5151,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     on bare glass.
                 </div>
 
-                <h3 id="sec-10-16">10.16 Multiple-testglass monitoring — the 99-layer filter becomes manufacturable</h3>
+                <h3 id="sec-10-16">10.16 Multiple-testglass monitoring — historical simulated feasibility of the 99-layer filter</h3>
                 <div class="highlight-box" style="background:#ecfdf5;border-left:4px solid #059669;">
                     🟢 <b>Measured 2026-08-15, re-measured at higher depth 2026-08-16.</b> Splitting
                     the monitoring across several witnesses takes the 99-layer bandpass from
@@ -5594,7 +5640,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
         </table>
 
         <p>
-            &#9888; <b>0.5627 against 0.5676 is &minus;0.9&nbsp;%, ten times below the 2.59&nbsp;% noise on a
+            <b>⚠ 0.5627 against 0.5676 is about &minus;0.9 %, roughly three times smaller than the quoted 2.59 % noise on a
             SEEL difference. It is an equality, never a superiority.</b> What changed is not the figure, it is
             its <b>condition</b>: the 0.5676 required knowing that seed 77 supplied the right pads; this one
             requires nothing. Two numbers do sit outside the noise: the crash rate falls from 1.67&nbsp;% to
@@ -5691,8 +5737,10 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
 
         <p>
             The cause is in our own code. The turning-point detector carries a hysteresis threshold
-            <code>tp_hysteresis_factor &times; A &times; noise_val</code> &mdash; it <b>scales with the noise
-            level</b>. More noise therefore makes the detector <i>more conservative</i>, so it invents fewer false
+            given by <code>max(tp_hysteresis_floor, tp_hysteresis_factor * A * noise_val)</code>
+            for this absolute-noise case (<code>reading_hysteresis</code>). The noise-dependent term scales
+            only while it exceeds the floor. In the historical sweep below, increasing that term made
+            detection more conservative and reduced false
             turning points, and the dominant failure mode recedes faster than the noise adds to it. Sweeping that
             single factor, at identical component and seed:
         </p>
@@ -5731,7 +5779,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
             <b>Source.</b> Artefacts <code>reports/blocs_vs_plantage_r75x2_deep_s404{,_hyst0,_hyst05}.json</code>,
             probe <code>scripts/probe_plantage_vs_sigma.py</code>, sweep
             <code>scripts/enchainer_hysteresis.sh</code>, mechanism at
-            <code>certus/core/certus_strat_robustness_task.py:378-385</code>. Reading rule written <i>before</i> the
+            <code>certus/core/certus_strat_robustness_task.py</code>. Reading rule written <i>before</i> the
             result, in <code>docs/archives/REPRENDRE_ICI.md</code> &sect;1ter (removed from the tree, see above).
         </div>
 
@@ -5799,15 +5847,13 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     On a real 24-layer stack, keeping only physical transmissions, the error
                     grows <b>linearly in k</b> and stays four decades below the reading noise:
                     <b>4.2&times;10<sup>&minus;8</sup> at k = 10<sup>&minus;4</sup></b>, which is
-                    0.008 % of the noise amplitude. Restricting STRAT to k &lt; 10<sup>&minus;4</sup>
-                    is therefore comfortable, with a decade of margin.
+                    0.008 % of that experiment's noise amplitude. The current implementation uses this threshold
+                    to choose its numerical path; it does not prohibit all larger absorption values.
                     <br><br>
-                    ⚠️ The guard must <b>raise</b>, never silently fall back — and the fast path
-                    must be validated against the <b>independent TMM oracle</b>, not against the
-                    kernel. Two sign bugs worth 46 and 82 points of reflectance have already
-                    hidden inside re-implementations, and <b>both were exact at k = 0</b>:
-                    invisible to any test that only looks at dielectrics, which is precisely
-                    this case.
+                    <code>_fill_history_signal</code> and <code>_fill_current_signal</code> use the closed form
+                    below <code>K_MAX_CLOSED_FORM</code> and complex TMM otherwise.
+                    <code>_invert_thickness_exact</code> also falls back to probe inversion on the absorbing branch.
+                    Independent TMM-oracle validation remains necessary when changing these paths.
                 </div>
 
                 <div class="highlight-box">
@@ -5820,22 +5866,15 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     10<sup>&minus;3</sup>): 0.276 s against 0.331 s.
                     <b>A Python benchmark does not predict a compiled kernel.</b>
                     <br><br>
-                    🔴 <b>And three follow-on ideas were measured and closed.</b>
+                    <b>Separate historical benchmarks from the current stop model.</b>
                     <ul style="margin:8px 0 0 18px;">
-                        <li><b>Replacing the parabolic inversion:</b> the parabola is already
-                            exact to <b>2.1&times;10<sup>&minus;10</sup> nm</b> over 200 random
-                            stacks — 240 million times below the 0.05 nm at which a thickness
-                            difference stops meaning anything. It also explains a figure from
-                            §2.8: POEM's invariance measured at 2.19&times;10<sup>&minus;10</sup> nm
-                            was <i>the parabola's</i> limit, not POEM's.</li>
-                        <li><b>Analytic dT/dd:</b> outside the hot loop, and changing it would move
-                            the noise scale — hence every result — for no gain.</li>
-                        <li><b>🔴 Solving the turning points analytically: structurally impossible.</b>
-                            The detector runs on the <i>noisy</i> signal and is a hysteresis
-                            machine, not an extremum finder: it models what the instrument
-                            <i>believes it sees</i>. An analytic extremum of the clean curve would
-                            <b>delete the false-turning-point mechanism entirely</b> — 79 % of the
-                            measured failures.</li>
+                        <li><b>Inversion:</b> earlier parabolic-inversion benchmarks do not describe the current
+                            production default: <code>stop_model_flags</code> enables exact inversion and exact anchors.</li>
+                        <li><b>Derivative:</b> changing <code>dT/dd</code> can change a thickness-to-photometric-noise
+                            conversion, so numerical and statistical consequences must be measured together.</li>
+                        <li><b>Turning points:</b> noisy hysteresis detection models what the controller declares.
+                            Refining an anchor on its exact curve is distinct from replacing that detection with
+                            noiseless extrema; the latter would remove false detections from the model.</li>
                     </ul>
                 </div>
 
@@ -5855,8 +5894,9 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     one: the same parameter wrong in both directions.
                 </p>
                 <div class="highlight-box">
-                    🔴 <b>The adaptive window nevertheless does not work, and the flag stays
-                    off.</b>
+                    <b>The adaptive-window experiment was rejected and its unused path removed.</b>
+                    Current <code>_scan_window</code> uses the fixed scan constants; there is no dormant adaptive flag.
+                    The following table records the historical comparison.
                     <table style="border-collapse:collapse;margin:8px 0;font-size:0.9em;">
                         <tr style="background:#fff;">
                             <th style="border:1px solid #ccc;padding:4px 10px;text-align:left;">window</th>
@@ -5897,7 +5937,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 <p>
                     What it costs is not accuracy but <b>verifiability</b>: bit-level comparison
                     becomes impossible, and the independent TMM oracle drops from
-                    3.3&times;10<sup>&minus;16</sup> to ~10<sup>&minus;7</sup> — four decades of
+                    3.3&times;10<sup>&minus;16</sup> to ~10<sup>&minus;7</sup> — about eight decades of
                     sensitivity lost on the very instrument that caught the two sign bugs.
                     <b>Monitoring path only, never the scoring path and never the oracle.</b>
                 </p>
@@ -5912,9 +5952,10 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 <div class="footer">
                     <p>Generated from strict source code analysis of <code>CERTUS_STRAT.py</code>,
                         <code>certus_strat_context.py</code>, <code>certus_strat_db.py</code> and
-                        <code>_certus_physics_impl.py</code> — Revision 2026-10-04
+                        <code>_certus_physics_impl.py</code>. Implementation correspondence: 2026-10-31. Settings from
+                        <a href="../docs/ETAT.md">project state</a>; campaign results retain their source dates.
                     </p>
-                    <p>&copy; CERTUS Scientific Suite v26-08 • Scientific Report</p>
+                    <p>&copy; CERTUS Scientific Suite • Scientific Report</p>
                 </div>
         </div>
 

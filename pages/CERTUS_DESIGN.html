@@ -14,6 +14,9 @@
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <script src="assets/certus_report_init.js"></script>
     <link rel="stylesheet" href="assets/certus_report.css">
+    <style>
+        #current-design, #design-benchmarks, #design-limits { scroll-margin-top: 180px; }
+    </style>
 </head>
 
 <body>
@@ -58,28 +61,97 @@
     <div class="container">
         <header>
             <h1>CERTUS-DESIGN</h1>
-            <p style="font-size: 1.3em; color: #7f8c8d; font-weight: 300;">Stochastic Global Synthesis & Density
-                Clustering Engine</p>
-            <p style="font-size: 1.0em; color: #95a5a6; font-weight: 300;">Implementation review: 2026-10-03</p>
+            <p style="font-size: 1.3em; color: #7f8c8d; font-weight: 300;">Memetic Optical Synthesis, Local Refinement &amp; Structure Search</p>
+            <p style="font-size: 1.0em; color: #95a5a6; font-weight: 300;">Documentation updated: 2026-10-25 &bull; Reference runtime: Python 3.15.1</p>
         </header>
 
         <div class="abstract">
-            <strong>Executive Summary:</strong> CERTUS-DESIGN is a high-performance synthesis engine for optical thin
-            films, powered by the <strong>PGLOBAL (Population-based Stochastic Exploration)</strong> algorithm.
+            <strong>Executive Summary:</strong> CERTUS-DESIGN synthesizes optical multilayers against spectral targets.
+            The normal-incidence global stage uses a <strong>memetic population search</strong> by default, followed by
+            local refinement, cleanup and structure search. PGLOBAL remains available as the alternative global stage
+            and is still used in oblique mode.
             <br><br>
             <div style="background-color: #f8f9fa; border-left: 4px solid #6c757d; padding: 10px; margin-bottom: 15px;">
-                <strong>Interpretation of “global”:</strong> PGLOBAL explores multiple regions of the bounded design space and combines stochastic search with local refinement. A reported best fit is the best solution found under the configured budget; the algorithm does not certify a global optimum or guarantee escape from every local basin.
+                <strong>Interpretation of “global”:</strong> Population search and local refinement explore the bounded design space.
+                A reported best fit is the best solution found under the configured budget; neither global stage certifies a global optimum.
             </div>
-            It addresses multimodality by combining stochastic exploration with density-based clustering.
+            The memetic stage combines population evolution with local descent; the PGLOBAL branch uses density-based clustering.
             Implemented mechanisms include <strong>analytic gradient</strong> computation (<a href="https://en.wikipedia.org/wiki/Adjoint_state_method" target="_blank" rel="noopener noreferrer">adjoint method</a>) for $O(N)$
             local refinement, <strong>Topological Deep Search</strong> (Needle Method) for automatic structure
             evolution, and <strong>incoherent backside correction</strong> for real-world glass substrates.
         </div>
 
+        <section id="current-design">
+            <h2>Current workflow and measured results</h2>
+            <p>The defaults below follow the decisions of 2026-10-23 recorded in the
+                <a href="../reports/DESIGN_bs5050_2026-10-22/bilan.md">DESIGN campaign summary</a> and
+                <a href="../docs/ETAT.md">project state</a>. Benchmark results are dated measurements under the stated
+                constraints, not guarantees for other targets or a fresh benchmark under Python 3.15.1.</p>
+            <ol>
+                <li>Read materials, spectral targets and layer constraints.</li>
+                <li>Run the memetic global stage at normal incidence, or PGLOBAL when the memetic stage is disabled or incidence is oblique.</li>
+                <li>Refine locally, clean up the stack and explore structure changes through Needle insertion.</li>
+                <li>Retain the best eligible Pareto design and restart from it while the improvement threshold and restart budget allow.</li>
+                <li>Restore the best round and export the structure associated with its score.</li>
+            </ol>
+            <table>
+                <caption>Delivered normal-incidence workflow</caption>
+                <thead><tr><th scope="col">Stage</th><th scope="col">Current behavior</th></tr></thead>
+                <tbody>
+                    <tr><td>Global exploration</td><td>1,000 memetic children, population 30. The worker raises the
+                        per-layer search ceiling to 3 QWOT; the PGLOBAL branch retains its 1.2 QWOT ceiling.</td></tr>
+                    <tr><td>Thin layers and champion</td><td>The default memetic floor and eligible Pareto champion
+                        avoid layers below 5 nm. A configured optical-thickness floor is material dependent.</td></tr>
+                    <tr><td>Automatic restarts</td><td>Restart from the best design while the round improves by more
+                        than 1%, with at most five restarts. Restore the best round if the last one is worse.</td></tr>
+                    <tr><td>Configuration limits</td><td>The design file can set <code>max_layers</code>,
+                        <code>max_total_qwot</code> and <code>min_layer_ot_nm</code>. Setting
+                        <code>_memetic_children = 0</code> on the window selects PGLOBAL.</td></tr>
+                </tbody>
+            </table>
+            <p>Implementation: <code>certus_design_memetic.run_memetic</code>,
+                <code>OptimWorker._run_memetic_global</code> and <code>OptimizationManager._restart_from_best</code>.
+                Oblique mode follows PGLOBAL rather than the memetic branch.</p>
+
+            <h3 id="design-benchmarks">Measured synthesis benchmarks</h3>
+            <table>
+                <caption>Campaign of 2026-10-22/23; transmission RMSE evaluated on a fixed 0.5 nm grid</caption>
+                <thead><tr><th scope="col">Problem and conditions</th><th scope="col">Measured result</th><th scope="col">Budget and scope</th></tr></thead>
+                <tbody>
+                    <tr><td>50/50 splitter, 400–1200 nm; H/L materials unchanged, at most 34 layers and 30 QWOT</td>
+                        <td>RMSE 0.000135–0.000165; 32–34 layers, 26.2–26.6 QWOT, layers at least 5 nm</td>
+                        <td>Delivered example; 21–48 minutes on eight threads</td></tr>
+                    <tr><td>Tikhonravov et al. 1996 problem, 34 layers</td>
+                        <td>RMSE 8.6 × 10<sup>−5</sup>, versus 1.77 × 10<sup>−4</sup> for their design evaluated in the campaign</td>
+                        <td>26.4 versus 31.4 QWOT; 47 minutes for the CERTUS run</td></tr>
+                </tbody>
+            </table>
+            <p>Source and reproduction details:
+                <a href="../reports/DESIGN_bs5050_2026-10-22/bilan.md">campaign summary</a> and
+                <a href="../reports/DESIGN_bs5050_2026-10-22/tikhonravov/README.md">literature comparison</a>.
+                The nominal results were cross-checked with the independent TMM oracle.
+                Under the campaign's thickness-error model (0.1% + 0.2 nm at 2σ), mean RMSE is about 0.003
+                (spread about 0.0015): nominal fit quality is not a manufacturing-tolerance guarantee.</p>
+
+            <h3 id="design-limits">Known limits that affect interpretation</h3>
+            <ul>
+                <li><strong>Oblique sampling:</strong> ALG-03 remains open: the densified grid is not passed to the worker;
+                    the audited case used two points instead of 135. Re-evaluate on the intended dense grid.</li>
+                <li><strong>End-only floor:</strong> <code>floor_at_end</code> remains inactive by default; thin layers can
+                    reappear after Needle insertion (ALG-21). The final 5 nm deletion rule is not itself a re-optimization
+                    (ALG-19); the default compliant champion and memetic floor mitigate this.</li>
+                <li><strong>Score comparison:</strong> the difference between the window's RMSE and fixed-grid RMSE is
+                    unresolved (ALG-22). Compare exported structures on the same independent grid.</li>
+            </ul>
+            <p>The <a href="../docs/AUDITS.md">audit register</a> records the open issues and corrected export/champion
+                inconsistencies. The technical sections below explain the shared physics and the PGLOBAL branch;
+                PGLOBAL's clustering description is not the default memetic algorithm.</p>
+        </section>
+
         <!-- ================================================================ -->
         <!--  0. GLOBAL PIPELINE                                               -->
         <!-- ================================================================ -->
-        <h2>1. Detailed Algorithmic Flowchart</h2>
+        <h2>1. Detailed Algorithmic Flowchart — PGLOBAL Branch</h2>
 
         <div class="mermaid">
             flowchart TD
@@ -155,7 +227,7 @@
         </div>
 
         <div class="algo-step">
-            <span class="algo-title">Complete Hybrid Workflow — Step by Step</span>
+            <span class="algo-title">PGLOBAL Branch — Step by Step</span>
             <strong>Phase 1 — Global Exploration (PGLOBAL):</strong> Repeatedly sample the thickness
             hypercube, evaluate via Numba-JIT TMM kernels, cluster points into basins of attraction using
             single-linkage clustering, and refine new basins with L-BFGS-B using the $O(N)$ analytic gradient.
@@ -199,7 +271,7 @@
         <!-- ================================================================ -->
         <!--  2. PGLOBAL                                                       -->
         <!-- ================================================================ -->
-        <h2>3. PGLOBAL: Mathematical Formulation</h2>
+        <h2>3. PGLOBAL Alternative: Mathematical Formulation</h2>
         <p>
             The core algorithm fits into the class of "Multi-Start with Single-Linkage Clustering" methods, enhanced
             with stochastic exploration reminiscent of Simulated Annealing (SA) during boundary escapes.
@@ -609,7 +681,8 @@
             <tr>
                 <td><strong>Global Search</strong></td>
                 <td>NumPy / SciPy</td>
-                <td>Latin Hypercube Sampling & Single-Linkage Clustering.</td>
+                <td>Memetic population evolution with local descent at normal incidence; Latin Hypercube Sampling
+                    and Single-Linkage Clustering in the PGLOBAL branch.</td>
             </tr>
             <tr>
                 <td><strong>Cost Function</strong></td>
@@ -656,8 +729,9 @@
         <h3>9.1 Numerical Precision</h3>
         <p>
             All TMM evaluations use <code>float64</code> / <code>complex128</code> exclusively (since v2026.02).
-            The analytic gradient is computed at machine precision ($\sim 10^{-12}$), validated against
-            finite-difference reference in <code>test_gradient_vs_fd.py</code> (7/7 tests pass).
+            The analytic gradient is checked against finite-difference references in
+            <code>tests/oracle/test_gradients_vs_finite_differences.py</code>. This is a numerical consistency check, not external validation
+            of a manufactured coating.
         </p>
 
         <h3>9.2 Key Source Files</h3>
@@ -672,7 +746,11 @@
             </tr>
             <tr>
                 <td><code>certus_design_core.py</code></td>
-                <td>PGLOBAL orchestration, target management, needle driver logic.</td>
+                <td>Shared design calculations, target management and Needle driver logic.</td>
+            </tr>
+            <tr>
+                <td><code>certus_design_memetic.py</code></td>
+                <td>Memetic global search and per-layer bound expansion.</td>
             </tr>
             <tr>
                 <td><code>certus_design_workers.py</code></td>
@@ -715,9 +793,10 @@
             logs before using an exported result.</p>
 
         <div class="footer">
-            <p>Generated from source analysis of <code>CERTUS_DESIGN.py</code> (Facade), <code>certus_design_core.py</code>, <code>certus_design_ui.py</code> &mdash; implementation review: 2026-10-04
+            <p>Updated from the <a href="../docs/ETAT.md">project state</a>,
+                <a href="../reports/DESIGN_bs5050_2026-10-22/bilan.md">DESIGN campaign</a> and current implementation &mdash; 2026-10-25.
             </p>
-            <p>&copy; CERTUS Scientific Suite v26-04 &bull; Scientific Analysis Report</p>
+            <p>&copy; CERTUS Scientific Suite &bull; Scientific Analysis Report</p>
         </div>
     </div>
 

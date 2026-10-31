@@ -256,7 +256,8 @@ check(
 # 4. Lint must already be clean, otherwise a later failure cannot be attributed.
 print("\n4. LINT")
 code, out = run(sys.executable, "-m", "ruff", "check", ".")
-check("ruff check .", out.strip().endswith("All checks passed!"), out.splitlines()[-1] if out else "(no output)")
+# Judged on the exit code: ruff may append warnings to stderr (e.g. "Support for Python 3.15 is under development").
+check("ruff check .", code == 0 and "All checks passed!" in out, out.splitlines()[-1] if out else "(no output)")
 
 # 5. Sacred files untouched.
 print("\n5. FILES THAT MUST NOT BE MODIFIED")

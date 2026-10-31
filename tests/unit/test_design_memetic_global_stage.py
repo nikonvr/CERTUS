@@ -192,3 +192,98 @@ def test_prune_merge_shift_escapes_a_basin_by_merging_neighbours_of_a_thin_layer
     assert res_off.y > 0.5
 
 
+def _counted(fun):
+    """`fun` with a count of its calls and the threads that made them."""
+    import threading
+
+    lock, seen = threading.Lock(), {"calls": 0, "threads": set()}
+
+    def wrapped(x: np.ndarray) -> tuple[float, np.ndarray]:
+        with lock:
+            seen["calls"] += 1
+            seen["threads"].add(threading.get_ident())
+        return fun(x)
+
+    return wrapped, seen
+
+
+def test_a_pool_polishes_designs_at_once_and_the_children_still_improve() -> None:
+    from concurrent.futures import ThreadPoolExecutor
+
+    from certus.core.certus_design_memetic import run_memetic
+
+    bounds = np.array([[-5.12, 5.12]] * 6)
+    initial = run_memetic(_rastrigin, bounds, x0=None, population=8, children=0, seed=7)
+    cost, seen = _counted(_rastrigin)
+    with ThreadPoolExecutor(4) as pool:
+        evolved = run_memetic(cost, bounds, x0=None, population=8, children=200, seed=7, pool=pool, batch=4)
+
+    assert evolved.y < initial.y
+    assert np.all(evolved.x >= bounds[:, 0])
+    assert np.all(evolved.x <= bounds[:, 1])
+    assert len(seen["threads"]) > 1
+    assert evolved.evaluations == seen["calls"]
+
+
+def test_the_pool_polishes_the_starts_of_the_sequential_search() -> None:
+    from concurrent.futures import ThreadPoolExecutor
+
+    from certus.core.certus_design_memetic import run_memetic
+
+    bounds = np.array([[-5.12, 5.12]] * 5)
+    alone = run_memetic(_rastrigin, bounds, x0=None, population=7, children=0, seed=3)
+    with ThreadPoolExecutor(3) as pool:
+        pooled = run_memetic(_rastrigin, bounds, x0=None, population=7, children=0, seed=3, pool=pool, batch=3)
+
+    assert pooled.y == alone.y
+    assert np.array_equal(pooled.x, alone.x)
+
+
+def test_a_pooled_search_is_reproducible_for_a_given_seed() -> None:
+    from concurrent.futures import ThreadPoolExecutor
+
+    from certus.core.certus_design_memetic import run_memetic
+
+    bounds = np.array([[-5.12, 5.12]] * 6)
+    runs = []
+    for _ in range(2):
+        with ThreadPoolExecutor(4) as pool:
+            runs.append(run_memetic(_rastrigin, bounds, x0=None, population=8, children=60, seed=5, pool=pool,
+                                    batch=4, screen_maxiter=5))
+
+    assert runs[0].y == runs[1].y
+    assert np.array_equal(runs[0].x, runs[1].x)
+    assert runs[0].evaluations == runs[1].evaluations
+
+
+@pytest.mark.parametrize(("workers", "batch"), [(None, 1), (3, 3), (0, "cores")])
+def test_memetic_workers_reaches_the_memetic_search_as_a_pool(qapp, monkeypatch, workers, batch) -> None:
+    import certus.core.certus_design_memetic as memetic
+    import certus.workers.certus_design_workers as design_workers
+    from certus_physics import PGlobalOptimizer
+
+    cfg = _window_global_cfg(qapp, monkeypatch, memetic_children=2, memetic_population=2)
+    if workers is not None:
+        cfg["memetic_workers"] = workers  # optional step, 1 (one design after another) by default
+    seen = {}
+
+    def fake_run_memetic(cost_and_grad, bounds, **k):
+        seen.update(pool=k["pool"], batch=k["batch"])
+        return memetic.MemeticResult(x=np.full(len(bounds), 50.0), y=1.0, evaluations=1)
+
+    monkeypatch.setattr(memetic, "run_memetic", fake_run_memetic)
+    monkeypatch.setattr(design_workers.OptimWorker, "_get_gradient_analytic",
+                        lambda self, ep, **k: (float(np.sum(ep)), np.ones(len(ep), dtype=np.float64)))
+    monkeypatch.setattr(design_workers.OptimWorker, "_evaluate_thicknesses", lambda self, ep, **k: float(np.sum(ep)))
+
+    design_workers.OptimWorker(cfg).run()
+
+    expected = PGlobalOptimizer._resolve_worker_count() if batch == "cores" else batch
+    assert seen["batch"] == expected
+    if expected > 1:
+        assert seen["pool"]._max_workers == expected
+        assert seen["pool"]._shutdown  # the worker closes its pool
+    else:
+        assert seen["pool"] is None
+
+

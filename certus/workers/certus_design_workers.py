@@ -11,6 +11,7 @@ env = create_module_environment(__file__, 'CERTUS_DESIGN')
 script_dir = env['script_dir']
 import logging
 import traceback
+from concurrent.futures import ThreadPoolExecutor
 from threading import Event
 from typing import Any
 
@@ -57,6 +58,7 @@ from certus.workers.certus_design_workers_needle_strat import NeedleOptimization
 from certus.workers.certus_design_workers_strat import DesignOptimizationStrategy
 from certus_physics import (
     PGlobalConfig,
+    PGlobalOptimizer,
     calc_spectrum_front_wrapper,
     calc_spectrum_full_exact_wrapper,
     calc_spectrum_full_oblique_exact,
@@ -261,10 +263,26 @@ class OptimWorker(QObject):
                     g = np.asarray(g, dtype=np.float64) + 2.0 * QWOT_EXCESS_PENALTY * excess * q_per_nm
             return c, g
 
-        result = run_memetic(cost_and_grad, wide, x0=x0_start, population=population, children=children,
-                             seed=self.cfg.get('memetic_seed'), screen_maxiter=int(self.cfg.get('memetic_screen_maxiter', 0)),
-                             stop_event=self._stop_event, on_improve=callback, init_bounds=bounds,
-                             merge_shift_every=int(self._optional_step('memetic_merge_shift_every')))
+        # `memetic_workers` threads polish designs at once; each thread keeps NUMBA_NUM_THREADS // threads Numba
+        # threads, as in PGLOBAL's pool (2026-10-30, 50/50 cost and gradient call: one caller with 8 Numba threads
+        # 193 calls/s, 7 callers with one thread each 313 calls/s; envelope_v2/DESIGN_PLAN.md).
+        workers = int(self._optional_step('memetic_workers'))
+        if workers == 0:
+            workers = PGlobalOptimizer._resolve_worker_count()
+        pool = None
+        if workers > 1:
+            pool = ThreadPoolExecutor(max_workers=workers, initializer=PGlobalOptimizer._init_pool_thread,
+                                      initargs=(PGlobalOptimizer._inner_numba_threads(workers),))
+            logging.getLogger('CERTUS').info(f'[OPTIM] Memetic global stage: {workers} designs polished at once')
+        try:
+            result = run_memetic(cost_and_grad, wide, x0=x0_start, population=population, children=children,
+                                 seed=self.cfg.get('memetic_seed'), screen_maxiter=int(self.cfg.get('memetic_screen_maxiter', 0)),
+                                 stop_event=self._stop_event, on_improve=callback, init_bounds=bounds,
+                                 merge_shift_every=int(self._optional_step('memetic_merge_shift_every')),
+                                 pool=pool, batch=workers)
+        finally:
+            if pool is not None:
+                pool.shutdown(wait=True)
         result.x = np.where(result.x < min_d, 0.0, result.x)
         logging.getLogger('CERTUS').info(f'[OPTIM] Memetic global stage done: best cost={result.y:.6e}, cost calls={result.evaluations}')
         return result

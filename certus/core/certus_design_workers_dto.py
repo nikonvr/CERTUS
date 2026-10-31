@@ -45,6 +45,8 @@ DESIGN_OPTIONAL_STEPS: dict[str, Any] = {
     "final_refine_lower_bounds": False,  # the final refinement keeps every layer at or above the search floor
     "restart_flip_alternation": False,  # an automatic restart may shift the stack by one layer (HL <-> LH)
     "polish_after_5nm_rule": False,  # re-polish above the floor after the 5 nm rule removed layers
+    # 2026-10-30: threads polishing memetic designs at once (1: one after another; 0: cores - 2, as PGLOBAL's pool)
+    "memetic_workers": 1,
 }
 
 

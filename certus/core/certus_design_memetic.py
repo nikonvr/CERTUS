@@ -9,14 +9,17 @@ On the 50/50 splitter 400-1200 nm (example/example_design/JSON-design-example.js
 reached an RMSE of 1.7e-4 with 32 layers, where random restarts reached 4.8e-4 with 34 layers and
 the PGLOBAL workflow 1.8e-3 to 4.2e-3 (reports/DESIGN_bs5050_2026-10-22/journal.md).
 
-Inactive by default: OptimWorker uses it only when ``memetic_children`` > 0 in its configuration.
+OptimWorker uses it when ``memetic_children`` > 0 in its configuration (the window's default since
+2026-10-23). With a pool of threads it polishes several designs at once: the polish is one Numba
+kernel call after another, and the kernels release the GIL.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
+from concurrent.futures import Executor
 from dataclasses import dataclass
-from threading import Event
+from threading import Event, Lock
 from types import SimpleNamespace
 
 import numpy as np
@@ -48,6 +51,8 @@ def run_memetic(
     on_improve: Callable[[SimpleNamespace], None] | None = None,
     init_bounds: np.ndarray | None = None,
     merge_shift_every: int = 0,
+    pool: Executor | None = None,
+    batch: int = 1,
 ) -> MemeticResult:
     """Run the memetic search inside ``bounds`` (one (low, high) row per variable layer).
 
@@ -56,6 +61,12 @@ def run_memetic(
     wide bounds starts from designs far thicker than useful ones. ``screen_maxiter`` > 0 polishes each child briefly first and gives the full
     polish only to a child that already beats the worst member. ``on_improve`` receives an object
     with ``x``, ``y`` and ``generation`` each time the best cost improves.
+
+    ``pool`` with ``batch`` > 1 polishes ``batch`` designs at a time on the pool's threads, so
+    ``cost_and_grad`` must be thread-safe: first the random starts, then the children, drawn
+    ``batch`` at a time from the same population and judged in the order they were drawn. The
+    starts are the sequential ones; the children differ from the sequential search, which
+    ``pool=None`` (default) keeps unchanged.
     """
     lo_b = np.asarray(bounds, dtype=np.float64)[:, 0]
     hi_b = np.asarray(bounds, dtype=np.float64)[:, 1]
@@ -64,9 +75,12 @@ def run_memetic(
     init = np.asarray(init_bounds if init_bounds is not None else bounds, dtype=np.float64)
     init_lo, init_hi = np.maximum(init[:, 0], lo_b), np.minimum(init[:, 1], hi_b)
     calls = {"n": 0}
+    calls_lock = Lock()
+    parallel = pool is not None and batch > 1
 
     def f(x: np.ndarray) -> tuple[float, np.ndarray]:
-        calls["n"] += 1
+        with calls_lock:
+            calls["n"] += 1
         c, g = cost_and_grad(np.ascontiguousarray(x, dtype=np.float64))
         return float(c), np.asarray(g, dtype=np.float64)
 
@@ -91,12 +105,19 @@ def run_memetic(
         pop.append(polish(np.asarray(x0, dtype=np.float64), local_maxiter))
         record(*pop[-1], 0)
     while len(pop) < max(2, population) and not stopped():
-        pop.append(polish(rng.uniform(init_lo, init_hi), local_maxiter))
-        record(*pop[-1], 0)
+        if parallel:
+            starts = [rng.uniform(init_lo, init_hi) for _ in range(min(batch, max(2, population) - len(pop)))]
+            for x, y in pool.map(polish, starts, [local_maxiter] * len(starts)):
+                pop.append((x, y))
+                record(x, y, 0)
+        else:
+            pop.append(polish(rng.uniform(init_lo, init_hi), local_maxiter))
+            record(*pop[-1], 0)
 
-    for gen in range(1, children + 1):
-        if stopped() or len(pop) < 2 or dim < 2:
-            break
+    def worst_index() -> int:
+        return int(np.argmax([m[1] for m in pop]))
+
+    def draw_child(gen: int) -> np.ndarray:
         i, j = rng.choice(len(pop), 2, replace=False)
         child = pop[i][0].copy()
         if merge_shift_every > 0 and dim >= 4 and gen % merge_shift_every == 0:
@@ -105,17 +126,32 @@ def run_memetic(
             cut_lo, cut_hi = sorted(rng.choice(np.arange(1, dim), 2, replace=False)) if dim > 2 else (1, 2)
             child[cut_lo:cut_hi] = pop[j][0][cut_lo:cut_hi]
         child *= 1.0 + jitter * rng.standard_normal(dim)
-        worst = int(np.argmax([m[1] for m in pop]))
+        return child
+
+    def polish_child(child: np.ndarray, worst_cost: float) -> tuple[np.ndarray, float]:
         if screen_maxiter:
             x, y = polish(child, screen_maxiter)
-            if y < pop[worst][1]:
+            if y < worst_cost:
                 x, y = polish(x, local_maxiter)
-        else:
-            x, y = polish(child, local_maxiter)
+            return x, y
+        return polish(child, local_maxiter)
+
+    def judge(x: np.ndarray, y: float, gen: int) -> None:
+        worst = worst_index()
         duplicate = any(abs(y - m[1]) <= 1e-12 * max(abs(y), 1e-30) for m in pop)
         if y < pop[worst][1] and not duplicate:
             pop[worst] = (x, y)
         record(x, y, gen)
+
+    gen = 0
+    while gen < children and not (stopped() or len(pop) < 2 or dim < 2):
+        size = min(batch, children - gen) if parallel else 1
+        kids = [draw_child(gen + 1 + k) for k in range(size)]
+        worst_cost = pop[worst_index()][1]
+        polished = pool.map(polish_child, kids, [worst_cost] * size) if parallel else [polish_child(kids[0], worst_cost)]
+        for k, (x, y) in enumerate(polished):
+            judge(x, y, gen + 1 + k)
+        gen += size
 
     if best["x"] is None:
         return MemeticResult(x=np.asarray(x0 if x0 is not None else lo_b, dtype=np.float64), y=np.inf,

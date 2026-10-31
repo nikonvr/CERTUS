@@ -17,6 +17,11 @@ One JSON line per stack: rmse_grid, max_dev (largest |T - target|), layers, tota
 optical thickness, thinnest layer, cost and gradient evaluations, wall time. Only one run per
 process: repeat with a shell loop, so that each run starts cold. PGLOBAL draws a new Sobol
 scramble at each run (no fixed seed), so repeats measure the spread of the workflow.
+
+Counting the evaluations replaces the generic kernels of `certus_design_core`, and its fast
+lossless kernels only run when those are the original functions: a counted run computes with the
+generic kernels, slower than the window. `--no-count` (2026-10-30) keeps the window's kernels and
+reports no counts; use it to compare wall times.
 """
 
 from __future__ import annotations
@@ -208,6 +213,8 @@ def main() -> None:
     p.add_argument("--kw", action="append", default=[], metavar="KEY=VALUE",
                    help="extra argument of run_optim('global', ...), e.g. memetic_children=300 (repeatable)")
     p.add_argument("--max-s", type=float, default=3600.0, help="run: longest wait for the workflow, in seconds")
+    p.add_argument("--no-count", action="store_true",
+                   help="run: do not count evaluations, so that the window's fast kernels run (wall-time comparisons)")
     p.add_argument("--save-design", type=Path, default=None,
                    help="run: write the final design of the window as a DESIGN file (QWOT with n4)")
     p.add_argument("--set", dest="attrs", action="append", default=[], metavar="NAME=VALUE",
@@ -235,7 +242,8 @@ def main() -> None:
             rows.append({"mode": "eval", "file": f.name, **judge(load(f), config)})
     else:
         config = json.loads(args.config.read_text(encoding="utf-8"))
-        count_evaluations()
+        if not args.no_count:
+            count_evaluations()
         app = load(args.config)
         for key, value in window_attrs.items():
             setattr(app, key, value)
@@ -254,8 +262,8 @@ def main() -> None:
                 "table_layers": app.front_table.rowCount(),
                 **judge(app, config),
                 "passes": n_passes,
-                "cost_evals": COUNTS["cost"],
-                "grad_evals": COUNTS["grad"],
+                "cost_evals": None if args.no_count else COUNTS["cost"],
+                "grad_evals": None if args.no_count else COUNTS["grad"],
                 "run_s": round(run_s, 1),
                 "timeout": run_s >= args.max_s - 1.0,
             }

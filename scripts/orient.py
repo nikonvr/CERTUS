@@ -98,7 +98,9 @@ def foreign_pythons(run=subprocess.run) -> list[tuple[int, str]]:
     own = {os.getpid(), os.getppid()}
     if os.name == "nt":
         script = "Get-CimInstance Win32_Process -Filter \"Name like 'python%'\" | ForEach-Object { '{0}|{1}' -f $_.ProcessId, $_.CommandLine }"
-        command = ["powershell", "-NoProfile", "-Command", script]
+        # Chemin absolu : sous Git Bash, `powershell` n'est pas dans le PATH et l'echec rendait « aucun » (2026-11-01).
+        system_root = os.environ.get("SystemRoot", r"C:\Windows")
+        command = [os.path.join(system_root, "System32", "WindowsPowerShell", "v1.0", "powershell.exe"), "-NoProfile", "-Command", script]
     else:
         command = ["ps", "-eo", "pid=,args="]
     try:

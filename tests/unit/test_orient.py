@@ -15,6 +15,8 @@ import subprocess
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 from scripts import orient
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -78,6 +80,14 @@ def test_another_python_process_is_reported_but_not_this_one_nor_other_programs(
     listing = f"{os.getpid()}|python orient.py\n999991|C:\\Python314\\python.exe C:\\work\\measure_slow.py --seed 7\n999992|notepad.exe C:\\x\\python.txt\n"
     seen = orient.foreign_pythons(run=lambda *_a, **_k: SimpleNamespace(stdout=listing))
     assert [pid for pid, _command in seen] == [999991]
+
+
+@pytest.mark.skipif(os.name != "nt", reason="the Windows listing goes through PowerShell")
+def test_powershell_is_called_by_absolute_path_because_git_bash_has_no_powershell_on_path():
+    called = []
+    orient.foreign_pythons(run=lambda command, **_k: called.append(command) or SimpleNamespace(stdout=""))
+    assert os.path.isabs(called[0][0])
+    assert called[0][0].lower().endswith("powershell.exe")
 
 
 def test_a_process_listing_that_fails_reports_nothing():

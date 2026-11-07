@@ -5,13 +5,19 @@
 > [`CLAUDE.md`](../CLAUDE.md). Il se tient **en place** : un fait change, on corrige sa ligne,
 > on ne raconte pas la correction (`git log` s'en charge). Toute mesure porte sa date.
 > Le détail et l'historique sont dans `git`, sans autorité (CLAUDE.md, en-tête).
-> Mis à jour le 2026-10-25.
+> Mis à jour le 2026-11-07.
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
 > L'état présent seulement ; l'historique est dans `git log` et `reports/`. À la demande : actions ouvertes et protocole de mesure
 > ([`ETAT_actions.md`](ETAT_actions.md)), acquis ([`ETAT_acquis.md`](ETAT_acquis.md)), registre des audits ([`AUDITS.md`](AUDITS.md),
 > `grep -n "ALG-02" docs/AUDITS.md`), preuves dans `reports/` (le `bilan.md` d'un dossier).
+
+**RICL (2026-11-05)** : précontrôle GO ; protocole de charge au sommet et sélection des tours cohérents, témoin nominal,
+audit indépendant et pilote de 109 couches validés. Sources figées, travail antérieur préservé, aucun noyau modifié ;
+validation parallèle GO, un artefact unitaire vert seul ; série bloquée en préparation GUI ([bilan](../reports/A2_preparation_calculs_2026-11-05/bilan.md)).
+
+**Résonances DESIGN (2026-11-05, étendu le 2026-11-07)** : outil natif optionnel et interface implémentés. Étendu aux couches absorbantes (n − ik constants), aux cibles en réflexion et aux cibles variables (rampes de DESIGN, fonction de λ), par le noyau R/T existant `gradient_oblique.compute_oblique_rt_and_grads_analytic` à 0° (aucune nouvelle formule TMM) ; chemin sans pertes en T inchangé. 42 tests ciblés passés (oracle, unitaires, interface, cliquet TMM, anglais). Validation générale du 2026-11-07 : oracle 1186 passés, interface 1356 passés ; unitaires et `tests/` restants interrompus par le garde-fou `tests/qt_lifecycle.py` (QThread d'INDEX > 180 s sous la charge d'une campagne de 15 processus ; `test_index_headless` passe seul) : à refaire machine libre. Pilote natif : MF résolu 0,032431 %, témoin nominal 0,382927 % ; voir le [bilan d'intégration](../reports/DESIGN_resonances_integration_2026-11-05/bilan.md).
 
 **Reprise en cours (2026-10-30)** : changement d'ordinateur ; lire d'abord
 [`REPRISE_2026-10-30.md`](../reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/REPRISE_2026-10-30.md). Cissoïde OIC 2016 :

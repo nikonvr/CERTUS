@@ -1,0 +1,29 @@
+{
+  "mode": "nominal",
+  "settings": {
+    "rounds": 40,
+    "burst": 30,
+    "gamma_nm": null,
+    "height_threshold": 1.0,
+    "max_width_nm": 0.5,
+    "count_step_nm": 0.02,
+    "max_ot_nm": 15000.0
+  },
+  "python": "3.15.2 (tags/v3.15.2:5e58eaa, Oct 25 2026, 17:27:03) [MSC v.1951 64 bit (AMD64)]",
+  "executable": "C:\\Users\\Fabien\\AppData\\Local\\Programs\\Python\\Python315\\python.exe",
+  "versions": {
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "numba": "0.68.0"
+  },
+  "sources_sha256": {
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\DESIGN_resonances_integration_2026-11-05\\pilote_natif_109.py": "965cc1d7cca9ad35bded5c02b283b87298f42c255a0402d5c26f361b947aa942",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\OE_resonances\\code\\hidden_resonances.py": "8ec1ba93987f58db2e8572db5ca804e51476760a6541ef84d10ba9a260cf5716",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\certus\\physics\\design_resonances.py": "954f5f9f00c0c5d1257c5b8631a2e0825f4629279af1343eda36ac790590f440",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\certus\\core\\certus_design_resonances.py": "794cfd08e93243f30755cd404db64c5411f2fe41cf421aa29d64087c115971d2",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\certus\\physics\\certus_tmm_oblique.py": "959e1aa4784b1436b05aadbe22de332ed6d3975c9240b6001137fc4a4a130dca",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\certus\\physics\\design_fast_gauss_newton.py": "55da7a684e44c68a487c6eca6e67ce341abb9592e318e5c595e85d690d0d4f97",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\A2_preparation_calculs_2026-11-05\\pilote_109\\initial_design.json": "5fba632ccaab162b95b3c7fdbeb6a9a6bb5ed597a20d14e2311baaf9ebb4332f",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\A2_preparation_calculs_2026-11-05\\pilote_109\\nominal_rounds.csv": "83e4da7631dce1c0bb821d39c8a2d0d6b593dd1ed0cd40febfa9f0b184dd756e"
+  }
+}

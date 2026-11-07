@@ -1,0 +1,2 @@
+2026-11-05 19:29:28 ✦ WARNING [certus_ui_utils.install_standard_shortcuts:507] ➔ CertusDesignApp: shortcut 'Ctrl+S' requested for 'save' but already claimed by QShortcut(Ctrl+S) - not installed
+GUI_NATIVE_ANALYSIS=GO: real DESIGN window, one hidden peak, source design unchanged

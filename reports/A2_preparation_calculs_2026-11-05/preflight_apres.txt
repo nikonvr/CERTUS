@@ -1,0 +1,6 @@
+  [ ! ] 28 commit(s) HERE that origin/master does NOT have
+  [BAD] no uncommitted change to tracked files: 3 modified file(s) -- finish or revert the action in progress
+  [   ] HEAD: 9c753203 orient: call PowerShell by absolute path, Git Bash has none on PATH and the failure read as 'no other python'
+WARNING  28 unpushed commit(s) on master. If this machine has no post-commit hook, they will stay local: `git push origin master`.
+WARNING  no uncommitted change to tracked files: 3 modified file(s) -- finish or revert the action in progress
+PREFLIGHT=GO

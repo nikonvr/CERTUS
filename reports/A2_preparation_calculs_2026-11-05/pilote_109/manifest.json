@@ -1,0 +1,51 @@
+{
+  "argv": [
+    "reports\\A2_preparation_calculs_2026-11-05\\pilote_threeline.py",
+    "--rounds",
+    "40",
+    "--out",
+    "reports\\A2_preparation_calculs_2026-11-05\\pilote_109"
+  ],
+  "python": "3.15.2 (tags/v3.15.2:5e58eaa, Oct 25 2026, 17:27:03) [MSC v.1951 64 bit (AMD64)]",
+  "executable": "C:\\Users\\Fabien\\AppData\\Local\\Programs\\Python\\Python315\\python.exe",
+  "versions": {
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "numba": "0.68.0"
+  },
+  "git_head": "9c7532031464711b7b2d3b209b6d3323c012b9c1",
+  "parameters": {
+    "source": "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\DESIGN_bs5050_2026-10-22\\tikhonravov\\envelope_v2\\gradual_deep2_cont_seed89_clean2.csv",
+    "pick": "best",
+    "rounds": 40,
+    "ot_max": 15000.0,
+    "out": "reports\\A2_preparation_calculs_2026-11-05\\pilote_109"
+  },
+  "protocol": {
+    "SEARCH_TARGET": "threeline",
+    "SEARCH_NH": "2.35",
+    "TRACK_DETECT": "complex",
+    "TRACK_STEPS": "localmax",
+    "TRACK_MULTISTART": "dense",
+    "TRACK_PEAK": "top"
+  },
+  "files_sha256": {
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\A2_preparation_calculs_2026-11-05\\pilote_threeline.py": "25a36651fc6dd65d4d5e2d005e95a62a338f514d26b42d6d333eda02dc4f262d",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\DESIGN_bs5050_2026-10-22\\tikhonravov\\envelope_v2\\gradual_deep2_cont_seed89_clean2.csv": "2eb15c4ae0742bf74bea8d9fa795b62fedee2a082e4cd721189cdb8fd3d72f75",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\OE_resonances\\code\\hidden_resonances.py": "8ec1ba93987f58db2e8572db5ca804e51476760a6541ef84d10ba9a260cf5716",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\OE_resonances\\code\\three_line_101_recreated.csv": "4303ceb54cbf720baf223f97857199219da0778a228f600a40c62663d56f3454",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\pyproject.toml": "06d827d149464c48f3c9b582f03c7b4bf99fe081ccc8b1113246e642d95ccd05",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\requirements.lock": "9ae1cdacd4904820390274648cbcb3c672738d20b394e96643ff8ad9e95716a7",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\DESIGN_bs5050_2026-10-22\\tikhonravov\\envelope_v2\\search.py": "46f381bbd9a0f9255e55c8c0a1ca20650b6130528b9bd0bf44e066b4f550576e",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\DESIGN_bs5050_2026-10-22\\tikhonravov\\envelope_v2\\cissoid_opt.py": "2edc55aa96b24484844a1ff3fdec8f6f5e947e3d36c49764856d321f70dce473",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\DESIGN_bs5050_2026-10-22\\tikhonravov\\envelope_v2\\complex_plane_detect.py": "c21eb95e9474baee0522a9e9f076f91bf00a3d0bef18873b346cf9e11ce1c4a5",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\DESIGN_bs5050_2026-10-22\\tikhonravov\\envelope_v2\\field_grid_link.py": "9c4a60913e2fa25fcc3380c7b1fd774828c23d104370c988ac4c73077d47580d",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\DESIGN_bs5050_2026-10-22\\tikhonravov\\envelope_v2\\bs5050_grid.py": "803367eba3375457ecaa64ce3fd8aa1e64aaab8eb3a2a39d7560d49f0337f609",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\DESIGN_bs5050_2026-10-22\\tikhonravov\\envelope_v2\\grid_study.py": "5031a98deacc1b97e21b33d0ad05e7e0f70ec81961b0eacbfd971b55c0cb69bb",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\DESIGN_bs5050_2026-10-22\\tikhonravov\\envelope_v2\\threeline_track.py": "f1339e6a608a3d265a184212c061eda4c0f0846c207ebdd95d5f713d0bc2a8e1",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\certus\\physics\\design_fast_gauss_newton.py": "55da7a684e44c68a487c6eca6e67ce341abb9592e318e5c595e85d690d0d4f97",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\certus\\physics\\design_fast_normal.py": "814b4d19526bb53c73bf1880b0008b4d46392f41a5bdc8f2699763e2269af260"
+  },
+  "selection": "Minimum own objective among admissible rounds including round zero; identical burst limits.",
+  "budget_scope": "Retained states only; intermediate optimizer states are not OT-constrained."
+}

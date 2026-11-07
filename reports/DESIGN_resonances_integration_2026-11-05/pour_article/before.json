@@ -1,0 +1,59 @@
+{
+  "charged_peaks": [
+    {
+      "peak_lambda_nm": 405.4670655013812,
+      "peak_height": 0.5529073927394529,
+      "pole_fwhm_nm": 0.011426855660279917,
+      "e2max_at_this_peak": null
+    },
+    {
+      "peak_lambda_nm": 414.38479241403365,
+      "peak_height": 0.15982295752249817,
+      "pole_fwhm_nm": 0.012752044267399535,
+      "e2max_at_this_peak": null
+    },
+    {
+      "peak_lambda_nm": 425.24572841083216,
+      "peak_height": 0.33561662050817576,
+      "pole_fwhm_nm": 0.009583105161151986,
+      "e2max_at_this_peak": null
+    }
+  ],
+  "counts": [
+    {
+      "band_index": 0,
+      "located": 0,
+      "counted": 0
+    },
+    {
+      "band_index": 1,
+      "located": 0,
+      "counted": 0
+    },
+    {
+      "band_index": 2,
+      "located": 0,
+      "counted": 0
+    },
+    {
+      "band_index": 3,
+      "located": 3,
+      "counted": 3
+    },
+    {
+      "band_index": 4,
+      "located": 0,
+      "counted": 0
+    },
+    {
+      "band_index": 5,
+      "located": 1,
+      "counted": 1
+    },
+    {
+      "band_index": 6,
+      "located": 0,
+      "counted": 0
+    }
+  ]
+}

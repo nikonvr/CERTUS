@@ -1,0 +1,4 @@
+ARTEFACT de charge ou d'ordre (unit), verts seuls en serie :
+    tests/unit/test_design_scheduled_tasks_run.py::test_a_scheduled_task_runs_after_its_delay[schedule_smart_decimation_remove_and_optimize-_smart_decimation_remove_and_optimize]
+VALIDATION=GO
+La reference de CLAUDE.md section 2 reste la suite complete en serie.

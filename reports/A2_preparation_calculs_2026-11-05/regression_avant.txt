@@ -1,0 +1,18 @@
+FF.                                                                      [100%]
+================================== FAILURES ===================================
+________ test_top_mode_reports_the_true_peak_and_its_field_wavelength _________
+tests\unit\test_threeline_round_uses_the_charged_peak.py:52: in test_top_mode_reports_the_true_peak_and_its_field_wavelength
+    assert float(row["highest"]) == pytest.approx(0.8, abs=1e-6)
+E   assert 0.558141 == 0.8 ± 1.0e-06
+E     
+E     comparison failed
+E     Obtained: 0.558141
+E     Expected: 0.8 ± 1.0e-06
+_______ test_round_selection_follows_the_objective_optimized_at_the_top _______
+tests\unit\test_threeline_round_uses_the_charged_peak.py:61: in test_round_selection_follows_the_objective_optimized_at_the_top
+    assert min(rows, key=lambda row: float(row["mf_tracked"]))["round"] == 1
+E   assert 0 == 1
+=========================== short test summary info ===========================
+FAILED tests/unit/test_threeline_round_uses_the_charged_peak.py::test_top_mode_reports_the_true_peak_and_its_field_wavelength
+FAILED tests/unit/test_threeline_round_uses_the_charged_peak.py::test_round_selection_follows_the_objective_optimized_at_the_top
+2 failed, 1 passed in 2.66s

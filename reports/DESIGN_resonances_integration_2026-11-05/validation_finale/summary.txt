@@ -1,0 +1,7 @@
+ECHEC REEL (unit), rouge aussi seul en serie :
+    tests/unit/test_ci_lambda_connect_audit.py::test_no_new_signal_is_connected_to_a_lambda
+    tests/unit/test_ci_lambda_connect_audit.py::test_the_ci_ceiling_is_the_real_count
+ARTEFACT de charge ou d'ordre (rest), verts seuls en serie :
+    tests/property/test_physics_properties.py::test_bare_substrate_transmission_bounds
+VALIDATION=NO-GO
+La reference de CLAUDE.md section 2 reste la suite complete en serie.

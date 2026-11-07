@@ -1,0 +1,11 @@
+{
+  "certus\\physics\\design_resonances.py": "954f5f9f00c0c5d1257c5b8631a2e0825f4629279af1343eda36ac790590f440",
+  "certus\\core\\certus_design_resonances.py": "794cfd08e93243f30755cd404db64c5411f2fe41cf421aa29d64087c115971d2",
+  "certus\\ui\\certus_design_resonances_dialog.py": "152b065106bc76cc20f24d21da4fd57c2fd9d8c7f2a45516432c424f9c547b0c",
+  "certus\\ui\\certus_design_ui_layout.py": "9cbf5fba9b28684d7d3c55abbb297c11932fddbf63d3295bacaa580951226685",
+  "tests\\oracle\\test_design_complex_wavelength_resonances.py": "e60b16dc80c3b2b82f590ba3d3cd595481ef0b549948a902c533cfcb8f399f2c",
+  "tests\\unit\\test_design_resonances_input_boundary.py": "b0d3aa99430520cb5976f40546c0d7c745a518268f99725a22cf42465253fd39",
+  "tests\\ui\\test_design_resonance_tool.py": "20328ffe53db60fd459e172081bc6440c8879d505fce6cb5b65c73c2442192ab",
+  "reports\\DESIGN_resonances_integration_2026-11-05\\pilote_natif_109.py": "965cc1d7cca9ad35bded5c02b283b87298f42c255a0402d5c26f361b947aa942",
+  "reports\\DESIGN_resonances_integration_2026-11-05\\preparer_figures_article.py": "1d13a4fcde8cff92b3edb06ba37b3a4d2c1a4ceda9113e6b321c6af7cf7e5aa2"
+}

@@ -1,0 +1,634 @@
+{
+  "horodatage_utc": "2026-10-31T09:00:35.548019+00:00",
+  "reference_git": "6a5a72966bd38b530a06c701fc37211085ece801",
+  "page": {
+    "chemin": "pages/CERTUS_STRAT.html",
+    "octets": 479853,
+    "lignes_physiques": 5997,
+    "sha256": "480f3f309958d9ed1fe5c92442eed6e493863ebd18934f400f34863ea4bac2ab",
+    "modification_preexistante": true,
+    "inchangee_pendant_audit": true,
+    "lecture_integrale": true,
+    "titres": [
+      {
+        "niveau": 1,
+        "titre": "CERTUS-STRAT"
+      },
+      {
+        "niveau": 2,
+        "titre": "Current settings, reference measurements and limits"
+      },
+      {
+        "niveau": 3,
+        "titre": "Delivered monitoring and search settings"
+      },
+      {
+        "niveau": 3,
+        "titre": "Dated reference measurements"
+      },
+      {
+        "niveau": 3,
+        "titre": "Limits that remain open"
+      },
+      {
+        "niveau": 2,
+        "titre": "0. Algorithmic Overview"
+      },
+      {
+        "niveau": 2,
+        "titre": "1. Physical Model (Transfer Matrix Method)"
+      },
+      {
+        "niveau": 3,
+        "titre": "1.1 Conventions"
+      },
+      {
+        "niveau": 3,
+        "titre": "1.2 Characteristic Matrix of a Single Layer"
+      },
+      {
+        "niveau": 3,
+        "titre": "1.3 System Matrix and Transmittance"
+      },
+      {
+        "niveau": 3,
+        "titre": "1.4 Incoherent Backside Correction"
+      },
+      {
+        "niveau": 3,
+        "titre": "1.5 Growth Dynamics Kernel"
+      },
+      {
+        "niveau": 2,
+        "titre": "2. Optical Monitoring Simulation"
+      },
+      {
+        "niveau": 3,
+        "titre": "2.1 The real machine — measured specifications and frozen model"
+      },
+      {
+        "niveau": 4,
+        "titre": "What is given"
+      },
+      {
+        "niveau": 4,
+        "titre": "What is deduced from it"
+      },
+      {
+        "niveau": 4,
+        "titre": "🔒 The fixed model of the readout chain"
+      },
+      {
+        "niveau": 3,
+        "titre": "2.2 Smoothing changes the DIRECTION of the detection threshold"
+      },
+      {
+        "niveau": 3,
+        "titre": "2.3 Noise Model — Gaussian (Production Mode)"
+      },
+      {
+        "niveau": 3,
+        "titre": "2.4 READOUT noise of the monitoring signal — poem_anchor_noise"
+      },
+      {
+        "niveau": 3,
+        "titre": "2.5 The turning point detection rule — tp_hysteresis_factor"
+      },
+      {
+        "niveau": 3,
+        "titre": "2.6 The two failure modes, and why they must be counted separately"
+      },
+      {
+        "niveau": 3,
+        "titre": "2.7 🟢 The method — how to distinguish a measurement from an artifact"
+      },
+      {
+        "niveau": 3,
+        "titre": "2.8 The affine invariance of POEM — the theorem, and why the code denied it"
+      },
+      {
+        "niveau": 3,
+        "titre": "2.8bis The distortion was the wrong SHAPE — 2026-08-12"
+      },
+      {
+        "niveau": 3,
+        "titre": "2.9 Index uncertainty — a dispersion corridor, not a scalar"
+      },
+      {
+        "niveau": 3,
+        "titre": "2.10 Rate mode — control by turn counting, and what it costs"
+      },
+      {
+        "niveau": 3,
+        "titre": "2.11 Monochromator resolution — the first setting with an OPTIMUM"
+      },
+      {
+        "niveau": 3,
+        "titre": "2.12 The critical layer, and how to measure a risk that reads zero"
+      },
+      {
+        "niveau": 3,
+        "titre": "2.13 Non-Monotonic Error Model"
+      },
+      {
+        "niveau": 3,
+        "titre": "2.14 Cumulative Error Propagation"
+      },
+      {
+        "niveau": 3,
+        "titre": "2.15 Reality-Feedback Loop in Phase A"
+      },
+      {
+        "niveau": 2,
+        "titre": "3. Phase A: Layer-by-Layer Candidate Search"
+      },
+      {
+        "niveau": 3,
+        "titre": "3.1 Step A.1 — Dynamics Ranking"
+      },
+      {
+        "niveau": 3,
+        "titre": "3.2 Step A.2 — Safety Filters"
+      },
+      {
+        "niveau": 3,
+        "titre": "3.3 🔴 The safety margin at the turning point — and why the filter was inert"
+      },
+      {
+        "niveau": 3,
+        "titre": "3.4 Step A.3 — Monte Carlo Validation"
+      },
+      {
+        "niveau": 3,
+        "titre": "3.5 Step A.4 — Error Propagation + Normalization"
+      },
+      {
+        "niveau": 3,
+        "titre": "3.6 Layer 1 Attenuation (optional)"
+      },
+      {
+        "niveau": 2,
+        "titre": "4. Phase B: Block Grouping & Robustness Screening"
+      },
+      {
+        "niveau": 3,
+        "titre": "4.1 Dynamic Programming Segmentation"
+      },
+      {
+        "niveau": 3,
+        "titre": "4.2 Elite Candidate Generation"
+      },
+      {
+        "niveau": 3,
+        "titre": "4.3 SYM — Symmetry-Based Scoring"
+      },
+      {
+        "niveau": 3,
+        "titre": "4.4 🔴 YIELD in the DP objective — an idea, not implemented"
+      },
+      {
+        "niveau": 3,
+        "titre": "4.5 Full Monte Carlo Robustness Screening"
+      },
+      {
+        "niveau": 3,
+        "titre": "4.6 Consensus Multi-Seed Ranking (optional)"
+      },
+      {
+        "niveau": 3,
+        "titre": "4.7 Post-Check: T_min Floor on Best Strategy"
+      },
+      {
+        "niveau": 2,
+        "titre": "5. Smart Nucleation (Optional)"
+      },
+      {
+        "niveau": 2,
+        "titre": "6. Architecture & Dependency Injection"
+      },
+      {
+        "niveau": 3,
+        "titre": "6.1 StratContext — Dependency Container"
+      },
+      {
+        "niveau": 3,
+        "titre": "6.2 RobustMaterialDatabase"
+      },
+      {
+        "niveau": 3,
+        "titre": "6.3 Smart Index Retrieval"
+      },
+      {
+        "niveau": 2,
+        "titre": "7. Post-Optimization Analysis"
+      },
+      {
+        "niveau": 3,
+        "titre": "7.1 Spectral Resolution Check"
+      },
+      {
+        "niveau": 3,
+        "titre": "7.2 Phase A Observability JSON Export"
+      },
+      {
+        "niveau": 3,
+        "titre": "7.3 What the operator sees — yield at the head of the table"
+      },
+      {
+        "niveau": 3,
+        "titre": "7.4 Sensitivity Matrix (Legacy)"
+      },
+      {
+        "niveau": 3,
+        "titre": "7.5 SEEL Analysis (Legacy)"
+      },
+      {
+        "niveau": 3,
+        "titre": "7.6 Detailed Growth Visualization"
+      },
+      {
+        "niveau": 2,
+        "titre": "8. Implementation and Performance"
+      },
+      {
+        "niveau": 3,
+        "titre": "8.1 Numerical Precision"
+      },
+      {
+        "niveau": 3,
+        "titre": "8.2 Parallelism"
+      },
+      {
+        "niveau": 3,
+        "titre": "8.3 Key Source Files"
+      },
+      {
+        "niveau": 2,
+        "titre": "9. Ergonomics and UI"
+      },
+      {
+        "niveau": 3,
+        "titre": "9.1 Application Layout"
+      },
+      {
+        "niveau": 3,
+        "titre": "9.2 STRAT Keyboard Shortcuts"
+      },
+      {
+        "niveau": 3,
+        "titre": "9.3 Dynamic Processing Feedback"
+      },
+      {
+        "niveau": 3,
+        "titre": "9.4 Window Management"
+      },
+      {
+        "niveau": 3,
+        "titre": "9.5 Solver Execution Modes (Fast, Premium, Deep, Extreme)"
+      },
+      {
+        "niveau": 4,
+        "titre": "Extreme mode — for the design that no other mode makes manufacturable"
+      },
+      {
+        "niveau": 2,
+        "titre": "10. What Makes a Good Deposition Strategy"
+      },
+      {
+        "niveau": 3,
+        "titre": "10.1 The quantity being maximised"
+      },
+      {
+        "niveau": 3,
+        "titre": "10.2 Where the control wavelengths go"
+      },
+      {
+        "niveau": 3,
+        "titre": "10.3 How many blocks"
+      },
+      {
+        "niveau": 3,
+        "titre": "10.4 What is actually limiting"
+      },
+      {
+        "niveau": 3,
+        "titre": "10.5 Can the candidate pool be pruned? No — and the measurement is worth the space"
+      },
+      {
+        "niveau": 3,
+        "titre": "10.6 The unit the results are reported in"
+      },
+      {
+        "niveau": 3,
+        "titre": "10.6.1 Final displayed and exported ranking"
+      },
+      {
+        "niveau": 3,
+        "titre": "10.7 How many Monte-Carlo draws are actually needed"
+      },
+      {
+        "niveau": 3,
+        "titre": "10.7bis The control-λ grid — 1 nm or 2 nm, and why it was reopened"
+      },
+      {
+        "niveau": 3,
+        "titre": "10.8 Open conjectures, and the experiment that settles each"
+      },
+      {
+        "niveau": 3,
+        "titre": "10.9 A second test component — and why it is not a second data point"
+      },
+      {
+        "niveau": 3,
+        "titre": "10.10 What the nominal model actually chooses"
+      },
+      {
+        "niveau": 3,
+        "titre": "10.11 POEM has no purchase on the bandpass, and that is structural"
+      },
+      {
+        "niveau": 3,
+        "titre": "10.12 Where the error actually comes from"
+      },
+      {
+        "niveau": 3,
+        "titre": "10.13 What we deliberately do not claim"
+      },
+      {
+        "niveau": 3,
+        "titre": "10.14 Multi-Layer Block Monitoring Discovery & Phase A Block-Aware Engine (Campaign 2026-08-14)"
+      },
+      {
+        "niveau": 4,
+        "titre": "A. Performance by block count"
+      },
+      {
+        "niveau": 4,
+        "titre": "B. Why blocks beat one-λ-per-layer — the mechanism, and the limit of the claim"
+      },
+      {
+        "niveau": 4,
+        "titre": "C. The Block-Aware Phase A bonus — what the code actually does"
+      },
+      {
+        "niveau": 3,
+        "titre": "10.15 Where the method runs out — the 99-layer, 5-cavity bandpass"
+      },
+      {
+        "niveau": 4,
+        "titre": "What breaks, physically"
+      },
+      {
+        "niveau": 4,
+        "titre": "What the solver returns anyway"
+      },
+      {
+        "niveau": 3,
+        "titre": "10.16 Multiple-testglass monitoring — historical simulated feasibility of the 99-layer filter"
+      },
+      {
+        "niveau": 4,
+        "titre": "The method"
+      },
+      {
+        "niveau": 4,
+        "titre": "How a part is scored from independent campaigns"
+      },
+      {
+        "niveau": 4,
+        "titre": "Results"
+      },
+      {
+        "niveau": 4,
+        "titre": "Four results that were not expected"
+      },
+      {
+        "niveau": 4,
+        "titre": "What actually sets the limit — and it is not the layer count"
+      },
+      {
+        "niveau": 4,
+        "titre": "What is deliberately not claimed here"
+      },
+      {
+        "niveau": 3,
+        "titre": "10.17 A stack that looked impossible, and was not — the search was the wall"
+      },
+      {
+        "niveau": 4,
+        "titre": "What this does not claim"
+      },
+      {
+        "niveau": 3,
+        "titre": "10.18 The 2 nm slit on the ×2 random stack — and the honest name for what made it work"
+      },
+      {
+        "niveau": 3,
+        "titre": "10.19 The launch pads are no longer needed — an autonomous discovery, 2026-08-22"
+      },
+      {
+        "niveau": 3,
+        "titre": "10.20 The thickness-scale series, re-measured — three verdicts were wrong"
+      },
+      {
+        "niveau": 3,
+        "titre": "10.21 The crash rate falls when the noise rises — and the culprit is our own detector"
+      },
+      {
+        "niveau": 2,
+        "titre": "11. Making It Fast — What the Structure Gives for Free"
+      },
+      {
+        "niveau": 3,
+        "titre": "11.1 T(d) has a closed form, and it is exact"
+      },
+      {
+        "niveau": 3,
+        "titre": "11.2 The scan window — a negative result, reported as one"
+      },
+      {
+        "niveau": 3,
+        "titre": "11.3 Single precision — defensible, but not first"
+      }
+    ]
+  },
+  "constats": {
+    "total": 28,
+    "P1": [
+      "A03",
+      "A04",
+      "A05",
+      "A07",
+      "A08",
+      "A09",
+      "A10",
+      "A11",
+      "A12",
+      "A13",
+      "A14"
+    ],
+    "P2": [
+      "A01",
+      "A02",
+      "A06",
+      "A15",
+      "A16",
+      "A17",
+      "A18",
+      "A19",
+      "A20",
+      "A21",
+      "A22",
+      "A23",
+      "A24",
+      "A25",
+      "A26",
+      "A27",
+      "A28"
+    ],
+    "pourcentage_conformite": null
+  },
+  "sources_des_constats": [
+    {
+      "chemin": "certus/core/certus_strat_config.py",
+      "sha256": "42fdd986ef72308461f9acf2c1ef843c1cc6a3b47789fc6393e2223d99a84c3e"
+    },
+    {
+      "chemin": "certus/core/certus_strat_consensus.py",
+      "sha256": "7103803e94c61f0f8fc9db0361502166ee08225a3f1b373db83ca2d6e8c315fc"
+    },
+    {
+      "chemin": "certus/core/certus_strat_local_search.py",
+      "sha256": "1f1b714f22c83106dd6cd2d826b9c4ae1653b7a5f72311e2d1015d36fc07a908"
+    },
+    {
+      "chemin": "certus/core/certus_strat_objectives.py",
+      "sha256": "3f4d4398982c2587ae77bf3dbcd0c9eb6d237395f79ab62f426349b3ccab78e4"
+    },
+    {
+      "chemin": "certus/core/certus_strat_pipeline.py",
+      "sha256": "b1928ffe8d2010c96058d40a48388141ee08da1d3f16c6088dd193a23047a68b"
+    },
+    {
+      "chemin": "certus/core/certus_strat_ranking.py",
+      "sha256": "93c103e3cd0be0c4fe090d00c0daf287df3940772f2f0061d0fdaf62061e132d"
+    },
+    {
+      "chemin": "certus/core/certus_strat_robustness.py",
+      "sha256": "33234ddfbb232adde2c0cd17be0ff770b39d03455e10c54eb9a9ca8df4d966ec"
+    },
+    {
+      "chemin": "certus/core/certus_strat_robustness_results.py",
+      "sha256": "78f7649a24b7856a492c6e3c138cb41c04bd7f5b25362767a7ac7a58a8ea9604"
+    },
+    {
+      "chemin": "certus/core/certus_strat_robustness_slit.py",
+      "sha256": "48339e2166c182f246d7c5ee671e7d6bb8cf2aa5cab568383b238832e5075e8e"
+    },
+    {
+      "chemin": "certus/core/certus_strat_robustness_task.py",
+      "sha256": "65d56a5ddbff4ce48c035150b4f507b56365109f465944717defcc5dd0583c4d"
+    },
+    {
+      "chemin": "certus/core/certus_strat_utils.py",
+      "sha256": "a144163a8afc1179734cff3cc2a88cebbeddfbded453035da3a7ff3197214b86"
+    },
+    {
+      "chemin": "certus/physics/certus_strat_growth.py",
+      "sha256": "ff34ffdec7d8f2ebe39170a29048937ef919c3c4c967526c3982008a955e4105"
+    },
+    {
+      "chemin": "certus/physics/certus_strat_readings.py",
+      "sha256": "f7d890d0d089eb32bfbd3111d2019e015ce946046c4855dfd85664f3596a4fba"
+    },
+    {
+      "chemin": "certus/ui/certus_strat_defaults.py",
+      "sha256": "16aa2ab388a1aef705a14dda2f861b93554a2aaee04deea1604a5cbc5ddc205b"
+    },
+    {
+      "chemin": "certus/ui/certus_strat_table_ui.py",
+      "sha256": "a313493867e0a60f0e47428c5d2a804c8737732af8631fca6c4aaa55f5eaa1c7"
+    },
+    {
+      "chemin": "certus/ui/certus_strat_ui_layout.py",
+      "sha256": "524633bce371f76178a0d06e76a5e5d2521df67497b706e71af30a2770f37aca"
+    },
+    {
+      "chemin": "certus/ui/certus_strat_ui_state.py",
+      "sha256": "af67d336a3a076124d40d56e8949d4865b04ae2366417b41fd8a1e2c7c55820e"
+    },
+    {
+      "chemin": "certus/ui/certus_strat_ui_worker.py",
+      "sha256": "43d1b35afc9fff67197cb6ee4d024832b8cf0d1fb179c872d8376979ae44e35a"
+    },
+    {
+      "chemin": "certus/ui/certus_strat_multigraine_ui.py",
+      "sha256": "c365906ccf01c5000d1ed6670303359c01639231bbfb6d2bb4ab0cc517f42c5b"
+    },
+    {
+      "chemin": "certus/utils/certus_strat_context.py",
+      "sha256": "025d6d4bcd82289d6f9b7cdbc09440ad23504a0030c5721433dcba4e056b4e89"
+    },
+    {
+      "chemin": "certus/utils/certus_strat_db.py",
+      "sha256": "6d7dac0a92b4b0190776dbcfe2dddf0098e1b793424205d91f77915b375f5e6b"
+    },
+    {
+      "chemin": "certus/utils/certus_strat_service.py",
+      "sha256": "1c7bef575320a3454141f1cb1bf0f2a7ccc148a43c19272156880f236b356875"
+    },
+    {
+      "chemin": "certus/workers/certus_strat_workers.py",
+      "sha256": "37a74479a7f2f1c3f151d20ab2ad322f875551c02449562e3e084947ae962870"
+    },
+    {
+      "chemin": "certus/workers/certus_strat_workers_local_search.py",
+      "sha256": "b8dec0081531160f16e4014159d5d5338aaf716f76f280bf26bfb448c47f23cd"
+    },
+    {
+      "chemin": "certus/workers/certus_strat_workers_pipeline.py",
+      "sha256": "7098aecee16ad4f6db48a2cfb897555e1c57ee9b853f565e286c9f129b8bf944"
+    }
+  ],
+  "controle_html": {
+    "commande": "python scripts/verifier_html.py pages/CERTUS_STRAT.html",
+    "execute_au_cours_audit": true,
+    "code_sortie": 0,
+    "ancres": 26,
+    "renvois_internes": 25,
+    "points_signales": 0,
+    "portee": "Structure HTML et renvois ; aucune certification des assertions scientifiques."
+  },
+  "archives_rapprochees": [
+    {
+      "chemin": "reports/STRAT_A3_reperes_reprise_2026-10-21/bilan.md",
+      "portee": "Scores et SEEL des six références A3 ; transcription, pas nouvelle simulation."
+    },
+    {
+      "chemin": "reports/STRAT_A3_99c_grille_2026-10-24/bilan.md",
+      "portee": "Trois SEEL 99 couches et leur médiane ; transcription, pas nouvelle simulation."
+    },
+    {
+      "chemin": "reports/ANALYSE_claude_2026-10-22/bilan.md",
+      "portee": "Diagnostic historique de faux turning points à faible bruit."
+    }
+  ],
+  "sources_historiques_absentes_du_checkout_et_de_git_ls_files": [
+    "reports/blocs_vs_plantage_r75x2-2nm_deep_s042.json",
+    "reports/blocs_vs_plantage_r75x2_deep_s042_res1_large.json",
+    "reports/campagne_N35_300.log"
+  ],
+  "limites": {
+    "pytest_execute_par_audit": false,
+    "raison": "Validation extérieure déjà active : scripts/validate_parallel.py puis pytest tests/unit/ ; aucune seconde validation lancée simultanément.",
+    "resultat_validation_exterieure": "Non disponible à la clôture, aucun résultat revendiqué.",
+    "campagnes_monte_carlo_reproduites": false,
+    "performances_remesurees": false,
+    "caracteristiques_machine_verifiees_sur_document_constructeur": false,
+    "certification_de_toutes_les_affirmations_empiriques": false
+  },
+  "fichiers_produits": [
+    "reports/AUDIT_page_STRAT_2026-10-31/bilan.md",
+    "reports/AUDIT_page_STRAT_2026-10-31/preuves.json"
+  ]
+}

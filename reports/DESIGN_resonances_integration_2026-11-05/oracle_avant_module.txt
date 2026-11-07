@@ -1,0 +1,16 @@
+
+=================================== ERRORS ====================================
+_ ERROR collecting tests/oracle/test_design_complex_wavelength_resonances.py __
+ImportError while importing test module 'D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\tests\oracle\test_design_complex_wavelength_resonances.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\oracle\test_design_complex_wavelength_resonances.py:8: in <module>
+    from certus.physics.design_resonances import (
+E   ModuleNotFoundError: No module named 'certus.physics.design_resonances'. Did you mean: 'certus.physics.design_fast_kernels'?
+=========================== short test summary info ===========================
+ERROR tests/oracle/test_design_complex_wavelength_resonances.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 2.51s

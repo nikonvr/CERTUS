@@ -1,0 +1,22 @@
+[
+  {
+    "wavelength_real": 499.5,
+    "wavelength_imag": 1.0,
+    "relative_error": 7.434573324864111e-15
+  },
+  {
+    "wavelength_real": 500.0,
+    "wavelength_imag": 1.0,
+    "relative_error": 4.2031242268334964e-14
+  },
+  {
+    "wavelength_real": 500.1,
+    "wavelength_imag": -0.2,
+    "relative_error": 1.768446190731833e-13
+  },
+  {
+    "wavelength_real": 500.0,
+    "wavelength_imag": 0.0,
+    "relative_error": 8.013825068911862e-29
+  }
+]

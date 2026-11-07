@@ -1,0 +1,20 @@
+{
+  "mode": "nominal",
+  "settings": {
+    "rounds": 40,
+    "burst": 30,
+    "gamma_nm": null,
+    "height_threshold": 1.0,
+    "max_width_nm": 0.5,
+    "count_step_nm": 0.02,
+    "max_ot_nm": 15000.0
+  },
+  "sources_sha256": {
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\certus\\physics\\design_resonances.py": "aa1238ca33392de004609b0d1dbffcef8b8c3bb9f262dea044165e2de00a7a84",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\certus\\core\\certus_design_resonances.py": "734ccbec54810db5e4eaa23a1ba77514216147f5e2708fa16deeddb3ffc42a7e",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\certus\\physics\\certus_tmm_oblique.py": "959e1aa4784b1436b05aadbe22de332ed6d3975c9240b6001137fc4a4a130dca",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\certus\\physics\\design_fast_gauss_newton.py": "55da7a684e44c68a487c6eca6e67ce341abb9592e318e5c595e85d690d0d4f97",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\A2_preparation_calculs_2026-11-05\\pilote_109\\initial_design.json": "5fba632ccaab162b95b3c7fdbeb6a9a6bb5ed597a20d14e2311baaf9ebb4332f",
+    "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\A2_preparation_calculs_2026-11-05\\pilote_109\\nominal_rounds.csv": "83e4da7631dce1c0bb821d39c8a2d0d6b593dd1ed0cd40febfa9f0b184dd756e"
+  }
+}

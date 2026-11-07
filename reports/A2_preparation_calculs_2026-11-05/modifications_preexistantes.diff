@@ -1,0 +1,364 @@
+diff --git a/reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/cissoid_islands.py b/reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/cissoid_islands.py
+index c4c87cd7..e5fc3c01 100644
+--- a/reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/cissoid_islands.py
++++ b/reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/cissoid_islands.py
+@@ -43,6 +43,44 @@ is_metal = fx.is_metal
+ # env CISSOID_RANDOM: "free" (default, `cissoid_memetic.random_design`), "absorber" (2026-10-30: the 0.08521 record is
+ # opaque, T = 0: an 84 nm Ni base on the glass side, R = 1 - A, thin metals inside the stack) or "mixed" (half each)
+ RANDOM = os.environ.get("CISSOID_RANDOM", "free")
++# env CISSOID_SWAP (2026-10-31, off by default): after the deep round, swap the material of one layer (a dielectric for
++# another dielectric at constant optical thickness, a metal for another metal at constant thickness), polish every
++# candidate, keep the best while it gains; repeat. cissoid_drop_m.py found 0.01875 -> 0.01839 in 10 s this way, after
++# 45 min of a search that never changes the material of a layer.
++SWAP = os.environ.get("CISSOID_SWAP", "0") == "1"
++# env CISSOID_SWAP_MAX (2026-10-31; 0 = no cap, the first behaviour): most swaps kept per round. On islands started from
++# scratch almost every swap gains: one round kept 39 swaps in 682 s and stalled the whole campaign.
++SWAP_MAX = int(os.environ.get("CISSOID_SWAP_MAX", "0"))
++
++
++def swap_tasks(m, x):
++    tasks = []
++    for i, a in enumerate(m):
++        for b in (mm.METALS if is_metal(a) else mm.DIELECTRICS):
++            if b == a:
++                continue
++            d = np.maximum(x.copy(), co.FLOOR)
++            if not is_metal(a):
++                d[i] *= co.MATS[a] / co.MATS[b]
++            tasks.append(co.normalize([*m[:i], b, *m[i + 1:]], d, 0.0))
++    return tasks
++
++
++def swap_round(m, x, r, pool):
++    """Material swaps of one layer, best kept while it gains by 1e-3 relative; returns (m, x, r, swaps kept)."""
++    kept = 0
++    while not SWAP_MAX or kept < SWAP_MAX:
++        best = None
++        for kid in pool.map(mm.polish_feasible, swap_tasks(m, x)):
++            if len(kid[0]) > co.N_MAX or kid[1].min() < co.FLOOR - 1e-9:
++                continue
++            if best is None or kid[2] < best[2]:
++                best = kid
++        if best is None or best[2] >= r * (1 - 1e-3):
++            return m, x, r, kept
++        m, x, r = best
++        kept += 1
++    return m, x, r, kept
+ 
+ 
+ def metals_of(m):
+@@ -199,6 +237,11 @@ def main() -> None:
+                     f"{time.time() - t0:.0f} s, metals {metals_of(m2)})")
+                 if r2 < r and len(m2) <= co.N_MAX and x2.min() >= co.FLOOR - 1e-9:
+                     m, x, r = m2, x2, r2
++            if SWAP:
++                t0, r0 = time.time(), r
++                m, x, r, kept = swap_round(m, x, r, pool)
++                log(f"island {k} gen {isl['gen']}: swap {r0:.5f} -> {r:.5f} ({kept} kept, {time.time() - t0:.0f} s, "
++                    f"N {len(m)}, metals {metals_of(m)})")
+             isl["deep_done"] = r
+             if r < pop[0][2]:
+                 pop[0] = (m, x, r)
+diff --git a/reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/cissoid_opt.py b/reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/cissoid_opt.py
+index 7d66bf09..a91f5bb0 100644
+--- a/reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/cissoid_opt.py
++++ b/reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/cissoid_opt.py
+@@ -41,11 +41,29 @@ from certus.physics.gradient_oblique import compute_oblique_rt_and_grads_analyti
+ 
+ MATS = {"F": 1.38, "L": 1.45, "B": 1.65, "M": 1.8, "T": 2.15, "H": 2.45,
+         "A": 0.12 - 3.45j, "U": 0.306 - 2.88j, "N": 1.8 - 3.33j}  # A = Ag, U = Au, N = Ni
+-W = c.WLS
+-TGT = np.loadtxt(s.HERE / "cissoid_target_b1.csv", delimiter=",", skiprows=1)[:, 1]
++def exact_target(w):
++    """The contest's target at any wavelength (module docstring): |R - 0.5| = k s^1.5 / sqrt(2a - s), s the distance in
++    nm to the nearest R = 0.5 crossing (400, 500, 600, 700 nm), 2a = 100 nm, k = 0.3 / 50, R above 0.5 between 500 and
++    600 nm; on the 1 nm points it matches cissoid_target_b1.csv within its 4-decimal rounding (4.9e-5)."""
++    w = np.asarray(w, dtype=float)
++    s = np.abs(w[..., None] - np.array([400.0, 500.0, 600.0, 700.0])).min(axis=-1)
++    mag = 0.3 / 50.0 * s ** 1.5 / np.sqrt(100.0 - s)
++    return np.where((w > 500.0) & (w < 600.0), 0.5 + mag, 0.5 - mag)
++
++
++W_CONTEST = c.WLS
++TGT_CONTEST = np.loadtxt(s.HERE / "cissoid_target_b1.csv", delimiter=",", skiprows=1)[:, 1]
++W, TGT = W_CONTEST, TGT_CONTEST
++#: env CISSOID_JUDGE (2026-11-01, owner: each problem optimized on its nominal grid and on a resolved one; unset = the
++#: contest's 301 points and its 4-decimal target): "exactK" puts K points per nm from 400 to 700 nm, against
++#: `exact_target`, in place of the 301 points everywhere (search, polish_full, oracle_mf, the campaigns' judge).
++JUDGE = os.environ.get("CISSOID_JUDGE", "")
++if JUDGE:
++    W = np.linspace(400.0, 700.0, 300 * int(re.fullmatch(r"exact(\d+)", JUDGE).group(1)) + 1)
++    TGT = exact_target(W)
+ SCALE = 1.0 / (0.01 * np.sqrt(len(W)))
+ NSUB = np.full(len(W), 1.52 + 0j)
+-W_FULL, TGT_FULL, NSUB_FULL, SCALE_FULL = W, TGT, NSUB, SCALE  # the contest's 301 points: the judge
++W_FULL, TGT_FULL, NSUB_FULL, SCALE_FULL = W, TGT, NSUB, SCALE  # the judge: the contest's 301 points or CISSOID_JUDGE
+ SCALE_J = SCALE
+ 
+ 
+@@ -69,11 +87,30 @@ def search_grid(spec: str):
+ 
+ 
+ GRID = os.environ.get("CISSOID_GRID", "full")
+-if GRID != "full":
++if GRID.startswith("over"):
++    # "overK" (2026-10-31, owner): K points per nm, target interpolated linearly between the 1 nm points; a deformed
++    # landscape for the search, judged later on the 301 points (polishing on it alone worsens the 301-point MF)
++    W = np.linspace(400.0, 700.0, 300 * int(GRID[4:]) + 1)
++    TGT, NSUB = np.interp(W, W_FULL, TGT_FULL), np.full(len(W), 1.52 + 0j)
++    SCALE = 1.0 / (0.01 * np.sqrt(len(W)))
++    SCALE_J = SCALE
++elif GRID != "full":
+     _sel, _weight = search_grid(GRID)
+     W, TGT, NSUB = W_FULL[_sel], TGT_FULL[_sel], NSUB_FULL[_sel]
+     SCALE = np.sqrt(_weight / len(W_FULL)) / 0.01
+     SCALE_J = SCALE[:, None]
++# env CISSOID_WEIGHT (2026-10-31, owner; empty by default): "LO-HI:W,..." multiplies by W the weight of the search
++# points from LO to HI nm (the squared residual by W), to push the search where the error sits; SCALE_FULL, the
++# judge, is never weighted.
++WEIGHT = os.environ.get("CISSOID_WEIGHT", "")
++if WEIGHT:
++    _w = np.ones(len(W))
++    for part in WEIGHT.split(","):
++        span, wt = part.split(":")
++        lo, hi = (float(v) for v in span.split("-"))
++        _w[(W >= lo) & (W <= hi)] *= float(wt)
++    SCALE = SCALE * np.sqrt(_w)
++    SCALE_J = SCALE[:, None]
+ STEP, DROP, FLOOR, N_MAX = 2.0, 0.05, 3.0, 50
+ HI_METAL, HI_DIEL = 100.0, 3000.0  # a metal above 100 nm is opaque; bounds keep the kernel finite
+ K = int(os.environ.get("CISSOID_K", "7"))
+@@ -84,17 +121,34 @@ NEEDLE_MATS = list(MATS)
+ MAX_METALS: int | None = None
+ 
+ 
++#: env CISSOID_OTMAX (2026-11-01, owner: the record with a dielectric optical thickness of at most OTMAX nm; unset or
++#: 0 = off, the residuals unchanged): one more residual, OTMAX_W * max(0, OT_d - OTMAX) / OTMAX with OT_d the sum of
++#: n d over the dielectric layers, so that every polish, swap and screen of the study works under the cap. The judge
++#: (`oracle_mf`) ignores it.
++OTMAX = float(os.environ.get("CISSOID_OTMAX", "0") or 0.0)
++OTMAX_W = 100.0
++
++
++def _ot_cap(mats, d, r, j):
++    if not OTMAX:
++        return r, j
++    n = np.array([0.0 if np.iscomplex(MATS[m]) else float(np.real(MATS[m])) for m in mats])
++    excess = float(n @ d) - OTMAX
++    row = OTMAX_W * n / OTMAX if excess > 0.0 else np.zeros(len(d))
++    return np.append(r, OTMAX_W * max(excess, 0.0) / OTMAX), np.vstack([j, row])
++
++
+ def res_jac(mats: list[str], d: np.ndarray):
+     nm = np.column_stack([np.full(len(W), MATS[m], dtype=complex) for m in mats])
+     r, _t, dr, _dt = compute_oblique_rt_and_grads_analytic(d, nm, NSUB, W, np.arange(len(d)), 0.0, True)
+-    return (r - TGT) * SCALE, dr * SCALE_J
++    return _ot_cap(mats, d, (r - TGT) * SCALE, dr * SCALE_J)
+ 
+ 
+ def res_jac_full(mats: list[str], d: np.ndarray):
+     """`res_jac` on the contest's 301 points, whatever CISSOID_GRID."""
+     nm = np.column_stack([np.full(len(W_FULL), MATS[m], dtype=complex) for m in mats])
+     r, _t, dr, _dt = compute_oblique_rt_and_grads_analytic(d, nm, NSUB_FULL, W_FULL, np.arange(len(d)), 0.0, True)
+-    return (r - TGT_FULL) * SCALE_FULL, dr * SCALE_FULL
++    return _ot_cap(mats, d, (r - TGT_FULL) * SCALE_FULL, dr * SCALE_FULL)
+ 
+ 
+ def mf(mats, d) -> float:
+@@ -105,10 +159,12 @@ def mf_full(mats, d) -> float:
+     return float(np.linalg.norm(res_jac_full(mats, d)[0]))
+ 
+ 
+-def oracle_mf(mats, d) -> float:
++def oracle_mf(mats, d, w=None, tgt=None) -> float:
++    """The independent oracle's MF on the judge's grid, or on the wavelengths ``w`` against ``tgt``."""
++    w, tgt = (W_FULL, TGT_FULL) if w is None else (w, tgt)
+     n = [complex(MATS[m]) for m in mats]
+-    r = np.array([oracle.rt_stack(w, n, np.asarray(d), complex(1.0), complex(1.52))[0] for w in W_FULL])
+-    return float(np.sqrt(np.mean(((r - TGT_FULL) / 0.01) ** 2)))
++    r = np.array([oracle.rt_stack(x, n, np.asarray(d), complex(1.0), complex(1.52))[0] for x in w])
++    return float(np.sqrt(np.mean(((r - tgt) / 0.01) ** 2)))
+ 
+ 
+ def normalize(mats: list[str], d: np.ndarray, drop: float):
+diff --git a/reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/search.py b/reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/search.py
+index 17af17c6..b63a5663 100644
+--- a/reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/search.py
++++ b/reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/search.py
+@@ -64,6 +64,16 @@ TARGET = os.environ.get("SEARCH_TARGET", "bs5050")
+ #: starts of a target other than the 50/50: SEARCH_STARTS = random (default), bare (one layer, grown by the moves),
+ #: qw (quarter-wave stacks with random half- or full-wave cavities) or none (CSV designs only)
+ STARTS = os.environ.get("SEARCH_STARTS", "random")
++
++def band_values(x: np.ndarray, t) -> np.ndarray:
++    """Target of a band on the wavelengths x: a constant, "semi" (SEARCH_TARGET=semicircle) or "M" (mshape)."""
++    if t == "semi":
++        return 0.5 * np.sqrt(np.clip(1.0 - ((x - 550.0) / 50.0) ** 2, 0.0, None))
++    if t == "M":  # SEARCH_TARGET=mshape: 0 at 450, 0.5 at 500, 0.25 at 550, 0.5 at 600, 0 at 650 nm, linear between
++        return np.interp(x, [450.0, 500.0, 550.0, 600.0, 650.0], [0.0, 0.5, 0.25, 0.5, 0.0])
++    return np.full(len(x), float(t))
++
++
+ if TARGET == "threeline":
+     _bands = [(445, 455, 1.0), (505, 515, 1.0), (635, 645, 1.0), (400, 440, 0.0), (460, 500, 0.0), (520, 630, 0.0),
+               (650, 700, 0.0)]
+@@ -98,6 +108,73 @@ elif TARGET == "ar":
+     ZB, OB = np.zeros(len(WLS)), np.ones(len(WLS))
+     N_MAX = int(os.environ.get("SEARCH_NMAX", "30"))
+     TAG = "ar_"
++#: SEARCH_TARGET=notch (2026-11-01, owner: the simple filter of the method paper on hidden resonances): T = 0 on a 20 nm
++#: band centred at the geometric middle of 400-1200 nm (sqrt(400 x 1200) = 692.8 nm: 683-702 nm), T = 1 at 400-672 and
++#: 713-1200 nm, the 10 nm on either side of the notch left free, 1 nm step, uniform weights, same materials and substrate.
++elif TARGET == "notch":
++    _bands = [(400, 672, 1.0), (683, 702, 0.0), (713, 1200, 1.0)]
++    WLS = np.concatenate([np.arange(a, b + 1, dtype=float) for a, b, _t in _bands])
++    TGT = np.concatenate([np.full(b - a + 1, t) for a, b, t in _bands])
++    K0 = 2.0 * np.pi / WLS
++    SQW = np.full(len(WLS), np.sqrt(1.0 / len(WLS)))
++    NSUB = np.full(len(WLS), N_SUB)
++    ZB, OB = np.zeros(len(WLS)), np.ones(len(WLS))
++    N_MAX = int(os.environ.get("SEARCH_NMAX", "160"))
++    TAG = "notch_" + ("" if STARTS == "random" else f"{STARTS}_")
++#: SEARCH_TARGET=semicircle (2026-11-01 evening, owner: an arbitrary target for the method paper, in place of the notch):
++#: T = 0 at 400-499 nm, a half circle at 500-600 nm rising to T = 0.5 at 550 nm, T = 0 at 601-700 nm, 1 nm step, uniform
++#: weights, same materials and substrate. A band whose target is "semi" takes band_values below.
++elif TARGET == "semicircle":
++    _bands = [(400, 499, 0.0), (500, 600, "semi"), (601, 700, 0.0)]
++    WLS = np.concatenate([np.arange(a, b + 1, dtype=float) for a, b, _t in _bands])
++    TGT = np.concatenate([band_values(np.arange(a, b + 1, dtype=float), t) for a, b, t in _bands])
++    K0 = 2.0 * np.pi / WLS
++    SQW = np.full(len(WLS), np.sqrt(1.0 / len(WLS)))
++    NSUB = np.full(len(WLS), N_SUB)
++    ZB, OB = np.zeros(len(WLS)), np.ones(len(WLS))
++    N_MAX = int(os.environ.get("SEARCH_NMAX", "120"))
++    TAG = "semi_" + ("" if STARTS == "random" else f"{STARTS}_")
++#: SEARCH_TARGET=mshape (2026-11-01 evening, owner: a spectral M, zero on the edges): T = 0 at 400-449 nm, an M at
++#: 450-650 nm (band_values "M"), T = 0 at 651-700 nm, 1 nm step, uniform weights, same materials and substrate.
++elif TARGET == "mshape":
++    _bands = [(400, 449, 0.0), (450, 650, "M"), (651, 700, 0.0)]
++    WLS = np.concatenate([np.arange(a, b + 1, dtype=float) for a, b, _t in _bands])
++    TGT = np.concatenate([band_values(np.arange(a, b + 1, dtype=float), t) for a, b, t in _bands])
++    K0 = 2.0 * np.pi / WLS
++    SQW = np.full(len(WLS), np.sqrt(1.0 / len(WLS)))
++    NSUB = np.full(len(WLS), N_SUB)
++    ZB, OB = np.zeros(len(WLS)), np.ones(len(WLS))
++    N_MAX = int(os.environ.get("SEARCH_NMAX", "120"))
++    TAG = "mshape_" + ("" if STARTS == "random" else f"{STARTS}_")
++#: SEARCH_TARGET=highpass (2026-11-01 evening, owner: a simple long-wave pass filter): T = 0 at 400-540 nm, T = 1 at
++#: 560-700 nm, the 20 nm between left free, 1 nm step, uniform weights, same materials and substrate.
++elif TARGET == "highpass":
++    _bands = [(400, 540, 0.0), (560, 700, 1.0)]
++    WLS = np.concatenate([np.arange(a, b + 1, dtype=float) for a, b, _t in _bands])
++    TGT = np.concatenate([band_values(np.arange(a, b + 1, dtype=float), t) for a, b, t in _bands])
++    K0 = 2.0 * np.pi / WLS
++    SQW = np.full(len(WLS), np.sqrt(1.0 / len(WLS)))
++    NSUB = np.full(len(WLS), N_SUB)
++    ZB, OB = np.zeros(len(WLS)), np.ones(len(WLS))
++    N_MAX = int(os.environ.get("SEARCH_NMAX", "120"))
++    TAG = "highpass_" + ("" if STARTS == "random" else f"{STARTS}_")
++#: env SEARCH_POINTS / SEARCH_STEP (2026-11-01, owner: each problem optimized on its nominal grid and on a resolved one;
++#: unset, the grids above): SEARCH_POINTS=K puts the 50/50 on K points from 400 to 1200 nm (80: the authors' Eq. 3),
++#: SEARCH_STEP=h samples the three-line bands every h nm; the output files get a pts{K}_ or step{h}_ prefix.
++POINTS = int(os.environ.get("SEARCH_POINTS", "0") or 0)
++STEP_NM = float(os.environ.get("SEARCH_STEP", "0") or 0.0)
++if POINTS and TARGET == "bs5050":
++    WLS, TGT, TAG = np.linspace(400.0, 1200.0, POINTS), np.full(POINTS, 0.5), f"pts{POINTS}_" + TAG
++elif STEP_NM and TARGET in ("threeline", "notch"):
++    _w = [np.linspace(a, b, round((b - a) / STEP_NM) + 1) for a, b, _t in _bands]
++    WLS = np.concatenate(_w)
++    TGT = np.concatenate([band_values(x, t) for x, (_a, _b, t) in zip(_w, _bands, strict=True)])
++    TAG = f"step{STEP_NM:g}_" + TAG
++if POINTS or STEP_NM:
++    K0 = 2.0 * np.pi / WLS
++    SQW = np.full(len(WLS), np.sqrt(1.0 / len(WLS)))
++    NSUB = np.full(len(WLS), N_SUB)
++    ZB, OB = np.zeros(len(WLS)), np.ones(len(WLS))
+ 
+ 
+ def total_ot(seq: str, d: np.ndarray) -> float:
+@@ -284,6 +361,23 @@ def moves(seq: str, d: np.ndarray, floor: float, rng: np.random.Generator):
+     yield seq, d * float(rng.uniform(1.03, 1.10))
+ 
+ 
++#: env SEARCH_NO_LSUB=1 (2026-11-02, owner: "a low-index layer next to the substrate does nothing", designs with a thick
++#: one are refused): after every polish, a substrate-side L layer, or an H layer under 10 nm that only separates such an
++#: L layer from the substrate, is dropped and the design polished again; a start beginning with L loses that layer.
++#: Unset: unchanged. Output files get a nolsub_ prefix.
++NO_LSUB = os.environ.get("SEARCH_NO_LSUB", "0") == "1"
++if NO_LSUB:
++    TAG = "nolsub_" + TAG
++
++
++def strip_lsub(seq: str, d: np.ndarray) -> tuple[str, np.ndarray, bool]:
++    """Drop substrate-side L layers (and H layers under 10 nm before them); (sequence, thicknesses, changed)."""
++    changed = False
++    while len(seq) > 2 and (seq[0] == "L" or (d[0] < 10.0 and seq[1] == "L")):
++        seq, d, changed = seq[1:], np.asarray(d[1:], dtype=float), True
++    return seq, d, changed
++
++
+ def start_eval(task):
+     """Polish of one start: (rmse before, thicknesses, rmse after)."""
+     seq, d, floor = task
+@@ -291,6 +385,16 @@ def start_eval(task):
+     return rmse(seq, d), x, r
+ 
+ 
++#: env SEARCH_POLES=K (2026-11-01 late evening, owner: synthesis with the pole charge, "B", against synthesis on the
++#: grid then cure, "A"): after the nominal polish of each move, K rounds of threeline_track: resonances found from the
++#: complex plane (TRACK_DETECT=complex), each charged by its height at its pole, 30 trust-region iterations; the move is
++#: then ranked by the tracked merit sqrt(rmse^2 + sum(height^2) / L) (the nominal points plus one point per resonance).
++#: Unset or 0: the nominal search, unchanged. Output files get a poles{K}_ prefix.
++POLES = int(os.environ.get("SEARCH_POLES", "0") or 0)
++if POLES:
++    TAG = f"poles{POLES}_" + TAG
++
++
+ def move_eval(task):
+     """Polish of one move, dead layers dropped, re-polish if the sequence changed: (sequence, thicknesses, rmse)."""
+     s2, d2, floor = task
+@@ -298,6 +402,26 @@ def move_eval(task):
+     s3, x3 = normalize(s2, x, max(floor, DEAD))
+     if s3 != s2:
+         x3, r = polish(s3, x3, floor)
++    if NO_LSUB:
++        s4, x4, changed = strip_lsub(s3, x3)
++        if changed:
++            s3, x3 = normalize(s4, x4, max(floor, DEAD))
++            x3, r = polish(s3, x3, floor)
++    if POLES:
++        import threeline_track as tt  # late: it imports this module
++
++        x0 = x3.copy()
++        try:
++            for _ in range(POLES):
++                pk = tt.poles(s3, x3)
++                if not pk:
++                    break
++                x3 = np.maximum(tt.polish("height", s3, x3, pk), floor)
++            pk = tt.poles(s3, x3)
++            r = float(np.sqrt(rmse(s3, x3) ** 2 + sum(q[2] ** 2 for q in pk) / len(WLS)))
++        except (np.linalg.LinAlgError, ValueError):  # 2026-11-02: a failed SVD stopped a whole search; keep the move
++            x3, pk = x0, tt.poles(s3, x0)
++            r = float(np.sqrt(rmse(s3, x3) ** 2 + sum(q[2] ** 2 for q in pk) / len(WLS)))
+     return s3, x3, r
+ 
+ 
+@@ -335,6 +459,8 @@ def main() -> None:
+         for n in range(int(n_lo), int(n_hi) + 1, 5):
+             for _ in range(per):
+                 first = "HL"[int(rng.integers(2))]
++                if NO_LSUB:  # the draw is kept so that the other draws do not change
++                    first = "H"
+                 seq = "".join(first if i % 2 == 0 else other(first) for i in range(n))
+                 ot = rng.uniform(t_lo, t_hi) / n * np.exp(0.4 * rng.standard_normal(n))
+                 starts.append((seq, ot / np.array([N_IDX[m] for m in seq])))
+@@ -350,6 +476,8 @@ def main() -> None:
+         for n in range(q_lo, q_hi + 1, 5):
+             for _ in range(q_per):
+                 first = "HL"[int(rng.integers(2))]
++                if NO_LSUB:  # the draw is kept so that the other draws do not change
++                    first = "H"
+                 seq = "".join(first if i % 2 == 0 else other(first) for i in range(n))
+                 qw = np.ones(n)
+                 qw[rng.choice(n, size=int(rng.integers(3, 10)), replace=False)] = rng.choice([2.0, 4.0], size=1)[0]

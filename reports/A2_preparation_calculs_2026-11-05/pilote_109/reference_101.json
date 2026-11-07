@@ -1,0 +1,95 @@
+{
+  "layers": 101,
+  "ot_nm": 14171.0984832,
+  "nominal_native_reference_max_abs_T": 1.1102230246251565e-14,
+  "pole_locations_agree": true,
+  "peak_tops_agree": true,
+  "counts": [
+    {
+      "a_nm": 445,
+      "b_nm": 455,
+      "imag_min_nm": -0.25,
+      "found": 0,
+      "counted": 0
+    },
+    {
+      "a_nm": 505,
+      "b_nm": 515,
+      "imag_min_nm": -0.25,
+      "found": 0,
+      "counted": 0
+    },
+    {
+      "a_nm": 635,
+      "b_nm": 645,
+      "imag_min_nm": -0.25,
+      "found": 0,
+      "counted": 0
+    },
+    {
+      "a_nm": 400,
+      "b_nm": 440,
+      "imag_min_nm": -0.25,
+      "found": 3,
+      "counted": 3
+    },
+    {
+      "a_nm": 460,
+      "b_nm": 500,
+      "imag_min_nm": -0.25,
+      "found": 0,
+      "counted": 0
+    },
+    {
+      "a_nm": 520,
+      "b_nm": 630,
+      "imag_min_nm": -0.25,
+      "found": 1,
+      "counted": 1
+    },
+    {
+      "a_nm": 650,
+      "b_nm": 700,
+      "imag_min_nm": -0.25,
+      "found": 0,
+      "counted": 0
+    }
+  ],
+  "charged_peaks": [
+    {
+      "pole_lambda_nm": 402.5252839662598,
+      "pole_fwhm_nm": 0.010930534869654394,
+      "peak_lambda_nm": 402.5252831620227,
+      "peak_height": 0.6137450470765442,
+      "reference_peak_lambda_nm": 402.5252831620227,
+      "reference_peak_height": 0.6137450470765476,
+      "e2max_at_this_peak": 1198.4999503647057,
+      "sigma_real": 0.0024843159916479217,
+      "sigma_imag": 3.373067935804972e-08
+    },
+    {
+      "pole_lambda_nm": 410.6527854187737,
+      "pole_fwhm_nm": 0.05608569978887417,
+      "peak_lambda_nm": 410.652694458277,
+      "peak_height": 0.006367765419823888,
+      "reference_peak_lambda_nm": 410.65269445827704,
+      "reference_peak_height": 0.006367765419824597,
+      "e2max_at_this_peak": 2.435536608411865,
+      "sigma_real": 0.002435147247279047,
+      "sigma_imag": 1.6629247663974582e-07
+    },
+    {
+      "pole_lambda_nm": 422.40401654472015,
+      "pole_fwhm_nm": 0.011473523153803731,
+      "peak_lambda_nm": 422.40401704745295,
+      "peak_height": 0.06379497624997346,
+      "reference_peak_lambda_nm": 422.40401704745295,
+      "reference_peak_height": 0.06379497624997413,
+      "e2max_at_this_peak": 92.90796567388229,
+      "sigma_real": 0.0023674017311199726,
+      "sigma_imag": 3.2152202053557345e-08
+    }
+  ],
+  "field_scope": "Only the charged real maxima, not a global maximum over wavelength.",
+  "validated": true
+}

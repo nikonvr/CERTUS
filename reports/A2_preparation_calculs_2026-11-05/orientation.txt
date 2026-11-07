@@ -1,0 +1,15 @@
+orient  : 2026-11-05 17:27 | a lire dans l'ordre : CLAUDE.md, AGENTS.md, section 0 de docs/ETAT.md
+git     : master @ 9c753203 orient: call PowerShell by absolute path, Git Bash has none on PATH and the failure read as 'no other python'
+amont   : aucun
+hook    : core.hooksPath absent : committer ne publie pas ; pousser publie, sur ordre de 👤 seulement
+arbre   : 3 modifies, 671 non suivis : reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/cissoid_islands.py, reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/cissoid_opt.py, reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/search.py, "OIC 2016 Contest Description.pdf", "OIC 2016 Manufacturing Contest.xls", OIC_2016_Design_Problems.pdf (+668 autres)
+worktrees : 13 (un balayage depuis la racine lit leurs copies : balayer `git ls-files`)
+python  : aucun autre processus python en cours
+validation : : 2026-10-31, avant `7e386166`, sous 3.15.2, en parallèle (`validate_parallel.py`, 15 workers ; `pytest-xdist` hors de `requirements.lock`, à installer à part) : `VALIDATION=GO`, oracle 1 165, unit 5 751 + 3 artefacts, ui 1 349, rest 320 + 1 artefact (`test_index_headless`), performance 29 ; `c1_diff HEAD` C1 TENU (9 092 tabl...
+a lire  : CLAUDE.md ~2.1k, AGENTS.md ~0.4k, docs/ETAT.md section 0 ~1.5k
+demande : docs/ETAT_actions.md ~1.9k (actions A3 a A9 et protocole de mesure du Rate)
+demande : docs/ETAT_acquis.md ~1.0k (acquis du Rate, corrections qui invalident des mesures, vocabulaire)
+demande : docs/REGLES_reference.md ~2.3k (pieges d'execution, architecture du gel, vocabulaire, documentation, revue d'un autre agent)
+          docs/ETAT.md sections 1 a 7 ~6.3k : par section avec Read offset/limit, titres et lignes par --carte
+jamais en entier : reports/ (10205 fichiers suivis), studies/ ; chercher par identifiant (grep -n "ID" fichier)
+commandes : python scripts\preflight.py ; python -m pytest tests/unit -q --no-cov -x ; python scripts\validate_parallel.py

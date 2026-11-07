@@ -1,0 +1,21 @@
+VALIDATION PARALLELE -- 9c753203, 5 fichier(s) suivi(s) modifie(s)
+  python 3.15.2, 15 worker(s), ui 6, journaux : reports\DESIGN_resonances_integration_2026-11-05\validation_finale
+  ruff            PASS      0:00  
+  coherence_md    PASS      0:14  
+  check_claude_md PASS      0:00  
+  check_docs      PASS      0:00  
+  oracle          PASS      1:03  1179 passed
+  unit : 2 echec(s) en parallele, rejeu seul en serie...
+  unit            FAIL      9:41  2 failed, 5770 passed, 7 skipped, 1 xfailed
+  ui              PASS      6:41  1355 passed, 12 skipped, 2 xfailed
+  rest : 1 echec(s) en parallele, rejeu seul en serie...
+  rest            ARTEFACT  4:50  1 failed, 320 passed
+  performance     PASS      0:19  29 passed, 2 skipped
+
+ECHEC REEL (unit), rouge aussi seul en serie :
+    tests/unit/test_ci_lambda_connect_audit.py::test_no_new_signal_is_connected_to_a_lambda
+    tests/unit/test_ci_lambda_connect_audit.py::test_the_ci_ceiling_is_the_real_count
+ARTEFACT de charge ou d'ordre (rest), verts seuls en serie :
+    tests/property/test_physics_properties.py::test_bare_substrate_transmission_bounds
+VALIDATION=NO-GO
+La reference de CLAUDE.md section 2 reste la suite complete en serie.

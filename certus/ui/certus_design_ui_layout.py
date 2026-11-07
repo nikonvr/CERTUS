@@ -852,6 +852,10 @@ class LayoutManager:
         self.ui.plot_tabs.addTab(compare_tab, "Compare")
         self.ui.plot_tabs.currentChanged.connect(functools.partial(refresh_on_tab_shown, self.ui, compare_tab))
 
+        from certus.ui.certus_design_resonances_dialog import build_resonance_tab
+
+        self.ui.plot_tabs.addTab(build_resonance_tab(self.ui), "Resonances")
+
         # "Why CERTUS?" marketing content moved out of scientific plot tabs (Option A)
 
         v_lay.addWidget(plot_container)

@@ -340,7 +340,7 @@ def build_resonance_tab(ui: Any) -> QWidget:
     tab = QWidget()
     layout = QVBoxLayout(tab)
     label = QLabel("Find resonances hidden between grid wavelengths and refine their real maxima.\n"
-                   "Initial scope: normal incidence, constant lossless indices, transmission targets, no rear surface.")
+                   "Scope: normal incidence, constant lossless indices, transmission targets (constant or linear ramp), no rear surface.")
     label.setWordWrap(True)
     layout.addWidget(label)
     button = QPushButton("Open resonance analysis and refinement")

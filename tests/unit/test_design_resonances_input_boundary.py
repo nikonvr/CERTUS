@@ -52,3 +52,12 @@ def test_the_file_optical_floor_is_combined_with_the_explicit_physical_floor():
     bounds = resonance_lower_bounds(request.problem, 0.5, 2.35)
     np.testing.assert_allclose(bounds, [1., 2.35 / 1.45])
 
+
+def test_a_design_target_ramp_is_kept_as_the_same_linear_target_between_the_points():
+    mats, layers, _targets, d = example()
+    request = prepare_design_resonances(mats, layers, [Target(400, 440, 0.2, 0.6)], d)
+    wl, target = request.problem.grid()
+    np.testing.assert_allclose(target, 0.2 + 0.4 * (wl - 400) / 40)
+    band = request.problem.bands[0]
+    assert float(band.target_at(np.array([410.5]))[0]) == pytest.approx(0.2 + 0.4 * 10.5 / 40)
+    assert band.target_slope(420.) == pytest.approx(0.01)

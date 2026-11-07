@@ -23,6 +23,20 @@ class DesignResonanceInput:
     materials: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class LinearTarget:
+    """DESIGN's target ramp: tmin at lmin to tmax at lmax (as in certus_design_worker_utils), between the points too."""
+
+    lmin: float
+    lmax: float
+    tmin: float
+    tmax: float
+
+    def __call__(self, wavelengths: np.ndarray) -> np.ndarray:
+        wl = np.asarray(wavelengths, dtype=np.float64)
+        return self.tmin + (self.tmax - self.tmin) * (wl - self.lmin) / (self.lmax - self.lmin)
+
+
 def resonance_lower_bounds(problem: TransmissionProblem, physical_nm: float,
                             optical_nm: float | None = None) -> np.ndarray:
     """Combine the explicit physical floor with any active file optical-thickness floor."""
@@ -51,8 +65,6 @@ def prepare_design_resonances(materials: dict[str, Material], layers: list[Layer
     active = [t for t in targets if t.valid()]
     if not active:
         raise ValueError("At least one active transmission target is required.")
-    if any(t.tmin != t.tmax for t in active):
-        raise ValueError("The initial resonance tool supports constant transmission targets in each band.")
     if any(t.w != active[0].w for t in active):
         raise ValueError("The reference resonance tool requires equal target weights.")
     names = tuple(layer.mat for layer in layers)
@@ -63,7 +75,9 @@ def prepare_design_resonances(materials: dict[str, Material], layers: list[Layer
         material = materials.get(name)
         if not isinstance(material, Material) or material.n4 != material.n7:
             raise ValueError(f"{name}: constant indices are required; set its 400-nm and 700-nm indices equal.")
-    bands = tuple(TransmissionBand(float(t.lmin), float(t.lmax), float(t.tmin), step_nm) for t in active)
+    bands = tuple(TransmissionBand(float(t.lmin), float(t.lmax),
+                                   float(t.tmin) if t.tmin == t.tmax else LinearTarget(t.lmin, t.lmax, t.tmin, t.tmax),
+                                   step_nm) for t in active)
     problem = TransmissionProblem(np.array([materials[name].n4 for name in names]),
                                   float(materials[substrate_key].n4), bands)
     d = np.array(thicknesses, dtype=float, copy=True)

@@ -69,12 +69,86 @@ def test_an_explicit_zero_round_run_is_an_audit_without_refinement():
     assert result.final.counts[0].counted == 1
 
 
-def test_absorbing_indices_are_rejected_before_any_complex_continuation():
+def test_a_gain_medium_is_rejected_before_any_complex_continuation():
     problem, _ = cavity()
     indices = problem.indices.astype(complex)
-    indices[0] -= 0.01j
-    with pytest.raises(ValueError, match="lossless"):
+    indices[0] += 0.01j  # n + ik with k > 0 is a gain medium in the n - ik convention
+    with pytest.raises(ValueError, match="gain"):
         TransmissionProblem(indices, 1.52, problem.bands)
+
+
+def _lossy_stack():
+    rng = np.random.default_rng(7)
+    indices = np.array([2.45, 0.12 - 3.45j, 1.45, 1.8 - 3.33j, 2.15, 1.38, 2.35 - 0.002j, 1.65] * 2)
+    return indices, rng.uniform(5., 160., len(indices))
+
+
+@pytest.mark.parametrize("quantity", ["T", "R"])
+def test_the_absorbing_kernel_matches_the_independent_reference(quantity):
+    from tmm_reference import rt_stack
+
+    from certus.physics.design_resonances import _res_jac
+
+    indices, d = _lossy_stack()
+    problem = TransmissionProblem(indices, 1.52, (TransmissionBand(400., 700., 0.5, 1.),), quantity=quantity)
+    wl = np.linspace(400., 700., 31)
+    res, _ = _res_jac(problem, d, wl, np.zeros(len(wl)), np.empty(0, dtype=np.int64))
+    expected = [rt_stack(w, indices, d, n_sub=1.52)[0 if quantity == "R" else 1] for w in wl]
+    np.testing.assert_allclose(res, expected, rtol=1e-11, atol=1e-12)
+
+
+@pytest.mark.parametrize("quantity", ["T", "R"])
+def test_the_absorbing_kernel_jacobian_matches_finite_differences(quantity):
+    from certus.physics.design_resonances import _res_jac
+
+    indices, d = _lossy_stack()
+    problem = TransmissionProblem(indices, 1.52, (TransmissionBand(400., 700., 0.5, 1.),), quantity=quantity)
+    wl = np.linspace(400., 700., 13)
+    variable = np.arange(len(d), dtype=np.int64)
+    _, jac = _res_jac(problem, d, wl, np.zeros(len(wl)), variable)
+    step = 1e-5
+    for i in variable:
+        up, down = d.copy(), d.copy()
+        up[i] += step
+        down[i] -= step
+        fd = (_res_jac(problem, up, wl, np.zeros(len(wl)), variable[:0])[0]
+              - _res_jac(problem, down, wl, np.zeros(len(wl)), variable[:0])[0]) / (2 * step)
+        np.testing.assert_allclose(jac[:, i], fd, rtol=1e-5, atol=1e-9)
+
+
+def test_the_general_kernel_reproduces_the_lossless_design_kernel():
+    from certus.physics import design_resonances as native
+
+    problem, d = cavity()
+    wl = np.linspace(496., 505., 37)
+    target = np.full(len(wl), 0.2)
+    variable = np.arange(len(d), dtype=np.int64)
+    fast = native._res_jac(problem, d, wl, target, variable)
+    general_problem = TransmissionProblem(problem.indices, 1.52, problem.bands, quantity="R")
+    r_minus = native._res_jac(general_problem, d, wl, 1. - target, variable)  # R - (1 - target) = (1 - T) - 1 + target
+    general = (-r_minus[0], -r_minus[1])
+    np.testing.assert_allclose(general[0], fast[0], rtol=1e-10, atol=1e-12)
+    np.testing.assert_allclose(general[1], fast[1], rtol=1e-8, atol=1e-10)
+
+
+def test_a_wavelength_dependent_target_is_evaluated_between_the_grid_points():
+    band = TransmissionBand(400., 500., lambda wl: 0.2 + 0.6 * (wl - 400.) / 100., 10.)
+    np.testing.assert_allclose(band.target_at(np.array([400., 455.])), [0.2, 0.53])
+    assert band.target_slope(450.) == pytest.approx(0.006)
+    with pytest.raises(ValueError, match="fractions"):
+        TransmissionBand(400., 500., lambda wl: wl / 100., 10.)
+
+
+def test_a_hidden_cavity_peak_is_still_located_with_a_weakly_absorbing_layer():
+    problem, d = cavity()
+    indices = problem.indices.astype(complex)
+    indices[15] -= 1e-5j  # weak absorption in the spacer: the pole moves off the axis, the peak remains
+    lossy = TransmissionProblem(indices, 1.52, problem.bands)
+    analysis = analyze_resonances(lossy, d)
+    assert analysis.counts[0].located == analysis.counts[0].counted == 1
+    assert len(analysis.charged_peaks) == 1
+    lossless_pole = analyze_resonances(problem, d).resonances[0].sigma
+    assert analysis.resonances[0].sigma.imag > lossless_pole.imag
 
 
 def test_an_initial_state_outside_the_ot_budget_is_rejected():

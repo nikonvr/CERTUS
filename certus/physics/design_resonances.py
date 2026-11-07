@@ -1,8 +1,11 @@
-"""Optional hidden-resonance analysis and refinement for lossless normal-incidence T targets.
+"""Optional hidden-resonance analysis and refinement at normal incidence.
 
 Complex wavelengths are diagnostic only. The canonical characteristic matrix and
 amplitude helper supply the denominator; real residuals and analytic thickness
-Jacobians come from the existing DESIGN kernel. Layers start at the substrate.
+Jacobians come from the existing DESIGN kernel for lossless layers and transmittance
+targets (unchanged path), and from the existing R/T kernel with analytic derivatives
+(`gradient_oblique`, at 0 degrees) for absorbing layers (constant n - ik) or reflectance targets. Targets may be constant per band or a function of the
+wavelength. Layers start at the substrate.
 """
 from __future__ import annotations
 
@@ -17,42 +20,69 @@ from scipy.optimize import brentq, least_squares, minimize_scalar
 from certus.physics.certus_opt_tmm import reflection_amplitudes
 from certus.physics.certus_tmm_oblique import oblique_front_char_matrix_single
 from certus.physics.design_fast_gauss_newton import _res_jac_lossless_normal_kernel
+from certus.physics.gradient_oblique import compute_oblique_rt_and_grads_analytic
 
 
 @dataclass(frozen=True)
 class TransmissionBand:
-    """One constant target interval with its uniform nominal sampling step, in nm."""
+    """One target interval with its uniform nominal sampling step, in nm.
+
+    The target is a constant fraction or a callable of the wavelength (nm, array) returning fractions; a callable
+    target is the exact target between the nominal points (e.g. the OIC 2016 cissoid).
+    """
 
     lower_nm: float
     upper_nm: float
-    target: float
+    target: float | Callable[[np.ndarray], np.ndarray]
     step_nm: float = 1.0
 
     def __post_init__(self) -> None:
-        values = np.array([self.lower_nm, self.upper_nm, self.target, self.step_nm])
+        values = np.array([self.lower_nm, self.upper_nm, self.step_nm])
         if not np.isfinite(values).all() or not 0 < self.lower_nm < self.upper_nm or self.step_nm <= 0:
             raise ValueError("Target bands require positive finite wavelength bounds and sampling steps.")
         intervals = (self.upper_nm - self.lower_nm) / self.step_nm
         if intervals < 4 or not np.isclose(intervals, round(intervals), rtol=0, atol=1e-7):
             raise ValueError("Each target band needs at least five uniformly spaced nominal wavelengths.")
-        if not 0 <= self.target <= 1:
+        probe = self.target_at(np.linspace(self.lower_nm, self.upper_nm, round(intervals) + 1))
+        if not np.isfinite(probe).all() or np.any(probe < 0) or np.any(probe > 1):
             raise ValueError("Transmission targets must be fractions between zero and one.")
+
+    def target_at(self, wavelengths: np.ndarray) -> np.ndarray:
+        """Target fractions at real wavelengths (nm)."""
+        wl = np.asarray(wavelengths, dtype=np.float64)
+        if callable(self.target):
+            return np.asarray(self.target(wl), dtype=np.float64).reshape(wl.shape)
+        return np.full(wl.shape, float(self.target))
+
+    def target_slope(self, wavelength: float) -> float:
+        """d(target)/d(lambda) at one wavelength; zero for a constant target."""
+        if not callable(self.target):
+            return 0.
+        h = 1e-6 * wavelength
+        values = self.target_at(np.array([wavelength - h, wavelength + h]))
+        return float((values[1] - values[0]) / (2 * h))
 
 
 @dataclass(frozen=True)
 class TransmissionProblem:
-    """Air / constant lossless indices / real substrate, without a rear surface."""
+    """Air / constant layer indices n - ik (lossless or absorbing) / real substrate, without a rear surface.
+
+    `quantity` is "T" (transmittance targets, the original scope) or "R" (reflectance targets).
+    """
 
     indices: np.ndarray
     substrate_index: float
     bands: tuple[TransmissionBand, ...]
+    quantity: str = "T"
 
     def __post_init__(self) -> None:
         indices = np.array(self.indices, dtype=np.complex128, copy=True)
         if indices.ndim != 1 or not len(indices) or not np.isfinite(indices).all() or np.any(indices.real <= 0):
             raise ValueError("Layer indices must be a nonempty finite positive one-dimensional array.")
-        if np.any(indices.imag != 0):
-            raise ValueError("The resonance treatment currently requires constant lossless layer indices.")
+        if np.any(indices.imag > 0):
+            raise ValueError("Layer indices follow n - ik: a positive imaginary part would be a gain medium.")
+        if self.quantity not in ("T", "R"):
+            raise ValueError("The target quantity must be 'T' or 'R'.")
         if not np.isfinite(self.substrate_index) or self.substrate_index <= 0:
             raise ValueError("The substrate index must be positive, real and finite.")
         if not self.bands:
@@ -70,8 +100,12 @@ class TransmissionProblem:
         """The nominal wavelengths and targets, retaining the caller's band order."""
         wl = [np.linspace(b.lower_nm, b.upper_nm, round((b.upper_nm - b.lower_nm) / b.step_nm) + 1)
               for b in self.bands]
-        return np.concatenate(wl), np.concatenate([np.full(len(w), b.target)
-                                                  for w, b in zip(wl, self.bands, strict=True)])
+        return np.concatenate(wl), np.concatenate([b.target_at(w) for w, b in zip(wl, self.bands, strict=True)])
+
+    @property
+    def lossless_transmittance(self) -> bool:
+        """True for the original scope, served by the unchanged lossless DESIGN kernel."""
+        return self.quantity == "T" and not np.any(self.indices.imag != 0)
 
 
 @dataclass(frozen=True)
@@ -176,6 +210,16 @@ def transmission_denominator(problem: TransmissionProblem, d: np.ndarray, wavele
 
 def _res_jac(problem: TransmissionProblem, d: np.ndarray, wl: np.ndarray, target: np.ndarray,
              variable: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    if not problem.lossless_transmittance:
+        # Absorbing layers or reflectance targets: the existing CERTUS R/T kernel with analytic thickness
+        # derivatives, at normal incidence (no new transfer-matrix code, CLAUDE.md interdit 7).
+        wl = np.ascontiguousarray(wl, dtype=np.float64)
+        n = np.ascontiguousarray(np.tile(problem.indices, (len(wl), 1)))
+        r, t, dr, dt = compute_oblique_rt_and_grads_analytic(
+            np.asarray(d, dtype=np.float64), n, np.full(len(wl), problem.substrate_index, dtype=np.complex128),
+            wl, np.asarray(variable, dtype=np.int64), 0.0, True)
+        q, dq = (r, dr) if problem.quantity == "R" else (t, dt)
+        return np.asarray(q, dtype=np.float64) - np.asarray(target, dtype=np.float64), np.asarray(dq, dtype=np.float64)
     n = np.ascontiguousarray(np.tile(problem.indices.real, (len(wl), 1)))
     r, jac, _cost = _res_jac_lossless_normal_kernel(
         d, n, 1. / n, np.full(len(wl), problem.substrate_index), 2 * np.pi / wl, False,
@@ -231,13 +275,15 @@ def _peak_top(problem: TransmissionProblem, d: np.ndarray, pole: Resonance,
     variable = np.arange(len(d), dtype=np.int64)
 
     def error(wl: np.ndarray) -> np.ndarray:
-        return np.abs(_res_jac(problem, d, wl, np.full(len(wl), band.target), variable)[0])
+        return np.abs(_res_jac(problem, d, wl, band.target_at(wl), variable)[0])
 
     def slope(wl: np.ndarray) -> np.ndarray:
-        # With constant indices, T depends on d/lambda: lambda*T_lambda +
-        # sum(d_i*T_di) = 0. All layers contribute, including fixed ones.
-        residual, jac = _res_jac(problem, d, wl, np.full(len(wl), band.target), variable)
-        return np.sign(residual) * (-(jac @ d) / wl)
+        # With constant indices (lossless or absorbing), T and R depend on d/lambda:
+        # lambda*Q_lambda + sum(d_i*Q_di) = 0. All layers contribute, including fixed
+        # ones. A wavelength-dependent target adds -target'(lambda).
+        residual, jac = _res_jac(problem, d, wl, band.target_at(wl), variable)
+        target_slope = np.array([band.target_slope(float(x)) for x in wl])
+        return np.sign(residual) * (-(jac @ d) / wl - target_slope)
 
     lam, h = center, width / 50
     stationary = False
@@ -407,7 +453,8 @@ def refine_resonances(problem: TransmissionProblem, thicknesses: np.ndarray, *,
                             # window must not reject a moving maximum. Its anchor's
                             # constant target is retained until the next detection.
                             points.append(_peak_top(problem, full, moved, restrict_band=False)[0])
-                            targets.append(problem.bands[anchor.band_index].target)
+                            targets.append(float(problem.bands[anchor.band_index].target_at(
+                                np.array([points[-1]]))[0]))
                         rp, jp = _res_jac(problem, full, np.asarray(points), np.asarray(targets), variable)
                         r, j = np.concatenate((r, rp)), np.vstack((j, jp))
                     memo[key] = norm * r, norm * j

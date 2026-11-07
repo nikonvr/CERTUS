@@ -1,0 +1,12 @@
+fig4_2020_classical_nolsub.csv: classical N103, OT 13968.4 nm, max OT shift 5.87 nm, layer 1 (substrate side) H 86.03 nm, layer 2 L 141.55 nm
+MF on 1 nm steps (277 wavelengths): 0.0133 %  [0 s]
+MF on 0.001 nm steps (270007 wavelengths): 0.0387 %  [2 s]
+MF on 0.0002 nm steps (1350007 wavelengths): 0.0354 %  [10 s]
+MF on 0.0001 nm steps (2700007 wavelengths): 0.0354 %  [20 s]
+poles found from the 277 points (0 s): 3
+  543.0261 nm  FWHM 0.00098 nm  |T - target| 15.54 %  Im(lambda_p) -0.000488 nm
+  425.2494 nm  FWHM 0.02001 nm  |T - target| 2.35 %  Im(lambda_p) -0.010006 nm
+  412.7801 nm  FWHM 0.01740 nm  |T - target| 1.29 %  Im(lambda_p) -0.008699 nm
+direct scan of the highest: peak 543.0261 nm, T 15.54 %, FWHM 0.00098 nm
+max |E|^2 at 543.0261 nm: 7576
+max |E|^2 at 543.0000 nm: 3

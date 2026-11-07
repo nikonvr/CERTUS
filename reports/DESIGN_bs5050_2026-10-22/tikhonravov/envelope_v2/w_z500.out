@@ -1,0 +1,12 @@
+z500_A start: MF 0.03553 (weight '495-505:30'), oracle 0.01857
+z500_A round 1: MF 0.03694, oracle 0.02156, N 49, M 6
+z500_A round 2: MF 0.04374, oracle 0.03453, N 50, M 6
+z500_A round 3: MF 0.03776, oracle 0.03419, N 49, M 6
+z500_A round 4: MF 0.36214, oracle 0.55474, N 50, M 5
+z500_A end: MF 0.03694, oracle 0.02156, N 49, 181 s
+z500_B start: MF 0.01744 (weight ''), oracle 0.01724
+z500_B round 1: MF 0.01708, oracle 0.01686, N 50, M 6
+z500_B round 2: MF 0.01708, oracle 0.01686, N 50, M 6
+z500_B round 3: MF 0.01708, oracle 0.01686, N 50, M 6
+z500_B round 4: MF 0.01708, oracle 0.01686, N 50, M 6
+z500_B end: MF 0.01708, oracle 0.01686, N 50, 194 s

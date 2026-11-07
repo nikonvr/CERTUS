@@ -1,0 +1,38 @@
+table1/101_polished_0.005nm.csv: 101 layers, MF 0.0445 %, 0.0347 % on 0.001 nm; Table 1: 0.0445, 0.0347
+table1/101_polished_0.001nm.csv: 101 layers, MF 0.0445 %, 0.0272 % on 0.001 nm; Table 1: 0.0445, 0.0272
+table1/101_absorption_k1e-3.csv: 101 layers, MF 0.0412 %, 0.3510 % on 0.001 nm; Table 1: 0.0412, 0.351
+table1/101_absorption_k5e-3.csv: 101 layers, MF 2.9087 %, 1.9728 % on 0.001 nm; Table 1: 2.91, 1.97
+table1/101_exchange_round12.csv: 101 layers, MF 0.0461 %, 0.0960 % on 0.001 nm; Table 1: 0.0461, 0.096
+table1/101_window.csv: 101 layers, MF 0.0209 %, 0.0296 % on 0.001 nm; Table 1: 0.0209, 0.0296
+table1/101_charged.csv: 101 layers, MF 0.0239 %, 0.0215 % on 0.001 nm; Table 1: 0.0239, 0.0215
+table1/classical_103_recreated.csv: 103 layers, MF 0.0133 %, 0.0354 % on 0.0002 nm; Table 1: 0.0133, 0.0354
+table1/classical_103_charged.csv: 103 layers, MF 0.0294 %, 0.0286 % on 0.0002 nm; Table 1: 0.0294, 0.0286
+reoptimizations start 1, grid: MF 0.0218 %, 0.3705 % on 0.001 nm; source 0.0217778, 0.370495
+reoptimizations start 1, poles charged: MF 0.0324 %, 0.0292 % on 0.001 nm; source 0.0323719, 0.0292167
+reoptimizations start 2, grid: MF 0.0146 %, 0.4275 % on 0.001 nm; source 0.0146188, 0.427454
+reoptimizations start 2, poles charged: MF 0.0360 %, 0.0307 % on 0.001 nm; source 0.0360327, 0.0307209
+reoptimizations start 3, grid: MF 0.0139 %, 0.4126 % on 0.001 nm; source 0.0138823, 0.412558
+reoptimizations start 3, poles charged: MF 0.0490 %, 0.0396 % on 0.001 nm; source 0.0489995, 0.0396039
+reoptimizations start 4, grid: MF 0.0132 %, 0.3846 % on 0.001 nm; source 0.0132196, 0.384578
+reoptimizations start 4, poles charged: MF 0.0294 %, 0.0251 % on 0.001 nm; source 0.0293892, 0.0251379
+reoptimizations start 5, grid: MF 0.0147 %, 0.3869 % on 0.001 nm; source 0.0147235, 0.386851
+reoptimizations start 5, poles charged: MF 0.0222 %, 0.0185 % on 0.001 nm; source 0.0221598, 0.0184689
+reoptimizations start 6, grid: MF 0.0136 %, 0.3506 % on 0.001 nm; source 0.0136063, 0.350553
+reoptimizations start 6, poles charged: MF 0.0388 %, 0.0328 % on 0.001 nm; source 0.0387793, 0.0327505
+half_circle.csv: 151 designs, nominal MF of Code 1 within 4.9e-06 % of the source
+spectral_m.csv: 155 designs, nominal MF of Code 1 within 4.8e-06 % of the source
+long_wave_pass.csv: 140 designs, nominal MF of Code 1 within 4.9e-06 % of the source
+half_circle_nH2.1.csv: 318 designs, nominal MF of Code 1 within 5.0e-05 % of the source
+figure2 half_circle, optimized on the grid: MF 0.2709 %, 0.4093 % on 0.001 nm; source 0.270929, 0.409293
+figure2 half_circle, poles charged: MF 0.2529 %, 0.2065 % on 0.001 nm; source 0.252939, 0.206553
+figure2 spectral_m, optimized on the grid: MF 0.1190 %, 0.1566 % on 0.001 nm; source 0.118976, 0.156624
+figure2 spectral_m, poles charged: MF 0.1190 %, 0.1063 % on 0.001 nm; source 0.118965, 0.106257
+figure2 long_wave_pass, optimized on the grid: MF 0.0012 %, 0.0283 % on 0.001 nm; source 0.00121248, 0.0283073
+figure2 long_wave_pass, poles charged: MF 0.0054 %, 0.0058 % on 0.001 nm; source 0.00544511, 0.00580144
+spectral_m_search_on_the_grid.csv: 164 designs, nominal MF of Code 1 within 4.9e-06 % of the source
+spectral_m_search_with_poles.csv: 122 designs, nominal MF of Code 1 within 4.4e-06 % of the source
+spectral_m_search_on_the_grid_cured.csv: 75 designs, nominal MF of Code 1 within 5.4e-06 %; the best, 96 layers, resolved 0.0795 % (source 0.0794698)
+long_wave_pass_search_on_the_grid.csv: 173 designs, nominal MF of Code 1 within 4.5e-06 % of the source
+long_wave_pass_search_with_poles.csv: 97 designs, nominal MF of Code 1 within 4.5e-06 % of the source
+long_wave_pass_search_on_the_grid_cured.csv: 76 designs, nominal MF of Code 1 within 5.3e-06 %; the best, 98 layers, resolved 0.0035 % (source 0.00351331)
+checks failed: 0 []

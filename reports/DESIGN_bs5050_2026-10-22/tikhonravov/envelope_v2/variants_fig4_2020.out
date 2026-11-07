@@ -1,0 +1,19 @@
+classical N104 as read: MF 1 nm 0.2322 %, 0.001 nm 0.2317 %, 0.0002 nm 0.2321 %
+    peak  543.3094 nm   16.47 %  FWHM 0.0012 nm
+    peak  425.2004 nm    2.43 %  FWHM 0.0204 nm
+    peak  644.3546 nm    1.57 %  FWHM -243.4766 nm
+    peak  450.9742 nm    1.44 %  FWHM 2.4154 nm
+    peak  412.8744 nm    1.37 %  FWHM 0.0174 nm
+classical N104 refined: MF 1 nm 0.0129 %, 0.001 nm 0.0320 %, 0.0002 nm 0.0369 %
+    peak  543.0256 nm   16.90 %  FWHM 0.0010 nm
+    peak  425.2172 nm    2.51 %  FWHM 0.0200 nm
+    peak  412.8474 nm    1.32 %  FWHM 0.0172 nm
+deep N101 as read: MF 1 nm 0.4919 %, 0.001 nm 0.5201 %, 0.0002 nm 0.5201 %
+    peak  402.3210 nm   62.28 %  FWHM 0.0106 nm
+    peak  421.9694 nm    6.53 %  FWHM 0.0116 nm
+    peak  645.0000 nm    4.10 %  FWHM -244.9012 nm
+    peak  643.6910 nm    2.79 %  FWHM 1.5102 nm
+    peak  508.7162 nm    2.67 %  FWHM 3.6700 nm
+deep N101 refined: MF 1 nm 0.0128 %, 0.001 nm 0.3483 %, 0.0002 nm 0.3483 %
+    peak  402.5252 nm   61.36 %  FWHM 0.0110 nm
+    peak  422.4040 nm    6.38 %  FWHM 0.0116 nm

@@ -1,0 +1,7 @@
+start: 301-point MF 0.01375; needles ['F', 'L', 'B', 'M', 'T', 'H', 'A', 'N']
+best needles: N@42:-4.81e-03 N@44:-3.66e-03 N@45:-3.08e-03 N@41:-2.74e-03 N@46:-1.97e-03 A@35:-1.44e-03 A@43:-1.22e-03 A@37:-1.03e-03 N@28:-1.00e-03 A@36:-9.02e-04
+trial 0: 2 needles -> N 54, back to 49, 3 swaps, 301-point 0.02220 (48 s)
+trial 1: 4 needles -> N 57, back to 50, 3 swaps, 301-point 0.06821 (101 s)
+trial 2: 3 needles -> N 56, back to 50, 3 swaps, 301-point 0.01959 (152 s)
+trial 3: 2 needles -> N 54, back to 50, 1 swaps, 301-point 0.01378 (177 s)
+trial 4: 3 needles -> N 56, back to 48, 3 swaps, 301-point 0.02665 (229 s)

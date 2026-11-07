@@ -1,0 +1,5 @@
+start: 301-point MF 0.01448; needles ['F', 'L', 'B', 'M', 'T', 'H', 'A', 'N']
+best needles: N@42:-4.40e-03 N@44:-4.31e-03 N@45:-4.23e-03 N@46:-3.29e-03 N@41:-2.69e-03 N@40:-1.53e-03 A@35:-1.13e-03 N@28:-1.10e-03 N@43:-1.08e-03 A@37:-9.75e-04
+trial 0: 2 needles -> N 54, back to 50, 3 swaps, 301-point 0.01419  NEW BEST, oracle 0.01419 (41 s)
+trial 1: 8 needles -> N 66, back to 50, 3 swaps, 301-point 0.05482 (106 s)
+trial 2: 2 needles -> N 54, back to 50, 3 swaps, 301-point 0.07408 (149 s)

@@ -1,0 +1,19 @@
+start: N 50 M 0 MF 0.02705 oracle 0.02705
+grow -> N 52 MF 0.02278
+grow -> N 54 MF 0.02008
+grow -> N 56 MF 0.01890
+grow -> N 58 MF 0.01803
+grow -> N 58 MF 0.01792
+grown: N 58 M 0 MF 0.01792 oracle 0.01792
+clean -> N 56 MF 0.01794 thinnest 0.81
+clean -> N 54 MF 0.01811 thinnest 2.37
+clean -> N 52 MF 0.01914 thinnest 4.04
+clean -> N 50 MF 0.02077 thinnest 3.98
+remove: N 50 M 0 MF 0.02075 oracle 0.02075
+fuse -> N 57 M 1 MF 0.01790 thinnest 0.59 (111 candidates, 14 s)
+fuse -> N 56 M 2 MF 0.01789 thinnest 0.94 (107 candidates, 13 s)
+fuse -> N 54 M 2 MF 0.01792 thinnest 0.70 (103 candidates, 12 s)
+fuse -> N 52 M 2 MF 0.01817 thinnest 3.38 (101 candidates, 11 s)
+fuse -> N 51 M 3 MF 0.02023 thinnest 3.54 (96 candidates, 10 s)
+fuse -> N 49 M 3 MF 0.02224 thinnest 3.60 (92 candidates, 10 s)
+fuse: N 49 M 3 MF 0.02224 oracle 0.02224

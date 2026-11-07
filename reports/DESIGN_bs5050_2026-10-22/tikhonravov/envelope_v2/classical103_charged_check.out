@@ -1,0 +1,12 @@
+threeline_track_height_classical103.csv: classical N103, OT 13998.1 nm, max OT shift nan nm, layer 1 (substrate side) H 109.24 nm, layer 2 L 121.47 nm
+MF on 1 nm steps (277 wavelengths): 0.0350 %  [0 s]
+MF on 0.001 nm steps (270007 wavelengths): 0.0350 %  [2 s]
+MF on 0.0002 nm steps (1350007 wavelengths): 0.0350 %  [11 s]
+MF on 0.0001 nm steps (2700007 wavelengths): 0.0350 %  [21 s]
+poles found from the 277 points (0 s): 3
+  425.9627 nm  FWHM 0.02425 nm  |T - target| 0.52 %  Im(lambda_p) -0.012123 nm
+  543.1201 nm  FWHM 0.05098 nm  |T - target| 0.33 %  Im(lambda_p) -0.025489 nm
+  411.0453 nm  FWHM 0.03024 nm  |T - target| 0.31 %  Im(lambda_p) -0.015119 nm
+direct scan of the highest: peak 425.9627 nm, T 0.52 %, FWHM 0.02423 nm
+max |E|^2 at 425.9627 nm: 3869
+max |E|^2 at 426.0000 nm: 370

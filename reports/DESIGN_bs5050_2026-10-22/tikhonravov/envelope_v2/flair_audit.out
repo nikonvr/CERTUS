@@ -1,0 +1,9 @@
+08:37:31 start 0.012209 (oracle 0.012209), N 50, 2.0 h, 15 workers, start stages ['MT', 'BEAM']
+08:37:44 MT on the best: 0.01223 [17A->U]
+08:40:33   N2: 16650 -> 4162 -> 832 full; best sp10 0.01230 sp30 0.01225 full 0.01223 [27T 43H] vs 0.01221 (168 s)
+08:43:56   BEAM3: 24729 -> 6182 -> 1236 full; best sp10 0.01233 sp30 0.01231 full 0.01224 [42F 47T 49F] vs 0.01221 (203 s)
+08:47:19   BEAM4: 24717 -> 6179 -> 1235 full; best sp10 0.01229 sp30 0.01229 full 0.01228 [10L 35F 36L 42F] vs 0.01221 (203 s)
+08:50:39   BEAM5: 24235 -> 6058 -> 1211 full; best sp10 0.01235 sp30 0.01232 full 0.01227 [21H 22M 27T 35F 42F] vs 0.01221 (200 s)
+08:50:39 BEAM on the best: 0.01224 [42F 47T 49F]
+08:50:39 hub layers of the best: 27H:13 10F:13 14T:10 43T:8 42L:8 22B:7 24F:6 28L:5
+08:50:39 end after 0 iterations: best 0.012209 oracle (0.2 h)

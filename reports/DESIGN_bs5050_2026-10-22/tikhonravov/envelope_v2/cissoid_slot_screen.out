@@ -1,0 +1,143 @@
+== cissoid_record_best.csv: 0.010106
+base 0.010106; cheapest freeings: delete 2M +17.90 %, delete 47T +27.39 %, merge 46L+47T +40.19 %, merge 19B+20H +50.80 %, merge 5H+6F +70.68 %, merge 44B+45M +87.34 %, delete 18A +138.50 %, merge 11L+12T +164.57 %
+needles kept: F@10 z=33, L@10 z=33, H@8 z=245, T@4 z=293, H@4 z=293, A@10 z=31, A@4 z=201, A@7 z=841, T@14 z=477, M@14 z=477, A@1 z=375, H@16 z=51
+924 trades (113 s); best:
+  needle F@10 z=33 + delete 2M + merge 46L+47T: N 50, MF 0.013633 (+34.89 %)
+  needle L@10 z=33 + delete 2M + merge 46L+47T: N 50, MF 0.013633 (+34.89 %)
+  needle A@4 z=201 + delete 2M + merge 46L+47T: N 50, MF 0.013690 (+35.46 %)
+  needle A@4 z=201 + delete 2M + merge 5H+6F: N 50, MF 0.013768 (+36.23 %)
+  needle H@16 z=51 + delete 2M + merge 46L+47T: N 50, MF 0.014543 (+43.90 %)
+  needle A@4 z=201 + delete 47T + merge 5H+6F: N 50, MF 0.014765 (+46.10 %)
+11:24:43   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01194 sp30 0.01112 full 0.01105 [49B 1T 35H 41L 17F] vs 0.01363 (46 s)
+11:24:43   descent: 0.01105 [49B 1T 35H 41L 17F]
+11:25:49   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01091 sp30 0.01068 full 0.01067 [17L 30M 22L 26L] vs 0.01105 (45 s)
+11:25:49   descent: 0.01067 [17L 30M 22L 26L]
+  quick: needle F@10 z=33 + delete 2M + merge 46L+47T -> 0.010668 ['49B 1T 35H 41L 17F', '17L 30M 22L 26L'] (247 s)
+11:26:54   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01166 sp30 0.01142 full 0.01128 [49B 41L 5L 3L 43L] vs 0.01369 (44 s)
+11:26:54   descent: 0.01128 [49B 41L 5L 3L 43L]
+11:28:04   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01074 sp30 0.01060 full 0.01060 [1T 22L 3F 5F] vs 0.01128 (47 s)
+11:28:04   descent: 0.01060 [1T 22L 3F 5F]
+  quick: needle A@4 z=201 + delete 2M + merge 46L+47T -> 0.010600 ['49B 41L 5L 3L 43L', '1T 22L 3F 5F'] (382 s)
+11:29:22   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01242 sp30 0.01135 full 0.01122 [49B 1T 10F 41L 35H] vs 0.01454 (53 s)
+11:29:22   descent: 0.01122 [49B 1T 10F 41L 35H]
+11:30:31   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01096 sp30 0.01089 full 0.01086 [14H 7M 28B 15F 30M] vs 0.01122 (45 s)
+11:30:31   descent: 0.01086 [14H 7M 28B 15F 30M]
+  quick: needle H@16 z=51 + delete 2M + merge 46L+47T -> 0.010861 ['49B 1T 10F 41L 35H', '14H 7M 28B 15F 30M'] (529 s)
+11:31:48   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01310 sp30 0.01297 full 0.01289 [3B 12F 35H] vs 0.01479 (53 s)
+11:31:48   descent: 0.01289 [3B 12F 35H]
+11:33:00   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01092 sp30 0.01048 full 0.01048 [49B 41L] vs 0.01289 (48 s)
+11:33:00   descent: 0.01048 [49B 41L]
+  quick: needle A@1 z=375 + delete 2M + merge 46L+47T -> 0.010477 ['3B 12F 35H', '49B 41L'] (678 s)
+11:34:28   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01447 sp30 0.01433 full 0.01426 [1T 25L 11F 21L 16F] vs 0.01518 (61 s)
+11:34:28   descent: 0.01426 [1T 25L 11F 21L 16F]
+11:35:51   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01447 sp30 0.01413 full 0.01407 [40L 27B 8M 19L] vs 0.01426 (58 s)
+11:35:51   descent: 0.01389 [6A->F]
+  quick: needle A@7 z=841 + delete 2M + merge 5H+6F -> 0.013885 ['1T 25L 11F 21L 16F', '6A->F'] (849 s)
+== cissoid_record_0p01040.csv: 0.010396
+base 0.010396; cheapest freeings: merge 18F+19B +3.18 %, merge 19B+20H +6.34 %, delete 4H +63.66 %, delete 16A +67.08 %, merge 4H+5F +79.27 %, merge 44B+45M +102.15 %, delete 9H +140.48 %, merge 46L+47H +141.67 %
+needles kept: A@2 z=0, H@13 z=317, A@1 z=2363, F@45 z=111, L@45 z=111, T@45 z=39, A@31 z=47, H@45 z=39, H@10 z=149, A@3 z=209, A@9 z=25, A@6 z=177
+655 trades (922 s); best:
+  needle A@2 z=0 + merge 18F+19B: N 50, MF 0.010494 (+0.94 %)
+  needle H@45 z=39 + merge 18F+19B + merge 44B+45M: N 50, MF 0.010618 (+2.14 %)
+  needle F@45 z=111 + merge 18F+19B + merge 44B+45M: N 50, MF 0.010698 (+2.91 %)
+  needle L@45 z=111 + merge 18F+19B + merge 44B+45M: N 50, MF 0.010699 (+2.91 %)
+  needle A@2 z=0 + merge 19B+20H: N 50, MF 0.010717 (+3.09 %)
+  needle F@45 z=111 + merge 19B+20H + merge 44B+45M: N 50, MF 0.011069 (+6.48 %)
+11:38:17   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01007 sp30 0.00983 full 0.00982 [8L 21L 42L 27B 40F] vs 0.01049 (50 s)
+11:38:17   descent: 0.00975 [2A->M]
+11:39:43   ADD: 6868 -> 1717 -> 343 full; best sp10 0.00939 sp30 0.00935 full 0.00935 [8L 1H 36L] vs 0.00975 (55 s)
+11:39:43   descent: 0.00935 [8L 1H 36L]
+  quick: needle A@2 z=0 + merge 18F+19B -> 0.009348 ['2A->M', '8L 1H 36L'] (1081 s)
+GAIN (quick): 0.009348 -> cissoid_slot_screen.csv
+11:41:16   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01042 sp30 0.01030 full 0.01026 [20L 39F 24L] vs 0.01062 (63 s)
+11:41:16   descent: 0.01026 [20L 39F 24L]
+11:42:49   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01030 sp30 0.01023 full 0.01023 [44T 39L 33H] vs 0.01026 (61 s)
+11:42:49   descent: 0.01023 [44T 39L 33H]
+  quick: needle H@45 z=39 + merge 18F+19B + merge 44B+45M -> 0.010233 ['20L 39F 24L', '44T 39L 33H'] (1267 s)
+11:44:41   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01265 sp30 0.01214 full 0.01184 [49F 7M 14T 36L 23L] vs 0.01337 (78 s)
+11:44:41   descent: 0.01184 [49F 7M 14T 36L 23L]
+11:46:19   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01186 sp30 0.01183 full 0.01182 [42L 31L] vs 0.01184 (65 s)
+11:46:19   descent: 0.01180 [42L]
+  quick: needle A@31 z=47 + merge 19B+20H + delete 16A -> 0.011803 ['49F 7M 14T 36L 23L', '42L'] (1477 s)
+11:48:05   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01297 sp30 0.01283 full 0.01269 [27B 25L 34H 4B 15T] vs 0.01344 (74 s)
+11:48:05   descent: 0.01269 [27B 25L 34H 4B 15T]
+11:50:01   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01280 sp30 0.01274 full 0.01270 [47T 15H 28T] vs 0.01269 (81 s)
+11:50:01   descent: 0.01236 [6A->F]
+  quick: needle A@6 z=177 + merge 19B+20H + merge 4H+5F -> 0.012364 ['27B 25L 34H 4B 15T', '6A->F'] (1699 s)
+11:51:47   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01271 sp30 0.01200 full 0.01196 [6T 34H 27B 25L 21L] vs 0.01369 (74 s)
+11:51:47   descent: 0.01196 [6T 34H 27B 25L 21L]
+11:53:38   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01201 sp30 0.01190 full 0.01155 [47T 40F 28T 8L] vs 0.01196 (79 s)
+11:53:38   descent: 0.01155 [47T 40F 28T 8L]
+  quick: needle A@3 z=209 + merge 18F+19B + merge 4H+5F -> 0.011549 ['6T 34H 27B 25L 21L', '47T 40F 28T 8L'] (1917 s)
+== cissoid_record_0p01089.csv: 0.010887
+base 0.010887; cheapest freeings: delete 7F +5.82 %, merge 6H+7F +15.63 %, delete 47M +30.19 %, merge 19B+20H +39.61 %, merge 4H+5F +54.62 %, merge 7F+8T +63.85 %, delete 4H +72.75 %, merge 44B+45M +80.29 %
+needles kept: A@1 z=2509, H@3 z=289, T@3 z=289, A@3 z=195, H@14 z=495, A@2 z=0, T@11 z=435, A@17 z=0, A@16 z=321, A@8 z=217, H@11 z=435, A@6 z=1035
+493 trades (1995 s); best:
+  needle A@17 z=0 + delete 7F: N 50, MF 0.011579 (+6.36 %)
+  needle A@2 z=0 + delete 7F: N 50, MF 0.011666 (+7.15 %)
+  needle A@17 z=0 + merge 6H+7F: N 50, MF 0.012779 (+17.38 %)
+  needle A@2 z=0 + merge 6H+7F: N 50, MF 0.012975 (+19.18 %)
+  needle T@11 z=435 + delete 7F + delete 47M: N 50, MF 0.014581 (+33.93 %)
+  needle A@1 z=2509 + merge 6H+7F + merge 19B+20H: N 50, MF 0.014728 (+35.28 %)
+11:56:28   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01122 sp30 0.01109 full 0.01105 [7M 25F 40L 34T 36L] vs 0.01158 (62 s)
+11:56:28   descent: 0.01105 [7M 25F 40L 34T 36L]
+11:57:52   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01123 sp30 0.01111 full 0.01102 [47T 36F] vs 0.01105 (54 s)
+11:57:52   descent: 0.01063 [18A->F]
+  quick: needle A@17 z=0 + delete 7F -> 0.010627 ['7M 25F 40L 34T 36L', '18A->F'] (2170 s)
+11:59:04   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01077 sp30 0.01072 full 0.01067 [8M 40L 25F] vs 0.01167 (48 s)
+11:59:04   descent: 0.01067 [8M 40L 25F]
+12:00:15   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01072 sp30 0.01069 full 0.01068 [8B 36L] vs 0.01067 (47 s)
+12:00:15   descent: 0.01050 [2A->M]
+  quick: needle A@2 z=0 + delete 7F -> 0.010502 ['8M 40L 25F', '2A->M'] (2313 s)
+12:01:28   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01273 sp30 0.01145 full 0.01107 [49B 7B 11M 43L 30M] vs 0.01458 (49 s)
+12:01:28   descent: 0.01107 [49B 7B 11M 43L 30M]
+12:02:35   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01102 sp30 0.01070 full 0.01068 [22L 41L 43F 12L 24B] vs 0.01107 (46 s)
+12:02:35   descent: 0.01068 [22L 41L 43F 12L 24B]
+  quick: needle T@11 z=435 + delete 7F + delete 47M -> 0.010679 ['49B 7B 11M 43L 30M', '22L 41L 43F 12L 24B'] (2454 s)
+12:03:51   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01289 sp30 0.01207 full 0.01165 [8H 17B 1H 3M 25F] vs 0.01473 (51 s)
+12:03:51   descent: 0.01165 [8H 17B 1H 3M 25F]
+12:05:02   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01156 sp30 0.01133 full 0.01131 [40L 3B 15L 16H] vs 0.01165 (46 s)
+12:05:02   descent: 0.01131 [40L 3B 15L 16H]
+  quick: needle A@1 z=2509 + merge 6H+7F + merge 19B+20H -> 0.011314 ['8H 17B 1H 3M 25F', '40L 3B 15L 16H'] (2600 s)
+12:06:18   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01416 sp30 0.01322 full 0.01313 [17B 9M 36L 25F] vs 0.01476 (52 s)
+12:06:18   descent: 0.01313 [17B 9M 36L 25F]
+12:07:30   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01293 sp30 0.01275 full 0.01262 [34T 4T 42L 12L 36F] vs 0.01313 (48 s)
+12:07:30   descent: 0.01262 [34T 4T 42L 12L 36F]
+  quick: needle H@3 z=289 + delete 7F + merge 19B+20H -> 0.012620 ['17B 9M 36L 25F', '34T 4T 42L 12L 36F'] (2748 s)
+12:08:39   ADD: 6868 -> 1717 -> 343 full; best sp10 0.00938 sp30 0.00938 full 0.00938 [2B 1T] vs 0.00935 (46 s)
+12:10:42   N2: 17575 -> 4393 -> 878 full; best sp10 0.00938 sp30 0.00938 full 0.00932 [21L 34H] vs 0.00935 (122 s)
+12:10:42   descent: 0.00932 [21L 34H]
+12:11:50   ADD: 6868 -> 1717 -> 343 full; best sp10 0.00934 sp30 0.00933 full 0.00931 [36F 8B 25L] vs 0.00932 (45 s)
+12:13:47   N2: 17575 -> 4393 -> 878 full; best sp10 0.00934 sp30 0.00933 full 0.00930 [36F 42L] vs 0.00932 (118 s)
+12:13:47   descent: 0.00930 [36F 42L]
+12:14:56   ADD: 6868 -> 1717 -> 343 full; best sp10 0.00934 sp30 0.00934 full 0.00934 [2B 1T] vs 0.00930 (46 s)
+12:16:57   N2: 17575 -> 4393 -> 878 full; best sp10 0.00934 sp30 0.00934 full 0.00928 [36L 42F] vs 0.00930 (120 s)
+12:16:57   descent: 0.00928 [36L 42F]
+12:18:05   ADD: 6868 -> 1717 -> 343 full; best sp10 0.00931 sp30 0.00930 full 0.00930 [47T 40F] vs 0.00928 (45 s)
+12:20:03   N2: 17575 -> 4393 -> 878 full; best sp10 0.00931 sp30 0.00930 full 0.00930 [40F 47T] vs 0.00928 (117 s)
+12:20:03   descent: 0.00928 [47T]
+  full: cissoid_record_0p01040.csv: needle A@2 z=0 + merge 18F+19B + 2A->M + 8L 1H 36L + 21L 34H + 36F 42L + 36L 42F + 47T -> 0.009278 (3501 s)
+GAIN: 0.009278 -> cissoid_slot_screen.csv
+12:21:19   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01028 sp30 0.01022 full 0.01020 [26B 24F] vs 0.01023 (51 s)
+12:23:41   N2: 17575 -> 4393 -> 878 full; best sp10 0.01028 sp30 0.01022 full 0.01020 [24F 26B] vs 0.01023 (143 s)
+12:23:41   descent: 0.01020 [26B 24F]
+12:24:56   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01028 sp30 0.01023 full 0.01019 [44H 33T 35L] vs 0.01020 (51 s)
+12:27:25   N2: 17575 -> 4393 -> 878 full; best sp10 0.01028 sp30 0.01019 full 0.01019 [42H 43B] vs 0.01020 (148 s)
+12:27:25   descent: 0.01019 [42H 43B]
+12:28:39   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01027 sp30 0.01020 full 0.01020 [39F 47T] vs 0.01019 (50 s)
+12:30:56   N2: 17575 -> 4393 -> 878 full; best sp10 0.01027 sp30 0.01019 full 0.01017 [33T 35L] vs 0.01019 (137 s)
+12:30:56   descent: 0.01017 [33T 35L]
+12:32:11   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01027 sp30 0.01014 full 0.01012 [44F 35F 41L 39F] vs 0.01017 (51 s)
+12:34:26   N2: 17575 -> 4393 -> 878 full; best sp10 0.01024 sp30 0.01020 full 0.01011 [35F 39F] vs 0.01017 (135 s)
+12:34:26   descent: 0.01011 [35F 39F]
+  full: cissoid_record_0p01040.csv: needle H@45 z=39 + merge 18F+19B + merge 44B+45M + 20L 39F 24L + 44T 39L 33H + 26B 24F + 42H 43B + 33T 35L + 35F 39F -> 0.010110 (4365 s)
+12:35:35   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01046 sp30 0.01026 full 0.01025 [1M 30M 16H] vs 0.01048 (46 s)
+12:37:28   N2: 16650 -> 4162 -> 832 full; best sp10 0.01046 sp30 0.01044 full 0.01040 [1M 43L] vs 0.01048 (113 s)
+12:37:28   descent: 0.01025 [1M 30M 16H]
+12:38:39   ADD: 6868 -> 1717 -> 343 full; best sp10 0.00994 sp30 0.00974 full 0.00974 [3F 43L 1T 22L] vs 0.01025 (47 s)
+12:40:35   N2: 16650 -> 4162 -> 832 full; best sp10 0.00994 sp30 0.00994 full 0.00994 [1T 3F] vs 0.01025 (116 s)
+12:40:35   descent: 0.00974 [3F 43L 1T 22L]
+12:41:51   ADD: 6868 -> 1717 -> 343 full; best sp10 0.00997 sp30 0.00987 full 0.00979 [43F 37L] vs 0.00974 (52 s)
+12:44:06   N2: 16650 -> 4162 -> 832 full; best sp10 0.00977 sp30 0.00977 full 0.00977 [1H 3L] vs 0.00974 (135 s)
+  full: cissoid_record_best.csv: needle A@1 z=375 + delete 2M + merge 46L+47T + 3B 12F 35H + 49B 41L + 1M 30M 16H + 3F 43L 1T 22L -> 0.009743 (4945 s)
+done: best 0.009278

@@ -43,6 +43,44 @@ is_metal = fx.is_metal
 # env CISSOID_RANDOM: "free" (default, `cissoid_memetic.random_design`), "absorber" (2026-10-30: the 0.08521 record is
 # opaque, T = 0: an 84 nm Ni base on the glass side, R = 1 - A, thin metals inside the stack) or "mixed" (half each)
 RANDOM = os.environ.get("CISSOID_RANDOM", "free")
+# env CISSOID_SWAP (2026-10-31, off by default): after the deep round, swap the material of one layer (a dielectric for
+# another dielectric at constant optical thickness, a metal for another metal at constant thickness), polish every
+# candidate, keep the best while it gains; repeat. cissoid_drop_m.py found 0.01875 -> 0.01839 in 10 s this way, after
+# 45 min of a search that never changes the material of a layer.
+SWAP = os.environ.get("CISSOID_SWAP", "0") == "1"
+# env CISSOID_SWAP_MAX (2026-10-31; 0 = no cap, the first behaviour): most swaps kept per round. On islands started from
+# scratch almost every swap gains: one round kept 39 swaps in 682 s and stalled the whole campaign.
+SWAP_MAX = int(os.environ.get("CISSOID_SWAP_MAX", "0"))
+
+
+def swap_tasks(m, x):
+    tasks = []
+    for i, a in enumerate(m):
+        for b in (mm.METALS if is_metal(a) else mm.DIELECTRICS):
+            if b == a:
+                continue
+            d = np.maximum(x.copy(), co.FLOOR)
+            if not is_metal(a):
+                d[i] *= co.MATS[a] / co.MATS[b]
+            tasks.append(co.normalize([*m[:i], b, *m[i + 1:]], d, 0.0))
+    return tasks
+
+
+def swap_round(m, x, r, pool):
+    """Material swaps of one layer, best kept while it gains by 1e-3 relative; returns (m, x, r, swaps kept)."""
+    kept = 0
+    while not SWAP_MAX or kept < SWAP_MAX:
+        best = None
+        for kid in pool.map(mm.polish_feasible, swap_tasks(m, x)):
+            if len(kid[0]) > co.N_MAX or kid[1].min() < co.FLOOR - 1e-9:
+                continue
+            if best is None or kid[2] < best[2]:
+                best = kid
+        if best is None or best[2] >= r * (1 - 1e-3):
+            return m, x, r, kept
+        m, x, r = best
+        kept += 1
+    return m, x, r, kept
 
 
 def metals_of(m):
@@ -199,6 +237,11 @@ def main() -> None:
                     f"{time.time() - t0:.0f} s, metals {metals_of(m2)})")
                 if r2 < r and len(m2) <= co.N_MAX and x2.min() >= co.FLOOR - 1e-9:
                     m, x, r = m2, x2, r2
+            if SWAP:
+                t0, r0 = time.time(), r
+                m, x, r, kept = swap_round(m, x, r, pool)
+                log(f"island {k} gen {isl['gen']}: swap {r0:.5f} -> {r:.5f} ({kept} kept, {time.time() - t0:.0f} s, "
+                    f"N {len(m)}, metals {metals_of(m)})")
             isl["deep_done"] = r
             if r < pop[0][2]:
                 pop[0] = (m, x, r)

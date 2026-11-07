@@ -1,0 +1,4 @@
+cissoid_fuse_m_remove.csv:0 start N 50 MF 0.02074
+cissoid_fuse_m_remove.csv:0 step 1: best needle N 50 M 1 MF 0.01981 vs 0.02074 (48 candidates, 101 s)
+cissoid_fuse_m_remove.csv:0 step 2: best swap 15H N 50 M 2 MF 0.01957 vs 0.01981 (48 candidates, 117 s)
+cissoid_fuse_m_remove.csv:0 step 3: best needle N 50 M 2 MF 0.01957 vs 0.01957 (47 candidates, 93 s), stop

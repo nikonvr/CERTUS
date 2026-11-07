@@ -1,0 +1,9 @@
+base 0.010147; cheapest freeings: merge 1H+2M +11.68 %, delete 2M +18.25 %, merge 19B+20H +56.58 %, merge 5H+6F +72.05 %, delete 5H +88.48 %, merge 44B+45M +152.51 %, merge 11F+12T +158.31 %, delete 18A +164.13 %
+needles kept: F@15 z=105, T@16 z=47, L@15 z=105, H@16 z=47, M@14 z=287, T@14 z=287, A@10 z=31, A@4 z=201
+456 trades (57 s); best:
+  needle A@4 z=201 + merge 1H+2M + merge 5H+6F: N 50, MF 0.013203 (+30.12 %)
+  needle A@4 z=201 + delete 2M + merge 5H+6F: N 50, MF 0.013630 (+34.33 %)
+  needle T@16 z=47 + delete 2M + merge 19B+20H: N 50, MF 0.015385 (+51.62 %)
+  needle T@14 z=287 + merge 1H+2M + merge 19B+20H: N 50, MF 0.016108 (+58.75 %)
+  needle A@10 z=31 + merge 1H+2M + merge 5H+6F: N 50, MF 0.016187 (+59.52 %)
+  needle F@15 z=105 + merge 1H+2M + merge 19B+20H: N 50, MF 0.016595 (+63.55 %)

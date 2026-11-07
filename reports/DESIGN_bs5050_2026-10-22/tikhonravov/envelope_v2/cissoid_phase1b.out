@@ -1,0 +1,18 @@
+start: 301-point MF 0.01493, oracle 0.01493
+1. 190 single swaps, best search MF 0.01530
+1. 187 pairs, best search MF 0.01529 (pair 12F 10T)
+  NEW BEST pair 12F 10T: 301-point MF 0.01490, oracle 0.01490, N 50, M 6 (20 s)
+2. swap 43B + grow 60: 0.015010987340863629
+2. swap 43T + grow 60: 0.015013119538725276
+2. swap 40F + grow 60: 0.015054308654592244
+2. swap 43H + grow 60: 0.015013309171237228
+  NEW BEST swap 22L + grow 60: 301-point MF 0.01448, oracle 0.01448, N 50, M 5 (244 s)
+2. swap 22L + grow 60: 0.014477555123578914
+2. swap 36L + grow 60: 0.015015337123715338
+2. swap 28F + grow 60: 0.014966480086043697
+2. swap 20L + grow 60: 0.0151004775430934
+3. grow 55: 0.01493153426494274
+3. grow 60: 0.01493153426494274
+3. grow 65: 0.01493153426494274
+3. grow 70: 0.01493153426494274
+end: best 0.01448 by swap 22L + grow 60 (437 s)

@@ -1,0 +1,12 @@
+ctrl_A start: MF 0.01530 (weight ''), oracle 0.01508
+ctrl_A round 1: MF 0.01530, oracle 0.01508, N 50, M 6
+ctrl_A round 2: MF 0.01686, oracle 0.01624, N 49, M 6
+ctrl_A round 3: MF 0.01686, oracle 0.01624, N 49, M 6
+ctrl_A round 4: MF 0.01688, oracle 0.01625, N 49, M 6
+ctrl_A end: MF 0.01530, oracle 0.01508, N 50, 201 s
+ctrl_B start: MF 0.01530 (weight ''), oracle 0.01508
+ctrl_B round 1: MF 0.01530, oracle 0.01508, N 50, M 6
+ctrl_B round 2: MF 0.01530, oracle 0.01508, N 50, M 6
+ctrl_B round 3: MF 0.01530, oracle 0.01508, N 50, M 6
+ctrl_B round 4: MF 0.01530, oracle 0.01508, N 50, M 6
+ctrl_B end: MF 0.01530, oracle 0.01508, N 50, 178 s

@@ -1,0 +1,15 @@
+45 deg, s: max |T - oracle| at 50 random wavelengths 1.0e-15; 3 resonances narrower than 0.5 nm and above 1 % found from the 301 points, 9 on the 0.0005-nm scan
+  pole 459.3540 nm, FWHM 0.3351 nm, T 92.27 % | oracle 459.3600 nm, FWHM 0.3357 nm, T 92.36 % | on the scan: yes
+  pole 592.8559 nm, FWHM 0.1112 nm, T 86.84 % | oracle 592.8572 nm, FWHM 0.1107 nm, T 86.87 % | on the scan: yes
+  pole 694.3525 nm, FWHM 0.0074 nm, T 15.07 % | oracle 694.3525 nm, FWHM 0.0073 nm, T 15.07 % | on the scan: yes
+  on the scan only: 402.8605 nm, T 88.23 %, FWHM 0.1230 nm
+  on the scan only: 405.8485 nm, T 99.84 %, FWHM 0.8275 nm
+  on the scan only: 457.1675 nm, T 89.42 %, FWHM 0.1015 nm
+  on the scan only: 462.6010 nm, T 61.78 %, FWHM 0.5660 nm
+  on the scan only: 595.2020 nm, T 34.93 %, FWHM 0.1620 nm
+  on the scan only: 599.1675 nm, T 10.06 %, FWHM 0.0555 nm
+45 deg, p: max |T - oracle| at 50 random wavelengths 1.0e-15; 1 resonances narrower than 0.5 nm and above 1 % found from the 301 points, 4 on the 0.0005-nm scan
+  pole 672.3540 nm, FWHM 0.1549 nm, T 45.22 % | oracle 672.3540 nm, FWHM 0.1543 nm, T 45.22 % | on the scan: yes
+  on the scan only: 477.8210 nm, T 39.52 %, FWHM 0.6740 nm
+  on the scan only: 568.0365 nm, T 98.16 %, FWHM 0.7750 nm
+  on the scan only: 659.4930 nm, T 30.79 %, FWHM 0.0720 nm

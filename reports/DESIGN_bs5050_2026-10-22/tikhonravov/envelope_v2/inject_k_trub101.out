@@ -1,0 +1,16 @@
+check K=0: 0.0128 % (expected 0.0128)
+start: lossless MF 1 nm 0.0128 %, 0.001 nm 0.3483 % (4 s)
+    peak  402.5252 nm   61.36 %  FWHM 0.0110 nm
+    peak  422.4040 nm    6.38 %  FWHM 0.0116 nm
+K 0.001: lossy MF at start 14.6624 %
+K 0.001: lossy MF after polish 14.5858 %, nfev 300, max shift 4.20 nm
+K 0.001 polished, judged lossless: lossless MF 1 nm 0.0412 %, 0.001 nm 0.3510 % (26 s)
+    peak  402.7330 nm   58.42 %  FWHM 0.0124 nm
+    peak  422.8590 nm    5.40 %  FWHM 0.0142 nm
+K 0.005: lossy MF at start 32.0725 %
+K 0.005: lossy MF after polish 31.5236 %, nfev 300, max shift 52.83 nm
+K 0.005 polished, judged lossless: lossless MF 1 nm 2.9087 %, 0.001 nm 1.9728 % (49 s)
+    peak  408.5408 nm   48.59 %  FWHM 0.0276 nm
+    peak  635.0000 nm   28.01 %  FWHM 120.3002 nm
+    peak  645.0000 nm   19.39 %  FWHM -244.5970 nm
+    peak  641.3236 nm   10.02 %  FWHM 2.9314 nm

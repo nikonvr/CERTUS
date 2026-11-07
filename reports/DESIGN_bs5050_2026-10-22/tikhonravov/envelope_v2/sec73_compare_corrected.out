@@ -1,0 +1,12 @@
+== mshape
+A search: end after 2 rounds
+B search: end after 1 rounds
+A: 78 of 164 designs hide resonances; best resolved 0.0808 % (94 layers, OT 12.78 um)
+A cured (75 designs, best of each N; 649 s on 6 workers): best resolved 0.0795 % (96 layers, OT 12.75 um)
+B: 10 of 122 designs hide resonances; best resolved 0.0797 % (94 layers, OT 14.05 um)
+== highpass
+A search: end after 2 rounds
+B search: end after 1 rounds
+A: 159 of 173 designs hide resonances; best resolved 0.0429 % (93 layers, OT 11.14 um)
+A cured (76 designs, best of each N; 764 s on 6 workers): best resolved 0.0035 % (98 layers, OT 14.04 um)
+B: 26 of 97 designs hide resonances; best resolved 0.0066 % (98 layers, OT 13.95 um)

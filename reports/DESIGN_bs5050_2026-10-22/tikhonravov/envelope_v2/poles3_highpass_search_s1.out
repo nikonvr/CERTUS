@@ -1,0 +1,102 @@
+start free seed=1: 30:4.1389e-02 35:1.7779e-02 40:1.2753e-02 45:1.8759e-02 50:1.2810e-02 55:1.2145e-03 60:1.1768e-03 65:3.5815e-03 70:2.3865e-03 75:6.2646e-04 80:1.0091e-03 85:4.7330e-04 90:7.1114e-04 95:3.3082e-04 100:9.3196e-04
+r1 N=94 1.66016e-04 (was nan) L..H
+r1 N=92 9.26301e-03 (was nan) L..H
+r1 N=96 1.04615e-03 (was nan) L..H
+r1 N=92 7.24224e-03 (was nan) L..H
+r1 N=88 7.10093e-04 (was nan) L..H
+r1 N=92 6.54869e-03 (was nan) L..H
+r1 N=97 2.88981e-03 (was nan) L..L
+r1 N=98 8.92181e-04 (was nan) L..H
+r1 N=96 7.88864e-04 (was nan) H..L
+r1 N=98 8.44100e-04 (was nan) H..L
+r1 N=98 8.31009e-04 (was nan) H..L
+r1 N=97 8.26628e-04 (was nan) L..L
+r1 N=92 6.94595e-04 (was nan) H..L
+r1 N=98 7.46187e-04 (was nan) H..L
+r1 N=96 7.25369e-04 (was nan) H..L
+r1 N=87 4.14887e-03 (was nan) H..H
+r1 N=102 2.75398e-02 (was nan) L..H
+r1 N=101 2.77245e-02 (was nan) H..H
+r1 N=101 4.43688e-04 (was nan) L..L
+r1 N=102 3.93694e-03 (was nan) L..H
+r1 N=102 1.21889e-03 (was nan) L..H
+r1 N=102 3.61759e-04 (was nan) L..H
+r1 N=99 3.67634e-02 (was nan) H..H
+r1 N=93 5.93969e-02 (was nan) L..L
+r1 N=91 1.59333e-02 (was nan) L..L
+r1 N=91 1.41291e-02 (was nan) L..L
+r1 N=91 1.32497e-02 (was nan) L..L
+r1 N=93 1.43885e-02 (was nan) L..L
+r1 N=89 2.00766e-02 (was nan) L..L
+r1 N=93 1.31550e-02 (was nan) L..L
+r1 N=87 5.40165e-04 (was nan) L..L
+r1 N=89 3.81380e-04 (was nan) L..L
+r1 N=89 1.85834e-04 (was nan) L..L
+r1 N=91 4.60470e-04 (was nan) L..L
+r1 N=93 1.14495e-03 (was nan) L..L
+r1 N=91 4.04872e-04 (was nan) H..H
+r1 N=97 6.77341e-04 (was nan) H..H
+r1 N=96 6.78337e-04 (was nan) L..H
+r1 N=93 5.64937e-04 (was nan) H..H
+r1 N=87 4.66011e-04 (was nan) H..H
+r1 N=93 5.51727e-04 (was nan) H..H
+r1 N=93 4.46274e-04 (was nan) H..H
+concurrent.futures.process._RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\concurrent\futures\process.py", line 255, in _process_worker
+    r = call_item.fn(*call_item.args, **call_item.kwargs)
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\concurrent\futures\process.py", line 204, in _process_chunk
+    return [fn(*args) for args in chunk]
+            ~~^^^^^^^
+  File "D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\reports\DESIGN_bs5050_2026-10-22\tikhonravov\envelope_v2\search.py", line 384, in move_eval
+    x, r = polish(s2, d2, floor)
+           ~~~~~~^^^^^^^^^^^^^^^
+  File "D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\reports\DESIGN_bs5050_2026-10-22\tikhonravov\envelope_v2\search.py", line 266, in polish
+    sol = least_squares(lambda x: both(x)[0], x0, jac=lambda x: both(x)[1], bounds=(floor, np.inf), method="trf",
+                        x_scale="jac", ftol=1e-15, xtol=1e-15, gtol=1e-15, max_nfev=max_nfev)
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\_lib\_util.py", line 662, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\optimize\_lsq\least_squares.py", line 1019, in least_squares
+    result = trf(vector_fun.fun, vector_fun.jac, x0, f0, J0, lb, ub, ftol, xtol,
+                 gtol, max_nfev, x_scale, loss_function, tr_solver,
+                 tr_options.copy(), verbose, callback=callback_wrapped)
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\optimize\_lsq\trf.py", line 124, in trf
+    return trf_bounds(
+        fun, jac, x0, f0, J0, lb, ub, ftol, xtol, gtol, max_nfev, x_scale,
+        loss_function, tr_solver, tr_options, verbose, callback=callback)
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\optimize\_lsq\trf.py", line 303, in trf_bounds
+    U, s, V = svd(J_augmented, full_matrices=False)
+              ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\linalg\_decomp_svd.py", line 207, in svd
+    _format_emit_errors_warnings(err_lst, lapack_driver)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\linalg\_decomp_svd.py", line 26, in _format_emit_errors_warnings
+    raise LinAlgError(f"SVD did not converge for slice = {num}.")
+numpy.linalg.LinAlgError: SVD did not converge for slice = 0.
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\reports\DESIGN_bs5050_2026-10-22\tikhonravov\envelope_v2\search.py", line 514, in <module>
+    main()
+    ~~~~^^
+  File "D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\reports\DESIGN_bs5050_2026-10-22\tikhonravov\envelope_v2\search.py", line 479, in main
+    for s3, x3, r in mapper(move_eval, tasks):
+                     ~~~~~~^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\concurrent\futures\process.py", line 726, in _chain_from_iterable_of_lists
+    for element in iterable:
+                   ^^^^^^^^
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\concurrent\futures\_base.py", line 672, in result_iterator
+    yield _result_or_cancel(fs.pop())
+          ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\concurrent\futures\_base.py", line 312, in _result_or_cancel
+    return fut.result(timeout)
+           ~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\concurrent\futures\_base.py", line 447, in result
+    return self.__get_result()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\concurrent\futures\_base.py", line 396, in __get_result
+    raise self._exception
+numpy.linalg.LinAlgError: SVD did not converge for slice = 0.

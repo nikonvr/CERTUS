@@ -41,11 +41,29 @@ from certus.physics.gradient_oblique import compute_oblique_rt_and_grads_analyti
 
 MATS = {"F": 1.38, "L": 1.45, "B": 1.65, "M": 1.8, "T": 2.15, "H": 2.45,
         "A": 0.12 - 3.45j, "U": 0.306 - 2.88j, "N": 1.8 - 3.33j}  # A = Ag, U = Au, N = Ni
-W = c.WLS
-TGT = np.loadtxt(s.HERE / "cissoid_target_b1.csv", delimiter=",", skiprows=1)[:, 1]
+def exact_target(w):
+    """The contest's target at any wavelength (module docstring): |R - 0.5| = k s^1.5 / sqrt(2a - s), s the distance in
+    nm to the nearest R = 0.5 crossing (400, 500, 600, 700 nm), 2a = 100 nm, k = 0.3 / 50, R above 0.5 between 500 and
+    600 nm; on the 1 nm points it matches cissoid_target_b1.csv within its 4-decimal rounding (4.9e-5)."""
+    w = np.asarray(w, dtype=float)
+    s = np.abs(w[..., None] - np.array([400.0, 500.0, 600.0, 700.0])).min(axis=-1)
+    mag = 0.3 / 50.0 * s ** 1.5 / np.sqrt(100.0 - s)
+    return np.where((w > 500.0) & (w < 600.0), 0.5 + mag, 0.5 - mag)
+
+
+W_CONTEST = c.WLS
+TGT_CONTEST = np.loadtxt(s.HERE / "cissoid_target_b1.csv", delimiter=",", skiprows=1)[:, 1]
+W, TGT = W_CONTEST, TGT_CONTEST
+#: env CISSOID_JUDGE (2026-11-01, owner: each problem optimized on its nominal grid and on a resolved one; unset = the
+#: contest's 301 points and its 4-decimal target): "exactK" puts K points per nm from 400 to 700 nm, against
+#: `exact_target`, in place of the 301 points everywhere (search, polish_full, oracle_mf, the campaigns' judge).
+JUDGE = os.environ.get("CISSOID_JUDGE", "")
+if JUDGE:
+    W = np.linspace(400.0, 700.0, 300 * int(re.fullmatch(r"exact(\d+)", JUDGE).group(1)) + 1)
+    TGT = exact_target(W)
 SCALE = 1.0 / (0.01 * np.sqrt(len(W)))
 NSUB = np.full(len(W), 1.52 + 0j)
-W_FULL, TGT_FULL, NSUB_FULL, SCALE_FULL = W, TGT, NSUB, SCALE  # the contest's 301 points: the judge
+W_FULL, TGT_FULL, NSUB_FULL, SCALE_FULL = W, TGT, NSUB, SCALE  # the judge: the contest's 301 points or CISSOID_JUDGE
 SCALE_J = SCALE
 
 
@@ -69,10 +87,29 @@ def search_grid(spec: str):
 
 
 GRID = os.environ.get("CISSOID_GRID", "full")
-if GRID != "full":
+if GRID.startswith("over"):
+    # "overK" (2026-10-31, owner): K points per nm, target interpolated linearly between the 1 nm points; a deformed
+    # landscape for the search, judged later on the 301 points (polishing on it alone worsens the 301-point MF)
+    W = np.linspace(400.0, 700.0, 300 * int(GRID[4:]) + 1)
+    TGT, NSUB = np.interp(W, W_FULL, TGT_FULL), np.full(len(W), 1.52 + 0j)
+    SCALE = 1.0 / (0.01 * np.sqrt(len(W)))
+    SCALE_J = SCALE
+elif GRID != "full":
     _sel, _weight = search_grid(GRID)
     W, TGT, NSUB = W_FULL[_sel], TGT_FULL[_sel], NSUB_FULL[_sel]
     SCALE = np.sqrt(_weight / len(W_FULL)) / 0.01
+    SCALE_J = SCALE[:, None]
+# env CISSOID_WEIGHT (2026-10-31, owner; empty by default): "LO-HI:W,..." multiplies by W the weight of the search
+# points from LO to HI nm (the squared residual by W), to push the search where the error sits; SCALE_FULL, the
+# judge, is never weighted.
+WEIGHT = os.environ.get("CISSOID_WEIGHT", "")
+if WEIGHT:
+    _w = np.ones(len(W))
+    for part in WEIGHT.split(","):
+        span, wt = part.split(":")
+        lo, hi = (float(v) for v in span.split("-"))
+        _w[(W >= lo) & (W <= hi)] *= float(wt)
+    SCALE = SCALE * np.sqrt(_w)
     SCALE_J = SCALE[:, None]
 STEP, DROP, FLOOR, N_MAX = 2.0, 0.05, 3.0, 50
 HI_METAL, HI_DIEL = 100.0, 3000.0  # a metal above 100 nm is opaque; bounds keep the kernel finite
@@ -84,17 +121,34 @@ NEEDLE_MATS = list(MATS)
 MAX_METALS: int | None = None
 
 
+#: env CISSOID_OTMAX (2026-11-01, owner: the record with a dielectric optical thickness of at most OTMAX nm; unset or
+#: 0 = off, the residuals unchanged): one more residual, OTMAX_W * max(0, OT_d - OTMAX) / OTMAX with OT_d the sum of
+#: n d over the dielectric layers, so that every polish, swap and screen of the study works under the cap. The judge
+#: (`oracle_mf`) ignores it.
+OTMAX = float(os.environ.get("CISSOID_OTMAX", "0") or 0.0)
+OTMAX_W = 100.0
+
+
+def _ot_cap(mats, d, r, j):
+    if not OTMAX:
+        return r, j
+    n = np.array([0.0 if np.iscomplex(MATS[m]) else float(np.real(MATS[m])) for m in mats])
+    excess = float(n @ d) - OTMAX
+    row = OTMAX_W * n / OTMAX if excess > 0.0 else np.zeros(len(d))
+    return np.append(r, OTMAX_W * max(excess, 0.0) / OTMAX), np.vstack([j, row])
+
+
 def res_jac(mats: list[str], d: np.ndarray):
     nm = np.column_stack([np.full(len(W), MATS[m], dtype=complex) for m in mats])
     r, _t, dr, _dt = compute_oblique_rt_and_grads_analytic(d, nm, NSUB, W, np.arange(len(d)), 0.0, True)
-    return (r - TGT) * SCALE, dr * SCALE_J
+    return _ot_cap(mats, d, (r - TGT) * SCALE, dr * SCALE_J)
 
 
 def res_jac_full(mats: list[str], d: np.ndarray):
     """`res_jac` on the contest's 301 points, whatever CISSOID_GRID."""
     nm = np.column_stack([np.full(len(W_FULL), MATS[m], dtype=complex) for m in mats])
     r, _t, dr, _dt = compute_oblique_rt_and_grads_analytic(d, nm, NSUB_FULL, W_FULL, np.arange(len(d)), 0.0, True)
-    return (r - TGT_FULL) * SCALE_FULL, dr * SCALE_FULL
+    return _ot_cap(mats, d, (r - TGT_FULL) * SCALE_FULL, dr * SCALE_FULL)
 
 
 def mf(mats, d) -> float:
@@ -105,10 +159,12 @@ def mf_full(mats, d) -> float:
     return float(np.linalg.norm(res_jac_full(mats, d)[0]))
 
 
-def oracle_mf(mats, d) -> float:
+def oracle_mf(mats, d, w=None, tgt=None) -> float:
+    """The independent oracle's MF on the judge's grid, or on the wavelengths ``w`` against ``tgt``."""
+    w, tgt = (W_FULL, TGT_FULL) if w is None else (w, tgt)
     n = [complex(MATS[m]) for m in mats]
-    r = np.array([oracle.rt_stack(w, n, np.asarray(d), complex(1.0), complex(1.52))[0] for w in W_FULL])
-    return float(np.sqrt(np.mean(((r - TGT_FULL) / 0.01) ** 2)))
+    r = np.array([oracle.rt_stack(x, n, np.asarray(d), complex(1.0), complex(1.52))[0] for x in w])
+    return float(np.sqrt(np.mean(((r - tgt) / 0.01) ** 2)))
 
 
 def normalize(mats: list[str], d: np.ndarray, drop: float):

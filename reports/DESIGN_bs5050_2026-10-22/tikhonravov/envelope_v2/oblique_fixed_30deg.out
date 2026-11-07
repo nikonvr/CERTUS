@@ -1,0 +1,7 @@
+30 deg, s: max |T - oracle| at 50 random wavelengths 5.6e-15; 2 resonances narrower than 0.5 nm and above 1 % found from the 301 points, 4 on the 0.0005-nm scan
+  pole 402.9661 nm, FWHM 0.0058 nm, T 2.93 % | oracle 402.9661 nm, FWHM 0.0058 nm, T 2.93 % | on the scan: yes | background 0.00 %
+  pole 622.5691 nm, FWHM 0.3819 nm, T 34.79 % | oracle 622.5462 nm, FWHM 0.4010 nm, T 35.29 % | on the scan: yes | background 3.52 %
+  on the scan only: 424.3105 nm, T 99.77 %, FWHM 0.7470 nm | background 27.30 %
+  on the scan only: 481.5415 nm, T 99.81 %, FWHM 0.6355 nm | background 24.46 %
+30 deg, p: max |T - oracle| at 50 random wavelengths 3.4e-15; 1 resonances narrower than 0.5 nm and above 1 % found from the 301 points, 1 on the 0.0005-nm scan
+  pole 406.3571 nm, FWHM 0.0227 nm, T 14.55 % | oracle 406.3571 nm, FWHM 0.0226 nm, T 14.55 % | on the scan: yes | background 0.00 %

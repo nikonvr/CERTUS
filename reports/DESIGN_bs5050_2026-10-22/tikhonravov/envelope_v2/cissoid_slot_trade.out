@@ -1,0 +1,31 @@
+base 0.012209; cheapest freeings: merge 35L+36F +1.76 %, delete 9A +3.62 %, merge 10F+11T +39.17 %, delete 12A +48.35 %, merge 4H+5F +78.24 %, delete 17A +83.31 %
+needles kept: F@6 z=1197, L@6 z=1197, B@6 z=1197, M@6 z=1197, A@6 z=1197, H@3 z=129, T@3 z=129, H@5 z=129
+120 trades (25 s); best:
+  needle F@6 z=1197 + merge 35L+36F + delete 9A: N 50, MF 0.011951 (-2.12 %)
+  needle L@6 z=1197 + merge 35L+36F + delete 9A: N 50, MF 0.011953 (-2.10 %)
+  needle B@6 z=1197 + merge 35L+36F + delete 9A: N 50, MF 0.011967 (-1.99 %)
+  needle M@6 z=1197 + merge 35L+36F + delete 9A: N 50, MF 0.011987 (-1.82 %)
+  needle A@6 z=1197 + merge 35L+36F + delete 9A: N 50, MF 0.012143 (-0.54 %)
+  needle T@3 z=129 + merge 35L+36F + delete 9A: N 50, MF 0.013038 (+6.78 %)
+09:04:05   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01157 sp30 0.01111 full 0.01110 [8T 28T 23M 22H] vs 0.01195 (47 s)
+09:06:06   N2: 17575 -> 4393 -> 878 full; best sp10 0.01163 sp30 0.01149 full 0.01137 [23M 29B] vs 0.01195 (121 s)
+09:06:06   descent: 0.01110 [8T 28T 23M 22H]
+09:07:15   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01105 sp30 0.01093 full 0.01091 [27M 29B 28H 25L] vs 0.01110 (47 s)
+09:09:15   N2: 17575 -> 4393 -> 878 full; best sp10 0.01105 sp30 0.01103 full 0.01101 [7L 34T] vs 0.01110 (120 s)
+09:09:15   descent: 0.01091 [27M 29B 28H 25L]
+09:10:24   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01095 sp30 0.01094 full 0.01089 [42F 7L] vs 0.01091 (47 s)
+09:12:24   N2: 17575 -> 4393 -> 878 full; best sp10 0.01095 sp30 0.01090 full 0.01089 [7L 42F] vs 0.01091 (120 s)
+09:12:24   descent: 0.01089 [42F]
+09:13:32   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01092 sp30 0.01092 full 0.01091 [7L 42L] vs 0.01089 (46 s)
+09:15:32   N2: 17575 -> 4393 -> 878 full; best sp10 0.01092 sp30 0.01092 full 0.01090 [7L 40L] vs 0.01089 (120 s)
+  needle F@6 z=1197 + merge 35L+36F + delete 9A + descent ['8T 28T 23M 22H', '27M 29B 28H 25L', '42F']: MF 0.010887 (783 s)
+09:16:42   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01147 sp30 0.01111 full 0.01110 [8T 28T 23M 7F 22H] vs 0.01195 (46 s)
+09:18:44   N2: 17575 -> 4393 -> 878 full; best sp10 0.01168 sp30 0.01150 full 0.01137 [23M 29B] vs 0.01195 (123 s)
+09:18:44   descent: 0.01110 [8T 28T 23M 7F 22H]
+09:19:54   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01105 sp30 0.01093 full 0.01091 [27M 29B 28H 25L] vs 0.01110 (47 s)
+09:21:55   N2: 17575 -> 4393 -> 878 full; best sp10 0.01105 sp30 0.01103 full 0.01101 [7L 34T] vs 0.01110 (121 s)
+09:21:55   descent: 0.01091 [27M 29B 28H 25L]
+09:23:04   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01095 sp30 0.01094 full 0.01089 [42F 7L] vs 0.01091 (47 s)
+09:25:04   N2: 17575 -> 4393 -> 878 full; best sp10 0.01095 sp30 0.01090 full 0.01089 [7L 42F] vs 0.01091 (120 s)
+09:25:04   descent: 0.01089 [42F]
+09:26:10   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01092 sp30 0.01092 full 0.01091 [7L 42L] vs 0.01089 (45 s)

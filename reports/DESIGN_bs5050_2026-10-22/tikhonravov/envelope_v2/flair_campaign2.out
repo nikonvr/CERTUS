@@ -1,0 +1,23 @@
+08:08:18 start 0.012282 (oracle 0.012282), N 50, 4.3 h, 15 workers, start stages ['MT', 'BEAM', 'N3']
+08:08:31 MT on the best: 0.01280 [9A->F]
+08:10:44   N2: 16650 -> 4162 -> 832 full; best sp10 0.01225 sp30 0.01223 full 0.01221 [24F 26B] vs 0.01228 (133 s)
+08:13:58   BEAM3: 24715 -> 6178 -> 1235 full; best sp10 0.01230 sp30 0.01224 full 0.01221 [24F 26B 43T] vs 0.01228 (194 s)
+08:17:15   BEAM4: 24625 -> 6156 -> 1231 full; best sp10 0.01239 sp30 0.01227 full 0.01223 [24F 26B 27T 43T] vs 0.01228 (198 s)
+08:20:35   BEAM5: 24082 -> 6020 -> 1204 full; best sp10 0.01231 sp30 0.01228 full 0.01224 [24F 26B 27T 42F 43T] vs 0.01228 (199 s)
+08:20:35 BEAM on the best: 0.01221 [24F 26B 43T]
+08:20:35 NEW RECORD 0.012210 oracle [24F 26B 43T] -> cissoid_record_0p01221.csv
+08:21:58   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01228 sp30 0.01225 full 0.01225 [27T 22M] vs 0.01221 (58 s)
+08:24:18   N2: 16650 -> 4162 -> 832 full; best sp10 0.01228 sp30 0.01225 full 0.01223 [27T 43H] vs 0.01221 (140 s)
+08:27:42   N3: 25281 -> 6320 -> 1264 full; best sp10 0.01233 sp30 0.01230 full 0.01225 [22M 27T 43H] vs 0.01221 (204 s)
+08:27:42 N3 on the best: 0.01225 [22M 27T 43H]
+08:27:42 hub layers of the best: 27H:13 10F:13 43T:9 22B:8 14T:8 42L:7 13F:6 28L:5
+08:28:43 it 1 (from best): grow 4 needles seed 1001, 3 swaps: 0.01621 (best 0.01221)
+08:28:43 it 1: more than 25 % above the best, no descent
+08:28:45 it 2 (from best): kick 5L 39H 43H: 0.01268 (best 0.01221)
+08:29:56   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01273 sp30 0.01263 full 0.01257 [42F 15F] vs 0.01268 (48 s)
+08:31:52   N2: 16113 -> 4028 -> 805 full; best sp10 0.01273 sp30 0.01255 full 0.01254 [33T 40L] vs 0.01268 (115 s)
+08:31:52   descent: 0.01252 [42F]
+08:33:01   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01261 sp30 0.01256 full 0.01255 [27T 15F 24L 22M 21H] vs 0.01252 (46 s)
+08:34:58   N2: 16113 -> 4028 -> 805 full; best sp10 0.01262 sp30 0.01256 full 0.01249 [33T 40L] vs 0.01252 (117 s)
+08:34:58   descent: 0.01249 [33T 40L]
+08:36:07   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01261 sp30 0.01256 full 0.01252 [40F 33H] vs 0.01249 (45 s)

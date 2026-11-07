@@ -1,0 +1,17 @@
+three-line filter, 109 layers: hidden resonances and the field they hold
+  nominal (1 nm)
+     405.4670 nm  |T-T'|  55.3 %  FWHM 0.0116 nm  path   2.26 mm  max|E|^2    5299.1 (layer 70 L), at 405 nm   3.29
+     425.2458 nm  |T-T'|  33.6 %  FWHM 0.0098 nm  path   2.94 mm  max|E|^2     542.2 (layer 50 L), at 425 nm   3.99
+     414.3848 nm  |T-T'|  16.0 %  FWHM 0.0128 nm  path   2.14 mm  max|E|^2     193.2 (layer 42 L), at 414 nm   3.76
+    largest |E|^2 over the band: on the 277 grid points 116.59, every 0.01 nm 4193.9
+  polished on 0.005 nm
+     425.2476 nm  |T-T'|  38.7 %  FWHM 0.0034 nm  path   8.46 mm  max|E|^2    1851.0 (layer 50 L), at 425 nm   3.55
+     414.3876 nm  |T-T'|  26.9 %  FWHM 0.0030 nm  path   9.11 mm  max|E|^2    1512.5 (layer 42 L), at 414 nm   3.08
+     405.4674 nm  |T-T'|  19.6 %  FWHM 0.0042 nm  path   6.23 mm  max|E|^2   17085.1 (layer 70 L), at 405 nm   2.73
+    largest |E|^2 over the band: on the 277 grid points 110.09, every 0.01 nm 6719.9
+  polished on 0.001 nm
+     425.2476 nm  |T-T'|  31.2 %  FWHM 0.0038 nm  path   7.57 mm  max|E|^2    1380.7 (layer 50 L), at 425 nm   3.38
+     405.4674 nm  |T-T'|  24.4 %  FWHM 0.0036 nm  path   7.27 mm  max|E|^2   20157.6 (layer 70 L), at 405 nm   2.61
+     414.3876 nm  |T-T'|  21.5 %  FWHM 0.0032 nm  path   8.54 mm  max|E|^2    1129.6 (layer 42 L), at 414 nm   2.93
+     455.0000 nm  |T-T'|   1.1 %  FWHM 50.1982 nm  path   0.00 mm  max|E|^2       9.8 (layer 36 L), at 455 nm   9.81
+    largest |E|^2 over the band: on the 277 grid points 149.71, every 0.01 nm 6127.8

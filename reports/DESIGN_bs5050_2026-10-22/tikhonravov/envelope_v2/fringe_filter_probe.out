@@ -1,0 +1,19 @@
+band 400-440 nm (target 0): 4 local maxima, 3 above 0.25/gamma (excess 0.65 at 403, 0.60 at 411, 0.57 at 422); highest of the others 0.086 rad/nm
+    from 403: pole  402.5253 nm, FWHM   0.0109 nm, |T - target| 0.6137 -> kept
+    from 411: pole  410.6528 nm, FWHM   0.0561 nm, |T - target| 0.0064 -> kept
+    from 422: pole  422.4040 nm, FWHM   0.0115 nm, |T - target| 0.0638 -> kept
+  poles of the band: 4, FWHM (nm) 15.1 at 401.9, 0.0109 at 402.5, 0.0561 at 410.7, 0.0115 at 422.4
+band 445-455 nm (target 1): 2 local maxima, 0 above 0.25/gamma (excess -); highest of the others 0.114 rad/nm
+  poles of the band: 5, FWHM (nm) 4.82 at 445.2, 6.79 at 447.5, 7.44 at 450.1, 6.74 at 452.7, 4.73 at 454.8
+band 460-500 nm (target 0): 2 local maxima, 0 above 0.25/gamma (excess -); highest of the others 0.239 rad/nm
+  poles of the band: 0, FWHM (nm) 
+band 505-515 nm (target 1): 2 local maxima, 0 above 0.25/gamma (excess -); highest of the others 0.122 rad/nm
+  poles of the band: 5, FWHM (nm) 4.91 at 505.2, 6.97 at 507.4, 7.64 at 510.1, 6.89 at 512.7, 4.8 at 514.9
+band 520-630 nm (target 0): 6 local maxima, 2 above 0.25/gamma (excess 0.67 at 557, 0.29 at 589); highest of the others 0.238 rad/nm
+    from 557: pole  556.8817 nm, FWHM   0.1895 nm, |T - target| 0.0000 -> rejected: |T - target| <= 1e-3
+    from 589: pole  588.5544 nm, FWHM   3.1718 nm, |T - target| 0.0000 -> rejected: FWHM >= 0.5 nm, |T - target| <= 1e-3
+  poles of the band: 3, FWHM (nm) 0.189 at 556.9, 5.59 at 570.5, 3.17 at 588.6
+band 635-645 nm (target 1): 2 local maxima, 0 above 0.25/gamma (excess -); highest of the others 0.103 rad/nm
+  poles of the band: 4, FWHM (nm) 5.53 at 635.5, 7.54 at 638.4, 7.58 at 641.6, 5.6 at 644.5
+band 650-700 nm (target 0): 2 local maxima, 0 above 0.25/gamma (excess -); highest of the others 0.241 rad/nm
+  poles of the band: 0, FWHM (nm) 

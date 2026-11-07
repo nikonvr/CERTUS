@@ -1,0 +1,40 @@
+resonant -layer  12 ( 13.29 nm) nominal: nominal 0.0960 %, resolved 0.1735 %, highest 25.71 %
+resonant -layer  12 ( 13.29 nm) pole   : nominal 0.0653 %, resolved 0.0522 %, highest 0.98 %
+resonant -layer  21 ( 13.32 nm) nominal: nominal 0.0488 %, resolved 0.2500 %, highest 26.16 %
+resonant -layer  21 ( 13.32 nm) pole   : nominal 0.0551 %, resolved 0.0484 %, highest 0.84 %
+resonant -layer  74 ( 20.08 nm) nominal: nominal 0.0611 %, resolved 1.3786 %, highest 97.58 %
+resonant -layer  74 ( 20.08 nm) pole   : nominal 0.3204 %, resolved 0.2636 %, highest 3.63 %
+resonant -layer  96 ( 20.82 nm) nominal: nominal 0.0254 %, resolved 0.5662 %, highest 99.68 %
+resonant -layer  96 ( 20.82 nm) pole   : nominal 0.0587 %, resolved 0.0556 %, highest 0.69 %
+resonant -layer  92 ( 28.67 nm) nominal: nominal 0.1019 %, resolved 0.4488 %, highest 22.47 %
+resonant -layer  92 ( 28.67 nm) pole   : nominal 0.1333 %, resolved 0.2532 %, highest 1.61 %
+resonant -layer  20 ( 33.04 nm) nominal: nominal 0.0403 %, resolved 0.2055 %, highest 20.99 %
+resonant -layer  20 ( 33.04 nm) pole   : nominal 0.0715 %, resolved 0.0605 %, highest 1.01 %
+resonant -layer  84 ( 33.11 nm) nominal: nominal 0.1050 %, resolved 1.2128 %, highest 99.93 %
+resonant -layer  84 ( 33.11 nm) pole   : nominal 0.6472 %, resolved 0.6272 %, highest 12.50 %
+resonant -layer  24 ( 39.16 nm) nominal: nominal 0.0363 %, resolved 0.1929 %, highest 15.69 %
+resonant -layer  24 ( 39.16 nm) pole   : nominal 0.0415 %, resolved 0.0352 %, highest 0.50 %
+resonant -layer  58 ( 40.53 nm) nominal: nominal 19.4019 %, resolved 19.2814 %, highest 99.05 %
+resonant -layer  58 ( 40.53 nm) pole   : nominal 19.7622 %, resolved 19.4150 %, highest 13.16 %
+resonant -layer  93 ( 44.44 nm) nominal: nominal 0.0839 %, resolved 0.4190 %, highest 18.58 %
+resonant -layer  93 ( 44.44 nm) pole   : nominal 0.0411 %, resolved 0.0482 %, highest 0.79 %
+cured    -layer  12 ( 11.79 nm) nominal: nominal 0.0275 %, resolved 0.0230 %, highest 0.29 %
+cured    -layer  12 ( 11.79 nm) pole   : nominal 0.0359 %, resolved 0.0291 %, highest 0.14 %
+cured    -layer  21 ( 11.94 nm) nominal: nominal 0.0230 %, resolved 0.0225 %, highest 0.40 %
+cured    -layer  21 ( 11.94 nm) pole   : nominal 0.0789 %, resolved 0.0584 %, highest 0.16 %
+cured    -layer  96 ( 23.56 nm) nominal: nominal 0.0944 %, resolved 0.2064 %, highest 15.58 %
+cured    -layer  96 ( 23.56 nm) pole   : nominal 0.0776 %, resolved 0.0740 %, highest 0.93 %
+cured    -layer  74 ( 24.27 nm) nominal: nominal 0.0814 %, resolved 0.1663 %, highest 9.64 %
+cured    -layer  74 ( 24.27 nm) pole   : nominal 0.0960 %, resolved 0.0845 %, highest 0.91 %
+cured    -layer  92 ( 31.17 nm) nominal: nominal 0.0626 %, resolved 0.0604 %, highest 1.37 %
+cured    -layer  92 ( 31.17 nm) pole   : nominal 0.1874 %, resolved 0.2592 %, highest 0.52 %
+cured    -layer  20 ( 32.65 nm) nominal: nominal 0.1284 %, resolved 0.1009 %, highest 0.75 %
+cured    -layer  20 ( 32.65 nm) pole   : nominal 0.1237 %, resolved 0.0935 %, highest 0.17 %
+cured    -layer  24 ( 37.97 nm) nominal: nominal 0.1638 %, resolved 0.1499 %, highest 0.00 %
+cured    -layer  24 ( 37.97 nm) pole   : nominal 0.1925 %, resolved 0.1768 %, highest 0.00 %
+cured    -layer  84 ( 38.01 nm) nominal: nominal 0.0760 %, resolved 1.6180 %, highest 98.13 %
+cured    -layer  84 ( 38.01 nm) pole   : nominal 0.9427 %, resolved 1.5616 %, highest 81.43 %
+cured    -layer  58 ( 40.17 nm) nominal: nominal 19.9263 %, resolved 19.2670 %, highest 99.57 %
+cured    -layer  58 ( 40.17 nm) pole   : nominal 18.9849 %, resolved 18.5206 %, highest 13.48 %
+cured    -layer  86 ( 45.83 nm) nominal: nominal 0.0596 %, resolved 0.3011 %, highest 13.77 %
+cured    -layer  86 ( 45.83 nm) pole   : nominal 0.0747 %, resolved 0.0715 %, highest 1.01 %

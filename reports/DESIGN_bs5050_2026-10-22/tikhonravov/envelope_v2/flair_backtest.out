@@ -1,0 +1,43 @@
+[E] cissoid_record_0p01375.csv base 0.013745 N 50; 180 singles, Spearman vs full: raw 0.62 gn 0.71 sp10 0.92 sp30 0.97
+  single 10L (from M, OT 951): full MF 0.01478; rank among 180: raw 46 gn 62 sp10 26 sp30 38 full 45
+  single 11T (from H, OT 869): full MF 0.01430; rank among 180: raw 37 gn 52 sp10 19 sp30 28 full 31
+  best single 43T full 0.01375
+  winner 10L 11T: rank among 15750 size-2 candidates: raw 1113 gn 5388 sp10 1 sp30 1 additive-singles 1095 (216 s)
+[G] cissoid_record_0p01316.csv base 0.013158 N 50; 180 singles, Spearman vs full: raw 0.62 gn 0.70 sp10 0.91 sp30 0.95
+  single 46L (from F, OT 335): full MF 0.01411; rank among 180: raw 90 gn 44 sp10 91 sp30 52 full 44
+  single 49L (from F, OT 72): full MF 0.01342; rank among 180: raw 93 gn 77 sp10 37 sp30 39 full 18
+  best single 43T full 0.01316
+  winner 46L 49L: rank among 15750 size-2 candidates: raw 3756 gn 714 sp10 2602 sp30 491 additive-singles 836 (430 s)
+[I] cissoid_record_0p01299.csv base 0.012986 N 50; 180 singles, Spearman vs full: raw 0.57 gn 0.74 sp10 0.89 sp30 0.96
+  single 24M (from B, OT 142): full MF 0.01316; rank among 180: raw 70 gn 18 sp10 8 sp30 11 full 16
+  single 26T (from M, OT 707): full MF 0.01351; rank among 180: raw 99 gn 76 sp10 56 sp30 28 full 33
+  best single 10F full 0.01298
+  winner 24M 26T: rank among 15750 size-2 candidates: raw 4398 gn 4282 sp10 337 sp30 5 additive-singles 460 (642 s)
+[J] recon_0p01289 base 0.040555 N 50; 180 singles, Spearman vs full: raw 0.63 gn 0.59 sp10 0.76 sp30 0.84
+  single 40L (from F, OT 93): full MF 0.04024; rank among 180: raw 99 gn 43 sp10 28 sp30 13 full 19
+  single 43B (from H, OT 14): full MF 0.02963; rank among 180: raw 109 gn 52 sp10 107 sp30 65 full 1
+  best single 43B full 0.02963
+  winner 40L 43B: rank among 15750 size-2 candidates: raw 6887 gn 963 sp10 3061 sp30 556 additive-singles 39 (864 s)
+[D] cissoid_record_0p01379.csv base 0.013792 N 50; 180 singles, Spearman vs full: raw 0.60 gn 0.67 sp10 0.90 sp30 0.95
+  single 14T (from M, OT 367): full MF 0.01375; rank among 180: raw 25 gn 4 sp10 1 sp30 1 full 1
+  single 42F (from L, OT 244): full MF 0.01379; rank among 180: raw 89 gn 17 sp10 21 sp30 3 full 3
+  single 43H (from T, OT 34): full MF 0.01379; rank among 180: raw 100 gn 38 sp10 16 sp30 2 full 2
+  best single 14T full 0.01375
+  winner 14T 42F 43H: rank among 20001 size-3 candidates: raw 3893 gn 28 sp10 3 sp30 3 additive-singles 1 (1134 s)
+[C] cissoid_record_force2.csv base 0.014078 N 50; 180 singles, Spearman vs full: raw 0.63 gn 0.65 sp10 0.89 sp30 0.96
+  single 10M (from T, OT 931): full MF 0.01418; rank among 180: raw 40 gn 55 sp10 10 sp30 9 full 11
+  single 22B (from L, OT 512): full MF 0.01416; rank among 180: raw 63 gn 91 sp10 39 sp30 15 full 8
+  single 42L (from F, OT 238): full MF 0.01412; rank among 180: raw 89 gn 8 sp10 7 sp30 3 full 6
+  single 43T (from M, OT 70): full MF 0.01408; rank among 180: raw 133 gn 63 sp10 85 sp30 39 full 3
+  best single 6T full 0.01406
+  winner 10M 22B 42L 43T: rank among 20001 size-4 candidates: raw 4044 gn 199 sp10 941 sp30 493 additive-singles 3 (1403 s)
+[F] cissoid_record_exhaustive.csv base 0.013197 N 50; 180 singles, Spearman vs full: raw 0.61 gn 0.71 sp10 0.92 sp30 0.98
+  single 33H (from T, OT 210): full MF 0.01316; rank among 180: raw 104 gn 4 sp10 31 sp30 12 full 1
+  best single 33H full 0.01316
+[A] cissoid_record_0p01633.csv base 0.016326 N 50; 170 singles, Spearman vs full: raw 0.54 gn 0.76 sp10 0.89 sp30 0.95
+  single 1T (from H, OT 5411): full MF 0.01618; rank among 170: raw 6 gn 2 sp10 1 sp30 1 full 1
+  single 15L (from M, OT 384): full MF 0.01671; rank among 170: raw 25 gn 5 sp10 26 sp30 29 full 33
+  single 18B (from M, OT 149): full MF 0.01695; rank among 170: raw 44 gn 45 sp10 25 sp30 32 full 40
+  single 28L (from F, OT 550): full MF 0.01629; rank among 170: raw 61 gn 11 sp10 8 sp30 3 full 3
+  single 33T (from H, OT 206): full MF 0.01634; rank among 170: raw 98 gn 20 sp10 52 sp30 13 full 9
+  best single 1T full 0.01618

@@ -1,0 +1,9 @@
+start 15:16:44
+start (polished on 0.005 nm): 1 nm 0.0445 %, 0.005 nm 0.0347 %, 0.001 nm 0.0347 %, 0.0002 nm 0.0347 % (1 s)
+    peak  422.3996 nm    1.67 %  FWHM 0.0178 nm
+polish on 0.001 nm: 1200 evaluations, 1111 Jacobians, status 0 (The maximum number of function evaluations is exceeded.), 3376 s
+polished on 0.001 nm, budget 1200: 1 nm 0.0427 %, 0.005 nm 0.0231 %, 0.001 nm 0.0231 %, 0.0002 nm 0.0231 % (3382 s)
+    peak  422.4038 nm    1.21 %  FWHM 0.0192 nm
+highest peak 1.21 % at 422.4038 nm, FWHM 0.0192 nm, max |E|^2 11
+exit=0
+end 16:13:17

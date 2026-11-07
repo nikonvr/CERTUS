@@ -1,0 +1,12 @@
+z650_A start: MF 0.03405 (weight '645-655:30'), oracle 0.01935
+z650_A round 1: MF 0.01991, oracle 0.01843, N 50, M 6
+z650_A round 2: MF 0.02015, oracle 0.01870, N 49, M 6
+z650_A round 3: MF 0.02024, oracle 0.01877, N 49, M 6
+z650_A round 4: MF 0.02024, oracle 0.01877, N 49, M 6
+z650_A end: MF 0.01991, oracle 0.01843, N 50, 195 s
+z650_B start: MF 0.01658 (weight ''), oracle 0.01593
+z650_B round 1: MF 0.01658, oracle 0.01593, N 50, M 6
+z650_B round 2: MF 0.01658, oracle 0.01593, N 50, M 6
+z650_B round 3: MF 0.01658, oracle 0.01593, N 50, M 6
+z650_B round 4: MF 0.01658, oracle 0.01593, N 50, M 6
+z650_B end: MF 0.01658, oracle 0.01593, N 50, 182 s

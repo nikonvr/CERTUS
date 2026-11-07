@@ -1,0 +1,6 @@
+as re-created: sigma 0.2: nominal 0.4352 %, resolved 0.5095 %, sigma 0.5: nominal 2.3974 %, resolved 2.1002 %
+   sigma 0.2: draws with resolved MF > 2 x nominal: 43/300
+   sigma 0.5: draws with resolved MF > 2 x nominal: 0/300
+after the pole charge: sigma 0.2: nominal 0.4316 %, resolved 0.3631 %, sigma 0.5: nominal 2.3203 %, resolved 1.9970 %
+   sigma 0.2: draws with resolved MF > 2 x nominal: 0/300
+   sigma 0.5: draws with resolved MF > 2 x nominal: 0/300

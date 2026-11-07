@@ -1,0 +1,12 @@
+16:33:26 start 0.012076 (resolved), nominal 0.018792, N 50
+16:55:11   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01213 sp30 0.01209 full 0.01209 [47M 2B] vs 0.01208 (859 s)
+17:24:07   N2: 17575 -> 4393 -> 878 full; best sp10 0.01213 sp30 0.01208 full 0.01199 [34T 42L] vs 0.01208 (1736 s)
+17:24:07   descent: 0.01199 [34T 42L]
+17:24:08 gain 0.011991 (resolved), nominal 0.018783 [34T 42L]
+18:06:14   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01205 sp30 0.01202 full 0.01200 [47H 2B] vs 0.01199 (1774 s)
+18:44:37   N2: 17575 -> 4393 -> 878 full; best sp10 0.01205 sp30 0.01202 full 0.01200 [2B 47H] vs 0.01199 (2303 s)
+18:44:37   descent: 0.01199 [47H]
+18:44:38 gain 0.011988 (resolved), nominal 0.018765 [47H]
+18:58:45   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01200 sp30 0.01200 full 0.01200 [47T 2B] vs 0.01199 (575 s)
+19:26:37   N2: 17575 -> 4393 -> 878 full; best sp10 0.01200 sp30 0.01200 full 0.01200 [2B 47T] vs 0.01199 (1672 s)
+19:48:57   stopped by owner order during BEAM (process tree killed); best = last row of resolved_cissoid_descent.csv, 0.011988 resolved [47H]

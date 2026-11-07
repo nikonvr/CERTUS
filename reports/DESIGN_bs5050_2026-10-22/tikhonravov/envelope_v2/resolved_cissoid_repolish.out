@@ -1,0 +1,3 @@
+306 designs repolished on 3001 points (268 s)
+  best by mf_nominal_before: N 50, nominal 0.009210 -> 0.018796, resolved 0.021876 -> 0.012397 (cissoid_elites.csv)
+  best by mf_resolved_after: N 50, nominal 0.009278 -> 0.018792, resolved 0.021924 -> 0.012076 (cissoid_elites.csv)

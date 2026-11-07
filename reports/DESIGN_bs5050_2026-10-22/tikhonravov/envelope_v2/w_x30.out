@@ -1,0 +1,12 @@
+x30_A start: MF 0.04784 (weight '495-505:30,645-655:30'), oracle 0.02158
+x30_A round 1: MF 0.03878, oracle 0.02375, N 50, M 6
+x30_A round 2: MF 0.03878, oracle 0.02375, N 50, M 6
+x30_A round 3: MF 0.03878, oracle 0.02375, N 50, M 6
+x30_A round 4: MF 0.03878, oracle 0.02375, N 50, M 6
+x30_A end: MF 0.03878, oracle 0.02375, N 50, 165 s
+x30_B start: MF 0.01896 (weight ''), oracle 0.01843
+x30_B round 1: MF 0.01785, oracle 0.01749, N 49, M 6
+x30_B round 2: MF 0.01785, oracle 0.01749, N 49, M 6
+x30_B round 3: MF 0.01785, oracle 0.01749, N 49, M 6
+x30_B round 4: MF 0.01785, oracle 0.01749, N 49, M 6
+x30_B end: MF 0.01785, oracle 0.01749, N 49, 202 s

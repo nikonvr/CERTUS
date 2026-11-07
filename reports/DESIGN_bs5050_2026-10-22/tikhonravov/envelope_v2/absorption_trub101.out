@@ -1,0 +1,8 @@
+k_H 0: peak 402.5252 nm T  61.36 %  FWHM 0.0106 nm  A  -0.00 %
+k_H 0: peak 422.4040 nm T   6.38 %  FWHM 0.0112 nm  A   0.00 %
+k_H 1e-05: peak 402.5252 nm T  49.17 %  FWHM 0.0120 nm  A   7.11 %
+k_H 1e-05: peak 422.4040 nm T   5.04 %  FWHM 0.0128 nm  A   0.66 %
+k_H 0.0001: peak 402.5252 nm T  13.00 %  FWHM 0.0234 nm  A  18.91 %
+k_H 0.0001: peak 422.4040 nm T   1.26 %  FWHM 0.0256 nm  A   1.79 %
+k_H 0.0005: peak 402.5252 nm T   1.29 %  FWHM 0.0746 nm  A   9.83 %
+k_H 0.0005: peak 422.4040 nm T   0.12 %  FWHM 0.0830 nm  A   1.74 %

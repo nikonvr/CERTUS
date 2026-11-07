@@ -64,6 +64,16 @@ TARGET = os.environ.get("SEARCH_TARGET", "bs5050")
 #: starts of a target other than the 50/50: SEARCH_STARTS = random (default), bare (one layer, grown by the moves),
 #: qw (quarter-wave stacks with random half- or full-wave cavities) or none (CSV designs only)
 STARTS = os.environ.get("SEARCH_STARTS", "random")
+
+def band_values(x: np.ndarray, t) -> np.ndarray:
+    """Target of a band on the wavelengths x: a constant, "semi" (SEARCH_TARGET=semicircle) or "M" (mshape)."""
+    if t == "semi":
+        return 0.5 * np.sqrt(np.clip(1.0 - ((x - 550.0) / 50.0) ** 2, 0.0, None))
+    if t == "M":  # SEARCH_TARGET=mshape: 0 at 450, 0.5 at 500, 0.25 at 550, 0.5 at 600, 0 at 650 nm, linear between
+        return np.interp(x, [450.0, 500.0, 550.0, 600.0, 650.0], [0.0, 0.5, 0.25, 0.5, 0.0])
+    return np.full(len(x), float(t))
+
+
 if TARGET == "threeline":
     _bands = [(445, 455, 1.0), (505, 515, 1.0), (635, 645, 1.0), (400, 440, 0.0), (460, 500, 0.0), (520, 630, 0.0),
               (650, 700, 0.0)]
@@ -98,6 +108,73 @@ elif TARGET == "ar":
     ZB, OB = np.zeros(len(WLS)), np.ones(len(WLS))
     N_MAX = int(os.environ.get("SEARCH_NMAX", "30"))
     TAG = "ar_"
+#: SEARCH_TARGET=notch (2026-11-01, owner: the simple filter of the method paper on hidden resonances): T = 0 on a 20 nm
+#: band centred at the geometric middle of 400-1200 nm (sqrt(400 x 1200) = 692.8 nm: 683-702 nm), T = 1 at 400-672 and
+#: 713-1200 nm, the 10 nm on either side of the notch left free, 1 nm step, uniform weights, same materials and substrate.
+elif TARGET == "notch":
+    _bands = [(400, 672, 1.0), (683, 702, 0.0), (713, 1200, 1.0)]
+    WLS = np.concatenate([np.arange(a, b + 1, dtype=float) for a, b, _t in _bands])
+    TGT = np.concatenate([np.full(b - a + 1, t) for a, b, t in _bands])
+    K0 = 2.0 * np.pi / WLS
+    SQW = np.full(len(WLS), np.sqrt(1.0 / len(WLS)))
+    NSUB = np.full(len(WLS), N_SUB)
+    ZB, OB = np.zeros(len(WLS)), np.ones(len(WLS))
+    N_MAX = int(os.environ.get("SEARCH_NMAX", "160"))
+    TAG = "notch_" + ("" if STARTS == "random" else f"{STARTS}_")
+#: SEARCH_TARGET=semicircle (2026-11-01 evening, owner: an arbitrary target for the method paper, in place of the notch):
+#: T = 0 at 400-499 nm, a half circle at 500-600 nm rising to T = 0.5 at 550 nm, T = 0 at 601-700 nm, 1 nm step, uniform
+#: weights, same materials and substrate. A band whose target is "semi" takes band_values below.
+elif TARGET == "semicircle":
+    _bands = [(400, 499, 0.0), (500, 600, "semi"), (601, 700, 0.0)]
+    WLS = np.concatenate([np.arange(a, b + 1, dtype=float) for a, b, _t in _bands])
+    TGT = np.concatenate([band_values(np.arange(a, b + 1, dtype=float), t) for a, b, t in _bands])
+    K0 = 2.0 * np.pi / WLS
+    SQW = np.full(len(WLS), np.sqrt(1.0 / len(WLS)))
+    NSUB = np.full(len(WLS), N_SUB)
+    ZB, OB = np.zeros(len(WLS)), np.ones(len(WLS))
+    N_MAX = int(os.environ.get("SEARCH_NMAX", "120"))
+    TAG = "semi_" + ("" if STARTS == "random" else f"{STARTS}_")
+#: SEARCH_TARGET=mshape (2026-11-01 evening, owner: a spectral M, zero on the edges): T = 0 at 400-449 nm, an M at
+#: 450-650 nm (band_values "M"), T = 0 at 651-700 nm, 1 nm step, uniform weights, same materials and substrate.
+elif TARGET == "mshape":
+    _bands = [(400, 449, 0.0), (450, 650, "M"), (651, 700, 0.0)]
+    WLS = np.concatenate([np.arange(a, b + 1, dtype=float) for a, b, _t in _bands])
+    TGT = np.concatenate([band_values(np.arange(a, b + 1, dtype=float), t) for a, b, t in _bands])
+    K0 = 2.0 * np.pi / WLS
+    SQW = np.full(len(WLS), np.sqrt(1.0 / len(WLS)))
+    NSUB = np.full(len(WLS), N_SUB)
+    ZB, OB = np.zeros(len(WLS)), np.ones(len(WLS))
+    N_MAX = int(os.environ.get("SEARCH_NMAX", "120"))
+    TAG = "mshape_" + ("" if STARTS == "random" else f"{STARTS}_")
+#: SEARCH_TARGET=highpass (2026-11-01 evening, owner: a simple long-wave pass filter): T = 0 at 400-540 nm, T = 1 at
+#: 560-700 nm, the 20 nm between left free, 1 nm step, uniform weights, same materials and substrate.
+elif TARGET == "highpass":
+    _bands = [(400, 540, 0.0), (560, 700, 1.0)]
+    WLS = np.concatenate([np.arange(a, b + 1, dtype=float) for a, b, _t in _bands])
+    TGT = np.concatenate([band_values(np.arange(a, b + 1, dtype=float), t) for a, b, t in _bands])
+    K0 = 2.0 * np.pi / WLS
+    SQW = np.full(len(WLS), np.sqrt(1.0 / len(WLS)))
+    NSUB = np.full(len(WLS), N_SUB)
+    ZB, OB = np.zeros(len(WLS)), np.ones(len(WLS))
+    N_MAX = int(os.environ.get("SEARCH_NMAX", "120"))
+    TAG = "highpass_" + ("" if STARTS == "random" else f"{STARTS}_")
+#: env SEARCH_POINTS / SEARCH_STEP (2026-11-01, owner: each problem optimized on its nominal grid and on a resolved one;
+#: unset, the grids above): SEARCH_POINTS=K puts the 50/50 on K points from 400 to 1200 nm (80: the authors' Eq. 3),
+#: SEARCH_STEP=h samples the three-line bands every h nm; the output files get a pts{K}_ or step{h}_ prefix.
+POINTS = int(os.environ.get("SEARCH_POINTS", "0") or 0)
+STEP_NM = float(os.environ.get("SEARCH_STEP", "0") or 0.0)
+if POINTS and TARGET == "bs5050":
+    WLS, TGT, TAG = np.linspace(400.0, 1200.0, POINTS), np.full(POINTS, 0.5), f"pts{POINTS}_" + TAG
+elif STEP_NM and TARGET in ("threeline", "notch"):
+    _w = [np.linspace(a, b, round((b - a) / STEP_NM) + 1) for a, b, _t in _bands]
+    WLS = np.concatenate(_w)
+    TGT = np.concatenate([band_values(x, t) for x, (_a, _b, t) in zip(_w, _bands, strict=True)])
+    TAG = f"step{STEP_NM:g}_" + TAG
+if POINTS or STEP_NM:
+    K0 = 2.0 * np.pi / WLS
+    SQW = np.full(len(WLS), np.sqrt(1.0 / len(WLS)))
+    NSUB = np.full(len(WLS), N_SUB)
+    ZB, OB = np.zeros(len(WLS)), np.ones(len(WLS))
 
 
 def total_ot(seq: str, d: np.ndarray) -> float:
@@ -284,11 +361,38 @@ def moves(seq: str, d: np.ndarray, floor: float, rng: np.random.Generator):
     yield seq, d * float(rng.uniform(1.03, 1.10))
 
 
+#: env SEARCH_NO_LSUB=1 (2026-11-02, owner: "a low-index layer next to the substrate does nothing", designs with a thick
+#: one are refused): after every polish, a substrate-side L layer, or an H layer under 10 nm that only separates such an
+#: L layer from the substrate, is dropped and the design polished again; a start beginning with L loses that layer.
+#: Unset: unchanged. Output files get a nolsub_ prefix.
+NO_LSUB = os.environ.get("SEARCH_NO_LSUB", "0") == "1"
+if NO_LSUB:
+    TAG = "nolsub_" + TAG
+
+
+def strip_lsub(seq: str, d: np.ndarray) -> tuple[str, np.ndarray, bool]:
+    """Drop substrate-side L layers (and H layers under 10 nm before them); (sequence, thicknesses, changed)."""
+    changed = False
+    while len(seq) > 2 and (seq[0] == "L" or (d[0] < 10.0 and seq[1] == "L")):
+        seq, d, changed = seq[1:], np.asarray(d[1:], dtype=float), True
+    return seq, d, changed
+
+
 def start_eval(task):
     """Polish of one start: (rmse before, thicknesses, rmse after)."""
     seq, d, floor = task
     x, r = polish(seq, d, floor)
     return rmse(seq, d), x, r
+
+
+#: env SEARCH_POLES=K (2026-11-01 late evening, owner: synthesis with the pole charge, "B", against synthesis on the
+#: grid then cure, "A"): after the nominal polish of each move, K rounds of threeline_track: resonances found from the
+#: complex plane (TRACK_DETECT=complex), each charged by its height at its pole, 30 trust-region iterations; the move is
+#: then ranked by the tracked merit sqrt(rmse^2 + sum(height^2) / L) (the nominal points plus one point per resonance).
+#: Unset or 0: the nominal search, unchanged. Output files get a poles{K}_ prefix.
+POLES = int(os.environ.get("SEARCH_POLES", "0") or 0)
+if POLES:
+    TAG = f"poles{POLES}_" + TAG
 
 
 def move_eval(task):
@@ -298,6 +402,26 @@ def move_eval(task):
     s3, x3 = normalize(s2, x, max(floor, DEAD))
     if s3 != s2:
         x3, r = polish(s3, x3, floor)
+    if NO_LSUB:
+        s4, x4, changed = strip_lsub(s3, x3)
+        if changed:
+            s3, x3 = normalize(s4, x4, max(floor, DEAD))
+            x3, r = polish(s3, x3, floor)
+    if POLES:
+        import threeline_track as tt  # late: it imports this module
+
+        x0 = x3.copy()
+        try:
+            for _ in range(POLES):
+                pk = tt.poles(s3, x3)
+                if not pk:
+                    break
+                x3 = np.maximum(tt.polish("height", s3, x3, pk), floor)
+            pk = tt.poles(s3, x3)
+            r = float(np.sqrt(rmse(s3, x3) ** 2 + sum(q[2] ** 2 for q in pk) / len(WLS)))
+        except (np.linalg.LinAlgError, ValueError):  # 2026-11-02: a failed SVD stopped a whole search; keep the move
+            x3, pk = x0, tt.poles(s3, x0)
+            r = float(np.sqrt(rmse(s3, x3) ** 2 + sum(q[2] ** 2 for q in pk) / len(WLS)))
     return s3, x3, r
 
 
@@ -335,6 +459,8 @@ def main() -> None:
         for n in range(int(n_lo), int(n_hi) + 1, 5):
             for _ in range(per):
                 first = "HL"[int(rng.integers(2))]
+                if NO_LSUB:  # the draw is kept so that the other draws do not change
+                    first = "H"
                 seq = "".join(first if i % 2 == 0 else other(first) for i in range(n))
                 ot = rng.uniform(t_lo, t_hi) / n * np.exp(0.4 * rng.standard_normal(n))
                 starts.append((seq, ot / np.array([N_IDX[m] for m in seq])))
@@ -350,6 +476,8 @@ def main() -> None:
         for n in range(q_lo, q_hi + 1, 5):
             for _ in range(q_per):
                 first = "HL"[int(rng.integers(2))]
+                if NO_LSUB:  # the draw is kept so that the other draws do not change
+                    first = "H"
                 seq = "".join(first if i % 2 == 0 else other(first) for i in range(n))
                 qw = np.ones(n)
                 qw[rng.choice(n, size=int(rng.integers(3, 10)), replace=False)] = rng.choice([2.0, 4.0], size=1)[0]

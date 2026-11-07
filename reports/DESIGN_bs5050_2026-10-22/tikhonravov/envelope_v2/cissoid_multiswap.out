@@ -1,0 +1,7 @@
+start 301-point 0.01408
+0 singles kept (search 0.01439); 725 combos, best search 0.01415
+NEW BEST 43T 22B 42L 10M: 301-point 0.01379, oracle 0.01379
+0 singles kept (search 0.01415); 670 combos, best search 0.01414
+NEW BEST 43H 42F 14T: 301-point 0.01375, oracle 0.01375
+1 singles kept (search 0.01414); 670 combos, best search 0.01415
+stop: best 0.01375 (43T 14T) vs 0.01375

@@ -1,0 +1,6 @@
+mshape, grid: 94 layers, source 0.0808 %; Code 1 0.0808 % on 0.001 nm, 0.0808 % on 0.0002 nm
+mshape, grid, cured: 96 layers, source 0.0795 %; Code 1 0.0795 % on 0.001 nm, 0.0795 % on 0.0002 nm
+mshape, poles charged: 94 layers, source 0.0797 %; Code 1 0.0796 % on 0.001 nm, 0.0796 % on 0.0002 nm
+highpass, grid: 93 layers, source 0.0429 %; Code 1 0.0429 % on 0.001 nm, 0.0429 % on 0.0002 nm
+highpass, grid, cured: 98 layers, source 0.0035 %; Code 1 0.0035 % on 0.001 nm, 0.0035 % on 0.0002 nm
+highpass, poles charged: 98 layers, source 0.0066 %; Code 1 0.0066 % on 0.001 nm, 0.0066 % on 0.0002 nm

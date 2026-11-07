@@ -1,0 +1,13 @@
+45 deg s: steps at [409.0, 459.0, 503.0, 520.0, 543.0, 593.0, 694.0]
+  peak 402.8605: pole 402.8571 nm, FWHM 0.1214 nm; nearest step 409.0 (6.14 nm away); excess phase over +-3 nm 1.73 pi, its maximum 1.182 rad/nm (threshold 0.25)
+  peak 457.1675: pole 457.1650 nm, FWHM 0.1001 nm; nearest step 459.0 (1.84 nm away); excess phase over +-3 nm 1.82 pi, its maximum 1.210 rad/nm (threshold 0.25)
+  peak 459.3540: pole 459.3540 nm, FWHM 0.3351 nm; nearest step 459.0 (0.35 nm away); excess phase over +-3 nm 2.34 pi, its maximum 1.210 rad/nm (threshold 0.25)
+  peak 592.8559: pole 592.8559 nm, FWHM 0.1112 nm; nearest step 593.0 (0.14 nm away); excess phase over +-3 nm 1.81 pi, its maximum 1.069 rad/nm (threshold 0.25)
+  peak 595.2020: pole 595.2045 nm, FWHM 0.1609 nm; nearest step 593.0 (2.20 nm away); excess phase over +-3 nm 1.93 pi, its maximum 1.069 rad/nm (threshold 0.25)
+  peak 599.1675: pole 599.1681 nm, FWHM 0.0547 nm; nearest step 593.0 (6.17 nm away); excess phase over +-3 nm 1.28 pi, its maximum 0.859 rad/nm (threshold 0.25)
+  peak 694.3525: pole 694.3525 nm, FWHM 0.0074 nm; nearest step 694.0 (0.35 nm away); excess phase over +-3 nm 0.83 pi, its maximum 0.759 rad/nm (threshold 0.25)
+  poles narrower than 0.5 nm from starts every 0.25 nm over +-3 nm of each step: [np.float64(457.165), np.float64(459.354), np.float64(503.299), np.float64(592.856), np.float64(595.205), np.float64(694.353)]
+45 deg p: steps at [412.0, 478.0, 505.0, 568.0, 672.0, 700.0]
+  peak 659.4930: pole 659.4927 nm, FWHM 0.0719 nm; nearest step 672.0 (12.51 nm away); excess phase over +-3 nm 0.78 pi, its maximum 0.695 rad/nm (threshold 0.25)
+  peak 672.3540: pole 672.3540 nm, FWHM 0.1549 nm; nearest step 672.0 (0.35 nm away); excess phase over +-3 nm 0.75 pi, its maximum 0.695 rad/nm (threshold 0.25)
+  poles narrower than 0.5 nm from starts every 0.25 nm over +-3 nm of each step: [np.float64(672.354)]

@@ -1,0 +1,11 @@
+K 10 of 36 dielectrics, steps 8; relaxed layers [26, 28, 33, 35, 39, 40, 42, 45, 46, 49]
+mu 0.0e+00: MF 0.01373, max |n - allowed| 0.005 (1 s)
+mu 1.0e-06: MF 0.01373, max |n - allowed| 0.005 (1 s)
+mu 7.2e-06: MF 0.01373, max |n - allowed| 0.005 (1 s)
+mu 5.2e-05: MF 0.01373, max |n - allowed| 0.005 (1 s)
+mu 3.7e-04: MF 0.01373, max |n - allowed| 0.006 (1 s)
+mu 2.7e-03: MF 0.01373, max |n - allowed| 0.006 (1 s)
+mu 1.9e-02: MF 0.01374, max |n - allowed| 0.002 (1 s)
+mu 1.4e-01: MF 0.01374, max |n - allowed| 0.000 (2 s)
+mu 1.0e+00: MF 0.01375, max |n - allowed| 0.000 (2 s)
+snap: 0 changed []; 301-point polish 0.01375, oracle 0.01375, N 50 (2 s)

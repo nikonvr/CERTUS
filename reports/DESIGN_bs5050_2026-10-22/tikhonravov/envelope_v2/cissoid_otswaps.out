@@ -1,0 +1,13 @@
+start 0.01316; 12 layers OT < 200 nm, 60 single swaps
+size 1: 60/60, best 0.01316 (start 0.01316, 13 s)
+size 2: 1650/1650, best 0.01316 (start 0.01316, 161 s)
+size 3: 3000/27500, best 0.01316 (start 0.01316, 421 s)
+size 3: 6000/27500, best 0.01316 (start 0.01316, 685 s)
+size 3: 9000/27500, best 0.01316 (start 0.01316, 950 s)
+size 3: 12000/27500, best 0.01316 (start 0.01316, 1210 s)
+size 3: 15000/27500, best 0.01316 (start 0.01316, 1478 s)
+size 3: 18000/27500, best 0.01316 (start 0.01316, 1741 s)
+size 3: 21000/27500, best 0.01316 (start 0.01316, 2019 s)
+size 3: 24000/27500, best 0.01316 (start 0.01316, 2289 s)
+size 3: 27000/27500, best 0.01316 (start 0.01316, 2559 s)
+size 3: 27500/27500, best 0.01316 (start 0.01316, 2607 s)

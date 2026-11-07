@@ -1,0 +1,29 @@
+step 0: oracle 0.01297, N 50, left ['B', 'L', 'T'] (14 layers)
+  10F
+step 1: oracle 0.01289, N 50, left ['B', 'L', 'T'] (13 layers)
+  35M
+step 2: oracle 0.01292, N 50, left ['B', 'L', 'T'] (12 layers)
+  44F
+step 3: oracle 0.01295, N 50, left ['B', 'L', 'T'] (11 layers)
+  47H
+step 4: oracle 0.01305, N 50, left ['B', 'L', 'T'] (10 layers)
+  49F
+step 5: oracle 0.01303, N 50, left ['B', 'L', 'T'] (9 layers)
+  18M
+step 6: oracle 0.01304, N 50, left ['B', 'L', 'T'] (8 layers)
+  11M
+step 7: oracle 0.01335, N 50, left ['B', 'L', 'T'] (7 layers)
+  1H
+step 8: oracle 0.01354, N 50, left ['B', 'L', 'T'] (6 layers)
+  14M
+step 9: oracle 0.01379, N 50, left ['B', 'L', 'T'] (5 layers)
+  22M
+step 10: oracle 0.01399, N 50, left ['L', 'T'] (4 layers)
+  21H
+step 11: oracle 0.01381, N 50, left ['L', 'T'] (3 layers)
+  28F
+step 12: oracle 0.01504, N 50, left ['L', 'T'] (2 layers)
+  46F
+step 13: oracle 0.01660, N 50, left ['T'] (1 layers)
+  26H
+step 14: oracle 0.02459, N 50, left [] (0 layers)

@@ -1,0 +1,46 @@
+(1) resonance 402.5253 nm: grid point 402 nm T 6.87e-05, Lorentzian tail 6.61e-05
+(1) resonance 402.5253 nm: grid point 403 nm T 8.00e-05, Lorentzian tail 8.09e-05
+(1) resonance 422.404 nm: grid point 422 nm T 1.27e-05, Lorentzian tail 1.29e-05
+(1) resonance 422.404 nm: grid point 423 nm T 6.10e-06, Lorentzian tail 5.94e-06
+(1) MF residual RMS of the design on the grid: 1.28e-04
+(2) p  2: N  12, OT   1200 nm, pole 400.0000 nm, FWHM 1.012e+01 nm, FWHM / (lambda rho^(-2 OT/lambda)) = 0.459
+(2) p  3: N  16, OT   1600 nm, pole 400.0000 nm, FWHM 3.671e+00 nm, FWHM / (lambda rho^(-2 OT/lambda)) = 0.437
+(2) p  4: N  20, OT   2000 nm, pole 400.0000 nm, FWHM 1.372e+00 nm, FWHM / (lambda rho^(-2 OT/lambda)) = 0.429
+(2) p  5: N  24, OT   2400 nm, pole 400.0000 nm, FWHM 5.184e-01 nm, FWHM / (lambda rho^(-2 OT/lambda)) = 0.426
+(2) p  6: N  28, OT   2800 nm, pole 400.0000 nm, FWHM 1.968e-01 nm, FWHM / (lambda rho^(-2 OT/lambda)) = 0.424
+(2) p  7: N  32, OT   3200 nm, pole 400.0000 nm, FWHM 7.486e-02 nm, FWHM / (lambda rho^(-2 OT/lambda)) = 0.424
+(2) p  8: N  36, OT   3600 nm, pole 400.0000 nm, FWHM 2.849e-02 nm, FWHM / (lambda rho^(-2 OT/lambda)) = 0.424
+(2) p  9: N  40, OT   4000 nm, pole 400.0000 nm, FWHM 1.084e-02 nm, FWHM / (lambda rho^(-2 OT/lambda)) = 0.424
+(2) p 10: N  44, OT   4400 nm, pole 400.0000 nm, FWHM 4.128e-03 nm, FWHM / (lambda rho^(-2 OT/lambda)) = 0.424
+(2) p 11: N  48, OT   4800 nm, pole 400.0000 nm, FWHM 1.572e-03 nm, FWHM / (lambda rho^(-2 OT/lambda)) = 0.424
+(2) p 12: N  52, OT   5200 nm, pole 400.0000 nm, FWHM 5.983e-04 nm, FWHM / (lambda rho^(-2 OT/lambda)) = 0.424
+(2) p 13: N  56, OT   5600 nm, pole 400.0000 nm, FWHM 2.278e-04 nm, FWHM / (lambda rho^(-2 OT/lambda)) = 0.424
+(2) p 14: N  60, OT   6000 nm, pole 400.0000 nm, FWHM 8.673e-05 nm, FWHM / (lambda rho^(-2 OT/lambda)) = 0.424
+(2) p 15: N  64, OT   6400 nm, pole 400.0000 nm, FWHM 3.302e-05 nm, FWHM / (lambda rho^(-2 OT/lambda)) = 0.424
+(3) N  40 OT    4720 nm  nominal 3.3462 %  resolved 3.4327 %  ratio 1.03
+(3) N  41 OT    5100 nm  nominal 2.7973 %  resolved 2.2899 %  ratio 0.82
+(3) N  42 OT    5280 nm  nominal 2.6342 %  resolved 3.3496 %  ratio 1.27
+(3) N  44 OT    6150 nm  nominal 2.0137 %  resolved 1.5927 %  ratio 0.79
+(3) N  45 OT    6300 nm  nominal 1.5839 %  resolved 1.2428 %  ratio 0.78
+(3) N  48 OT    9059 nm  nominal 1.4194 %  resolved 1.1453 %  ratio 0.81
+(3) N  49 OT    6410 nm  nominal 1.2133 %  resolved 0.9600 %  ratio 0.79
+(3) N  53 OT    6610 nm  nominal 0.9357 %  resolved 0.9004 %  ratio 0.96
+(3) N  55 OT    6604 nm  nominal 0.9218 %  resolved 0.8824 %  ratio 0.96
+(3) N  56 OT    6900 nm  nominal 0.8298 %  resolved 1.3760 %  ratio 1.66
+(3) N  57 OT    7701 nm  nominal 0.7029 %  resolved 1.4669 %  ratio 2.09
+(3) N  59 OT    7818 nm  nominal 0.6561 %  resolved 1.4910 %  ratio 2.27
+(3) N  60 OT    7980 nm  nominal 0.6407 %  resolved 1.8742 %  ratio 2.93
+(3) N  61 OT    8470 nm  nominal 0.6062 %  resolved 0.8741 %  ratio 1.44
+(3) N  63 OT    8320 nm  nominal 0.4713 %  resolved 1.6723 %  ratio 3.55
+(3) N  64 OT    8264 nm  nominal 0.4703 %  resolved 0.8409 %  ratio 1.79
+(3) N  65 OT    8364 nm  nominal 0.3610 %  resolved 0.7178 %  ratio 1.99
+(3) N  67 OT    8756 nm  nominal 0.3045 %  resolved 0.8989 %  ratio 2.95
+(3) N  68 OT    9294 nm  nominal 0.2366 %  resolved 1.1630 %  ratio 4.92
+(3) N  70 OT    9508 nm  nominal 0.2311 %  resolved 0.8213 %  ratio 3.55
+(3) N  71 OT   10870 nm  nominal 0.1774 %  resolved 0.6780 %  ratio 3.82
+(3) N  73 OT   10859 nm  nominal 0.1730 %  resolved 0.9289 %  ratio 5.37
+(3) N  75 OT   11190 nm  nominal 0.1516 %  resolved 0.5555 %  ratio 3.67
+(3) N  77 OT   11183 nm  nominal 0.1372 %  resolved 0.7338 %  ratio 5.35
+(3) N  78 OT   11451 nm  nominal 0.1361 %  resolved 0.7581 %  ratio 5.57
+(3) N  79 OT   11138 nm  nominal 0.1232 %  resolved 0.7178 %  ratio 5.82
+(3) N  80 OT   11407 nm  nominal 0.1208 %  resolved 0.7116 %  ratio 5.89

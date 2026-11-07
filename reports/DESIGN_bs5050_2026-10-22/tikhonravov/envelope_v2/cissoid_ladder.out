@@ -1,0 +1,3 @@
+start 0.01287; 36 dielectric layers, 53 ladder swaps
+size 1: 53/53, best 0.01287 (start 0.01287, 8 s)
+size 2: 1361/1361, best 0.01287 (start 0.01287, 96 s)

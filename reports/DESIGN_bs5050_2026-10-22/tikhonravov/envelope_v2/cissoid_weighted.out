@@ -1,0 +1,24 @@
+testA start: MF 0.03693 (weight '495-505:10,645-655:10'), oracle 0.02261
+testA round 1: MF 0.03113, oracle 0.02246, N 50, M 6
+testA round 2: MF 0.03113, oracle 0.02246, N 50, M 6
+testA round 3: MF 0.03113, oracle 0.02246, N 50, M 6
+testA round 4: MF 0.03113, oracle 0.02246, N 50, M 6
+testA end: MF 0.03113, oracle 0.02246, N 50, 64 s
+testB start: MF 0.01932 (weight ''), oracle 0.01902
+testB round 1: MF 0.01883, oracle 0.01878, N 50, M 6
+testB round 2: MF 0.01883, oracle 0.01878, N 50, M 6
+testB round 3: MF 0.01883, oracle 0.01878, N 50, M 6
+testB round 4: MF 0.01883, oracle 0.01878, N 50, M 6
+testB end: MF 0.01883, oracle 0.01878, N 50, 71 s
+ctrlA start: MF 0.01863 (weight ''), oracle 0.01859
+ctrlA round 1: MF 0.01824, oracle 0.01804, N 50, M 7
+ctrlA round 2: MF 0.02650, oracle 0.02599, N 49, M 6
+ctrlA round 3: MF 0.03087, oracle 0.03110, N 50, M 6
+ctrlA round 4: MF 0.03087, oracle 0.03109, N 50, M 6
+ctrlA end: MF 0.01824, oracle 0.01804, N 50, 64 s
+ctrlB start: MF 0.01824 (weight ''), oracle 0.01804
+ctrlB round 1: MF 0.01824, oracle 0.01804, N 50, M 7
+ctrlB round 2: MF 0.01824, oracle 0.01804, N 50, M 7
+ctrlB round 3: MF 0.01824, oracle 0.01804, N 50, M 7
+ctrlB round 4: MF 0.01824, oracle 0.01804, N 50, M 7
+ctrlB end: MF 0.01824, oracle 0.01804, N 50, 65 s

@@ -1,0 +1,8 @@
+start 0.01316; screen of 144, kept 10 (134 s)
+layer 16F +125: screen 0.01669 -> 0.01571 (554 s)
+layer 6F +500: screen 0.01786 -> 0.01626 (976 s)
+layer 4F +500: screen 0.01880 -> 0.01667 (1368 s)
+layer 2T +250: screen 0.02273 -> 0.01396 (1820 s)
+layer 2T +125: screen 0.02274 -> 0.01396 (2331 s)
+layer 5H +500: screen 0.02292 -> 0.01386 (2863 s)
+layer 2T +500: screen 0.02373 -> 0.01411 (3354 s)

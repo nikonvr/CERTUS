@@ -1,0 +1,20 @@
+10:51:40 start 0.010147 (oracle 0.010147), N 50, 1.0 h, 15 workers, start stages ['BEAM', 'N3']
+10:53:44   N2: 17575 -> 4393 -> 878 full; best sp10 0.01025 sp30 0.01016 full 0.01010 [29M 47H] vs 0.01015 (125 s)
+10:56:34   BEAM3: 25546 -> 6386 -> 1277 full; best sp10 0.01020 sp30 0.01011 full 0.01011 [36F 40F 42L] vs 0.01015 (170 s)
+10:59:23   BEAM4: 25485 -> 6371 -> 1274 full; best sp10 0.01025 sp30 0.01013 full 0.01012 [36F 40F 42L 47H] vs 0.01015 (169 s)
+11:02:12   BEAM5: 24993 -> 6248 -> 1249 full; best sp10 0.01033 sp30 0.01016 full 0.01015 [8M 15T 36F 40F 47M] vs 0.01015 (169 s)
+11:02:12 BEAM on the best: 0.01011 [36F 40F 42L]
+11:02:12 NEW RECORD 0.010113 oracle [36F 40F 42L] -> cissoid_record_0p01011.csv
+11:03:20   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01019 sp30 0.01015 full 0.01015 [42F 36L 40L] vs 0.01011 (46 s)
+11:05:18   N2: 17575 -> 4393 -> 878 full; best sp10 0.01021 sp30 0.01016 full 0.01013 [42F 47H] vs 0.01011 (118 s)
+11:07:59   N3: 23972 -> 5993 -> 1198 full; best sp10 0.01019 sp30 0.01011 full 0.01011 [11L 15T 34T] vs 0.01011 (161 s)
+11:07:59 N3 on the best: 0.01011 [11L 15T 34T]
+11:07:59 NEW RECORD 0.010109 oracle [11L 15T 34T] -> cissoid_record_0p01011_1.csv
+11:09:14   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01020 sp30 0.01016 full 0.01014 [47H 40L] vs 0.01011 (50 s)
+11:11:33   N2: 17575 -> 4393 -> 878 full; best sp10 0.01020 sp30 0.01015 full 0.01011 [42F 47H] vs 0.01011 (139 s)
+11:11:33   descent: 0.01011 [42F]
+11:12:52   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01019 sp30 0.01011 full 0.01011 [47H 42L] vs 0.01011 (52 s)
+11:15:16   N2: 17575 -> 4393 -> 878 full; best sp10 0.01019 sp30 0.01011 full 0.01011 [42L 47H] vs 0.01011 (144 s)
+11:15:16 NEW RECORD 0.010106 oracle [42F] -> cissoid_record_0p01011_2.csv
+11:15:16 hub layers of the best: 47T:19 42F:11 1H:10 11L:10 2M:9 36F:8 40F:8 6F:8
+11:15:16 end after 0 iterations: best 0.010106 oracle (0.4 h)

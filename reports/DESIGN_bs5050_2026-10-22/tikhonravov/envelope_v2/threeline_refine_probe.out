@@ -1,0 +1,13 @@
+nominal design: 1 nm 0.0145 %, 0.005 nm 0.3772 %, 0.001 nm 0.3777 %, 0.0002 nm 0.3777 % (1 s)
+    peak  405.4670 nm   55.28 %  FWHM 0.0116 nm
+    peak  425.2458 nm   33.55 %  FWHM 0.0098 nm
+    peak  414.3848 nm   15.98 %  FWHM 0.0128 nm
+polished on 0.005 nm: 1 nm 0.1070 %, 0.005 nm 0.1160 %, 0.001 nm 0.1710 %, 0.0002 nm 0.1710 % (242 s)
+    peak  425.2476 nm   38.69 %  FWHM 0.0034 nm
+    peak  414.3876 nm   26.94 %  FWHM 0.0030 nm
+    peak  405.4674 nm   19.60 %  FWHM 0.0042 nm
+polished on 0.001 nm: 1 nm 0.1209 %, 0.005 nm 0.1113 %, 0.001 nm 0.1572 %, 0.0002 nm 0.1572 % (1377 s)
+    peak  425.2476 nm   31.17 %  FWHM 0.0038 nm
+    peak  405.4674 nm   24.39 %  FWHM 0.0036 nm
+    peak  414.3876 nm   21.50 %  FWHM 0.0032 nm
+    peak  455.0000 nm    1.12 %  FWHM 50.1982 nm

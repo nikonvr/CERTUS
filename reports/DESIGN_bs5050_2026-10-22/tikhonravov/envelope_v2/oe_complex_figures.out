@@ -1,0 +1,8 @@
+D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\reports\DESIGN_bs5050_2026-10-22\tikhonravov\envelope_v2\oe_complex_figures.py:83: SyntaxWarning: "\l" is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\l"? A raw string is also an option.
+  a.set_title("(a) grid points (dots), poles found from them (x), line $\lambda+i$ nm (dashed)", fontsize=9)
+(c) admittance loci | real: circles: final Y = +1.520000 +0.004313i
+(c) admittance loci | $\lambda+i\gamma$: closing spirals: final Y = +8.419905 -0.026896i
+(c) admittance loci | pole: opening spirals: final Y = -1.000000 -0.000000i
+(d) admittance loci | 402 nm, a grid point: final Y = +0.000076 +1.849972i
+(d) admittance loci | 402.5253 nm, the hidden resonance: final Y = +0.851263 +1.456302i
+(d) admittance loci | its pole: final Y = -1.000000 -0.000000i

@@ -1,0 +1,89 @@
+== cissoid_record_best.csv: 0.009209; 96 metal trades; best 17A->F +54.6 %, delete 17A +65.1 %, 17A->N +65.1 %, 17A->L +65.1 %, 17A->B +68.2 %
+14:48:59   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01213 sp30 0.01128 full 0.01104 [23B 16B 8M 1T] vs 0.01424 (56 s)
+14:48:59   descent: 0.01104 [23B 16B 8M 1T]
+14:50:08   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01082 sp30 0.01075 full 0.01073 [11L 28T] vs 0.01104 (48 s)
+14:50:08   descent: 0.01073 [11L 28T]
+  quick: cissoid_record_best.csv: 17A->F + 23B 16B 8M 1T + 11L 28T -> 0.010726 (166 s)
+14:51:22   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01330 sp30 0.01180 full 0.01164 [22B 15T 39L 8M 46T] vs 0.01521 (50 s)
+14:51:22   descent: 0.01164 [22B 15T 39L 8M 46T]
+14:52:29   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01158 sp30 0.01137 full 0.01133 [26M 46M 33H 39F 24L] vs 0.01164 (46 s)
+14:52:29   descent: 0.01133 [26M 46M 33H 39F 24L]
+  quick: cissoid_record_best.csv: delete 17A + 22B 15T 39L 8M 46T + 26M 46M 33H 39F 24L -> 0.011328 (308 s)
+14:53:48   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01251 sp30 0.01180 full 0.01122 [23B 17F 15T 8M 47T] vs 0.01549 (55 s)
+14:53:48   descent: 0.01122 [23B 17F 15T 8M 47T]
+14:54:59   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01124 sp30 0.01096 full 0.01096 [27M 49F 34H] vs 0.01122 (48 s)
+14:54:59   descent: 0.01096 [27M 49F 34H]
+  quick: cissoid_record_best.csv: 17A->B + 23B 17F 15T 8M 47T + 27M 49F 34H -> 0.010957 (457 s)
+14:56:18   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01251 sp30 0.01161 full 0.01122 [23B 17F 15T 8M 47T] vs 0.01573 (55 s)
+14:56:18   descent: 0.01122 [23B 17F 15T 8M 47T]
+14:57:27   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01124 sp30 0.01096 full 0.01096 [27M 49F 34H] vs 0.01122 (47 s)
+14:57:27   descent: 0.01096 [27M 49F 34H]
+  quick: cissoid_record_best.csv: 17A->M + 23B 17F 15T 8M 47T + 27M 49F 34H -> 0.010957 (605 s)
+14:58:51   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01285 sp30 0.01188 full 0.01122 [23B 17F 15T 8M 47T] vs 0.01637 (60 s)
+14:58:51   descent: 0.01122 [23B 17F 15T 8M 47T]
+15:00:03   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01124 sp30 0.01096 full 0.01096 [27M 49F 34H] vs 0.01122 (49 s)
+15:00:03   descent: 0.01096 [27M 49F 34H]
+  quick: cissoid_record_best.csv: 17A->T + 23B 17F 15T 8M 47T + 27M 49F 34H -> 0.010957 (761 s)
+15:01:27   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01275 sp30 0.01168 full 0.01133 [23B 17F 15T 40L 8M] vs 0.01704 (58 s)
+15:01:27   descent: 0.01133 [23B 17F 15T 40L 8M]
+15:02:38   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01127 sp30 0.01099 full 0.01090 [27M 49F 34H 40F 25L] vs 0.01133 (49 s)
+15:02:38   descent: 0.01090 [27M 49F 34H 40F 25L]
+  quick: cissoid_record_best.csv: 17A->H + 23B 17F 15T 40L 8M + 27M 49F 34H 40F 25L -> 0.010900 (916 s)
+15:04:19   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01647 sp30 0.01595 full 0.01589 [27L 42F 7T 40L 8L] vs 0.01756 (72 s)
+15:04:19   descent: 0.00921 [3A->N]
+15:05:29   ADD: 6868 -> 1717 -> 343 full; best sp10 0.00925 sp30 0.00925 full 0.00925 [2B 47T] vs 0.00921 (45 s)
+  quick: cissoid_record_best.csv: 3N->A + 3A->N -> 0.009209 (1088 s)
+15:06:48   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01716 sp30 0.01605 full 0.01556 [13H 34H 36L 6M 47T] vs 0.01923 (55 s)
+15:06:48   descent: 0.01556 [13H 34H 36L 6M 47T]
+15:08:04   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01419 sp30 0.01417 full 0.01390 [15M 29L 16F 42F 25L] vs 0.01556 (54 s)
+15:08:04   descent: 0.01390 [15M 29L 16F 42F 25L]
+  quick: cissoid_record_best.csv: 13A->M + 13H 34H 36L 6M 47T + 15M 29L 16F 42F 25L -> 0.013898 (1243 s)
+== elite 0.010106: 0.010106; 96 metal trades; best 18A->F +69.5 %, 18A->L +82.5 %, 3N->A +89.4 %, 13A->H +95.8 %, 13A->L +134.4 %
+15:09:33   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01333 sp30 0.01180 full 0.01142 [21B 40L 34H 8M 16B] vs 0.01713 (54 s)
+15:09:33   descent: 0.01142 [21B 40L 34H 8M 16B]
+15:10:47   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01146 sp30 0.01119 full 0.01112 [47H 14L 15H 11F 49F] vs 0.01142 (50 s)
+15:10:47   descent: 0.01112 [47H 14L 15H 11F 49F]
+  quick: elite 0.010106: 18A->F + 21B 40L 34H 8M 16B + 47H 14L 15H 11F 49F -> 0.011120 (1405 s)
+15:12:10   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01421 sp30 0.01253 full 0.01188 [23B 40L 21L 18F] vs 0.01845 (59 s)
+15:12:10   descent: 0.01188 [23B 40L 21L 18F]
+15:13:23   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01150 sp30 0.01136 full 0.01133 [47M 42L 25L 8M 11F] vs 0.01188 (49 s)
+15:13:23   descent: 0.01117 [44L]
+  quick: elite 0.010106: 18A->L + 23B 40L 21L 18F + 44L -> 0.011167 (1561 s)
+15:15:05   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01753 sp30 0.01733 full 0.01721 [11F 27B 40L 2H 8M] vs 0.01914 (71 s)
+15:15:05   descent: 0.01721 [11F 27B 40L 2H 8M]
+15:16:45   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01724 sp30 0.01722 full 0.01721 [7B 6T] vs 0.01721 (73 s)
+15:16:45   descent: 0.01276 [2A->N]
+  quick: elite 0.010106: 3N->A + 11F 27B 40L 2H 8M + 2A->N -> 0.012762 (1764 s)
+15:18:09   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01724 sp30 0.01670 full 0.01663 [16F 27B 21L 14L 8M] vs 0.01979 (56 s)
+15:18:09   descent: 0.01663 [16F 27B 21L 14L 8M]
+15:19:29   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01626 sp30 0.01589 full 0.01586 [36L 2L 34H 47H 15M] vs 0.01663 (55 s)
+15:19:29   descent: 0.01586 [36L 2L 34H 47H 15M]
+  quick: elite 0.010106: 13A->H + 16F 27B 21L 14L 8M + 36L 2L 34H 47H 15M -> 0.015862 (1928 s)
+15:21:01   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01899 sp30 0.01700 full 0.01627 [13H 16F 21L 44L 29F] vs 0.02369 (58 s)
+15:21:01   descent: 0.01627 [13H 16F 21L 44L 29F]
+15:22:44   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01470 sp30 0.01426 full 0.01419 [15M 36L 29L 25L 2B] vs 0.01627 (73 s)
+15:22:44   descent: 0.01419 [15M 36L 29L 25L 2B]
+  quick: elite 0.010106: 13A->L + 13H 16F 21L 44L 29F + 15M 36L 29L 25L 2B -> 0.014193 (2122 s)
+15:24:08   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01932 sp30 0.01888 full 0.01846 [35B 26B 15F 19T 33H] vs 0.02370 (54 s)
+15:24:08   descent: 0.01846 [35B 26B 15F 19T 33H]
+15:25:16   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01728 sp30 0.01721 full 0.01721 [12H 8M 2L] vs 0.01846 (45 s)
+15:25:16   descent: 0.01721 [12H 8M 2L]
+  quick: elite 0.010106: 13A->F + 35B 26B 15F 19T 33H + 12H 8M 2L -> 0.017215 (2274 s)
+15:26:41   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01940 sp30 0.01695 full 0.01647 [13H 16F 21L 20T 23T] vs 0.02373 (57 s)
+15:26:41   descent: 0.01647 [13H 16F 21L 20T 23T]
+15:27:57   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01544 sp30 0.01526 full 0.01507 [11F 15M 2B 36L 47H] vs 0.01647 (52 s)
+15:27:57   descent: 0.01507 [11F 15M 2B 36L 47H]
+  quick: elite 0.010106: 13A->M + 13H 16F 21L 20T 23T + 11F 15M 2B 36L 47H -> 0.015067 (2435 s)
+15:29:22   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01952 sp30 0.01744 full 0.01697 [13H 36B 16F 21L] vs 0.02374 (56 s)
+15:29:22   descent: 0.01697 [13H 36B 16F 21L]
+15:30:33   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01555 sp30 0.01518 full 0.01507 [11F 25L 29L 49F 2B] vs 0.01697 (49 s)
+15:30:33   descent: 0.01507 [11F 25L 29L 49F 2B]
+  quick: elite 0.010106: 13A->B + 13H 36B 16F 21L + 11F 25L 29L 49F 2B -> 0.015074 (2592 s)
+== elite 0.010185: 0.010185; 96 metal trades; best delete 17A +45.8 %, 17A->F +45.8 %, 17A->N +45.8 %, 17A->L +46.6 %, 17A->B +49.1 %
+15:31:56   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01244 sp30 0.01181 full 0.01154 [20B 7M 6T 15B 39L] vs 0.01485 (50 s)
+15:31:56   descent: 0.01154 [20B 7M 6T 15B 39L]
+15:33:08   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01148 sp30 0.01145 full 0.01143 [33H 7H 39F] vs 0.01154 (50 s)
+15:33:08   descent: 0.01143 [33H 7H 39F]
+  quick: elite 0.010185: delete 17A + 20B 7M 6T 15B 39L + 33H 7H 39F -> 0.011426 (2746 s)
+15:34:31   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01258 sp30 0.01194 full 0.01139 [21B 16B 7M 17F] vs 0.01493 (58 s)
+15:34:31   descent: 0.01139 [21B 16B 7M 17F]

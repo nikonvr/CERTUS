@@ -1,0 +1,12 @@
+classical N104, OT 14101.1 nm, max shift from the figure 2.58 nm, layer 1 (substrate side) L 94.17 nm, layer 2 H 86.36 nm
+MF on 1 nm steps (277 wavelengths): 0.0129 %  [0 s]
+MF on 0.001 nm steps (270007 wavelengths): 0.0320 %  [2 s]
+MF on 0.0002 nm steps (1350007 wavelengths): 0.0369 %  [10 s]
+MF on 0.0001 nm steps (2700007 wavelengths): 0.0369 %  [19 s]
+poles found from the 277 points (0 s): 3
+  543.0255 nm  FWHM 0.00086 nm  |T - target| 17.50 %  Im(lambda_p) -0.000431 nm
+  425.2172 nm  FWHM 0.01984 nm  |T - target| 2.51 %  Im(lambda_p) -0.009920 nm
+  412.8474 nm  FWHM 0.01718 nm  |T - target| 1.32 %  Im(lambda_p) -0.008588 nm
+direct scan of the highest: peak 543.0255 nm, T 17.50 %, FWHM 0.00086 nm
+max |E|^2 at 543.0255 nm: 9768
+max |E|^2 at 543.0000 nm: 3

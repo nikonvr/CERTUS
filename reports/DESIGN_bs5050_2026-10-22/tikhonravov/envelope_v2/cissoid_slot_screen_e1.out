@@ -1,0 +1,112 @@
+== cissoid_record_best.csv: 0.009268 (skipping 0 trades)
+base 0.009268; cheapest freeings: delete 2M +17.25 %, delete 17A +65.00 %, delete 5H +69.08 %, merge 5H+6F +79.90 %, delete 47H +85.42 %, delete 13A +107.14 %, merge 44B+45M +112.41 %, merge 11F+12T +173.41 %
+needles kept: L@12 z=195, F@12 z=195, M@14 z=291, T@16 z=47, H@16 z=47, A@1 z=373, T@14 z=291, A@18 z=17, A@6 z=185, H@14 z=291, A@10 z=33, H@29 z=191
+741 trades (84 s); best:
+  needle A@18 z=17 + delete 2M + delete 17A: N 50, MF 0.011328 (+22.23 %)
+  needle T@14 z=291 + delete 5H: N 50, MF 0.014781 (+59.49 %)
+  needle H@14 z=291 + delete 5H: N 50, MF 0.014781 (+59.49 %)
+  needle M@14 z=291 + delete 5H: N 50, MF 0.014781 (+59.49 %)
+  needle T@16 z=47 + delete 5H: N 50, MF 0.014867 (+60.42 %)
+  needle H@16 z=47 + delete 5H: N 50, MF 0.014867 (+60.42 %)
+13:24:10   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01060 sp30 0.01057 full 0.01057 [1T 36F] vs 0.01133 (49 s)
+13:24:10   descent: 0.01057 [1T 36F]
+13:25:22   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01066 sp30 0.01057 full 0.01047 [34H 42F] vs 0.01057 (49 s)
+13:25:22   descent: 0.01018 [16N->F]
+  quick: needle A@18 z=17 + delete 2M + delete 17A + 1T 36F + 16N->F -> 0.010185 (228 s)
+13:26:56   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01455 sp30 0.01410 full 0.01388 [27L 10H 1T 16F 34H] vs 0.01478 (67 s)
+13:26:56   descent: 0.01388 [27L 10H 1T 16F 34H]
+13:28:18   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01388 sp30 0.01388 full 0.01388 [13B 47T] vs 0.01388 (58 s)
+13:28:18   descent: 0.01388 [13B]
+  quick: needle T@14 z=291 + delete 5H + 27L 10H 1T 16F 34H + 13B -> 0.013878 (404 s)
+13:29:54   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01444 sp30 0.01412 full 0.01405 [19L 16F 25B 23B 1T] vs 0.01487 (68 s)
+13:29:54   descent: 0.01405 [19L 16F 25B 23B 1T]
+13:31:18   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01399 sp30 0.01395 full 0.01393 [28T 25M 14F 15H] vs 0.01405 (60 s)
+13:31:18   descent: 0.01393 [28T 25M 14F 15H]
+  quick: needle T@16 z=47 + delete 5H + 19L 16F 25B 23B 1T + 28T 25M 14F 15H -> 0.013930 (584 s)
+13:32:40   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01319 sp30 0.01295 full 0.01284 [6F 25B 1T 8T] vs 0.01499 (56 s)
+13:32:40   descent: 0.01284 [6F 25B 1T 8T]
+13:33:55   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01293 sp30 0.01288 full 0.01282 [42F 34H] vs 0.01284 (53 s)
+13:33:55   descent: 0.01250 [9A->M]
+  quick: needle A@10 z=33 + delete 2M + merge 5H+6F + 6F 25B 1T 8T + 9A->M -> 0.012500 (741 s)
+13:35:24   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01459 sp30 0.01427 full 0.01401 [25M 10H 36F 1T 23B] vs 0.01514 (64 s)
+13:35:24   descent: 0.01401 [25M 10H 36F 1T 23B]
+13:36:39   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01396 sp30 0.01379 full 0.01372 [34H 36L 12H 25B] vs 0.01401 (51 s)
+13:36:39   descent: 0.01372 [34H 36L 12H 25B]
+  quick: needle F@12 z=195 + delete 5H + 25M 10H 36F 1T 23B + 34H 36L 12H 25B -> 0.013718 (905 s)
+== elite 0.010106: 0.010106 (skipping 5 trades)
+base 0.010106; cheapest freeings: delete 2M +17.90 %, delete 47T +27.39 %, merge 46L+47T +40.19 %, merge 19B+20H +50.80 %, merge 5H+6F +70.68 %, merge 44B+45M +87.34 %, delete 18A +138.50 %, merge 11L+12T +164.57 %
+needles kept: F@10 z=33, L@10 z=33, H@8 z=245, T@4 z=293, H@4 z=293, A@10 z=31, A@4 z=201, A@7 z=841, T@14 z=477, M@14 z=477, A@1 z=375, H@16 z=51
+924 trades (1003 s); best:
+  needle F@10 z=33 + delete 2M + merge 46L+47T: N 50, MF 0.013633 (+34.89 %)
+  needle L@10 z=33 + delete 2M + merge 46L+47T: N 50, MF 0.013633 (+34.89 %)
+  needle A@4 z=201 + delete 2M + merge 46L+47T: N 50, MF 0.013690 (+35.46 %)
+  needle A@4 z=201 + delete 2M + merge 5H+6F: N 50, MF 0.013768 (+36.23 %)
+  needle H@16 z=51 + delete 2M + merge 46L+47T: N 50, MF 0.014543 (+43.90 %)
+  needle A@4 z=201 + delete 47T + merge 5H+6F: N 50, MF 0.014765 (+46.10 %)
+13:39:44   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01398 sp30 0.01381 full 0.01378 [27B 6F 11F 1T 4M] vs 0.01541 (61 s)
+13:39:44   descent: 0.01378 [27B 6F 11F 1T 4M]
+13:41:14   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01384 sp30 0.01376 full 0.01362 [34H 40L] vs 0.01378 (64 s)
+13:41:14   descent: 0.01362 [34H]
+  quick: needle H@8 z=245 + delete 2M + merge 5H+6F + 27B 6F 11F 1T 4M + 34H -> 0.013619 (1180 s)
+13:42:33   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01420 sp30 0.01302 full 0.01300 [17M 1T 34H 49F 7M] vs 0.01640 (54 s)
+13:42:33   descent: 0.01300 [17M 1T 34H 49F 7M]
+13:43:45   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01269 sp30 0.01265 full 0.01264 [16H 40L 13L] vs 0.01300 (48 s)
+13:43:45   descent: 0.01264 [16H 40L 13L]
+  quick: needle T@14 z=477 + delete 2M + merge 19B+20H + 17M 1T 34H 49F 7M + 16H 40L 13L -> 0.012643 (1331 s)
+== elite 0.010396: 0.010396 (skipping 5 trades)
+base 0.010396; cheapest freeings: merge 18F+19B +3.18 %, merge 19B+20H +6.34 %, delete 4H +63.66 %, delete 16A +67.08 %, merge 4H+5F +79.27 %, merge 44B+45M +102.15 %, delete 9H +140.48 %, merge 46L+47H +141.67 %
+needles kept: A@2 z=0, H@13 z=317, A@1 z=2363, F@45 z=111, L@45 z=111, T@45 z=39, A@31 z=47, H@45 z=39, H@10 z=149, A@3 z=209, A@9 z=25, A@6 z=177
+655 trades (1404 s); best:
+  needle A@2 z=0 + merge 18F+19B: N 50, MF 0.010494 (+0.94 %)
+  needle H@45 z=39 + merge 18F+19B + merge 44B+45M: N 50, MF 0.010618 (+2.14 %)
+  needle F@45 z=111 + merge 18F+19B + merge 44B+45M: N 50, MF 0.010698 (+2.91 %)
+  needle L@45 z=111 + merge 18F+19B + merge 44B+45M: N 50, MF 0.010699 (+2.91 %)
+  needle A@2 z=0 + merge 19B+20H: N 50, MF 0.010717 (+3.09 %)
+  needle F@45 z=111 + merge 19B+20H + merge 44B+45M: N 50, MF 0.011069 (+6.48 %)
+13:46:26   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01290 sp30 0.01253 full 0.01251 [25B 7L 36L 21L 40F] vs 0.01391 (63 s)
+13:46:26   descent: 0.01251 [25B 7L 36L 21L 40F]
+13:47:52   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01233 sp30 0.01219 full 0.01215 [23B 42L 10T 25M] vs 0.01251 (61 s)
+13:47:52   descent: 0.01215 [23B 42L 10T 25M]
+  quick: needle H@10 z=149 + merge 18F+19B + delete 9H + 25B 7L 36L 21L 40F + 23B 42L 10T 25M -> 0.012153 (1578 s)
+13:49:20   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01333 sp30 0.01315 full 0.01309 [6F 27B 34H 8T 36L] vs 0.01508 (60 s)
+13:49:20   descent: 0.01309 [6F 27B 34H 8T 36L]
+13:50:44   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01304 sp30 0.01295 full 0.01288 [8H 25L 36F 21L] vs 0.01309 (60 s)
+13:50:44   descent: 0.01271 [9A->F]
+  quick: needle A@9 z=25 + merge 18F+19B + merge 4H+5F + 6F 27B 34H 8T 36L + 9A->F -> 0.012713 (1750 s)
+13:51:56   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01281 sp30 0.01246 full 0.01207 [27B 17B 3B 9M 15L] vs 0.01592 (49 s)
+13:51:56   descent: 0.01207 [27B 17B 3B 9M 15L]
+13:53:03   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01160 sp30 0.01150 full 0.01147 [42L 1M 11T 49F 9B] vs 0.01207 (45 s)
+13:53:03   descent: 0.01147 [42L 1M 11T 49F 9B]
+  quick: needle A@1 z=2363 + merge 19B+20H + delete 16A + 27B 17B 3B 9M 15L + 42L 1M 11T 49F 9B -> 0.011470 (1889 s)
+13:54:24   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01536 sp30 0.01508 full 0.01493 [26B 24L 9H 33H 19T] vs 0.01670 (56 s)
+13:54:24   descent: 0.01493 [26B 24L 9H 33H 19T]
+13:55:43   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01487 sp30 0.01463 full 0.01460 [39F 5M 46T 24B 15F] vs 0.01493 (57 s)
+13:55:43   descent: 0.01460 [39F 5M 46T 24B 15F]
+  quick: needle H@13 z=317 + merge 18F+19B + delete 4H + 26B 24L 9H 33H 19T + 39F 5M 46T 24B 15F -> 0.014603 (2049 s)
+== elite 0.010887: 0.010887 (skipping 5 trades)
+base 0.010887; cheapest freeings: delete 7F +5.82 %, merge 6H+7F +15.63 %, delete 47M +30.19 %, merge 19B+20H +39.61 %, merge 4H+5F +54.62 %, merge 7F+8T +63.85 %, delete 4H +72.75 %, merge 44B+45M +80.29 %
+needles kept: A@1 z=2509, H@3 z=289, T@3 z=289, A@3 z=195, H@14 z=495, A@2 z=0, T@11 z=435, A@17 z=0, A@16 z=321, A@8 z=217, H@11 z=435, A@6 z=1035
+493 trades (2108 s); best:
+  needle A@17 z=0 + delete 7F: N 50, MF 0.011579 (+6.36 %)
+  needle A@2 z=0 + delete 7F: N 50, MF 0.011666 (+7.15 %)
+  needle A@17 z=0 + merge 6H+7F: N 50, MF 0.012779 (+17.38 %)
+  needle A@2 z=0 + merge 6H+7F: N 50, MF 0.012975 (+19.18 %)
+  needle T@11 z=435 + delete 7F + delete 47M: N 50, MF 0.014581 (+33.93 %)
+  needle A@1 z=2509 + merge 6H+7F + merge 19B+20H: N 50, MF 0.014728 (+35.28 %)
+13:57:57   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01334 sp30 0.01308 full 0.01308 [17B 7M 36L 42L] vs 0.01477 (51 s)
+13:57:57   descent: 0.01308 [17B 7M 36L 42L]
+13:59:08   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01289 sp30 0.01269 full 0.01258 [13L 16H 25F 17M 27B] vs 0.01308 (48 s)
+13:59:08   descent: 0.01258 [13L 16H 25F 17M 27B]
+  quick: needle H@14 z=495 + delete 7F + merge 19B+20H + 17B 7M 36L 42L + 13L 16H 25F 17M 27B -> 0.012578 (2255 s)
+14:00:26   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01474 sp30 0.01428 full 0.01396 [43H 47B 17B 15L 25F] vs 0.01523 (53 s)
+14:00:26   descent: 0.01396 [43H 47B 17B 15L 25F]
+14:01:40   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01365 sp30 0.01348 full 0.01347 [9M 25L 15B 16H 8T] vs 0.01396 (49 s)
+14:01:40   descent: 0.01321 [7A->F]
+  quick: needle A@6 z=1035 + delete 7F + merge 19B+20H + 43H 47B 17B 15L 25F + 7A->F -> 0.013207 (2406 s)
+14:03:02   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01442 sp30 0.01395 full 0.01391 [23T 27B 7M 42L 9M] vs 0.01530 (55 s)
+14:03:02   descent: 0.01391 [23T 27B 7M 42L 9M]
+14:04:21   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01399 sp30 0.01380 full 0.01375 [25F 29M 36L] vs 0.01391 (54 s)
+14:04:21   descent: 0.01364 [8A->F]
+  quick: needle A@8 z=217 + merge 19B+20H + merge 7F+8T + 23T 27B 7M 42L 9M + 8A->F -> 0.013644 (2567 s)
+14:05:42   ADD: 6868 -> 1717 -> 343 full; best sp10 0.01388 sp30 0.01175 full 0.01168 [49B 17H 41L 30M] vs 0.01596 (54 s)
+14:05:42   descent: 0.01168 [49B 17H 41L 30M]

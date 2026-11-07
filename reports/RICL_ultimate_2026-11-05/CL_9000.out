@@ -1,0 +1,2 @@
+2026-11-06 16:59:23 start {'designs': ['CIS_9000_curve.csv'], 'tag': 'CL_9000', 'judge': '', 'minutes': 20.0, 'axis': 'phys', 'floor': 3.0, 'nmax': 50, 'top': 100, 'workers': 15}; axis phys
+2026-11-06 16:59:23 5 designs read, 5 to clean

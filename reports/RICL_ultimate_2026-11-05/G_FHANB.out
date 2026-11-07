@@ -1,0 +1,4 @@
+2026-11-06 19:32:41 start {'mode': 'run', 'grid': '1:50:1', 'tag': 'G_FHANB', 'judge': '', 'minutes': 60.0, 'nmax': 50, 'floor': 0.1, 'pop': 40, 'moves': 'jitter:3,needle:3,needle_diel:1,substitute:3,remove:2,swap:2,block:1,cross:2', 'moves_per_key': 3, 'seeds': ['seed_FHANB_9378.csv'], 'seeds_per_key': 3, 'workers': 6, 'rng': 91, 'only_seeds': True, 'prefix': '', 'exclude': 'ULMT', 'window': (4500.0, 10000.0), 'axis': 'phys'}; 1 seed designs
+2026-11-06 19:33:05 BEST 0.0205439402 (oracle 0.0205439402) N 50 via seed from seed_FHANB_9378
+2026-11-06 19:33:05 population 1; best 0.0205439402
+2026-11-06 19:33:10 BEST 0.0205058031 (oracle 0.0205058031) N 50 via cross from seed_FHANB_9378

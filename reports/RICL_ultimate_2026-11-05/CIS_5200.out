@@ -1,0 +1,20 @@
+2026-11-06 18:46:55 start {'mode': 'dot', 'grid': '4800:5625:25', 'tag': 'CIS_5200', 'judge': '', 'minutes': 30.0, 'nmax': 50, 'floor': 0.1, 'pop': 60, 'moves': 'jitter:3,needle:3,needle_diel:1,substitute:3,remove:2,swap:2,block:1,cross:2', 'moves_per_key': 3, 'seeds': ['CIS_contest_curve.csv', 'CL_cis_contest_clean.csv', 'CIS_c50_curve.csv'], 'seeds_per_key': 3, 'workers': 6, 'rng': 52, 'only_seeds': False, 'axis': 'phys'}; 892 seed designs
+2026-11-06 18:47:44 seeded 34 of 34 points
+2026-11-06 18:50:04 round 1: 294 tasks, 41 improvements, 34/34 points
+2026-11-06 18:51:39 round 2: 261 tasks, 39 improvements, 34/34 points
+2026-11-06 18:53:37 round 3: 269 tasks, 37 improvements, 34/34 points
+2026-11-06 18:55:09 round 4: 257 tasks, 38 improvements, 34/34 points
+2026-11-06 18:56:45 round 5: 260 tasks, 37 improvements, 34/34 points
+2026-11-06 18:58:20 round 6: 252 tasks, 28 improvements, 34/34 points
+2026-11-06 18:59:57 round 7: 220 tasks, 28 improvements, 34/34 points
+2026-11-06 19:01:34 round 8: 230 tasks, 19 improvements, 34/34 points
+2026-11-06 19:03:10 round 9: 196 tasks, 26 improvements, 34/34 points
+2026-11-06 19:04:50 round 10: 231 tasks, 29 improvements, 34/34 points
+2026-11-06 19:06:34 round 11: 214 tasks, 23 improvements, 34/34 points
+2026-11-06 19:08:40 round 12: 220 tasks, 25 improvements, 34/34 points
+2026-11-06 19:10:22 round 13: 218 tasks, 25 improvements, 34/34 points
+2026-11-06 19:12:18 round 14: 213 tasks, 22 improvements, 34/34 points
+2026-11-06 19:14:16 round 15: 197 tasks, 16 improvements, 34/34 points
+2026-11-06 19:15:52 round 16: 175 tasks, 15 improvements, 34/34 points
+2026-11-06 19:16:56 round 17: 168 tasks, 12 improvements, 34/34 points
+2026-11-06 19:17:12 end: 34 points

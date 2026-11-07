@@ -1,0 +1,17 @@
+# RICL 48 h campaign. NAME ; MINUTES ; SCRIPT ARGS. Rule (owner 2026-11-05 22:10): no published solution nor descendant as seed; published results are references only.
+WAIT ; tl101_A.log ; end best
+S_tl_tot ; 600 ; sweep2.py --problem threeline --mode tot --grid 100:15000:50 --nmax 120 --floor 5 --tag S_tl_tot --minutes {minutes} --seeds seeds_tl_independent.csv
+# deep gradual evolution of Trubetskov 2020 widened to a beam of 8, from the bare substrate
+DG_beam8 ; 360 ; deepgrow.py --tag DG_beam8 --minutes {minutes} --beam 8 --tot-max 15500 --floor 5 --nmax 140
+# second pass of the three-line continuum, 25 nm grid (dense), fed by the deep beam
+S_tl_tot2 ; 300 ; sweep2.py --problem threeline --mode tot --grid 100:15000:25 --nmax 120 --floor 5 --tag S_tl_tot2 --minutes {minutes} --seeds S_tl_tot_curve.csv DG_beam8_designs.csv
+R_tl101 ; 240 ; run.py --problem threeline --tag R_tl101 --minutes {minutes} --nmax 101 --tot 14171.0 --floor 5 --pop 80 --moves jitter:3,needle:3,remove:2,halfwave:1,cross:2,swap:1,block:2,reverse:1,rescharge:2 --seeds S_tl_tot2_curve.csv DG_beam8_designs.csv seeds_tl_scratch.csv --seed-best 80 --rng 101
+B_n ; 100 ; sweep.py --problem bs5050 --points 1601 --mode n --grid 1:40:1 --tot 3923.75 --tot-le --floor 3.78 --tag B_n --minutes {minutes} --seeds seeds_bs.csv
+B_t ; 100 ; sweep2.py --problem bs5050 --points 1601 --mode tot --grid 200:4500:10 --nmax 34 --floor 3.78 --tag B_t --minutes {minutes} --seeds seeds_bs.csv B_n_curve.csv
+B_rec ; 50 ; run.py --problem bs5050 --points 1601 --tag B_rec --minutes {minutes} --nmax 34 --tot 3923.75 --floor 3.78 --pop 40 --moves jitter:3,needle:3,remove:2,halfwave:1,cross:2,swap:1,block:2,reverse:1 --seeds B_n_curve.csv B_t_curve.csv --seed-best 60 --rng 34
+C51 ; 150 ; run.py --problem threeline --tag C51 --minutes {minutes} --fixed HLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLH --otlo 100 --othi 350 --floor 0 --nmax 51 --pop 60 --moves jitter:4,swap:2,cross:2,block:3,reverse:1 --seeds seeds_c51_own.csv --rng 51
+CIS_n ; 150 ; cissoid_ultimate.py --mode n --grid 1:50:1 --tag CIS_n --minutes {minutes}
+S_tl_n ; 150 ; sweep.py --problem threeline --mode n --grid 10:120:1 --tot 15000 --tot-le --floor 5 --tag S_tl_n --minutes {minutes} --seeds seeds_tl_independent.csv S_tl_tot2_curve.csv R_tl101_elites.csv DG_beam8_designs.csv
+CIS_rec ; 150 ; cissoid_ultimate.py --mode run --tag CIS_rec --minutes {minutes} --pop 60 --seeds CIS_n_curve.csv
+CIS_dot ; 100 ; cissoid_ultimate.py --mode dot --grid 2000:24000:250 --tag CIS_dot --minutes {minutes} --seeds CIS_n_curve.csv CIS_rec_elites.csv
+R_tl101_final ; 150 ; run.py --problem threeline --tag R_tl101_final --minutes {minutes} --nmax 101 --tot 14171.0 --floor 5 --pop 80 --moves jitter:3,needle:3,remove:2,halfwave:1,cross:2,swap:1,block:2,reverse:1,rescharge:2 --seeds S_tl_tot2_curve.csv R_tl101_elites.csv --seed-best 80 --rng 707

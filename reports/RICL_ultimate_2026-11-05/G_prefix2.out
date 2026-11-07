@@ -1,0 +1,9 @@
+2026-11-06 19:26:29 start {'mode': 'run', 'grid': '1:50:1', 'tag': 'G_prefix2', 'judge': '', 'minutes': 60.0, 'nmax': 50, 'floor': 0.1, 'pop': 40, 'moves': 'jitter:3,needle:3,needle_diel:1,substitute:3,remove:2,swap:2,block:1,cross:2', 'moves_per_key': 3, 'seeds': ['seed_record_0p00921.csv'], 'seeds_per_key': 3, 'workers': 6, 'rng': 89, 'only_seeds': True, 'prefix': 'AHMNF', 'exclude': 'U', 'window': (4500.0, 11000.0), 'axis': 'phys'}; 1 seed designs
+2026-11-06 19:26:39 BEST 0.00920946518 (oracle 0.00920946518) N 50 via seed from seed_record_0p00921
+2026-11-06 19:26:39 population 1; best 0.00920946518
+2026-11-06 19:41:40 best 0.00920946518 pop [0.00920947..0.0118679] jitter:196/24 needle:184/60 needle_diel:52/21 substitute:176/32 remove:128/13 swap:124/20 block:52/2 cross:139/49
+2026-11-06 19:54:56 BEST 0.00918322196 (oracle 0.00918322196) N 50 via cross from seed_record_0p00921
+2026-11-06 19:56:40 best 0.00918322196 pop [0.00918322..0.0100505] jitter:374/31 needle:390/91 needle_diel:102/33 substitute:368/44 remove:264/13 swap:238/23 block:113/2 cross:272/78
+2026-11-06 20:11:41 best 0.00918322196 pop [0.00918322..0.00964855] jitter:534/35 needle:555/112 needle_diel:143/39 substitute:537/54 remove:365/13 swap:355/25 block:179/2 cross:383/98
+2026-11-06 20:13:48 BEST 0.00916219596 (oracle 0.00916219596) N 50 via cross from seed_record_0p00921
+2026-11-06 20:26:30 end best 0.00916219596

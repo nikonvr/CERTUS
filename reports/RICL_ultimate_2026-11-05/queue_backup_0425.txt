@@ -1,0 +1,25 @@
+# RICL 48 h campaign. NAME ; MINUTES ; SCRIPT ARGS. Rule (owner 2026-11-05 22:10): no published solution nor descendant as seed; published results are references only.
+# Rule (owner 2026-11-06 04:10): the 5 nm floor and the layer cap are applied ONCE at the end (clean.py); searches grow with a 0.1 nm floor.
+WAIT ; tl101_A.log ; end best
+S_tl_tot ; 600 ; sweep2.py --problem threeline --mode tot --grid 100:15000:50 --nmax 120 --floor 5 --tag S_tl_tot --minutes {minutes} --seeds seeds_tl_independent.csv
+DG_beam8 ; 360 ; deepgrow.py --tag DG_beam8 --minutes {minutes} --beam 8 --tot-max 15500 --floor 5 --nmax 140
+# S_tl_tot2 (floor at every step) stopped 2026-11-06 ~04:15, replaced by the floor-free pipeline below
+DG_free8 ; 300 ; deepgrow.py --tag DG_free8 --minutes {minutes} --beam 8 --tot-max 16000 --floor 5 --grow-floor 0.1 --nmax 200
+# cissoid MF versus total PHYSICAL thickness (axis of the contest results): must pass under Bolshakov 0.0294 @ 5688 nm and Trubetskov 0.0139 @ 8056 nm
+CIS_phys ; 240 ; cissoid_ultimate.py --mode dot --axis phys --grid 3000:12000:50 --tag CIS_phys --minutes {minutes} --seeds T_cis_phys_curve.csv
+CL_101 ; 40 ; clean.py --designs DG_free8_designs.csv S_tl_tot_curve.csv --tag CL_101 --minutes {minutes} --tot 14171 --tot-window 1500 --floor 5 --nmax 101 --top 400
+R_tl_free ; 180 ; run.py --problem threeline --tag R_tl_free --minutes {minutes} --nmax 140 --tot 14171.0 --floor 0.1 --pop 80 --moves jitter:3,needle:3,remove:2,halfwave:1,cross:2,swap:1,block:2,reverse:1,rescharge:2 --seeds DG_free8_designs.csv CL_101_clean.csv S_tl_tot_curve.csv --seed-best 80 --rng 141
+CL_101b ; 40 ; clean.py --designs R_tl_free_elites.csv --tag CL_101b --minutes {minutes} --tot 14171 --tot-window 10 --floor 5 --nmax 101 --top 80
+R_tl101 ; 120 ; run.py --problem threeline --tag R_tl101 --minutes {minutes} --nmax 101 --tot 14171.0 --floor 5 --pop 80 --moves jitter:3,needle:3,remove:2,halfwave:1,cross:2,swap:1,block:2,reverse:1,rescharge:2 --seeds CL_101b_clean.csv CL_101_clean.csv --seed-best 80 --rng 101
+# floor-free continuum, then every point cleaned at its own TOT (floor 5, N <= 120)
+S_tl_free ; 300 ; sweep2.py --problem threeline --mode tot --grid 100:16000:25 --nmax 160 --floor 0.1 --tag S_tl_free --minutes {minutes} --seeds S_tl_tot_curve.csv DG_free8_designs.csv
+CL_curve ; 150 ; clean.py --designs S_tl_free_curve.csv --tag CL_curve --minutes {minutes} --floor 5 --nmax 120 --top 700
+B_n ; 100 ; sweep.py --problem bs5050 --points 1601 --mode n --grid 1:40:1 --tot 3923.75 --tot-le --floor 3.78 --tag B_n --minutes {minutes} --seeds seeds_bs.csv
+B_t ; 100 ; sweep2.py --problem bs5050 --points 1601 --mode tot --grid 200:4500:10 --nmax 34 --floor 3.78 --tag B_t --minutes {minutes} --seeds seeds_bs.csv B_n_curve.csv
+B_rec ; 50 ; run.py --problem bs5050 --points 1601 --tag B_rec --minutes {minutes} --nmax 34 --tot 3923.75 --floor 3.78 --pop 40 --moves jitter:3,needle:3,remove:2,halfwave:1,cross:2,swap:1,block:2,reverse:1 --seeds B_n_curve.csv B_t_curve.csv --seed-best 60 --rng 34
+C51 ; 150 ; run.py --problem threeline --tag C51 --minutes {minutes} --fixed HLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLH --otlo 100 --othi 350 --floor 0 --nmax 51 --pop 60 --moves jitter:4,swap:2,cross:2,block:3,reverse:1 --seeds seeds_c51_own.csv --rng 51
+CIS_n ; 150 ; cissoid_ultimate.py --mode n --grid 1:50:1 --tag CIS_n --minutes {minutes}
+CIS_rec ; 150 ; cissoid_ultimate.py --mode run --tag CIS_rec --minutes {minutes} --pop 60 --seeds CIS_n_curve.csv
+CIS_dot ; 100 ; cissoid_ultimate.py --mode dot --grid 2000:24000:250 --tag CIS_dot --minutes {minutes} --seeds CIS_n_curve.csv CIS_rec_elites.csv
+S_tl_n ; 150 ; sweep.py --problem threeline --mode n --grid 10:120:1 --tot 15000 --tot-le --floor 5 --tag S_tl_n --minutes {minutes} --seeds seeds_tl_independent.csv CL_curve_clean.csv CL_101_clean.csv R_tl101_elites.csv
+R_tl101_final ; 150 ; run.py --problem threeline --tag R_tl101_final --minutes {minutes} --nmax 101 --tot 14171.0 --floor 5 --pop 80 --moves jitter:3,needle:3,remove:2,halfwave:1,cross:2,swap:1,block:2,reverse:1,rescharge:2 --seeds R_tl101_elites.csv CL_101b_clean.csv CL_101_clean.csv --seed-best 80 --rng 707

@@ -1,0 +1,31 @@
+WAIT@1 2026-11-05 21:23:41 waited
+S_tl_tot 2026-11-06 00:30:11 rc=1 186.5 min
+DG_beam8 2026-11-06 04:03:27 rc=1 213.3 min
+S_tl_tot2 2026-11-06 04:12:06 rc=1 8.7 min
+WAIT@2 2026-11-06 04:12:06 waited
+DG_free8 2026-11-06 04:25:19 started by the previous driver (still running; the new driver waits for its log end)
+WAIT@7 2026-11-06 08:25:34 waited
+WAIT@3 2026-11-06 08:25:34 waited
+WAIT@8 2026-11-06 09:12:34 waited
+RF_curve0 2026-11-06 09:18:18 rc=0 5.7 min
+S_tl_free 2026-11-06 11:37:58 rc=1 139.7 min
+CIS_res1 2026-11-06 15:23:59 rc=1 155.0 min
+CIS_contest 2026-11-06 16:54:09 rc=0 90.2 min
+CL_cis_contest 2026-11-06 16:57:44 rc=0 3.6 min
+CIS_9000 2026-11-06 16:59:22 rc=1 1.6 min
+CL_9000 2026-11-06 16:59:33 rc=1 0.2 min
+CIS_c50 2026-11-06 18:18:43 rc=1 79.2 min
+CL_c50 2026-11-06 18:19:09 rc=0 0.4 min
+R_tl_free 2026-11-06 18:25:44 rc=1 6.6 min
+CIS_free1 2026-11-07 00:23:22 rc=0 180.5 min
+S_tl_free2 2026-11-07 04:23:29 rc=0 240.1 min
+CIS_res2 2026-11-07 07:09:30 rc=0 166.0 min
+CIS_res3 2026-11-07 12:11:35 rc=0 301.5 min
+CL_curve2 2026-11-07 12:16:13 rc=0 4.6 min
+CL_tl101b 2026-11-07 12:19:14 rc=0 3.0 min
+CL_cis_res3 2026-11-07 12:31:04 rc=0 11.8 min
+RF_tl101b 2026-11-07 12:33:55 rc=0 2.8 min
+CIS_recres 2026-11-07 15:35:55 rc=0 182.0 min
+CIS_recfree 2026-11-07 17:36:11 rc=0 120.3 min
+CL_recfree 2026-11-07 17:49:52 rc=0 13.7 min
+CL_recres 2026-11-07 17:59:35 rc=0 9.7 min

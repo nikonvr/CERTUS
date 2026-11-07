@@ -1,0 +1,16 @@
+2026-11-06 18:28:14 start {'mode': 'run', 'grid': '1:50:1', 'tag': 'G_cis_1p9', 'judge': '', 'minutes': 60.0, 'nmax': 50, 'floor': 0.1, 'pop': 40, 'moves': 'jitter:3,needle:3,needle_diel:1,substitute:3,remove:2,swap:2,block:1,cross:2', 'moves_per_key': 3, 'seeds': ['seed_cis_1p9.csv'], 'seeds_per_key': 3, 'workers': 6, 'rng': 79, 'only_seeds': True, 'axis': 'phys'}; 1 seed designs
+2026-11-06 18:28:19 BEST 0.0237091331 (oracle 0.0237091331) N 49 via seed from seed_cis_1p9
+2026-11-06 18:28:19 population 1; best 0.0237091331
+2026-11-06 18:30:21 BEST 0.0232511241 (oracle 0.0232511241) N 50 via needle from seed_cis_1p9
+2026-11-06 18:31:39 BEST 0.0232498945 (oracle 0.0232498945) N 50 via substitute from seed_cis_1p9
+2026-11-06 18:32:51 BEST 0.0227237377 (oracle 0.0227237377) N 50 via needle from seed_cis_1p9
+2026-11-06 18:33:22 BEST 0.0223640582 (oracle 0.0223640582) N 50 via needle_diel from seed_cis_1p9
+2026-11-06 18:33:32 BEST 0.022222838 (oracle 0.022222838) N 50 via needle from seed_cis_1p9
+2026-11-06 18:33:52 BEST 0.0221231034 (oracle 0.0221231034) N 50 via jitter from seed_cis_1p9
+2026-11-06 18:35:27 BEST 0.0219032374 (oracle 0.0219032374) N 50 via substitute from seed_cis_1p9
+2026-11-06 18:36:06 BEST 0.0218112803 (oracle 0.0218112803) N 50 via substitute from seed_cis_1p9
+2026-11-06 18:37:50 BEST 0.0216905514 (oracle 0.0216905514) N 50 via needle from seed_cis_1p9
+2026-11-06 18:39:17 BEST 0.0216109349 (oracle 0.0216109349) N 50 via needle from seed_cis_1p9
+2026-11-06 18:39:33 BEST 0.021553182 (oracle 0.021553182) N 50 via jitter from seed_cis_1p9
+2026-11-06 18:40:07 BEST 0.0211804086 (oracle 0.0211804086) N 50 via substitute from seed_cis_1p9
+2026-11-06 18:41:46 BEST 0.0209916907 (oracle 0.0209916907) N 50 via cross from seed_cis_1p9

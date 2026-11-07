@@ -1,0 +1,33 @@
+2026-11-07 00:42:13 start {'mode': 'run', 'grid': '1:50:1', 'tag': 'DEEP_NEEDLE', 'judge': '', 'minutes': 45.0, 'nmax': 50, 'floor': 0.1, 'pop': 30, 'moves': 'needle:6,needle_diel:3,jitter:1,swap:1', 'moves_per_key': 3, 'seeds': ['seed_deep_needle.csv'], 'seeds_per_key': 3, 'workers': 4, 'rng': 111, 'only_seeds': True, 'prefix': '', 'exclude': 'U', 'window': (5500.0, 6000.0), 'axis': 'phys'}; 1 seed designs
+2026-11-07 00:42:20 BEST 0.053382703 (oracle 0.053382703) N 48 via seed from seed_deep_needle
+2026-11-07 00:42:20 population 1; best 0.053382703
+2026-11-07 00:42:26 BEST 0.0528822046 (oracle 0.0528822046) N 50 via needle from seed_deep_needle
+2026-11-07 00:42:32 BEST 0.0518862827 (oracle 0.0518862827) N 50 via needle from seed_deep_needle
+2026-11-07 00:42:34 BEST 0.0486613913 (oracle 0.0486613913) N 49 via needle from seed_deep_needle
+2026-11-07 00:42:44 BEST 0.0426656553 (oracle 0.0426656553) N 49 via needle from seed_deep_needle
+2026-11-07 00:42:46 BEST 0.0424746742 (oracle 0.0424746742) N 49 via needle from seed_deep_needle
+2026-11-07 00:43:04 BEST 0.0393647732 (oracle 0.0393647732) N 49 via needle_diel from seed_deep_needle
+2026-11-07 00:43:20 BEST 0.0389811769 (oracle 0.0389811769) N 50 via needle_diel from seed_deep_needle
+2026-11-07 00:43:26 BEST 0.0389811135 (oracle 0.0389811135) N 50 via needle from seed_deep_needle
+2026-11-07 00:43:39 BEST 0.0357302218 (oracle 0.0357302218) N 50 via needle_diel from seed_deep_needle
+2026-11-07 00:44:05 BEST 0.03573022 (oracle 0.03573022) N 50 via needle_diel from seed_deep_needle
+2026-11-07 00:44:27 BEST 0.0357302199 (oracle 0.0357302199) N 50 via needle_diel from seed_deep_needle
+2026-11-07 00:47:40 BEST 0.0352633468 (oracle 0.0352633468) N 49 via needle_diel from seed_deep_needle
+2026-11-07 00:49:25 BEST 0.0345608825 (oracle 0.0345608825) N 50 via needle_diel from seed_deep_needle
+2026-11-07 00:51:03 BEST 0.0339530433 (oracle 0.0339530433) N 50 via needle_diel from seed_deep_needle
+2026-11-07 00:52:16 BEST 0.0339284864 (oracle 0.0339284864) N 50 via needle from seed_deep_needle
+2026-11-07 00:52:49 BEST 0.0321398727 (oracle 0.0321398727) N 50 via needle_diel from seed_deep_needle
+2026-11-07 00:52:59 BEST 0.0320220854 (oracle 0.0320220854) N 49 via needle_diel from seed_deep_needle
+2026-11-07 00:53:38 BEST 0.0313251255 (oracle 0.0313251255) N 50 via needle_diel from seed_deep_needle
+2026-11-07 00:54:21 BEST 0.0313220203 (oracle 0.0313220203) N 50 via needle from seed_deep_needle
+2026-11-07 00:54:29 BEST 0.031321643 (oracle 0.031321643) N 50 via needle_diel from seed_deep_needle
+2026-11-07 00:54:43 BEST 0.0313216428 (oracle 0.0313216428) N 50 via needle_diel from seed_deep_needle
+2026-11-07 00:54:49 BEST 0.0312885252 (oracle 0.0312885252) N 50 via jitter from seed_deep_needle
+2026-11-07 00:55:07 BEST 0.0306680964 (oracle 0.0306680964) N 50 via needle from seed_deep_needle
+2026-11-07 00:57:24 best 0.0306680964 pop [0.0306681..0.0345855] needle:218/95 needle_diel:125/66 jitter:37/11 swap:38/4
+2026-11-07 00:57:58 BEST 0.0292290529 (oracle 0.0292290529) N 50 via needle_diel from seed_deep_needle
+2026-11-07 00:59:06 BEST 0.0292279049 (oracle 0.0292279049) N 50 via needle from seed_deep_needle
+2026-11-07 01:00:13 BEST 0.0292278984 (oracle 0.0292278984) N 50 via needle from seed_deep_needle
+2026-11-07 01:06:47 BEST 0.0279666195 (oracle 0.0279666195) N 50 via needle from seed_deep_needle
+2026-11-07 01:12:25 best 0.0279666195 pop [0.0279666..0.0318781] needle:463/149 needle_diel:242/94 jitter:88/17 swap:76/4
+2026-11-07 01:27:15 end best 0.0279666195

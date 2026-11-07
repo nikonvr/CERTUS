@@ -1,0 +1,16 @@
+2026-11-07 12:16:14 start {'problem': 'threeline', 'designs': ['R_tl_free_elites.csv', 'S_tl_free2_curve.csv'], 'tag': 'CL_tl101b', 'minutes': 40.0, 'tot': 14171.0, 'tot_window': 800.0, 'floor': 5.0, 'nmax': 101, 'top': 400, 'workers': 15}
+2026-11-07 12:16:14 657 designs read, 126 to clean
+2026-11-07 12:16:38 10/126 cleaned; best 0.02268 % N 101 TOT 14171.0 thinnest 15.20
+2026-11-07 12:16:56 20/126 cleaned; best 0.01838 % N 100 TOT 14171.0 thinnest 14.70
+2026-11-07 12:17:09 30/126 cleaned; best 0.01838 % N 100 TOT 14171.0 thinnest 14.70
+2026-11-07 12:17:26 40/126 cleaned; best 0.01838 % N 100 TOT 14171.0 thinnest 14.70
+2026-11-07 12:17:41 50/126 cleaned; best 0.01838 % N 100 TOT 14171.0 thinnest 14.70
+2026-11-07 12:17:53 60/126 cleaned; best 0.01838 % N 100 TOT 14171.0 thinnest 14.70
+2026-11-07 12:18:11 70/126 cleaned; best 0.01838 % N 100 TOT 14171.0 thinnest 14.70
+2026-11-07 12:18:25 80/126 cleaned; best 0.01838 % N 100 TOT 14171.0 thinnest 14.70
+2026-11-07 12:18:38 90/126 cleaned; best 0.01838 % N 100 TOT 14171.0 thinnest 14.70
+2026-11-07 12:18:52 100/126 cleaned; best 0.01838 % N 100 TOT 14171.0 thinnest 14.70
+2026-11-07 12:19:00 110/126 cleaned; best 0.01838 % N 100 TOT 14171.0 thinnest 14.70
+2026-11-07 12:19:09 120/126 cleaned; best 0.01838 % N 100 TOT 14171.0 thinnest 14.70
+2026-11-07 12:19:13 126/126 cleaned; best 0.01838 % N 100 TOT 14171.0 thinnest 14.70
+2026-11-07 12:19:14 end best 0.018376 % (oracle 0.018376) N 100 TOT 14171.0 thinnest 14.704

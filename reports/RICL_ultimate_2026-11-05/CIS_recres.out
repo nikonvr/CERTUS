@@ -1,0 +1,82 @@
+2026-11-07 12:33:59 start {'mode': 'run', 'grid': '1:50:1', 'tag': 'CIS_recres', 'judge': 'exact10', 'minutes': 180.0, 'nmax': 70, 'floor': 0.1, 'pop': 60, 'moves': 'jitter:3,needle:3,needle_diel:1,substitute:3,remove:2,swap:2,block:1,cross:2', 'moves_per_key': 3, 'seeds': ['CIS_res2_curve.csv'], 'seeds_per_key': 3, 'workers': 15, 'rng': 2016, 'only_seeds': False, 'prefix': '', 'exclude': 'U', 'window': None, 'axis': 'diel_ot'}; 878 seed designs
+2026-11-07 12:34:18 BEST 0.011989366 (oracle 0.011989366) N 55 via seed from CIS_res2_curve
+2026-11-07 12:36:16 population 60; best 0.011989366
+2026-11-07 12:37:35 BEST 0.0119714213 (oracle 0.0119714213) N 57 via needle_diel from CIS_res2_curve
+2026-11-07 12:38:14 BEST 0.0119606002 (oracle 0.0119606002) N 57 via needle from CIS_res2_curve
+2026-11-07 12:39:06 BEST 0.0119365809 (oracle 0.0119365809) N 55 via needle from CIS_res2_curve
+2026-11-07 12:39:16 BEST 0.0119099429 (oracle 0.0119099429) N 55 via needle_diel from CIS_res2_curve
+2026-11-07 12:42:06 BEST 0.0119030085 (oracle 0.0119030085) N 59 via needle_diel from CIS_res2_curve
+2026-11-07 12:44:41 BEST 0.0117941601 (oracle 0.0117941601) N 61 via needle from CIS_res2_curve
+2026-11-07 12:44:52 BEST 0.0117721163 (oracle 0.0117721163) N 61 via needle_diel from CIS_res2_curve
+2026-11-07 12:47:46 BEST 0.0117637225 (oracle 0.0117637225) N 63 via needle_diel from CIS_res2_curve
+2026-11-07 12:49:05 BEST 0.0116807341 (oracle 0.0116807341) N 63 via needle from CIS_res2_curve
+2026-11-07 12:50:25 BEST 0.0116807331 (oracle 0.0116807331) N 63 via cross from CIS_res2_curve
+2026-11-07 12:50:38 BEST 0.0115455814 (oracle 0.0115455814) N 65 via needle_diel from CIS_res2_curve
+2026-11-07 12:51:16 best 0.0115455814 pop [0.0115456..0.0128288] jitter:49/11 needle:52/26 needle_diel:20/20 substitute:78/19 remove:41/4 swap:32/5 block:27/0 cross:41/20
+2026-11-07 12:53:33 BEST 0.0115455795 (oracle 0.0115455795) N 65 via needle from CIS_res2_curve
+2026-11-07 12:54:21 BEST 0.0112307005 (oracle 0.0112307005) N 65 via needle_diel from CIS_res2_curve
+2026-11-07 12:56:28 BEST 0.0112215888 (oracle 0.0112215888) N 67 via cross from CIS_res2_curve
+2026-11-07 12:56:39 BEST 0.0111814609 (oracle 0.0111814609) N 67 via needle from CIS_res2_curve
+2026-11-07 12:59:12 BEST 0.0111814459 (oracle 0.0111814459) N 67 via jitter from CIS_res2_curve
+2026-11-07 13:01:43 BEST 0.0111502946 (oracle 0.0111502946) N 67 via needle_diel from CIS_res2_curve
+2026-11-07 13:03:01 BEST 0.011054691 (oracle 0.011054691) N 67 via needle_diel from CIS_res2_curve
+2026-11-07 13:04:45 BEST 0.00983413993 (oracle 0.00983413993) N 67 via needle from CIS_res2_curve
+2026-11-07 13:06:16 best 0.00983413993 pop [0.00983414..0.0117637] jitter:97/20 needle:107/54 needle_diel:52/51 substitute:119/23 remove:71/7 swap:70/12 block:48/0 cross:71/40
+2026-11-07 13:10:45 BEST 0.00958215537 (oracle 0.00958215537) N 69 via needle_diel from CIS_res2_curve
+2026-11-07 13:11:45 BEST 0.0090880645 (oracle 0.0090880645) N 69 via substitute from CIS_res2_curve
+2026-11-07 13:15:56 BEST 0.00908521352 (oracle 0.00908521352) N 69 via substitute from CIS_res2_curve
+2026-11-07 13:17:05 BEST 0.00874750849 (oracle 0.00874750849) N 68 via needle_diel from CIS_res2_curve
+2026-11-07 13:19:39 BEST 0.00874211888 (oracle 0.00874211888) N 70 via needle_diel from CIS_res2_curve
+2026-11-07 13:21:09 BEST 0.00836743577 (oracle 0.00836743577) N 70 via needle from CIS_res2_curve
+2026-11-07 13:21:17 best 0.00836743577 pop [0.00836744..0.0111299] jitter:137/27 needle:153/87 needle_diel:69/67 substitute:170/44 remove:108/10 swap:98/16 block:64/1 cross:94/49
+2026-11-07 13:23:54 BEST 0.00826582191 (oracle 0.00826582191) N 70 via needle_diel from CIS_res2_curve
+2026-11-07 13:27:10 BEST 0.00826305325 (oracle 0.00826305325) N 70 via jitter from CIS_res2_curve
+2026-11-07 13:27:40 BEST 0.00826295817 (oracle 0.00826295817) N 70 via needle from CIS_res2_curve
+2026-11-07 13:28:58 BEST 0.00826213439 (oracle 0.00826213439) N 70 via cross from CIS_res2_curve
+2026-11-07 13:30:49 BEST 0.00825528203 (oracle 0.00825528203) N 70 via needle_diel from CIS_res2_curve
+2026-11-07 13:35:13 BEST 0.00825523683 (oracle 0.00825523683) N 70 via cross from CIS_res2_curve
+2026-11-07 13:36:27 best 0.00825523683 pop [0.00825524..0.00938435] jitter:175/33 needle:201/119 needle_diel:80/78 substitute:216/63 remove:132/15 swap:121/17 block:75/1 cross:130/62
+2026-11-07 13:38:04 BEST 0.00818133143 (oracle 0.00818133143) N 69 via swap from CIS_res2_curve
+2026-11-07 13:40:56 BEST 0.00817831687 (oracle 0.00817831687) N 69 via jitter from CIS_res2_curve
+2026-11-07 13:43:26 BEST 0.00817814925 (oracle 0.00817814925) N 69 via needle from CIS_res2_curve
+2026-11-07 13:44:50 BEST 0.0081765772 (oracle 0.0081765772) N 69 via needle_diel from CIS_res2_curve
+2026-11-07 13:47:24 BEST 0.0081480215 (oracle 0.0081480215) N 69 via jitter from CIS_res2_curve
+2026-11-07 13:50:37 BEST 0.00814641962 (oracle 0.00814641962) N 69 via needle from CIS_res2_curve
+2026-11-07 13:51:36 best 0.00814641962 pop [0.00814642..0.00864635] jitter:217/40 needle:237/143 needle_diel:89/81 substitute:254/71 remove:165/21 swap:152/20 block:89/1 cross:158/78
+2026-11-07 13:56:07 BEST 0.00814622338 (oracle 0.00814622338) N 69 via needle from CIS_res2_curve
+2026-11-07 13:57:11 BEST 0.00812145581 (oracle 0.00812145581) N 69 via needle_diel from CIS_res2_curve
+2026-11-07 14:01:21 BEST 0.00811709952 (oracle 0.00811709952) N 69 via needle from CIS_res2_curve
+2026-11-07 14:02:29 BEST 0.00806930755 (oracle 0.00806930755) N 70 via needle from CIS_res2_curve
+2026-11-07 14:05:45 BEST 0.00806927048 (oracle 0.00806927048) N 70 via jitter from CIS_res2_curve
+2026-11-07 14:06:16 BEST 0.0074126631 (oracle 0.0074126631) N 69 via needle_diel from CIS_res2_curve
+2026-11-07 14:06:36 best 0.0074126631 pop [0.00741266..0.0082951] jitter:259/48 needle:276/165 needle_diel:105/92 substitute:296/83 remove:190/22 swap:182/21 block:101/1 cross:189/89
+2026-11-07 14:06:46 BEST 0.00733965184 (oracle 0.00733965184) N 69 via needle_diel from CIS_res2_curve
+2026-11-07 14:09:03 BEST 0.00732007845 (oracle 0.00732007845) N 69 via jitter from CIS_res2_curve
+2026-11-07 14:10:46 BEST 0.00731367387 (oracle 0.00731367387) N 69 via needle from CIS_res2_curve
+2026-11-07 14:11:55 BEST 0.00728379465 (oracle 0.00728379465) N 70 via needle_diel from CIS_res2_curve
+2026-11-07 14:15:28 BEST 0.00728111746 (oracle 0.00728111746) N 70 via needle from CIS_res2_curve
+2026-11-07 14:17:18 BEST 0.00702994544 (oracle 0.00702994544) N 69 via needle_diel from CIS_res2_curve
+2026-11-07 14:20:54 BEST 0.0070090589 (oracle 0.0070090589) N 69 via needle from CIS_res2_curve
+2026-11-07 14:21:05 BEST 0.00700874091 (oracle 0.00700874091) N 69 via needle_diel from CIS_res2_curve
+2026-11-07 14:21:40 best 0.00700874091 pop [0.00700874..0.00818977] jitter:291/57 needle:317/189 needle_diel:124/106 substitute:332/90 remove:211/23 swap:198/21 block:115/1 cross:211/94
+2026-11-07 14:23:45 BEST 0.00699135369 (oracle 0.00699135369) N 69 via needle from CIS_res2_curve
+2026-11-07 14:26:27 BEST 0.00697975319 (oracle 0.00697975319) N 69 via cross from CIS_res2_curve
+2026-11-07 14:31:54 BEST 0.00697106904 (oracle 0.00697106904) N 69 via cross from CIS_res2_curve
+2026-11-07 14:35:47 BEST 0.00697005407 (oracle 0.00697005407) N 69 via needle from CIS_res2_curve
+2026-11-07 14:36:41 best 0.00697005407 pop [0.00697005..0.00807563] jitter:336/63 needle:354/213 needle_diel:136/115 substitute:366/97 remove:233/24 swap:220/25 block:133/2 cross:238/105
+2026-11-07 14:36:47 BEST 0.00696453567 (oracle 0.00696453567) N 69 via needle from CIS_res2_curve
+2026-11-07 14:38:59 BEST 0.00696430722 (oracle 0.00696430722) N 69 via needle from CIS_res2_curve
+2026-11-07 14:39:45 BEST 0.00676130379 (oracle 0.00676130379) N 69 via substitute from CIS_res2_curve
+2026-11-07 14:42:49 BEST 0.00676103802 (oracle 0.00676103802) N 69 via needle from CIS_res2_curve
+2026-11-07 14:46:20 BEST 0.00676103099 (oracle 0.00676103099) N 69 via cross from CIS_res2_curve
+2026-11-07 14:47:35 BEST 0.00676103094 (oracle 0.00676103094) N 69 via cross from CIS_res2_curve
+2026-11-07 14:49:34 BEST 0.00676102931 (oracle 0.00676102931) N 69 via jitter from CIS_res2_curve
+2026-11-07 14:51:44 BEST 0.00676102807 (oracle 0.00676102807) N 69 via jitter from CIS_res2_curve
+2026-11-07 14:51:44 best 0.00676102807 pop [0.00676103..0.00733965] jitter:373/73 needle:396/240 needle_diel:143/120 substitute:412/102 remove:262/25 swap:249/25 block:141/2 cross:272/129
+2026-11-07 14:57:55 BEST 0.00665539765 (oracle 0.00665539765) N 69 via cross from CIS_res2_curve
+2026-11-07 15:00:26 BEST 0.00665535699 (oracle 0.00665535699) N 69 via needle from CIS_res2_curve
+2026-11-07 15:02:34 BEST 0.00665533045 (oracle 0.00665533045) N 69 via jitter from CIS_res2_curve
+2026-11-07 15:06:49 best 0.00665533045 pop [0.00665533..0.00697239] jitter:412/78 needle:428/255 needle_diel:153/126 substitute:456/113 remove:295/25 swap:272/26 block:155/2 cross:305/150
+2026-11-07 15:10:19 BEST 0.00654861849 (oracle 0.00654861849) N 69 via substitute from CIS_res2_curve
+2026-11-07 15:21:57 best 0.00654861849 pop [0.00654862..0.00691015] jitter:453/83 needle:465/273 needle_diel:165/132 substitute:506/124 remove:326/25 swap:305/26 block:163/2 cross:327/157
+2026-11-07 15:34:01 end best 0.00654861849

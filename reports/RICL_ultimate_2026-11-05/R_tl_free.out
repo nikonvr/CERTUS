@@ -1,0 +1,149 @@
+2026-11-06 18:19:10 start {'problem': 'threeline', 'points': 1601, 'tag': 'R_tl_free', 'minutes': 180.0, 'nmax': 120, 'tot': 14171.0, 'floor': 0.1, 'otlo': None, 'othi': None, 'fixed': None, 'iters': 200, 'pop': 80, 'workers': 15, 'seeds': ['S_tl_free_curve.csv', 'DG_free8_designs.csv', 'S_tl_tot_curve.csv'], 'seed_best': 80, 'moves': 'jitter:3,needle:3,remove:2,halfwave:1,cross:2,swap:1,block:2,reverse:1,rescharge:2', 'rng': 141}
+2026-11-06 18:19:10 240 seeds
+2026-11-06 18:19:13 BEST 20.1314103 (oracle 20.1314103) N 117 TOT 14171.000 thinnest 0.10 nm via seed from S_tl_free_curve#0
+2026-11-06 18:19:13 BEST 0.0296820303 (oracle 0.0296820303) N 117 TOT 14171.000 thinnest 1.02 nm via seed from S_tl_free_curve#1
+2026-11-06 18:19:16 BEST 0.0237517339 (oracle 0.0237517339) N 119 TOT 14171.000 thinnest 0.17 nm via seed from S_tl_free_curve#2
+2026-11-06 18:19:16 BEST 0.0217324191 (oracle 0.0217324191) N 113 TOT 14171.000 thinnest 0.99 nm via seed from S_tl_free_curve#5
+2026-11-06 18:19:17 BEST 0.0199165966 (oracle 0.0199165966) N 113 TOT 14171.000 thinnest 0.89 nm via seed from S_tl_free_curve#6
+2026-11-06 18:19:17 BEST 0.0172637448 (oracle 0.0172637448) N 113 TOT 14171.000 thinnest 0.70 nm via seed from S_tl_free_curve#7
+2026-11-06 18:19:17 BEST 0.0162493339 (oracle 0.0162493339) N 113 TOT 14171.000 thinnest 0.81 nm via seed from S_tl_free_curve#8
+2026-11-06 18:19:17 BEST 0.0153155005 (oracle 0.0153155005) N 113 TOT 14171.000 thinnest 0.58 nm via seed from S_tl_free_curve#9
+2026-11-06 18:19:18 BEST 0.0145633871 (oracle 0.0145633871) N 115 TOT 14171.000 thinnest 0.45 nm via seed from S_tl_free_curve#13
+2026-11-06 18:19:28 population 80 after seeds; best 0.0145633871
+2026-11-06 18:19:34 BEST 0.0144729379 (oracle 0.0144729379) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:19:42 BEST 0.0144693082 (oracle 0.0144693082) N 115 TOT 14171.000 thinnest 0.46 nm via rescharge from S_tl_free_curve#13
+2026-11-06 18:19:42 BEST 0.0144526187 (oracle 0.0144526187) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:19:49 BEST 0.014450413 (oracle 0.014450413) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:19:50 BEST 0.0144409928 (oracle 0.0144409928) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:19:57 BEST 0.0144397487 (oracle 0.0144397487) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:19:58 BEST 0.014432071 (oracle 0.014432071) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:20:05 BEST 0.014430791 (oracle 0.014430791) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:20:06 BEST 0.0144249294 (oracle 0.0144249294) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:20:14 BEST 0.0144239432 (oracle 0.0144239432) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:20:14 BEST 0.014418621 (oracle 0.014418621) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:20:22 BEST 0.014417896 (oracle 0.014417896) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:20:22 BEST 0.0144126897 (oracle 0.0144126897) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:20:31 BEST 0.0144119873 (oracle 0.0144119873) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:20:31 BEST 0.0144069791 (oracle 0.0144069791) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:20:39 BEST 0.0144064845 (oracle 0.0144064845) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:20:40 BEST 0.0144015363 (oracle 0.0144015363) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:20:48 BEST 0.0143996413 (oracle 0.0143996413) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:20:49 BEST 0.0143965656 (oracle 0.0143965656) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:20:57 BEST 0.0143944668 (oracle 0.0143944668) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:20:58 BEST 0.014389702 (oracle 0.014389702) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:21:07 BEST 0.0143853707 (oracle 0.0143853707) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:21:17 BEST 0.0143815496 (oracle 0.0143815496) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:21:25 BEST 0.0143775433 (oracle 0.0143775433) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:21:35 BEST 0.0143734523 (oracle 0.0143734523) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:21:42 BEST 0.0143727091 (oracle 0.0143727091) N 115 TOT 14171.000 thinnest 0.46 nm via rescharge from S_tl_free_curve#13
+2026-11-06 18:21:42 BEST 0.0143691308 (oracle 0.0143691308) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:21:48 BEST 0.0143685362 (oracle 0.0143685362) N 115 TOT 14171.000 thinnest 0.46 nm via rescharge from S_tl_free_curve#13
+2026-11-06 18:21:50 BEST 0.0143654249 (oracle 0.0143654249) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:21:57 BEST 0.0143647576 (oracle 0.0143647576) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:21:58 BEST 0.0143618508 (oracle 0.0143618508) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:22:05 BEST 0.0143612489 (oracle 0.0143612489) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:22:06 BEST 0.0143582978 (oracle 0.0143582978) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:22:14 BEST 0.0143577113 (oracle 0.0143577113) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:22:15 BEST 0.0143546532 (oracle 0.0143546532) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:22:22 BEST 0.0143544556 (oracle 0.0143544556) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:22:24 BEST 0.014351345 (oracle 0.014351345) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:22:31 BEST 0.0143510714 (oracle 0.0143510714) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:22:32 BEST 0.0143480345 (oracle 0.0143480345) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:22:40 BEST 0.0143478746 (oracle 0.0143478746) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:22:41 BEST 0.0143447046 (oracle 0.0143447046) N 115 TOT 14171.000 thinnest 0.46 nm via polish from S_tl_free_curve#13
+2026-11-06 18:22:50 BEST 0.0143414202 (oracle 0.0143414202) N 115 TOT 14171.000 thinnest 0.38 nm via polish from S_tl_free_curve#13
+2026-11-06 18:22:57 BEST 0.0143407907 (oracle 0.0143407907) N 115 TOT 14171.000 thinnest 0.34 nm via rescharge from S_tl_free_curve#13
+2026-11-06 18:22:59 BEST 0.0143382588 (oracle 0.0143382588) N 115 TOT 14171.000 thinnest 0.16 nm via polish from S_tl_free_curve#13
+2026-11-06 18:23:05 BEST 0.0143359943 (oracle 0.0143359943) N 117 TOT 14171.000 thinnest 0.21 nm via needle from S_tl_free_curve#13
+2026-11-06 18:23:08 BEST 0.0143358192 (oracle 0.0143358192) N 115 TOT 14171.000 thinnest 0.10 nm via polish from S_tl_free_curve#13
+2026-11-06 18:23:14 BEST 0.0143309095 (oracle 0.0143309095) N 117 TOT 14171.000 thinnest 0.10 nm via polish from S_tl_free_curve#13
+2026-11-06 18:23:23 BEST 0.0143271359 (oracle 0.0143271359) N 117 TOT 14171.000 thinnest 0.10 nm via polish from S_tl_free_curve#13
+2026-11-06 18:23:32 BEST 0.0143234369 (oracle 0.0143234369) N 117 TOT 14171.000 thinnest 0.10 nm via polish from S_tl_free_curve#13
+2026-11-06 18:23:41 BEST 0.0143200729 (oracle 0.0143200729) N 117 TOT 14171.000 thinnest 0.10 nm via polish from S_tl_free_curve#13
+2026-11-06 18:23:50 BEST 0.0143165346 (oracle 0.0143165346) N 117 TOT 14171.000 thinnest 0.10 nm via polish from S_tl_free_curve#13
+2026-11-06 18:23:58 BEST 0.0143127581 (oracle 0.0143127581) N 117 TOT 14171.000 thinnest 0.10 nm via polish from S_tl_free_curve#13
+2026-11-06 18:24:08 BEST 0.0143093688 (oracle 0.0143093688) N 117 TOT 14171.000 thinnest 0.10 nm via polish from S_tl_free_curve#13
+2026-11-06 18:24:16 BEST 0.0143061732 (oracle 0.0143061732) N 117 TOT 14171.000 thinnest 0.10 nm via polish from S_tl_free_curve#13
+2026-11-06 18:24:24 BEST 0.0143027768 (oracle 0.0143027768) N 117 TOT 14171.000 thinnest 0.10 nm via polish from S_tl_free_curve#13
+2026-11-06 18:24:32 BEST 0.0143020873 (oracle 0.0143020873) N 116 TOT 14171.000 thinnest 0.45 nm via rescharge from S_tl_free_curve#13
+2026-11-06 18:24:35 BEST 0.0142998058 (oracle 0.0142998058) N 117 TOT 14171.000 thinnest 0.10 nm via polish from S_tl_free_curve#13
+2026-11-06 18:24:40 BEST 0.0142983345 (oracle 0.0142983345) N 116 TOT 14171.000 thinnest 0.45 nm via polish from S_tl_free_curve#13
+2026-11-06 18:24:44 BEST 0.0142967233 (oracle 0.0142967233) N 117 TOT 14171.000 thinnest 0.10 nm via polish from S_tl_free_curve#13
+2026-11-06 18:24:49 BEST 0.0142953222 (oracle 0.0142953222) N 116 TOT 14171.000 thinnest 0.45 nm via polish from S_tl_free_curve#13
+2026-11-06 18:24:52 BEST 0.0142937829 (oracle 0.0142937829) N 117 TOT 14171.000 thinnest 0.10 nm via polish from S_tl_free_curve#13
+2026-11-06 18:24:56 BEST 0.0142919295 (oracle 0.0142919295) N 116 TOT 14171.000 thinnest 0.45 nm via cross from S_tl_free_curve#13
+2026-11-06 18:25:02 BEST 0.0142905071 (oracle 0.0142905071) N 117 TOT 14171.000 thinnest 0.10 nm via polish from S_tl_free_curve#13
+2026-11-06 18:25:06 BEST 0.0142887774 (oracle 0.0142887774) N 116 TOT 14171.000 thinnest 0.45 nm via polish from S_tl_free_curve#13
+2026-11-06 18:25:11 BEST 0.0142874742 (oracle 0.0142874742) N 117 TOT 14171.000 thinnest 0.10 nm via polish from S_tl_free_curve#13
+2026-11-06 18:25:15 BEST 0.0142855118 (oracle 0.0142855118) N 116 TOT 14171.000 thinnest 0.45 nm via polish from S_tl_free_curve#13
+2026-11-06 18:25:20 BEST 0.0142844953 (oracle 0.0142844953) N 117 TOT 14171.000 thinnest 0.10 nm via polish from S_tl_free_curve#13
+2026-11-06 18:25:24 BEST 0.0142822669 (oracle 0.0142822669) N 116 TOT 14171.000 thinnest 0.45 nm via polish from S_tl_free_curve#13
+2026-11-06 18:25:29 BEST 0.014281465 (oracle 0.014281465) N 117 TOT 14171.000 thinnest 0.10 nm via polish from S_tl_free_curve#13
+2026-11-06 18:25:34 BEST 0.0142792455 (oracle 0.0142792455) N 116 TOT 14171.000 thinnest 0.45 nm via polish from S_tl_free_curve#13
+2026-11-06 18:25:38 BEST 0.0142786053 (oracle 0.0142786053) N 117 TOT 14171.000 thinnest 0.10 nm via polish from S_tl_free_curve#13
+concurrent.futures.process._RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\concurrent\futures\process.py", line 255, in _process_worker
+    r = call_item.fn(*call_item.args, **call_item.kwargs)
+  File "D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\reports\RICL_ultimate_2026-11-05\run.py", line 40, in task
+    out = E.mutate(PROB, RULES, parents, move, rng)
+  File "D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\reports\RICL_ultimate_2026-11-05\engine.py", line 504, in mutate
+    d = resonance_kick(seq, d, int(rng.integers(2, 9)), rules.floor, rules.tot)
+  File "D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\reports\RICL_ultimate_2026-11-05\kick.py", line 20, in resonance_kick
+    ref = refine_resonances(prob, np.maximum(np.asarray(d, dtype=float), floor), settings=settings,
+                            lower_bounds=np.full(len(seq), floor))
+  File "D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\certus\physics\design_resonances.py", line 416, in refine_resonances
+    sol = least_squares(lambda x: both(x)[0], d[variable], jac=lambda x: both(x)[1],
+                        bounds=(lo[variable], hi[variable]), method="trf", x_scale="jac",
+                        ftol=1e-15, xtol=1e-15, gtol=1e-15, max_nfev=settings.burst)
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\_lib\_util.py", line 662, in inner
+    return func(*args, **kwargs)
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\optimize\_lsq\least_squares.py", line 1019, in least_squares
+    result = trf(vector_fun.fun, vector_fun.jac, x0, f0, J0, lb, ub, ftol, xtol,
+                 gtol, max_nfev, x_scale, loss_function, tr_solver,
+                 tr_options.copy(), verbose, callback=callback_wrapped)
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\optimize\_lsq\trf.py", line 124, in trf
+    return trf_bounds(
+        fun, jac, x0, f0, J0, lb, ub, ftol, xtol, gtol, max_nfev, x_scale,
+        loss_function, tr_solver, tr_options, verbose, callback=callback)
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\optimize\_lsq\trf.py", line 340, in trf_bounds
+    f_new = fun(x_new)
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\optimize\_differentiable_functions.py", line 743, in fun
+    self._update_fun()
+    ~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\optimize\_differentiable_functions.py", line 707, in _update_fun
+    self.f = self.fun_wrapped(xp_copy(self.x))
+             ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\optimize\_differentiable_functions.py", line 424, in __call__
+    return np.atleast_1d(self.fun(x))
+                         ~~~~~~~~^^^
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\optimize\_lsq\least_squares.py", line 263, in __call__
+    return self.f(x, *self.args, **self.kwargs)
+           ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\certus\physics\design_resonances.py", line 416, in <lambda>
+    sol = least_squares(lambda x: both(x)[0], d[variable], jac=lambda x: both(x)[1],
+                                  ~~~~^^^
+  File "D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\certus\physics\design_resonances.py", line 409, in both
+    points.append(_peak_top(problem, full, moved, restrict_band=False)[0])
+                  ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\certus\physics\design_resonances.py", line 263, in _peak_top
+    raise _NoErrorMaximum("No isolated interior error maximum was resolved near the tracked pole.")
+certus.physics.design_resonances._NoErrorMaximum: No isolated interior error maximum was resolved near the tracked pole.
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\reports\RICL_ultimate_2026-11-05\run.py", line 262, in <module>
+    main()
+    ~~~~^^
+  File "D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310\reports\RICL_ultimate_2026-11-05\run.py", line 233, in main
+    move, out, dt = f.result()
+                    ~~~~~~~~^^
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\concurrent\futures\_base.py", line 447, in result
+    return self.__get_result()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\concurrent\futures\_base.py", line 396, in __get_result
+    raise self._exception
+certus.physics.design_resonances._NoErrorMaximum: No isolated interior error maximum was resolved near the tracked pole.

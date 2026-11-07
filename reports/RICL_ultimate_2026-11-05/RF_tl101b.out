@@ -1,0 +1,6 @@
+2026-11-07 12:31:06 start {'designs': ['CL_tl101_clean.csv', 'CL_tl101b_clean.csv'], 'tag': 'RF_tl101b', 'minutes': 60.0, 'floor': 5.0, 'rounds': 40, 'per_key': 60, 'keys': '100:14500:50', 'tot': 14171.0, 'tot_window': 1.0, 'nmax': 101, 'by': 'tot', 'workers': 15}
+2026-11-07 12:31:06 1 keys, 60 designs to finish
+2026-11-07 12:32:27 25/60; last key 14171.0: resolved 0.5905 -> 0.5882 %, nominal 0.0224 -> 0.0254 % (61 s, ok try0: 0.5905; try1: _NoErrorMaximum; try2: 0.5909; try3: 0.5882)
+2026-11-07 12:33:18 50/60; last key 14171.0: resolved 0.0633 -> 0.0205 %, nominal 0.0291 -> 0.0239 % (13 s, ok try0: 0.0205)
+2026-11-07 12:33:54 60/60; last key 14171.0: resolved 0.3759 -> 0.3734 %, nominal 0.0291 -> 0.0334 % (48 s, ok try0: 0.3759; try1: 0.3753; try2: 0.3800; try3: 0.3734)
+2026-11-07 12:33:55 end: 1 keys written

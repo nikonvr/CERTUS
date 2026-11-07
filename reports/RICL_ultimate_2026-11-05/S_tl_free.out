@@ -1,0 +1,27 @@
+2026-11-06 09:18:19 start {'problem': 'threeline', 'points': 1601, 'mode': 'tot', 'grid': '100:14500:25', 'tag': 'S_tl_free', 'minutes': 300.0, 'nmax': 160, 'tot': None, 'tot_le': False, 'floor': 0.1, 'iters': 200, 'moves_per_key': 3, 'grow_from': '1,2,3,5,8', 'grow_top': 4, 'moves': 'jitter:3,needle:3,remove:2,halfwave:1,swap:1,block:2,reverse:1', 'seeds': ['S_tl_tot_curve.csv', 'DG_free8_designs.csv'], 'seeds_per_key': 3, 'workers': 15, 'rng': 2026}; 577 grid points
+2026-11-06 09:18:19 617 seed designs read
+2026-11-06 09:19:17 seeded 577 of 577 points
+2026-11-06 09:28:45 round 1: 6325 tasks + 2866 growths, 804 improvements, 577/577 points, median MF 0.729581
+2026-11-06 09:36:13 round 2: 4807 tasks + 1916 growths, 392 improvements, 577/577 points, median MF 0.729288
+2026-11-06 09:42:12 round 3: 4090 tasks + 1471 growths, 338 improvements, 577/577 points, median MF 0.728899
+2026-11-06 09:47:43 round 4: 3882 tasks + 1343 growths, 325 improvements, 577/577 points, median MF 0.728899
+2026-11-06 09:53:16 round 5: 3786 tasks + 1282 growths, 308 improvements, 577/577 points, median MF 0.728899
+2026-11-06 09:58:39 round 6: 3653 tasks + 1195 growths, 284 improvements, 577/577 points, median MF 0.728899
+2026-11-06 10:04:02 round 7: 3574 tasks + 1146 growths, 287 improvements, 577/577 points, median MF 0.728862
+2026-11-06 10:09:54 round 8: 3632 tasks + 1184 growths, 305 improvements, 577/577 points, median MF 0.728831
+2026-11-06 10:15:54 round 9: 3676 tasks + 1206 growths, 281 improvements, 577/577 points, median MF 0.728802
+2026-11-06 10:21:14 round 10: 3504 tasks + 1096 growths, 273 improvements, 577/577 points, median MF 0.728802
+2026-11-06 10:27:05 round 11: 3476 tasks + 1081 growths, 261 improvements, 577/577 points, median MF 0.728802
+2026-11-06 10:32:17 round 12: 3382 tasks + 1025 growths, 246 improvements, 577/577 points, median MF 0.728802
+2026-11-06 10:37:21 round 13: 3282 tasks + 966 growths, 259 improvements, 577/577 points, median MF 0.728714
+2026-11-06 10:42:30 round 14: 3264 tasks + 953 growths, 236 improvements, 577/577 points, median MF 0.728714
+2026-11-06 10:47:24 round 15: 3234 tasks + 935 growths, 248 improvements, 577/577 points, median MF 0.728677
+2026-11-06 10:52:50 round 16: 3256 tasks + 949 growths, 236 improvements, 577/577 points, median MF 0.728677
+2026-11-06 10:58:05 round 17: 3249 tasks + 940 growths, 237 improvements, 577/577 points, median MF 0.728677
+2026-11-06 11:04:15 round 18: 3355 tasks + 1009 growths, 216 improvements, 577/577 points, median MF 0.72867
+2026-11-06 11:09:22 round 19: 3141 tasks + 876 growths, 220 improvements, 577/577 points, median MF 0.72867
+2026-11-06 11:14:29 round 20: 3177 tasks + 895 growths, 233 improvements, 577/577 points, median MF 0.72867
+2026-11-06 11:19:53 round 21: 3313 tasks + 980 growths, 200 improvements, 577/577 points, median MF 0.72867
+2026-11-06 11:24:43 round 22: 3069 tasks + 831 growths, 186 improvements, 577/577 points, median MF 0.728645
+2026-11-06 11:29:23 round 23: 3016 tasks + 800 growths, 190 improvements, 577/577 points, median MF 0.728645
+2026-11-06 11:33:56 round 24: 2998 tasks + 785 growths, 189 improvements, 577/577 points, median MF 0.728631

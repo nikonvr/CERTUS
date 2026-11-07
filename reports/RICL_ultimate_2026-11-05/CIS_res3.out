@@ -1,0 +1,8 @@
+2026-11-07 07:10:10 start {'mode': 'dot', 'grid': '2500:12000:25', 'tag': 'CIS_res3', 'judge': 'exact10', 'minutes': 300.0, 'nmax': 70, 'floor': 0.1, 'pop': 60, 'moves': 'jitter:3,needle:3,needle_diel:1,substitute:3,remove:2,swap:2,block:1,cross:2', 'moves_per_key': 3, 'seeds': ['CIS_res2_curve.csv'], 'seeds_per_key': 3, 'workers': 15, 'rng': 33, 'only_seeds': False, 'prefix': '', 'exclude': 'U', 'window': None, 'axis': 'phys'}; 878 seed designs
+2026-11-07 07:27:20 seeded 381 of 381 points
+2026-11-07 08:33:35 round 1: 3417 tasks, 537 improvements, 381/381 points
+2026-11-07 09:32:53 round 2: 3131 tasks, 429 improvements, 381/381 points
+2026-11-07 10:37:17 round 3: 3011 tasks, 426 improvements, 381/381 points
+2026-11-07 11:35:10 round 4: 2975 tasks, 409 improvements, 381/381 points
+2026-11-07 12:10:12 round 5: 2900 tasks, 235 improvements, 381/381 points
+2026-11-07 12:11:35 end: 381 points

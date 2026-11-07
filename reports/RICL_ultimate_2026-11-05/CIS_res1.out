@@ -1,0 +1,10 @@
+2026-11-06 11:38:00 start {'mode': 'dot', 'grid': '2500:12000:50', 'tag': 'CIS_res1', 'judge': 'exact10', 'minutes': 300.0, 'nmax': 70, 'floor': 0.1, 'pop': 60, 'moves': 'jitter:3,needle:3,needle_diel:1,substitute:3,remove:2,swap:2,block:1,cross:2', 'moves_per_key': 3, 'seeds': ['T_cis_free_curve.csv', 'T_cis_phys_curve.csv'], 'seeds_per_key': 3, 'workers': 15, 'rng': 11, 'axis': 'phys'}; 559 seed designs
+2026-11-06 11:45:00 seeded 191 of 191 points
+2026-11-06 12:13:53 round 1: 1707 tasks, 297 improvements, 191/191 points
+2026-11-06 12:49:02 start {'mode': 'dot', 'grid': '2500:12000:50', 'tag': 'CIS_res1', 'judge': 'exact10', 'minutes': 255.0, 'nmax': 70, 'floor': 0.1, 'pop': 60, 'moves': 'jitter:3,needle:3,needle_diel:1,substitute:3,remove:2,swap:2,block:1,cross:2', 'moves_per_key': 3, 'seeds': ['CIS_res1_curve_round1.csv', 'T_cis_free_curve.csv', 'T_cis_phys_curve.csv'], 'seeds_per_key': 3, 'workers': 15, 'rng': 11, 'axis': 'phys'}; 750 seed designs
+2026-11-06 12:55:04 seeded 191 of 191 points
+2026-11-06 13:24:06 round 1: 1707 tasks, 251 improvements, 191/191 points
+2026-11-06 13:52:38 round 2: 1533 tasks, 222 improvements, 191/191 points
+2026-11-06 14:21:41 round 3: 1461 tasks, 208 improvements, 191/191 points
+2026-11-06 14:48:47 round 4: 1426 tasks, 197 improvements, 191/191 points
+2026-11-06 15:23:51 round 5: 1461 tasks, 190 improvements, 191/191 points

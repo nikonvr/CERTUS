@@ -1,0 +1,36 @@
+# RICL 48 h campaign. NAME ; MINUTES ; SCRIPT ARGS. Rule (owner 2026-11-05 22:10): no published solution nor descendant as seed; published results are references only.
+# Rule (owner 2026-11-06 04:10, repeated 04:25): physical floors (5 nm three-line, 3 nm cissoid, 3.78 nm 50/50) and layer caps are applied ONCE, at the very end (CL_* stages, clean.py / clean_multi.py). Every search runs with a 0.1 nm growth floor. No floored polishing after a cleaning.
+# Rule (owner 2026-11-06 08:40): the campaign FOCUSES ON THE RESOLVED GRID (three-line: problem threeline_fine, 0.1 nm, 2707 points; cissoid: --judge exact10, 3001 points against the exact cissoid). Results are presented on both grids (resolved and nominal). Three-line TOT capped at 14500 nm. 50/50: no grid effect (1601 vs 80001 points identical), unchanged.
+WAIT ; tl101_A.log ; end best
+S_tl_tot ; 600 ; sweep2.py --problem threeline --mode tot --grid 100:15000:50 --nmax 120 --floor 5 --tag S_tl_tot --minutes {minutes} --seeds seeds_tl_independent.csv
+DG_beam8 ; 360 ; deepgrow.py --tag DG_beam8 --minutes {minutes} --beam 8 --tot-max 15500 --floor 5 --nmax 140
+DG_free8 ; 300 ; deepgrow.py --tag DG_free8 --minutes {minutes} --beam 8 --tot-max 16000 --floor 5 --grow-floor 0.1 --nmax 200
+WAIT ; DG_free8.log ; end
+WAIT ; DG_free8.log ; end
+# ---- searches (all floor-free; floors and caps at the very end in the CL_* stages) ----
+S_tl_res ; 360 ; sweep2.py --problem threeline_fine --mode tot --grid 100:14500:50 --nmax 160 --floor 0.1 --tag S_tl_res --minutes {minutes} --seeds S_tl_tot_curve.csv DG_free8_designs.csv
+CIS_res1 ; 300 ; cissoid_ultimate.py --mode dot --judge exact10 --axis phys --floor 0.1 --nmax 70 --grid 2500:12000:50 --tag CIS_res1 --minutes {minutes} --seeds T_cis_free_curve.csv T_cis_phys_curve.csv --rng 11
+R_tl_res ; 240 ; run.py --problem threeline_fine --tag R_tl_res --minutes {minutes} --nmax 120 --tot 14171.0 --floor 0.1 --pop 80 --moves jitter:3,needle:3,remove:2,halfwave:1,cross:2,swap:1,block:2,reverse:1,rescharge:2 --seeds S_tl_res_curve.csv DG_free8_designs.csv S_tl_tot_curve.csv --seed-best 80 --rng 241
+CIS_free1 ; 180 ; cissoid_ultimate.py --mode dot --axis phys --floor 0.1 --nmax 70 --grid 2500:12000:25 --tag CIS_free1 --minutes {minutes} --seeds T_cis_free_curve.csv T_cis_phys_curve.csv CIS_res1_curve.csv --rng 1
+S_tl_res2 ; 300 ; sweep2.py --problem threeline_fine --mode tot --grid 100:14500:25 --nmax 160 --floor 0.1 --tag S_tl_res2 --minutes {minutes} --seeds S_tl_res_curve.csv R_tl_res_elites.csv
+CIS_res2 ; 300 ; cissoid_ultimate.py --mode dot --judge exact10 --axis phys --floor 0.1 --nmax 70 --grid 2500:12000:25 --tag CIS_res2 --minutes {minutes} --seeds CIS_res1_curve.csv CIS_free1_curve.csv --rng 12
+S_tl_free ; 180 ; sweep2.py --problem threeline --mode tot --grid 100:14500:25 --nmax 160 --floor 0.1 --tag S_tl_free --minutes {minutes} --seeds S_tl_tot_curve.csv DG_free8_designs.csv S_tl_res2_curve.csv
+R_tl_free ; 120 ; run.py --problem threeline --tag R_tl_free --minutes {minutes} --nmax 120 --tot 14171.0 --floor 0.1 --pop 80 --moves jitter:3,needle:3,remove:2,halfwave:1,cross:2,swap:1,block:2,reverse:1,rescharge:2 --seeds S_tl_free_curve.csv R_tl_res_elites.csv DG_free8_designs.csv --seed-best 80 --rng 141
+CIS_recres ; 180 ; cissoid_ultimate.py --mode run --judge exact10 --floor 0.1 --nmax 70 --pop 60 --tag CIS_recres --minutes {minutes} --seeds CIS_res2_curve.csv
+CIS_recfree ; 120 ; cissoid_ultimate.py --mode run --floor 0.1 --nmax 70 --pop 60 --tag CIS_recfree --minutes {minutes} --seeds CIS_free1_curve.csv CIS_res2_curve.csv
+S_tl_n_res ; 180 ; sweep.py --problem threeline_fine --mode n --grid 10:130:1 --tot 14500 --tot-le --floor 0.1 --tag S_tl_n_res --minutes {minutes} --seeds S_tl_res2_curve.csv R_tl_res_elites.csv
+CIS_n_res ; 150 ; cissoid_ultimate.py --mode n --judge exact10 --grid 1:70:1 --floor 0.1 --nmax 70 --tag CIS_n_res --minutes {minutes} --seeds CIS_res2_curve.csv CIS_recres_elites.csv
+B_n ; 100 ; sweep.py --problem bs5050 --points 1601 --mode n --grid 1:50:1 --tot 3923.75 --tot-le --floor 0.1 --tag B_n --minutes {minutes} --seeds seeds_bs.csv
+B_t ; 100 ; sweep2.py --problem bs5050 --points 1601 --mode tot --grid 200:4500:10 --nmax 50 --floor 0.1 --tag B_t --minutes {minutes} --seeds seeds_bs.csv B_n_curve.csv
+B_rec ; 50 ; run.py --problem bs5050 --points 1601 --tag B_rec --minutes {minutes} --nmax 50 --tot 3923.75 --floor 0.1 --pop 40 --moves jitter:3,needle:3,remove:2,halfwave:1,cross:2,swap:1,block:2,reverse:1 --seeds B_n_curve.csv B_t_curve.csv --seed-best 60 --rng 34
+C51 ; 150 ; run.py --problem threeline --tag C51 --minutes {minutes} --fixed HLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLH --otlo 100 --othi 350 --floor 0 --nmax 51 --pop 60 --moves jitter:4,swap:2,cross:2,block:3,reverse:1 --seeds seeds_c51_own.csv --rng 51
+# ---- final cleanings (the ONLY place where floors and caps apply); resolved stages cleaned on the resolved grid ----
+CL_res ; 120 ; clean.py --problem threeline_fine --designs S_tl_res2_curve.csv S_tl_res_curve.csv --tag CL_res --minutes {minutes} --floor 5 --nmax 160 --top 900
+CL_tl101_res ; 60 ; clean.py --problem threeline_fine --designs R_tl_res_elites.csv S_tl_res2_curve.csv --tag CL_tl101_res --minutes {minutes} --tot 14171 --tot-window 800 --floor 5 --nmax 101 --top 300
+CL_n_res ; 60 ; clean.py --problem threeline_fine --designs S_tl_n_res_curve.csv --tag CL_n_res --minutes {minutes} --floor 5 --nmax 130 --top 200
+CL_cis_res ; 150 ; clean_multi.py --judge exact10 --designs CIS_res1_curve.csv CIS_res2_curve.csv CIS_recres_elites.csv CIS_n_res_curve.csv --axis phys --floor 3 --nmax 50 --tag CL_cis_res --minutes {minutes} --top 3000
+CL_curve ; 90 ; clean.py --designs S_tl_free_curve.csv --tag CL_curve --minutes {minutes} --floor 5 --nmax 160 --top 700
+CL_tl101 ; 40 ; clean.py --designs R_tl_free_elites.csv S_tl_free_curve.csv DG_free8_designs.csv --tag CL_tl101 --minutes {minutes} --tot 14171 --tot-window 800 --floor 5 --nmax 101 --top 400
+CL_cis ; 90 ; clean_multi.py --designs CIS_free1_curve.csv CIS_recfree_elites.csv --axis phys --floor 3 --nmax 50 --tag CL_cis --minutes {minutes} --top 2000
+CL_bs ; 40 ; clean.py --problem bs5050 --designs B_n_curve.csv B_t_curve.csv B_rec_elites.csv --tag CL_bs --minutes {minutes} --floor 3.78 --nmax 50 --top 600
+CL_bsrec ; 30 ; clean.py --problem bs5050 --designs B_rec_elites.csv B_n_curve.csv B_t_curve.csv --tag CL_bsrec --minutes {minutes} --tot 3923.75 --tot-window 400 --floor 3.78 --nmax 34 --top 300

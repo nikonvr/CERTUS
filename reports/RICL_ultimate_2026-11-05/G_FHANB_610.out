@@ -1,0 +1,35 @@
+2026-11-06 20:00:23 start {'mode': 'run', 'grid': '1:50:1', 'tag': 'G_FHANB_610', 'judge': '', 'minutes': 40.0, 'nmax': 50, 'floor': 0.1, 'pop': 40, 'moves': 'jitter:3,needle:3,needle_diel:1,substitute:3,remove:2,swap:2,block:1,cross:2', 'moves_per_key': 3, 'seeds': ['seed_FHANB_valid.csv'], 'seeds_per_key': 3, 'workers': 6, 'rng': 93, 'only_seeds': True, 'prefix': '', 'exclude': 'ULMT', 'window': (6800.0, 10500.0), 'axis': 'phys'}; 1 seed designs
+2026-11-06 20:00:52 BEST 0.0190388112 (oracle 0.0190388112) N 50 via seed from seed_FHANB_valid
+2026-11-06 20:00:52 population 1; best 0.0190388112
+2026-11-06 20:01:02 BEST 0.0190387779 (oracle 0.0190387779) N 50 via cross from seed_FHANB_valid
+2026-11-06 20:01:15 BEST 0.019038772 (oracle 0.019038772) N 50 via needle from seed_FHANB_valid
+2026-11-06 20:01:25 BEST 0.0190387714 (oracle 0.0190387714) N 50 via needle from seed_FHANB_valid
+2026-11-06 20:01:46 BEST 0.0190387267 (oracle 0.0190387267) N 50 via cross from seed_FHANB_valid
+2026-11-06 20:01:59 BEST 0.0190387016 (oracle 0.0190387016) N 50 via jitter from seed_FHANB_valid
+2026-11-06 20:02:21 BEST 0.0190386934 (oracle 0.0190386934) N 50 via needle from seed_FHANB_valid
+2026-11-06 20:02:33 BEST 0.0190386714 (oracle 0.0190386714) N 50 via cross from seed_FHANB_valid
+2026-11-06 20:04:12 BEST 0.019038651 (oracle 0.019038651) N 50 via cross from seed_FHANB_valid
+2026-11-06 20:05:59 BEST 0.019038636 (oracle 0.019038636) N 50 via needle from seed_FHANB_valid
+2026-11-06 20:06:59 BEST 0.0190386182 (oracle 0.0190386182) N 50 via needle from seed_FHANB_valid
+2026-11-06 20:08:14 BEST 0.0190386131 (oracle 0.0190386131) N 50 via needle from seed_FHANB_valid
+2026-11-06 20:09:56 BEST 0.0190385726 (oracle 0.0190385726) N 50 via cross from seed_FHANB_valid
+2026-11-06 20:10:40 BEST 0.0190385337 (oracle 0.0190385337) N 50 via cross from seed_FHANB_valid
+2026-11-06 20:12:19 BEST 0.019038512 (oracle 0.019038512) N 50 via needle from seed_FHANB_valid
+2026-11-06 20:13:01 BEST 0.0190384953 (oracle 0.0190384953) N 50 via needle from seed_FHANB_valid
+2026-11-06 20:14:51 BEST 0.0190384804 (oracle 0.0190384804) N 50 via needle from seed_FHANB_valid
+2026-11-06 20:15:18 BEST 0.019038472 (oracle 0.019038472) N 50 via needle from seed_FHANB_valid
+2026-11-06 20:15:38 BEST 0.0190384643 (oracle 0.0190384643) N 50 via needle_diel from seed_FHANB_valid
+2026-11-06 20:15:52 best 0.0190384643 pop [0.0190385..0.0222945] jitter:116/30 needle:121/82 needle_diel:41/23 substitute:96/8 remove:80/9 swap:75/5 block:34/3 cross:56/32
+2026-11-06 20:16:29 BEST 0.0190384346 (oracle 0.0190384346) N 50 via needle_diel from seed_FHANB_valid
+2026-11-06 20:16:59 BEST 0.0190384211 (oracle 0.0190384211) N 50 via needle from seed_FHANB_valid
+2026-11-06 20:17:11 BEST 0.0190383972 (oracle 0.0190383972) N 50 via needle from seed_FHANB_valid
+2026-11-06 20:17:11 BEST 0.0190383689 (oracle 0.0190383689) N 50 via cross from seed_FHANB_valid
+2026-11-06 20:17:30 BEST 0.0190383303 (oracle 0.0190383303) N 50 via cross from seed_FHANB_valid
+2026-11-06 20:18:33 BEST 0.0190383044 (oracle 0.0190383044) N 50 via cross from seed_FHANB_valid
+2026-11-06 20:19:01 BEST 0.0190382773 (oracle 0.0190382773) N 50 via cross from seed_FHANB_valid
+2026-11-06 20:20:25 BEST 0.0190382661 (oracle 0.0190382661) N 50 via needle from seed_FHANB_valid
+2026-11-06 20:21:32 BEST 0.0190382548 (oracle 0.0190382548) N 50 via needle from seed_FHANB_valid
+2026-11-06 20:22:12 BEST 0.0190382195 (oracle 0.0190382195) N 50 via cross from seed_FHANB_valid
+2026-11-06 20:23:11 BEST 0.0181407518 (oracle 0.0181407518) N 50 via substitute from seed_FHANB_valid
+2026-11-06 20:30:53 best 0.0181407518 pop [0.0181408..0.0190544] jitter:266/55 needle:266/141 needle_diel:75/31 substitute:261/11 remove:181/9 swap:160/6 block:83/3 cross:155/73
+2026-11-06 20:40:24 end best 0.0181407518

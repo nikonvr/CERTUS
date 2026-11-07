@@ -1,0 +1,18 @@
+2026-11-06 19:34:03 start {'mode': 'run', 'grid': '1:50:1', 'tag': 'G_FHANB_wide', 'judge': '', 'minutes': 60.0, 'nmax': 50, 'floor': 0.1, 'pop': 60, 'moves': 'jitter:3,needle:3,needle_diel:1,substitute:3,remove:2,swap:2,block:1,cross:2', 'moves_per_key': 3, 'seeds': ['seeds_FHANB_all.csv'], 'seeds_per_key': 3, 'workers': 6, 'rng': 92, 'only_seeds': True, 'prefix': '', 'exclude': 'ULMT', 'window': (4500.0, 12000.0), 'axis': 'phys'}; 28 seed designs
+2026-11-06 19:34:30 BEST 0.0205439402 (oracle 0.0205439402) N 50 via seed from seeds_FHANB_all
+2026-11-06 19:34:38 population 12; best 0.0205439402
+2026-11-06 19:34:49 BEST 0.0205058136 (oracle 0.0205058136) N 50 via jitter from seeds_FHANB_all
+2026-11-06 19:34:58 BEST 0.0205057946 (oracle 0.0205057946) N 50 via cross from seeds_FHANB_all
+2026-11-06 19:44:14 BEST 0.0198289836 (oracle 0.0198289836) N 50 via swap from seeds_FHANB_all
+2026-11-06 19:47:58 BEST 0.0192211984 (oracle 0.0192211984) N 50 via cross from seeds_FHANB_all
+2026-11-06 19:48:16 BEST 0.0191428292 (oracle 0.0191428292) N 50 via needle from seeds_FHANB_all
+2026-11-06 19:48:36 BEST 0.0191028132 (oracle 0.0191028132) N 50 via needle_diel from seeds_FHANB_all
+2026-11-06 19:49:32 BEST 0.019088421 (oracle 0.019088421) N 50 via jitter from seeds_FHANB_all
+2026-11-06 19:49:38 best 0.019088421 pop [0.0190884..0.0239182] jitter:193/51 needle:163/75 needle_diel:70/40 substitute:170/15 remove:106/12 swap:114/15 block:46/3 cross:96/38
+2026-11-06 19:51:11 BEST 0.0190804484 (oracle 0.0190804484) N 50 via jitter from seeds_FHANB_all
+2026-11-06 19:51:19 BEST 0.0190421192 (oracle 0.0190421192) N 50 via cross from seeds_FHANB_all
+2026-11-06 19:51:36 BEST 0.0190402333 (oracle 0.0190402333) N 50 via needle from seeds_FHANB_all
+2026-11-06 19:53:22 BEST 0.0190396801 (oracle 0.0190396801) N 50 via needle from seeds_FHANB_all
+2026-11-06 19:55:09 BEST 0.0190394325 (oracle 0.0190394325) N 50 via needle from seeds_FHANB_all
+2026-11-06 19:56:43 BEST 0.0190392296 (oracle 0.0190392296) N 50 via cross from seeds_FHANB_all
+2026-11-06 19:57:13 BEST 0.0190389655 (oracle 0.0190389655) N 50 via needle from seeds_FHANB_all

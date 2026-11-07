@@ -1,0 +1,9 @@
+2026-11-06 18:18:44 start {'designs': ['CIS_c50_curve.csv'], 'tag': 'CL_c50', 'judge': '', 'minutes': 25.0, 'axis': 'phys', 'floor': 3.0, 'nmax': 50, 'top': 200, 'workers': 15}; axis phys
+2026-11-06 18:18:45 139 designs read, 139 to clean
+2026-11-06 18:18:49 20 cleaned
+2026-11-06 18:18:55 40 cleaned
+2026-11-06 18:18:57 60 cleaned
+2026-11-06 18:18:59 80 cleaned
+2026-11-06 18:19:03 100 cleaned
+2026-11-06 18:19:05 120 cleaned
+2026-11-06 18:19:09 end: 139 admissible designs written

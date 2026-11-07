@@ -1,0 +1,13 @@
+2026-11-07 17:36:13 start {'designs': ['CIS_recfree_best.csv', 'CIS_recfree_elites.csv'], 'tag': 'CL_recfree', 'judge': '', 'minutes': 20.0, 'axis': 'phys', 'floor': 3.0, 'nmax': 50, 'top': 300, 'workers': 15}; axis phys
+2026-11-07 17:36:14 212 designs read, 212 to clean
+2026-11-07 17:38:07 20 cleaned
+2026-11-07 17:39:25 40 cleaned
+2026-11-07 17:40:43 60 cleaned
+2026-11-07 17:41:52 80 cleaned
+2026-11-07 17:43:16 100 cleaned
+2026-11-07 17:44:36 120 cleaned
+2026-11-07 17:45:45 140 cleaned
+2026-11-07 17:47:22 160 cleaned
+2026-11-07 17:48:20 180 cleaned
+2026-11-07 17:49:18 200 cleaned
+2026-11-07 17:49:52 end: 212 admissible designs written

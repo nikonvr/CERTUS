@@ -1,0 +1,35 @@
+2026-11-07 00:23:49 start {'mode': 'run', 'grid': '1:50:1', 'tag': 'G_ZONE4500', 'judge': '', 'minutes': 60.0, 'nmax': 50, 'floor': 0.1, 'pop': 40, 'moves': 'jitter:3,needle:3,needle_diel:1,substitute:3,remove:2,swap:2,block:1,cross:2', 'moves_per_key': 3, 'seeds': ['seed_zone4500.csv'], 'seeds_per_key': 3, 'workers': 4, 'rng': 107, 'only_seeds': True, 'prefix': '', 'exclude': 'U', 'window': (5500.0, 6000.0), 'axis': 'phys'}; 1 seed designs
+2026-11-07 00:23:55 BEST 0.0612024826 (oracle 0.0612024826) N 44 via seed from seed_zone4500
+2026-11-07 00:23:55 population 1; best 0.0612024826
+2026-11-07 00:24:05 BEST 0.0573456862 (oracle 0.0573456862) N 46 via needle from seed_zone4500
+2026-11-07 00:24:06 BEST 0.0543907213 (oracle 0.0543907213) N 44 via substitute from seed_zone4500
+2026-11-07 00:24:13 BEST 0.0539466672 (oracle 0.0539466672) N 45 via needle from seed_zone4500
+2026-11-07 00:24:13 BEST 0.0536456404 (oracle 0.0536456404) N 45 via needle from seed_zone4500
+2026-11-07 00:24:14 BEST 0.0533952041 (oracle 0.0533952041) N 46 via needle from seed_zone4500
+2026-11-07 00:24:20 BEST 0.050851373 (oracle 0.050851373) N 46 via needle_diel from seed_zone4500
+2026-11-07 00:24:25 BEST 0.0503811511 (oracle 0.0503811511) N 47 via needle from seed_zone4500
+2026-11-07 00:24:48 BEST 0.0427625947 (oracle 0.0427625947) N 46 via needle_diel from seed_zone4500
+2026-11-07 00:25:10 BEST 0.0418059312 (oracle 0.0418059312) N 47 via needle_diel from seed_zone4500
+2026-11-07 00:25:28 BEST 0.0393177053 (oracle 0.0393177053) N 49 via needle from seed_zone4500
+2026-11-07 00:26:32 BEST 0.0391853317 (oracle 0.0391853317) N 50 via needle from seed_zone4500
+2026-11-07 00:26:43 BEST 0.0378659785 (oracle 0.0378659785) N 49 via needle from seed_zone4500
+2026-11-07 00:27:41 BEST 0.0375808241 (oracle 0.0375808241) N 50 via needle_diel from seed_zone4500
+2026-11-07 00:27:46 BEST 0.0373913325 (oracle 0.0373913325) N 50 via needle_diel from seed_zone4500
+2026-11-07 00:28:17 BEST 0.0373745741 (oracle 0.0373745741) N 50 via needle from seed_zone4500
+2026-11-07 00:28:17 BEST 0.0373745649 (oracle 0.0373745649) N 49 via needle from seed_zone4500
+2026-11-07 00:28:49 BEST 0.0371872225 (oracle 0.0371872225) N 50 via needle from seed_zone4500
+2026-11-07 00:29:37 BEST 0.0366952762 (oracle 0.0366952762) N 49 via needle from seed_zone4500
+2026-11-07 00:29:50 BEST 0.0359003608 (oracle 0.0359003608) N 50 via needle from seed_zone4500
+2026-11-07 00:31:57 BEST 0.0356271927 (oracle 0.0356271927) N 50 via needle_diel from seed_zone4500
+2026-11-07 00:32:30 BEST 0.0339886688 (oracle 0.0339886688) N 50 via needle from seed_zone4500
+2026-11-07 00:33:08 BEST 0.0339879028 (oracle 0.0339879028) N 50 via jitter from seed_zone4500
+2026-11-07 00:34:23 BEST 0.0339878805 (oracle 0.0339878805) N 50 via needle from seed_zone4500
+2026-11-07 00:36:03 BEST 0.0339843185 (oracle 0.0339843185) N 50 via substitute from seed_zone4500
+2026-11-07 00:36:36 BEST 0.0339834363 (oracle 0.0339834363) N 50 via needle_diel from seed_zone4500
+2026-11-07 00:36:43 BEST 0.033983417 (oracle 0.033983417) N 50 via cross from seed_zone4500
+2026-11-07 00:36:49 BEST 0.0336797168 (oracle 0.0336797168) N 50 via substitute from seed_zone4500
+2026-11-07 00:37:29 BEST 0.0336791246 (oracle 0.0336791246) N 50 via needle from seed_zone4500
+2026-11-07 00:37:33 BEST 0.0336784848 (oracle 0.0336784848) N 50 via cross from seed_zone4500
+2026-11-07 00:38:13 BEST 0.0336784073 (oracle 0.0336784073) N 50 via needle_diel from seed_zone4500
+2026-11-07 00:38:59 best 0.0336784073 pop [0.0336784..0.0358083] jitter:168/27 needle:218/121 needle_diel:53/45 substitute:171/54 remove:110/16 swap:106/7 block:65/1 cross:118/49
+2026-11-07 00:39:55 BEST 0.0336783304 (oracle 0.0336783304) N 50 via cross from seed_zone4500

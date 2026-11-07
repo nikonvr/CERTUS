@@ -1,0 +1,15 @@
+2026-11-06 09:12:39 start {'designs': ['S_tl_tot_curve.csv'], 'tag': 'RF_curve0', 'minutes': 75.0, 'floor': 5.0, 'rounds': 40, 'per_key': 1, 'keys': '100:14500:50', 'tot': None, 'tot_window': 30.0, 'nmax': 1000, 'by': 'tot', 'workers': 15}
+2026-11-06 09:12:39 289 keys, 289 designs to finish
+2026-11-06 09:12:48 25/289; last key 1350.0: resolved 28.7164 -> 28.7164 %, nominal 29.5826 -> 29.5826 % (3 s, ok try0: 28.7164; try1: 28.7165; try2: 28.7164; try3: 28.7165)
+2026-11-06 09:12:59 50/289; last key 2550.0: resolved 11.1160 -> 11.1157 %, nominal 12.1590 -> 12.1591 % (6 s, ok try0: 11.1160; try1: 11.1162; try2: 11.1157; try3: 11.1160)
+2026-11-06 09:13:10 75/289; last key 3800.0: resolved 5.4933 -> 5.4932 %, nominal 6.2950 -> 6.2950 % (8 s, ok try0: 5.4933; try1: 5.4932; try2: 5.4943; try3: 5.4949)
+2026-11-06 09:13:28 100/289; last key 5050.0: resolved 2.7128 -> 2.7109 %, nominal 2.8236 -> 2.8241 % (13 s, ok try0: 2.7128; try1: 2.7131; try2: 2.7135; try3: 2.7109)
+2026-11-06 09:13:50 125/289; last key 6400.0: resolved 0.9515 -> 0.9515 %, nominal 1.1961 -> 1.1961 % (13 s, unchanged try0: 0.9515; try1: 0.9540; try2: 0.9517; try3: 0.9522)
+2026-11-06 09:14:17 150/289; last key 8100.0: resolved 1.4487 -> 0.5892 %, nominal 0.4996 -> 0.6898 % (7 s, ok try0: 0.5892)
+2026-11-06 09:14:43 175/289; last key 9400.0: resolved 1.2094 -> 0.2066 %, nominal 0.1991 -> 0.2347 % (6 s, ok try0: 0.2066)
+2026-11-06 09:15:23 200/289; last key 9900.0: resolved 0.6227 -> 0.6224 %, nominal 0.1886 -> 0.1890 % (33 s, ok try0: 0.6227; try1: 0.6232; try2: 0.6233; try3: 0.6224)
+2026-11-06 09:15:56 225/289; last key 11700.0: resolved 0.3392 -> 0.0492 %, nominal 0.0555 -> 0.0639 % (11 s, ok try0: 0.0492)
+2026-11-06 09:16:38 250/289; last key 12900.0: resolved 0.5075 -> 0.0563 %, nominal 0.0448 -> 0.0706 % (15 s, ok try0: _NoErrorMaximum; try1: 0.0563)
+2026-11-06 09:17:28 275/289; last key 13450.0: resolved 0.0742 -> 0.0728 %, nominal 0.0250 -> 0.0257 % (45 s, ok try0: RuntimeError; try1: 0.0753; try2: 0.0747; try3: 0.0728)
+2026-11-06 09:18:17 289/289; last key 14500.0: resolved 0.0275 -> 0.0275 %, nominal 0.0150 -> 0.0150 % (50 s, unchanged try0: 0.0275; try1: 0.0282; try2: 0.0285; try3: 0.0285)
+2026-11-06 09:18:18 end: 289 keys written

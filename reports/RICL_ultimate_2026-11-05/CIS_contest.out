@@ -1,0 +1,44 @@
+2026-11-06 15:24:02 start {'mode': 'dot', 'grid': '5600:8100:25', 'tag': 'CIS_contest', 'judge': '', 'minutes': 90.0, 'nmax': 70, 'floor': 0.1, 'pop': 60, 'moves': 'jitter:3,needle:3,needle_diel:1,substitute:3,remove:2,swap:2,block:1,cross:2', 'moves_per_key': 3, 'seeds': ['CIS_res1_curve.csv', 'CIS_res1_curve_round1.csv'], 'seeds_per_key': 3, 'workers': 15, 'rng': 21, 'axis': 'phys'}; 933 seed designs
+2026-11-06 15:24:37 seeded 101 of 101 points
+2026-11-06 15:26:44 round 1: 897 tasks, 142 improvements, 101/101 points
+2026-11-06 15:28:41 round 2: 858 tasks, 129 improvements, 101/101 points
+2026-11-06 15:30:36 round 3: 819 tasks, 130 improvements, 101/101 points
+2026-11-06 15:32:26 round 4: 816 tasks, 127 improvements, 101/101 points
+2026-11-06 15:34:22 round 5: 789 tasks, 131 improvements, 101/101 points
+2026-11-06 15:36:21 round 6: 804 tasks, 129 improvements, 101/101 points
+2026-11-06 15:38:27 round 7: 838 tasks, 139 improvements, 101/101 points
+2026-11-06 15:40:47 round 8: 849 tasks, 120 improvements, 101/101 points
+2026-11-06 15:42:55 round 9: 807 tasks, 133 improvements, 101/101 points
+2026-11-06 15:45:06 round 10: 825 tasks, 128 improvements, 101/101 points
+2026-11-06 15:47:19 round 11: 813 tasks, 128 improvements, 101/101 points
+2026-11-06 15:49:30 round 12: 834 tasks, 122 improvements, 101/101 points
+2026-11-06 15:51:42 round 13: 816 tasks, 133 improvements, 101/101 points
+2026-11-06 15:53:59 round 14: 816 tasks, 122 improvements, 101/101 points
+2026-11-06 15:56:06 round 15: 814 tasks, 115 improvements, 101/101 points
+2026-11-06 15:58:06 round 16: 771 tasks, 128 improvements, 101/101 points
+2026-11-06 16:00:07 round 17: 821 tasks, 117 improvements, 101/101 points
+2026-11-06 16:02:07 round 18: 765 tasks, 118 improvements, 101/101 points
+2026-11-06 16:04:13 round 19: 764 tasks, 128 improvements, 101/101 points
+2026-11-06 16:06:25 round 20: 795 tasks, 127 improvements, 101/101 points
+2026-11-06 16:08:56 round 21: 826 tasks, 113 improvements, 101/101 points
+2026-11-06 16:11:13 round 22: 819 tasks, 124 improvements, 101/101 points
+2026-11-06 16:13:36 round 23: 806 tasks, 109 improvements, 101/101 points
+2026-11-06 16:15:55 round 24: 755 tasks, 129 improvements, 101/101 points
+2026-11-06 16:18:25 round 25: 790 tasks, 126 improvements, 101/101 points
+2026-11-06 16:20:56 round 26: 822 tasks, 123 improvements, 101/101 points
+2026-11-06 16:23:16 round 27: 801 tasks, 115 improvements, 101/101 points
+2026-11-06 16:25:39 round 28: 807 tasks, 115 improvements, 101/101 points
+2026-11-06 16:28:06 round 29: 796 tasks, 119 improvements, 101/101 points
+2026-11-06 16:30:29 round 30: 785 tasks, 121 improvements, 101/101 points
+2026-11-06 16:32:47 round 31: 773 tasks, 112 improvements, 101/101 points
+2026-11-06 16:34:50 round 32: 785 tasks, 103 improvements, 101/101 points
+2026-11-06 16:36:57 round 33: 736 tasks, 121 improvements, 101/101 points
+2026-11-06 16:39:21 round 34: 789 tasks, 119 improvements, 101/101 points
+2026-11-06 16:41:45 round 35: 810 tasks, 112 improvements, 101/101 points
+2026-11-06 16:43:58 round 36: 800 tasks, 109 improvements, 101/101 points
+2026-11-06 16:46:14 round 37: 778 tasks, 108 improvements, 101/101 points
+2026-11-06 16:48:19 round 38: 773 tasks, 102 improvements, 101/101 points
+2026-11-06 16:50:23 round 39: 744 tasks, 103 improvements, 101/101 points
+2026-11-06 16:52:44 round 40: 759 tasks, 108 improvements, 101/101 points
+2026-11-06 16:54:02 round 41: 769 tasks, 61 improvements, 101/101 points
+2026-11-06 16:54:08 end: 101 points

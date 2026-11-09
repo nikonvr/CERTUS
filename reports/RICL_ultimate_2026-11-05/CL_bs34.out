@@ -1,0 +1,5 @@
+2026-11-08 20:26:19 start {'designs': ['B_rec34_elites.csv'], 'tag': 'CL_bs34', 'minutes': 30.0, 'floor': 3.0, 'nmax': 34, 'tot': 3923.75, 'top': 800, 'kmax': 8, 'workers': 16}
+2026-11-08 20:26:19 37 designs to clean (every variant of their thin layers)
+2026-11-08 20:26:34 20/37 cleaned; best 2.104537e-04
+2026-11-08 20:26:39 37/37 cleaned; best 2.104537e-04
+2026-11-08 20:26:40 end: 37 designs written; best 0.00021045368887426014

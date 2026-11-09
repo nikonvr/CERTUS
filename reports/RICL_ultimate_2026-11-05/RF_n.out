@@ -1,0 +1,7 @@
+2026-11-08 23:12:21 start {'designs': ['CL_n_clean.csv'], 'tag': 'RF_n', 'minutes': 90.0, 'floor': 5.0, 'rounds': 40, 'per_key': 3, 'keys': '100:14500:50', 'tot': None, 'tot_window': 30.0, 'nmax': 1000, 'by': 'n', 'workers': 16}
+2026-11-08 23:12:21 70 keys, 95 designs to finish
+2026-11-08 23:12:39 25/95; last key 34: resolved 1.2611 -> 1.2611 %, nominal 1.5217 -> 1.5217 % (9 s, ok try0: 1.2611; try1: 1.2621; try2: 1.2611; try3: 1.2618)
+2026-11-08 23:12:57 50/95; last key 65: resolved 0.4878 -> 0.1562 %, nominal 0.1474 -> 0.1731 % (7 s, ok try0: 0.1562)
+2026-11-08 23:13:35 75/95; last key 83: resolved 0.0266 -> 0.0231 %, nominal 0.0231 -> 0.0265 % (25 s, ok try0: _NoErrorMaximum; try1: _NoErrorMaximum; try2: 0.0231; try3: _NoErrorMaximum)
+2026-11-08 23:14:38 95/95; last key 107: resolved 0.0195 -> 0.0195 %, nominal 0.0135 -> 0.0135 % (45 s, unchanged try0: 0.0231; try1: 0.0219; try2: 0.0216; try3: 0.0224)
+2026-11-08 23:14:38 end: 70 keys written

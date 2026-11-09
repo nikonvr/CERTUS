@@ -1,0 +1,43 @@
+2026-11-08 22:40:39 start {'problem': 'bs5050', 'points': 1601, 'tag': 'B_conv11', 'minutes': 12.0, 'nmax': 34, 'tot': 3923.75, 'floor': 3.0, 'otlo': None, 'othi': None, 'fixed': None, 'iters': 200, 'pop': 40, 'workers': 16, 'seeds': ['conv_bs_seeds_11.csv'], 'seed_best': 0, 'moves': 'jitter:3,needle:3,remove:2,halfwave:1,cross:2,swap:1,block:2,reverse:1', 'rng': 5011}
+2026-11-08 22:40:39 40 seeds
+2026-11-08 22:40:41 BEST 0.0655068339 (oracle 0.0655068339) N 21 TOT 3923.750 thinnest 16.79 nm via seed from random11_00
+2026-11-08 22:40:42 BEST 0.0444450855 (oracle 0.0444450855) N 22 TOT 3923.750 thinnest 8.19 nm via seed from random11_01
+2026-11-08 22:40:42 BEST 0.026073819 (oracle 0.026073819) N 22 TOT 3923.750 thinnest 7.22 nm via seed from random11_02
+2026-11-08 22:40:42 BEST 0.0216961693 (oracle 0.0216961693) N 26 TOT 3923.750 thinnest 9.09 nm via seed from random11_03
+2026-11-08 22:40:42 BEST 0.00475429179 (oracle 0.00475429179) N 30 TOT 3923.750 thinnest 3.70 nm via seed from random11_06
+2026-11-08 22:40:42 population 40 after seeds; best 0.00475429179
+2026-11-08 22:40:44 BEST 0.00461917231 (oracle 0.00461917231) N 30 TOT 3923.750 thinnest 9.20 nm via needle from random11_06
+2026-11-08 22:40:44 BEST 0.00397016874 (oracle 0.00397016874) N 30 TOT 3923.750 thinnest 9.89 nm via needle from random11_06
+2026-11-08 22:40:45 BEST 0.00362173246 (oracle 0.00362173246) N 28 TOT 3923.750 thinnest 6.39 nm via needle from random11_06
+2026-11-08 22:40:46 BEST 0.00316041479 (oracle 0.00316041479) N 30 TOT 3923.750 thinnest 9.31 nm via needle from random11_06
+2026-11-08 22:40:47 BEST 0.00279620274 (oracle 0.00279620274) N 30 TOT 3923.750 thinnest 13.38 nm via block from random11_06
+2026-11-08 22:40:47 BEST 0.00279587763 (oracle 0.00279587763) N 30 TOT 3923.750 thinnest 13.29 nm via polish from random11_06
+2026-11-08 22:40:47 BEST 0.00217983423 (oracle 0.00217983423) N 25 TOT 3923.750 thinnest 5.61 nm via cross from random11_06+random11_26
+2026-11-08 22:40:48 BEST 0.00167352275 (oracle 0.00167352275) N 30 TOT 3923.750 thinnest 10.30 nm via needle from random11_06
+2026-11-08 22:40:48 BEST 0.00164750846 (oracle 0.00164750846) N 27 TOT 3923.750 thinnest 3.89 nm via needle from random11_06+random11_26
+2026-11-08 22:40:49 BEST 0.00159963806 (oracle 0.00159963806) N 27 TOT 3923.750 thinnest 6.46 nm via needle from random11_06+random11_26
+2026-11-08 22:40:49 BEST 0.00150829626 (oracle 0.00150829626) N 34 TOT 3923.750 thinnest 3.69 nm via needle from random11_06
+2026-11-08 22:40:50 BEST 0.000603640594 (oracle 0.000603640594) N 29 TOT 3923.750 thinnest 8.38 nm via needle from random11_06+random11_26
+2026-11-08 22:40:52 BEST 0.000525334266 (oracle 0.000525334266) N 29 TOT 3923.750 thinnest 5.50 nm via needle from random11_06+random11_26
+2026-11-08 22:40:57 BEST 0.000297344702 (oracle 0.000297344702) N 32 TOT 3923.750 thinnest 5.10 nm via cross from random11_06+random11_26
+2026-11-08 22:40:58 BEST 0.000213148293 (oracle 0.000213148293) N 34 TOT 3923.750 thinnest 5.96 nm via cross from random11_06+random11_26
+2026-11-08 22:41:01 BEST 0.00017030298 (oracle 0.00017030298) N 32 TOT 3923.750 thinnest 3.05 nm via remove from random11_06+random11_26
+2026-11-08 22:41:03 BEST 7.75788246e-05 (oracle 7.75788246e-05) N 30 TOT 3923.750 thinnest 3.53 nm via halfwave from random11_06+random11_26
+2026-11-08 22:41:06 BEST 6.940122e-05 (oracle 6.940122e-05) N 32 TOT 3923.750 thinnest 3.02 nm via needle from random11_06+random11_26
+2026-11-08 22:41:10 BEST 5.59831548e-05 (oracle 5.59831548e-05) N 34 TOT 3923.750 thinnest 3.65 nm via needle from random11_06+random11_26
+2026-11-08 22:41:11 BEST 4.70587084e-05 (oracle 4.70587084e-05) N 34 TOT 3923.750 thinnest 3.63 nm via needle from random11_06+random11_26
+2026-11-08 22:41:12 BEST 4.69609034e-05 (oracle 4.69609034e-05) N 34 TOT 3923.750 thinnest 3.62 nm via polish from random11_06+random11_26
+2026-11-08 22:41:13 BEST 4.6960903e-05 (oracle 4.6960903e-05) N 34 TOT 3923.750 thinnest 3.62 nm via needle from random11_06+random11_26
+2026-11-08 22:41:14 BEST 4.69609019e-05 (oracle 4.69609019e-05) N 34 TOT 3923.750 thinnest 3.62 nm via needle from random11_06+random11_26
+2026-11-08 22:41:22 BEST 4.31844461e-05 (oracle 4.31844461e-05) N 34 TOT 3923.750 thinnest 3.61 nm via needle from random11_06+random11_26
+2026-11-08 22:41:24 BEST 4.31844452e-05 (oracle 4.31844452e-05) N 34 TOT 3923.750 thinnest 3.61 nm via needle from random11_06+random11_26
+2026-11-08 22:41:27 BEST 3.98107506e-05 (oracle 3.98107506e-05) N 34 TOT 3923.750 thinnest 3.53 nm via needle from random11_06+random11_26
+2026-11-08 22:41:55 BEST 3.96495223e-05 (oracle 3.96495223e-05) N 34 TOT 3923.750 thinnest 3.00 nm via needle from random11_06+random11_26
+2026-11-08 22:42:17 BEST 3.94527155e-05 (oracle 3.94527155e-05) N 34 TOT 3923.750 thinnest 3.62 nm via needle from random11_06+random11_26
+2026-11-08 22:42:26 BEST 3.60812134e-05 (oracle 3.60812134e-05) N 34 TOT 3923.750 thinnest 3.37 nm via cross from random11_06+random11_26
+2026-11-08 22:42:33 BEST 3.06070893e-05 (oracle 3.06070893e-05) N 34 TOT 3923.750 thinnest 3.20 nm via needle from random11_06+random11_26
+2026-11-08 22:42:38 BEST 3.06070885e-05 (oracle 3.06070885e-05) N 34 TOT 3923.750 thinnest 3.20 nm via cross from random11_06+random11_26
+2026-11-08 22:43:25 BEST 1.30273539e-05 (oracle 1.30273539e-05) N 33 TOT 3923.750 thinnest 4.08 nm via needle from random11_06+random11_26
+2026-11-08 22:43:44 BEST 1.30273538e-05 (oracle 1.30273538e-05) N 33 TOT 3923.750 thinnest 4.08 nm via cross from random11_06+random11_26
+2026-11-08 22:45:03 BEST 1.30273538e-05 (oracle 1.30273538e-05) N 33 TOT 3923.750 thinnest 4.08 nm via cross from random11_06+random11_26
+2026-11-08 22:52:42 end best 1.30273538e-05 moves jitter:2571/58/0.4s needle:2663/223/1.7s remove:1637/72/1.0s halfwave:888/20/0.7s cross:1663/97/0.8s swap:880/20/0.6s block:1717/53/0.7s reverse:855/30/0.6s

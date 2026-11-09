@@ -1,0 +1,12 @@
+2026-11-08 18:00:08 start {'problem': 'threeline', 'points': 1601, 'tag': 'C51', 'minutes': 55.8, 'nmax': 51, 'tot': None, 'floor': 0.0, 'otlo': 100.0, 'othi': 350.0, 'fixed': 'HLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLHLH', 'iters': 200, 'pop': 60, 'workers': 15, 'seeds': ['seeds_c51_own.csv'], 'seed_best': 0, 'moves': 'jitter:4,swap:2,cross:2,block:3,reverse:1', 'rng': 51}
+2026-11-08 18:00:08 10 seeds
+2026-11-08 18:00:10 BEST 0.980707306 (oracle 0.980707306) N 51 TOT 8644.417 thinnest 42.55 nm via seed from constrained_threeline_N51#0
+2026-11-08 18:00:10 BEST 0.871444015 (oracle 0.871444015) N 51 TOT 9631.894 thinnest 51.20 nm via seed from constrained_threeline_N51#2
+2026-11-08 18:00:10 BEST 0.606186553 (oracle 0.606186553) N 51 TOT 8981.761 thinnest 48.33 nm via seed from constrained_threeline_N51_lbfgsb_mix#0
+2026-11-08 18:00:10 BEST 0.459670585 (oracle 0.459670585) N 51 TOT 8990.270 thinnest 50.95 nm via seed from constrained_threeline_N51_lbfgsb_mix_resume#0
+2026-11-08 18:00:10 population 6 after seeds; best 0.459670585
+2026-11-08 18:00:13 BEST 0.459670584 (oracle 0.459670584) N 51 TOT 8990.269 thinnest 50.95 nm via polish from constrained_threeline_N51_lbfgsb_mix_resume#0
+2026-11-08 18:15:10 done 79489 best 0.459670584 pop [0.459671..0.459903] moves jitter:26559/184/0.2s swap:13032/111/0.2s cross:13492/814/0.2s block:19871/31/0.2s reverse:6535/16/0.2s
+2026-11-08 18:30:10 done 152428 best 0.459670584 pop [0.459671..0.459845] moves jitter:50797/190/0.2s swap:25098/112/0.2s cross:25620/913/0.2s block:38345/32/0.2s reverse:12568/17/0.2s
+2026-11-08 18:45:10 done 229041 best 0.459670584 pop [0.459671..0.459837] moves jitter:76319/195/0.2s swap:37800/117/0.2s cross:38526/955/0.2s block:57413/32/0.2s reverse:18983/17/0.2s
+2026-11-08 18:55:57 end best 0.459670584 moves jitter:95397/196/0.2s swap:47324/117/0.2s cross:47972/968/0.2s block:71785/32/0.2s reverse:23704/17/0.2s

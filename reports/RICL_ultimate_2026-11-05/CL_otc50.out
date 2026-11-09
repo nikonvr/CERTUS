@@ -1,0 +1,22 @@
+2026-11-08 04:23:37 start {'designs': ['CIS_otc50_curve.csv'], 'tag': 'CL_otc50', 'judge': '', 'minutes': 40.0, 'axis': 'diel_ot', 'floor': 3.0, 'nmax': 50, 'top': 1000, 'workers': 15}; axis diel_ot
+2026-11-08 04:23:38 391 designs read, 391 to clean
+2026-11-08 04:23:43 20 cleaned
+2026-11-08 04:23:46 40 cleaned
+2026-11-08 04:23:47 60 cleaned
+2026-11-08 04:23:49 80 cleaned
+2026-11-08 04:23:50 100 cleaned
+2026-11-08 04:23:53 120 cleaned
+2026-11-08 04:23:55 140 cleaned
+2026-11-08 04:23:57 160 cleaned
+2026-11-08 04:24:00 180 cleaned
+2026-11-08 04:24:03 200 cleaned
+2026-11-08 04:24:07 220 cleaned
+2026-11-08 04:24:10 240 cleaned
+2026-11-08 04:24:14 260 cleaned
+2026-11-08 04:24:18 280 cleaned
+2026-11-08 04:24:25 300 cleaned
+2026-11-08 04:24:30 320 cleaned
+2026-11-08 04:24:36 340 cleaned
+2026-11-08 04:24:40 360 cleaned
+2026-11-08 04:24:44 380 cleaned
+2026-11-08 04:24:50 end: 391 admissible designs written

@@ -1,0 +1,25 @@
+2026-11-08 18:56:13 start {'problem': 'bs5050', 'points': 1601, 'tag': 'B_rec34', 'minutes': 90.0, 'nmax': 34, 'tot': 3923.75, 'floor': 0.1, 'otlo': None, 'othi': None, 'fixed': None, 'iters': 200, 'pop': 40, 'workers': 15, 'seeds': ['CL_bs_clean.csv', 'CL_bsrec_clean.csv', 'B_n_curve.csv', 'B_rec_elites.csv'], 'seed_best': 80, 'moves': 'jitter:3,needle:3,remove:2,halfwave:1,cross:2,swap:1,block:2,reverse:1', 'rng': 3434}
+2026-11-08 18:56:13 250 seeds
+2026-11-08 18:56:24 BEST 3.37868434e-05 (oracle 3.37868434e-05) N 33 TOT 3923.750 thinnest 2.54 nm via seed from CL_bs_clean#0
+2026-11-08 18:56:25 BEST 1.97577066e-05 (oracle 1.97577066e-05) N 34 TOT 3923.750 thinnest 2.15 nm via seed from CL_bs_clean#6
+2026-11-08 18:56:25 BEST 1.67199299e-05 (oracle 1.67199299e-05) N 34 TOT 3923.750 thinnest 2.17 nm via seed from CL_bs_clean#7
+2026-11-08 18:56:26 BEST 1.24118007e-05 (oracle 1.24118007e-05) N 33 TOT 3923.750 thinnest 2.71 nm via seed from CL_bs_clean#8
+2026-11-08 18:57:06 BEST 1.1789368e-05 (oracle 1.1789368e-05) N 33 TOT 3923.750 thinnest 0.67 nm via seed from B_n_curve#0
+2026-11-08 18:57:09 BEST 1.05372562e-05 (oracle 1.05372562e-05) N 33 TOT 3923.750 thinnest 1.63 nm via seed from B_n_curve#6
+2026-11-08 18:58:07 population 40 after seeds; best 1.05372562e-05
+2026-11-08 18:58:35 BEST 1.05372562e-05 (oracle 1.05372562e-05) N 33 TOT 3923.750 thinnest 1.63 nm via cross from B_n_curve#6+CL_bs_clean#18
+2026-11-08 19:00:04 BEST 1.05372561e-05 (oracle 1.05372561e-05) N 33 TOT 3923.750 thinnest 1.63 nm via cross from B_n_curve#6+CL_bs_clean#18
+2026-11-08 19:00:58 BEST 7.44719891e-06 (oracle 7.44719891e-06) N 34 TOT 3923.750 thinnest 0.36 nm via needle from B_n_curve#14+CL_bs_clean#18+CL_bs_clean#38+CL_bsrec_clean#0
+2026-11-08 19:01:00 BEST 7.43889475e-06 (oracle 7.43889475e-06) N 34 TOT 3923.750 thinnest 0.23 nm via polish from B_n_curve#14+CL_bs_clean#18+CL_bs_clean#38+CL_bsrec_clean#0
+2026-11-08 19:01:04 BEST 6.59657424e-06 (oracle 6.59657424e-06) N 34 TOT 3923.750 thinnest 1.24 nm via needle from B_n_curve#14+CL_bs_clean#18+CL_bs_clean#38+CL_bsrec_clean#0
+2026-11-08 19:01:05 BEST 6.25709279e-06 (oracle 6.25709279e-06) N 34 TOT 3923.750 thinnest 1.29 nm via needle from B_n_curve#14+CL_bs_clean#18+CL_bs_clean#38+CL_bsrec_clean#0
+2026-11-08 19:01:11 BEST 5.83378432e-06 (oracle 5.83378432e-06) N 34 TOT 3923.750 thinnest 1.20 nm via needle from B_n_curve#14+CL_bs_clean#18+CL_bs_clean#38+CL_bsrec_clean#0
+2026-11-08 19:01:15 BEST 5.83378426e-06 (oracle 5.83378426e-06) N 34 TOT 3923.750 thinnest 1.20 nm via cross from B_n_curve#14+CL_bs_clean#18+CL_bs_clean#38+CL_bsrec_clean#0
+2026-11-08 19:01:34 BEST 5.83007274e-06 (oracle 5.83007274e-06) N 34 TOT 3923.750 thinnest 1.16 nm via cross from B_n_curve#14+CL_bs_clean#18+CL_bs_clean#38+CL_bsrec_clean#0
+2026-11-08 19:01:34 BEST 5.82995525e-06 (oracle 5.82995525e-06) N 34 TOT 3923.750 thinnest 1.16 nm via needle from B_n_curve#14+CL_bs_clean#18+CL_bs_clean#38+CL_bsrec_clean#0
+2026-11-08 19:13:07 done 11174 best 5.82995525e-06 pop [5.82996e-06..5.86997e-06] moves jitter:2162/140/0.7s needle:2252/189/2.8s remove:1423/16/1.3s halfwave:737/8/0.7s cross:1535/129/0.8s swap:770/14/0.7s block:1549/16/0.7s reverse:746/17/0.7s
+2026-11-08 19:28:08 done 22955 best 5.82995525e-06 pop [5.82996e-06..5.86705e-06] moves jitter:4470/174/0.7s needle:4578/227/2.6s remove:2976/16/1.3s halfwave:1503/8/0.7s cross:3178/157/0.8s swap:1602/19/0.7s block:3108/18/0.7s reverse:1540/19/0.7s
+2026-11-08 19:43:08 done 34194 best 5.82995525e-06 pop [5.82996e-06..5.86343e-06] moves jitter:6751/192/0.7s needle:6803/241/2.7s remove:4506/16/1.3s halfwave:2226/9/0.7s cross:4609/166/0.8s swap:2327/23/0.7s block:4635/19/0.7s reverse:2337/20/0.7s
+2026-11-08 19:58:08 done 45795 best 5.82995525e-06 pop [5.82996e-06..5.8605e-06] moves jitter:9142/202/0.7s needle:9129/244/2.6s remove:6026/16/1.3s halfwave:2970/9/0.7s cross:6243/173/0.8s swap:3092/25/0.7s block:6127/19/0.7s reverse:3066/21/0.7s
+2026-11-08 20:13:08 done 57271 best 5.82995525e-06 pop [5.82996e-06..5.8605e-06] moves jitter:11393/207/0.7s needle:11426/246/2.6s remove:7573/16/1.3s halfwave:3766/10/0.7s cross:7801/180/0.8s swap:3848/27/0.7s block:7630/19/0.7s reverse:3834/21/0.7s
+2026-11-08 20:26:17 end best 5.82995525e-06 moves jitter:13299/208/0.7s needle:13357/249/2.7s remove:8800/16/1.4s halfwave:4346/10/0.7s cross:9010/182/0.8s swap:4447/29/0.7s block:8948/21/0.7s reverse:4468/21/0.7s

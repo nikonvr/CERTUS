@@ -1,0 +1,33 @@
+2026-11-08 17:07:09 start {'problem': 'bs5050', 'points': 1601, 'tag': 'B_rec', 'minutes': 50.0, 'nmax': 50, 'tot': 3923.75, 'floor': 0.1, 'otlo': None, 'othi': None, 'fixed': None, 'iters': 200, 'pop': 40, 'workers': 15, 'seeds': ['B_n_curve.csv', 'B_t_curve.csv'], 'seed_best': 60, 'moves': 'jitter:3,needle:3,remove:2,halfwave:1,cross:2,swap:1,block:2,reverse:1', 'rng': 34}
+2026-11-08 17:07:09 110 seeds
+2026-11-08 17:07:11 BEST 2.60772053e-06 (oracle 2.60772053e-06) N 41 TOT 3923.750 thinnest 3.75 nm via seed from B_n_curve#0
+2026-11-08 17:07:17 BEST 2.60759357e-06 (oracle 2.60759357e-06) N 44 TOT 3923.750 thinnest 0.10 nm via seed from B_t_curve#56
+2026-11-08 17:07:17 BEST 2.60564481e-06 (oracle 2.60564481e-06) N 42 TOT 3923.750 thinnest 0.12 nm via seed from B_t_curve#57
+2026-11-08 17:07:17 population 40 after seeds; best 2.60564481e-06
+2026-11-08 17:07:19 BEST 2.60564481e-06 (oracle 2.60564481e-06) N 42 TOT 3923.750 thinnest 0.12 nm via reverse from B_t_curve#56
+2026-11-08 17:07:25 BEST 2.60562288e-06 (oracle 2.60562288e-06) N 44 TOT 3923.750 thinnest 0.12 nm via needle from B_t_curve#57
+2026-11-08 17:07:33 BEST 2.60561233e-06 (oracle 2.60561233e-06) N 44 TOT 3923.750 thinnest 0.12 nm via needle from B_t_curve#57
+2026-11-08 17:07:36 BEST 2.60559846e-06 (oracle 2.60559846e-06) N 44 TOT 3923.750 thinnest 0.12 nm via swap from B_t_curve#57
+2026-11-08 17:07:38 BEST 2.60558011e-06 (oracle 2.60558011e-06) N 44 TOT 3923.750 thinnest 0.13 nm via jitter from B_t_curve#57
+2026-11-08 17:07:40 BEST 2.60556285e-06 (oracle 2.60556285e-06) N 44 TOT 3923.750 thinnest 0.13 nm via jitter from B_t_curve#57
+2026-11-08 17:07:41 BEST 2.60556285e-06 (oracle 2.60556285e-06) N 44 TOT 3923.750 thinnest 0.13 nm via polish from B_t_curve#57
+2026-11-08 17:07:45 BEST 2.60554407e-06 (oracle 2.60554407e-06) N 44 TOT 3923.750 thinnest 0.13 nm via jitter from B_t_curve#57
+2026-11-08 17:07:45 BEST 2.60554156e-06 (oracle 2.60554156e-06) N 44 TOT 3923.750 thinnest 0.13 nm via needle from B_t_curve#57
+2026-11-08 17:07:46 BEST 2.60554153e-06 (oracle 2.60554153e-06) N 44 TOT 3923.750 thinnest 0.13 nm via polish from B_t_curve#57
+2026-11-08 17:07:47 BEST 2.60552794e-06 (oracle 2.60552794e-06) N 44 TOT 3923.750 thinnest 0.13 nm via cross from B_t_curve#55+B_t_curve#57
+2026-11-08 17:07:48 BEST 2.60552256e-06 (oracle 2.60552256e-06) N 44 TOT 3923.750 thinnest 0.13 nm via needle from B_t_curve#57
+2026-11-08 17:07:49 BEST 2.60552256e-06 (oracle 2.60552256e-06) N 44 TOT 3923.750 thinnest 0.13 nm via polish from B_t_curve#57
+2026-11-08 17:07:49 BEST 2.60551396e-06 (oracle 2.60551396e-06) N 44 TOT 3923.750 thinnest 0.12 nm via jitter from B_t_curve#57
+2026-11-08 17:07:50 BEST 2.60551155e-06 (oracle 2.60551155e-06) N 44 TOT 3923.750 thinnest 0.12 nm via cross from B_t_curve#55+B_t_curve#57
+2026-11-08 17:07:50 BEST 2.60550488e-06 (oracle 2.60550488e-06) N 44 TOT 3923.750 thinnest 0.12 nm via jitter from B_t_curve#57
+2026-11-08 17:07:53 BEST 2.60548825e-06 (oracle 2.60548825e-06) N 44 TOT 3923.750 thinnest 0.11 nm via needle from B_t_curve#57
+2026-11-08 17:07:53 BEST 2.60546617e-06 (oracle 2.60546617e-06) N 44 TOT 3923.750 thinnest 0.10 nm via jitter from B_t_curve#57
+2026-11-08 17:07:57 BEST 2.60546349e-06 (oracle 2.60546349e-06) N 44 TOT 3923.750 thinnest 0.10 nm via needle from B_t_curve#57
+2026-11-08 17:08:03 BEST 2.60546324e-06 (oracle 2.60546324e-06) N 44 TOT 3923.750 thinnest 0.10 nm via needle from B_t_curve#57
+2026-11-08 17:22:17 done 11908 best 2.60546324e-06 pop [2.60546e-06..2.6057e-06] moves jitter:2417/92/1.0s needle:2400/162/0.9s remove:1624/2/2.0s halfwave:802/1/1.1s cross:1538/29/0.7s swap:781/10/1.1s block:1577/1/1.2s reverse:769/5/1.2s
+2026-11-08 17:37:17 done 23776 best 2.60546324e-06 pop [2.60546e-06..2.60565e-06] moves jitter:4796/96/1.0s needle:4757/249/0.9s remove:3193/2/2.0s halfwave:1610/1/1.1s cross:3098/34/0.6s swap:1538/10/1.2s block:3201/1/1.2s reverse:1583/5/1.2s
+2026-11-08 17:39:20 BEST 2.60546112e-06 (oracle 2.60546112e-06) N 44 TOT 3923.750 thinnest 0.10 nm via jitter from B_t_curve#57
+2026-11-08 17:49:31 BEST 2.60545651e-06 (oracle 2.60545651e-06) N 44 TOT 3923.750 thinnest 0.10 nm via jitter from B_n_curve#1+B_t_curve#57
+2026-11-08 17:52:18 done 35092 best 2.60545651e-06 pop [2.60546e-06..2.60564e-06] moves jitter:7028/105/1.1s needle:7042/300/0.9s remove:4746/2/2.0s halfwave:2343/1/1.2s cross:4588/40/0.7s swap:2322/12/1.2s block:4682/1/1.2s reverse:2341/5/1.2s
+2026-11-08 17:53:42 BEST 2.60545352e-06 (oracle 2.60545352e-06) N 44 TOT 3923.750 thinnest 0.10 nm via jitter from B_n_curve#1+B_t_curve#57
+2026-11-08 17:57:12 end best 2.60545352e-06 moves jitter:7761/109/1.1s needle:7734/309/0.9s remove:5181/2/2.0s halfwave:2587/1/1.2s cross:5047/45/0.7s swap:2558/13/1.2s block:5135/1/1.2s reverse:2564/5/1.2s

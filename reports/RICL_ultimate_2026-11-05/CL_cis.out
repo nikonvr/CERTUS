@@ -1,0 +1,25 @@
+2026-11-08 13:36:41 start {'designs': ['CIS_free1_curve.csv', 'CIS_recfree_elites.csv'], 'tag': 'CL_cis', 'judge': '', 'minutes': 90.0, 'axis': 'phys', 'floor': 3.0, 'nmax': 50, 'top': 2000, 'workers': 15}; axis phys
+2026-11-08 13:36:42 441 designs read, 441 to clean
+2026-11-08 13:38:00 20 cleaned
+2026-11-08 13:38:38 40 cleaned
+2026-11-08 13:39:29 60 cleaned
+2026-11-08 13:40:12 80 cleaned
+2026-11-08 13:40:37 100 cleaned
+2026-11-08 13:41:02 120 cleaned
+2026-11-08 13:41:38 140 cleaned
+2026-11-08 13:42:09 160 cleaned
+2026-11-08 13:42:39 180 cleaned
+2026-11-08 13:43:11 200 cleaned
+2026-11-08 13:43:38 220 cleaned
+2026-11-08 13:43:59 240 cleaned
+2026-11-08 13:44:24 260 cleaned
+2026-11-08 13:44:36 280 cleaned
+2026-11-08 13:45:04 300 cleaned
+2026-11-08 13:45:28 320 cleaned
+2026-11-08 13:45:45 340 cleaned
+2026-11-08 13:46:06 360 cleaned
+2026-11-08 13:46:26 380 cleaned
+2026-11-08 13:46:39 400 cleaned
+2026-11-08 13:46:43 420 cleaned
+2026-11-08 13:46:47 440 cleaned
+2026-11-08 13:46:50 end: 441 admissible designs written

@@ -1,0 +1,42 @@
+2026-11-07 19:10:59 start {'mode': 'dot', 'grid': '2500:22000:50', 'tag': 'CIS_otfull', 'judge': '', 'minutes': 300.0, 'nmax': 70, 'floor': 0.1, 'pop': 60, 'moves': 'jitter:3,needle:3,needle_diel:1,substitute:3,remove:2,swap:2,block:1,cross:2', 'moves_per_key': 3, 'seeds': ['CL_cis_res3_clean.csv', 'CL_PO_res2_clean.csv', 'CL_FILL_11000_12500_clean.csv', 'CL_FILL_9500_10000_clean.csv', 'CL_FILL_3000_4500_clean.csv', 'CIS_free1_curve.csv', 'CIS_contest_curve.csv'], 'seeds_per_key': 3, 'workers': 15, 'rng': 61, 'only_seeds': False, 'prefix': '', 'exclude': 'U', 'window': None, 'axis': 'diel_ot'}; 2190 seed designs
+2026-11-07 19:12:52 seeded 391 of 391 points
+2026-11-07 19:20:10 round 1: 3507 tasks, 512 improvements, 391/391 points
+2026-11-07 19:26:52 round 2: 3189 tasks, 456 improvements, 391/391 points
+2026-11-07 19:33:39 round 3: 3109 tasks, 437 improvements, 391/391 points
+2026-11-07 19:40:15 round 4: 3081 tasks, 413 improvements, 391/391 points
+2026-11-07 19:46:48 round 5: 2967 tasks, 383 improvements, 391/391 points
+2026-11-07 19:53:37 round 6: 2985 tasks, 388 improvements, 391/391 points
+2026-11-07 20:01:32 round 7: 2987 tasks, 389 improvements, 391/391 points
+2026-11-07 20:09:39 round 8: 3014 tasks, 387 improvements, 391/391 points
+2026-11-07 20:17:56 round 9: 2977 tasks, 368 improvements, 391/391 points
+2026-11-07 20:25:49 round 10: 2919 tasks, 361 improvements, 391/391 points
+2026-11-07 20:33:44 round 11: 2909 tasks, 349 improvements, 391/391 points
+2026-11-07 20:40:56 round 12: 2838 tasks, 326 improvements, 391/391 points
+2026-11-07 20:47:46 round 13: 2787 tasks, 345 improvements, 391/391 points
+2026-11-07 20:55:14 round 14: 2859 tasks, 366 improvements, 391/391 points
+2026-11-07 21:03:14 round 15: 2940 tasks, 356 improvements, 391/391 points
+2026-11-07 21:10:16 round 16: 2844 tasks, 347 improvements, 391/391 points
+2026-11-07 21:18:02 round 17: 2837 tasks, 366 improvements, 391/391 points
+2026-11-07 21:26:12 round 18: 2885 tasks, 330 improvements, 391/391 points
+2026-11-07 21:33:43 round 19: 2748 tasks, 329 improvements, 391/391 points
+2026-11-07 21:41:51 round 20: 2737 tasks, 349 improvements, 391/391 points
+2026-11-07 21:49:37 round 21: 2870 tasks, 355 improvements, 391/391 points
+2026-11-07 21:57:23 round 22: 2910 tasks, 335 improvements, 391/391 points
+2026-11-07 22:05:02 round 23: 2814 tasks, 379 improvements, 391/391 points
+2026-11-07 22:13:02 round 24: 2945 tasks, 352 improvements, 391/391 points
+2026-11-07 22:20:48 round 25: 2862 tasks, 331 improvements, 391/391 points
+2026-11-07 22:28:45 round 26: 2825 tasks, 337 improvements, 391/391 points
+2026-11-07 22:36:34 round 27: 2827 tasks, 361 improvements, 391/391 points
+2026-11-07 22:44:39 round 28: 2886 tasks, 327 improvements, 391/391 points
+2026-11-07 22:52:23 round 29: 2767 tasks, 345 improvements, 391/391 points
+2026-11-07 23:00:27 round 30: 2865 tasks, 360 improvements, 391/391 points
+2026-11-07 23:08:22 round 31: 2857 tasks, 358 improvements, 391/391 points
+2026-11-07 23:16:21 round 32: 2859 tasks, 358 improvements, 391/391 points
+2026-11-07 23:24:23 round 33: 2879 tasks, 360 improvements, 391/391 points
+2026-11-07 23:32:28 round 34: 2925 tasks, 319 improvements, 391/391 points
+2026-11-07 23:40:06 round 35: 2730 tasks, 333 improvements, 391/391 points
+2026-11-07 23:48:07 round 36: 2769 tasks, 339 improvements, 391/391 points
+2026-11-07 23:56:15 round 37: 2799 tasks, 349 improvements, 391/391 points
+2026-11-08 00:04:30 round 38: 2816 tasks, 356 improvements, 391/391 points
+2026-11-08 00:10:59 round 39: 2891 tasks, 281 improvements, 391/391 points
+2026-11-08 00:11:08 end: 391 points

@@ -1,0 +1,36 @@
+2026-11-08 15:26:58 start {'problem': 'bs5050', 'points': 1601, 'mode': 'tot', 'grid': '200:4500:10', 'tag': 'B_t', 'minutes': 100.0, 'nmax': 50, 'tot': None, 'tot_le': False, 'floor': 0.1, 'iters': 200, 'moves_per_key': 3, 'grow_from': '1,2,3,5,8', 'grow_top': 4, 'moves': 'jitter:3,needle:3,remove:2,halfwave:1,swap:1,block:2,reverse:1', 'seeds': ['seeds_bs.csv', 'B_n_curve.csv'], 'seeds_per_key': 3, 'workers': 15, 'rng': 2026}; 431 grid points
+2026-11-08 15:26:58 402 seed designs read
+2026-11-08 15:27:19 seeded 294 of 431 points
+2026-11-08 15:30:57 round 1: 3370 tasks + 1465 growths, 698 improvements, 431/431 points, median MF 0.000777567
+2026-11-08 15:35:34 round 2: 4303 tasks + 1876 growths, 562 improvements, 431/431 points, median MF 0.000664065
+2026-11-08 15:40:28 round 3: 3831 tasks + 1581 growths, 495 improvements, 431/431 points, median MF 0.00062265
+2026-11-08 15:45:25 round 4: 3394 tasks + 1306 growths, 479 improvements, 431/431 points, median MF 0.000573084
+2026-11-08 15:50:46 round 5: 3234 tasks + 1201 growths, 374 improvements, 431/431 points, median MF 0.000573084
+2026-11-08 15:55:37 round 6: 2934 tasks + 1016 growths, 372 improvements, 431/431 points, median MF 0.000573084
+2026-11-08 16:00:33 round 7: 2842 tasks + 956 growths, 309 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 16:05:08 round 8: 2530 tasks + 761 growths, 283 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 16:09:33 round 9: 2498 tasks + 741 growths, 224 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 16:13:35 round 10: 2338 tasks + 641 growths, 201 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 16:17:23 round 11: 2219 tasks + 568 growths, 175 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 16:20:57 round 12: 2050 tasks + 461 growths, 171 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 16:24:24 round 13: 2026 tasks + 446 growths, 165 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 16:27:35 round 14: 1946 tasks + 396 growths, 165 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 16:30:37 round 15: 1874 tasks + 351 growths, 132 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 16:33:32 round 16: 1862 tasks + 346 growths, 108 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 16:36:08 round 17: 1778 tasks + 291 growths, 112 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 16:38:37 round 18: 1738 tasks + 266 growths, 107 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 16:41:07 round 19: 1730 tasks + 261 growths, 107 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 16:43:36 round 20: 1714 tasks + 251 growths, 125 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 16:46:11 round 21: 1738 tasks + 266 growths, 111 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 16:48:30 round 22: 1682 tasks + 231 growths, 93 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 16:50:46 round 23: 1674 tasks + 226 growths, 95 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 16:52:52 round 24: 1666 tasks + 221 growths, 85 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 16:55:09 round 25: 1690 tasks + 236 growths, 104 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 16:57:25 round 26: 1682 tasks + 231 growths, 98 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 16:59:37 round 27: 1658 tasks + 216 growths, 88 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 17:01:48 round 28: 1634 tasks + 201 growths, 82 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 17:03:49 round 29: 1610 tasks + 186 growths, 91 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 17:06:01 round 30: 1646 tasks + 211 growths, 79 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 17:06:58 round 31: 1588 tasks + 174 growths, 51 improvements, 431/431 points, median MF 0.000559346
+2026-11-08 17:06:58 oracle judging
+2026-11-08 17:07:08 end: 431 points written, largest relative kernel/oracle difference 4.20e-11

@@ -1,0 +1,6 @@
+2026-11-08 09:45:39 start {'mode': 'n', 'grid': '1:70:1', 'tag': 'CIS_n_res', 'judge': 'exact10', 'minutes': 150.0, 'nmax': 70, 'floor': 0.1, 'pop': 60, 'moves': 'jitter:3,needle:3,needle_diel:1,substitute:3,remove:2,swap:2,block:1,cross:2', 'moves_per_key': 3, 'seeds': ['CIS_res2_curve.csv', 'CIS_recres_elites.csv'], 'seeds_per_key': 3, 'workers': 15, 'rng': 2016, 'only_seeds': False, 'prefix': '', 'exclude': 'U', 'window': None, 'axis': 'diel_ot'}; 938 seed designs
+2026-11-08 10:10:35 seeded 57 of 70 points
+2026-11-08 11:09:58 round 1: 507 tasks, 110 improvements, 62/70 points
+2026-11-08 12:05:02 round 2: 510 tasks, 83 improvements, 63/70 points
+2026-11-08 12:15:41 round 3: 488 tasks, 51 improvements, 63/70 points
+2026-11-08 12:27:06 end: 63 points

@@ -1,0 +1,18 @@
+2026-11-08 17:58:14 start {'problem': 'bs5050', 'designs': ['B_rec_elites.csv', 'B_n_curve.csv', 'B_t_curve.csv'], 'tag': 'CL_bsrec', 'minutes': 30.0, 'tot': 3923.75, 'tot_window': 400.0, 'floor': 3.78, 'nmax': 34, 'top': 300, 'workers': 15}
+2026-11-08 17:58:14 521 designs read, 141 to clean
+2026-11-08 17:58:27 10/141 cleaned; best 0.00402 % N 29 TOT 3923.8 thinnest 6.38
+2026-11-08 17:58:41 20/141 cleaned; best 0.00402 % N 29 TOT 3923.7 thinnest 6.38
+2026-11-08 17:58:45 30/141 cleaned; best 0.00005 % N 33 TOT 3923.8 thinnest 4.66
+2026-11-08 17:58:59 40/141 cleaned; best 0.00005 % N 33 TOT 3923.8 thinnest 4.66
+2026-11-08 17:59:08 50/141 cleaned; best 0.00005 % N 33 TOT 3923.8 thinnest 4.66
+2026-11-08 17:59:17 60/141 cleaned; best 0.00005 % N 33 TOT 3923.8 thinnest 4.66
+2026-11-08 17:59:31 70/141 cleaned; best 0.00005 % N 33 TOT 3923.8 thinnest 4.66
+2026-11-08 17:59:38 80/141 cleaned; best 0.00005 % N 33 TOT 3923.8 thinnest 4.66
+2026-11-08 17:59:44 90/141 cleaned; best 0.00002 % N 33 TOT 3923.8 thinnest 3.85
+2026-11-08 17:59:49 100/141 cleaned; best 0.00002 % N 33 TOT 3923.8 thinnest 3.85
+2026-11-08 17:59:53 110/141 cleaned; best 0.00002 % N 33 TOT 3923.8 thinnest 3.85
+2026-11-08 17:59:57 120/141 cleaned; best 0.00002 % N 33 TOT 3923.8 thinnest 3.85
+2026-11-08 17:59:59 130/141 cleaned; best 0.00002 % N 33 TOT 3923.8 thinnest 3.85
+2026-11-08 18:00:06 140/141 cleaned; best 0.00002 % N 33 TOT 3923.8 thinnest 3.85
+2026-11-08 18:00:07 141/141 cleaned; best 0.00002 % N 33 TOT 3923.8 thinnest 3.85
+2026-11-08 18:00:08 end best 0.000016 % (oracle 0.000016) N 33 TOT 3923.8 thinnest 3.851

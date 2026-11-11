@@ -27,7 +27,8 @@ move of code has to leave as it was:
      "acknowledged_seams": {"pkg.old:np": "why the tests that replace it do not reach the moved code"}}
 
 A moved function keeps its bytecode and its signature, and each global it loads resolves to the same object in the module
-it moved to. A name that a module exposed stays there. A moved function that loads a global which the tests replace in the
+it moved to. A method that leaves a class for one this class does not inherit is gone from it: its `moved_methods` entry is
+what allows that, provided the class it names defines the method, unchanged. A name that a module exposed stays there. A moved function that loads a global which the tests replace in the
 module it LEFT fails the comparison until a manifest acknowledges it: the test would patch a module the code no longer reads.
 
 `report` prints, from a snapshot, the names that several project classes of a window define and the seams of the group.
@@ -595,7 +596,7 @@ class _Comparison:
 
     def _attribute(self, where: str, name: str, x: dict[str, Any], y: dict[str, Any] | None) -> None:
         if y is None:
-            self.problems.append(f"ATTRIBUTE | {where} | gone")
+            self._gone(where, name, x)
             return
         if x["kind"] != y["kind"]:
             self.problems.append(f"KIND      | {where} | {y['kind']}, was {x['kind']}")
@@ -612,6 +613,26 @@ class _Comparison:
                     self.function(i, j, where)
         elif not self._same(x["value"], y["value"], where):
             self.problems.append(f"VALUE     | {where} | {self._was_and_is(x['value'], y['value'])}")
+
+    def _gone(self, where: str, name: str, x: dict[str, Any]) -> None:
+        """A class no longer has the attribute: a move, if a manifest sends it to a class that defines it, unchanged."""
+        for moved, origin, target in sorted(self.allow.method_moves):
+            if moved != name or origin != x["owner"]:
+                continue
+            landed = self.new["classes"].get(target, {}).get("attrs", {}).get(name)
+            if landed is None or landed["owner"] != target:
+                self.problems.append(f"ATTRIBUTE | {where} | gone, and {target}, where a manifest sends it, does not define it")
+            elif landed["kind"] != x["kind"]:
+                self.problems.append(f"KIND      | {where} | {landed['kind']} in {target}, was {x['kind']}")
+            elif "impl" in x:
+                for i, j in zip(x["impl"], landed["impl"], strict=True):
+                    if i is None or j is None:
+                        if i != j:
+                            self.problems.append(f"KIND      | {where} | a property accessor appeared or went")
+                    else:
+                        self.function(i, j, where)
+            return
+        self.problems.append(f"ATTRIBUTE | {where} | gone")
 
     def modules(self) -> None:
         for module, a in self.old["modules"].items():

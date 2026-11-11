@@ -129,6 +129,28 @@ MANIFEST = {
     "new_classes": ["rgpkg.new:NewMixin"],
 }
 
+#: A second move: `side` leaves a class that does NOT inherit the class it goes to. The window still finds it, through
+#: OldMixin; the class it left no longer has it, and only the manifest can say that this is the move.
+SIDE_WINDOW = WINDOW.replace("import OldMixin", "import OldMixin, SideMixin").replace("(OldMixin, Base)", "(OldMixin, SideMixin, Base)")
+SIDE_CLASS = """
+
+class SideMixin:
+"""
+SIDE_METHOD = """    def side(self) -> str:
+        return 'side'
+"""
+SIDE_BEFORE = {**BEFORE, "old.py": OLD_BEFORE + SIDE_CLASS + SIDE_METHOD, "win.py": SIDE_WINDOW}
+SIDE_AFTER = {
+    **AFTER,
+    "old.py": OLD_AFTER + SIDE_CLASS + "    pass" + chr(10),
+    "new.py": NEW + chr(10) + SIDE_METHOD,
+    "win.py": SIDE_WINDOW,
+}
+SIDE_MANIFEST = {
+    "moved_methods": [{"name": "side", "from": "rgpkg.old:SideMixin", "to": "rgpkg.new:NewMixin"}],
+    "added_attributes": ["rgpkg.old:OldMixin.side"],
+}
+
 
 def _forget_the_package() -> None:
     for name in [n for n in sys.modules if n == PACKAGE or n.startswith(f"{PACKAGE}.")]:
@@ -192,6 +214,35 @@ def test_a_body_that_changed_passes_only_when_the_manifest_names_it(snapshot_of)
 
     assert kinds(refused) == {"BYTECODE"}
     assert allowed == []
+
+
+def test_a_method_that_leaves_a_class_for_one_it_does_not_inherit_passes_with_its_manifest(snapshot_of) -> None:
+    before, after = snapshot_of("before", SIDE_BEFORE), snapshot_of("after", SIDE_AFTER)
+    assert "side" in before["classes"]["rgpkg.old:SideMixin"]["attrs"]
+    assert "side" not in after["classes"]["rgpkg.old:SideMixin"]["attrs"]
+
+    problems, _ = guard.compare(before, after, [MANIFEST, SIDE_MANIFEST])
+
+    assert problems == []
+
+
+def test_a_method_gone_from_its_class_is_refused_when_no_manifest_sends_it_elsewhere(snapshot_of) -> None:
+    before, after = snapshot_of("before", SIDE_BEFORE), snapshot_of("after", SIDE_AFTER)
+    problems, _ = guard.compare(before, after, [MANIFEST, {"added_attributes": SIDE_MANIFEST["added_attributes"]}])
+    assert "ATTRIBUTE | rgpkg.old:SideMixin.side | gone" in problems
+
+
+def test_a_method_gone_from_its_class_is_refused_when_the_class_the_manifest_names_does_not_define_it(snapshot_of) -> None:
+    before, after = snapshot_of("before", SIDE_BEFORE), snapshot_of("after", SIDE_AFTER)
+    elsewhere = {"moved_methods": [{"name": "side", "from": "rgpkg.old:SideMixin", "to": "rgpkg.win:Base"}]}
+    problems, _ = guard.compare(before, after, [MANIFEST, elsewhere])
+    assert any(p.startswith("ATTRIBUTE | rgpkg.old:SideMixin.side | gone, and rgpkg.win:Base") for p in problems)
+
+
+def test_a_method_that_left_its_class_and_changed_on_the_way_is_refused(snapshot_of) -> None:
+    changed = {**SIDE_AFTER, "new.py": SIDE_AFTER["new.py"].replace("return 'side'", "return 'aside'")}
+    problems, _ = guard.compare(snapshot_of("before", SIDE_BEFORE), snapshot_of("after", changed), [MANIFEST, SIDE_MANIFEST])
+    assert kinds(problems) == {"BYTECODE"}
 
 
 # =============================================================================

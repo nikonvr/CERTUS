@@ -396,7 +396,7 @@ def test_start_manual_sigma_repartition_worker_uses_current_selected_k_not_resul
 
 
 def test_start_deferred_corridor_worker_logs_after_stage(monkeypatch) -> None:
-    monkeypatch.setattr("certus.ui.certus_index_spline_corridorui_mixin.GenericWorker", _FakeWorker)
+    monkeypatch.setattr("certus.ui.certus_index_spline_corridor_run.GenericWorker", _FakeWorker)
 
     logger = _Logger()
     app = SimpleNamespace(
@@ -423,6 +423,7 @@ def test_start_deferred_corridor_worker_logs_after_stage(monkeypatch) -> None:
     ok = CertusIndexSplineApp._start_deferred_corridor_worker(app, result)
 
     assert ok is True
+    assert isinstance(app._worker, _FakeWorker)
     cfg_used = app._worker.args[0]
     assert cfg_used.corridor_profile_d_enabled is True
     assert any(
@@ -432,7 +433,7 @@ def test_start_deferred_corridor_worker_logs_after_stage(monkeypatch) -> None:
 
 
 def test_start_deferred_corridor_worker_sets_standard_base_mode(monkeypatch) -> None:
-    monkeypatch.setattr("certus.ui.certus_index_spline_corridorui_mixin.GenericWorker", _FakeWorker)
+    monkeypatch.setattr("certus.ui.certus_index_spline_corridor_run.GenericWorker", _FakeWorker)
 
     logger = _Logger()
     app = SimpleNamespace(
@@ -459,6 +460,7 @@ def test_start_deferred_corridor_worker_sets_standard_base_mode(monkeypatch) -> 
     ok = CertusIndexSplineApp._start_deferred_corridor_worker(app, result)
 
     assert ok is True
+    assert isinstance(app._worker, _FakeWorker)
     cfg_used = app._worker.args[0]
     assert cfg_used.corridor_profile_d_enabled is True
     assert "Corridors:" in app.lbl_status.texts[-1]

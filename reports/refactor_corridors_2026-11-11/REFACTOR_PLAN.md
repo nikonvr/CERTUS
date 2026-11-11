@@ -979,7 +979,12 @@ Consignes d'origine de la phase :
   (principe 6 : un module garde les noms qu'il exposait) ; mettre `docs/ETAT.md` à jour.
 - Test : suite complète, puis `tests/unit/test_the_architecture_debt_only_shrinks.py` seul.
 
-### [ ] Phase 9 — Réparer la couture de test périmée (Q5 ; un commit de test, aucun code de production)
+### [x] Phase 9 — Réparer la couture de test périmée (Q5 ; un commit de test, aucun code de production) — faite le 2026-11-11
+
+Preuve faite : l'assertion `isinstance(app._worker, _FakeWorker)`, ajoutée seule aux deux tests, **échoue** (`2 failed` :
+`app._worker` est un vrai `certus.workers.certus_base_workers.GenericWorker`). Une fois le remplacement pointé sur
+`certus.ui.certus_index_spline_corridor_run.GenericWorker`, le fichier rend `16 passed`. Garde : `problems=0`,
+`GUARD=OK`. Les deux tests ne construisent plus de fil de calcul réel.
 
 - Modifier : `tests/unit/test_mwir_gui_flow.py:399, 435` — le remplacement de `GenericWorker` vise le module où
   `_start_deferred_corridor_worker` le lit depuis la Phase 3a (`certus.ui.certus_index_spline_corridor_run`) ; chacun des

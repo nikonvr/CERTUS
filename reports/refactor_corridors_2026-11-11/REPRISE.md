@@ -72,6 +72,7 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | **Phase 6c** : le constructeur donne à tout l'état corridor sa valeur par défaut, depuis la table | `fce0ee90` |
 | **Phase 8, clôture** : registre de dette exact, garde finale `GUARD=OK` avec les 17 manifestes, relevé des 56 imports sans lecteur | `9c57ffd8` |
 | **Validation complète des phases 6 et 8** : rien de plus que l'état connu (plan, Phase 6) | sur `9c57ffd8` |
+| **Phase 9** : les deux tests de `test_mwir_gui_flow.py` remplacent `GenericWorker` là où la méthode le lit ; preuve faite que le vrai était construit | commit suivant `d9db99a7` |
 
 ## En cours
 
@@ -79,12 +80,11 @@ Rien : tout ce qui est fait est commité. La prochaine tâche est la première d
 
 ## À faire, dans l'ordre
 
-1. Phase 9 : couture de test périmée (Q5), un commit de test.
-2. Phase 10 : correctifs révélés par l'audit, un commit chacun, chacun avec un test qui échoue avant : 10a (Q17), 10b
+1. Phase 10 : correctifs révélés par l'audit, un commit chacun, chacun avec un test qui échoue avant : 10a (Q17), 10b
    (Q13), 10c (Q11), 10d (Q12). Puis validation complète.
-3. Phase 7, après la Phase 10 (Q21) : 7a, puis 7b sous le protocole de noyau (oracle avant et après,
+2. Phase 7, après la Phase 10 (Q21) : 7a, puis 7b sous le protocole de noyau (oracle avant et après,
    `python scripts/c1_diff.py HEAD`). Puis validation complète.
-4. Feuille de route UX, plan section 5.5 : U1 à U5 d'abord (défauts visibles).
+3. Feuille de route UX, plan section 5.5 : U1 à U5 d'abord (défauts visibles).
 
 Outils : pour une extraction, `tools/` (`plan_move`, `move`, `manifest`, `contracts`, `protocols`, `born_in`, puis `guard`
 et `lot`) ; `tools/static_to_function.py` pour une méthode statique ; `tools/unread_imports.py` pour le relevé de clôture.

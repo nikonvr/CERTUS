@@ -47,16 +47,17 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | **Phase 2a** : les trois constantes corridor n'ont plus qu'une définition | `bea41352` |
 | **Phase 2b** : `_apply_fixed_log_k_axis` et ses deux bornes n'ont plus qu'une définition | `4be1b0af` |
 | **Phase 2c** : les 16 constantes de fenêtre n'ont plus qu'une définition, dans le cœur spline | `133becde` |
-| **Phase 2d** : les deux clés du smart-init n'ont plus qu'une définition, dans `common` | commit suivant `133becde` |
+| **Phase 2d** : les deux clés du smart-init n'ont plus qu'une définition, dans `common` | `d16346d9` |
+| **Phase 2e** : les trois classes du smart-init n'ont plus qu'une définition, dans `state_ui` | commit suivant `d16346d9` |
 
 ## En cours
 
-Rien : tout ce qui est fait est commité. La prochaine tâche est la première de la liste ci-dessous.
+**Validation complète de la phase 2** (`python scripts/validate_parallel.py`), à lancer ou à relancer si elle a été
+coupée : rien d'autre en même temps. Tout le code de la phase 2 est commité.
 
 ## À faire, dans l'ordre
 
-1. Phase 2 du plan, suite : 2e classes `SmartInitPayload` en double ;
-   puis la validation complète de la phase.
+1. Validation complète de la phase 2, puis cocher la Phase 2 au plan.
 2. Phase 3 : extraction des tranches 3a, 3b, 3c, 3d.
 3. Phase 4 : tracé RMSE(d).
 4. Phase 5 : 5a, 5b, 5c, puis 5d (les 8 fonctions statiques appelées par le mandataire).

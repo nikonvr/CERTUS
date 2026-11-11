@@ -1,0 +1,22 @@
+{
+  "phase": "2e - the payload and the two states of the smart-init dialog keep one definition (state_ui); smart_init imports them. The two definitions had the same fields, defaults and method bytecode (plan, 2e).",
+  "moved_objects": [
+    {
+      "from": "certus.ui.certus_index_spline_smart_init:SmartInitPayload",
+      "to": "certus.ui.certus_index_spline_state_ui:SmartInitPayload"
+    },
+    {
+      "from": "certus.ui.certus_index_spline_smart_init:_SmartInitState",
+      "to": "certus.ui.certus_index_spline_state_ui:_SmartInitState"
+    },
+    {
+      "from": "certus.ui.certus_index_spline_smart_init:SmartInitState",
+      "to": "certus.ui.certus_index_spline_state_ui:SmartInitState"
+    },
+    {
+      "from": "certus.ui.certus_index_spline_smart_init:__create_fn__",
+      "to": "certus.ui.certus_index_spline_state_ui:__create_fn__"
+    }
+  ],
+  "note": "__create_fn__ is the factory of the methods the dataclass decorator writes (__repr__ here): they belong to the module of their class and follow it."
+}

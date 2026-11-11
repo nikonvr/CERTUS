@@ -695,7 +695,13 @@ partout ailleurs c'est le même objet, importé. Chaque cas ajouté doit échoue
   `tests/unit/test_the_architecture_debt_only_shrinks.py`, puis
   `tests/ui/test_the_two_unplugged_windows_are_plugged_back.py`, puis LOT.
 
-- [ ] **2e — Classes du smart-init en double (Q9)** — sous condition
+- [x] **2e — Classes du smart-init en double (Q9)** — sous condition — faite le 2026-11-11. Préalable mesuré, aucun
+  écart : mêmes champs (10, 11 et 11), mêmes valeurs par défaut, même configuration, même bytecode pour `from_dict`,
+  `__post_init__` et `update` ; les sources ne diffèrent que par des lignes vides et l'écriture `dataclass` /
+  `dataclasses.dataclass`. Les cas nouveaux échouaient avant (`6 failed, 50 passed`) et passent ; ruff PASS ; lot de
+  contrôle `261 passed` ; garde avec `manifests/phase_2e.json` : `problems=0`, `GUARD=OK`. Suite visible : la façade
+  `CERTUS_INDEX_SPLINE` résout les trois noms dans `state_ui`. Laissés en place, sans lecteur : les imports
+  `dataclass`, `field`, `BaseModel`, `ConfigDict` de `smart_init` (un nom qu'un module exposait y reste ; Phase 8).
   Préalable, avant toute écriture : comparer les deux définitions de `SmartInitPayload` et de ses deux classes d'état,
   dans `certus/ui/certus_index_spline_smart_init.py` et `certus/ui/certus_index_spline_state_ui.py` — champs, valeurs par
   défaut, empreintes des méthodes dans l'instantané. **Au moindre écart : s'arrêter, le consigner, ne rien unifier.**

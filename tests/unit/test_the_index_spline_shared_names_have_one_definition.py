@@ -53,6 +53,9 @@ ONE_SOURCE |= dict.fromkeys(WINDOW_CONSTANTS, "certus/spline/certus_index_spline
 #: The two smart-init keys: `common` defines them, `smart_init` imports them.
 SMART_INIT_KEYS = ("_QS_SMART_INIT_DEEP", "_QS_SMART_INIT_TWO_PHASE")
 ONE_SOURCE |= dict.fromkeys(SMART_INIT_KEYS, f"{UI}common.py")
+#: The payload and the two states of the smart-init dialog: `state_ui` defines them, `smart_init` imports them.
+SMART_INIT_CLASSES = ("SmartInitPayload", "_SmartInitState", "SmartInitState")
+ONE_SOURCE |= dict.fromkeys(SMART_INIT_CLASSES, f"{UI}state_ui.py")
 EXPOSED_BY = {
     "_DEFAULT_CORRIDOR_RMSE_DELTA": ("common", "settings", "corridors"),
     "_DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN": ("common", "settings", "corridors"),
@@ -64,6 +67,9 @@ EXPOSED_BY = {
 EXPOSED_BY |= dict.fromkeys(WINDOW_CONSTANTS, ("common",))
 EXPOSED_BY |= dict.fromkeys(("_QS_SPLINE_ORG", "_QS_SPLINE_APP"), ("common", "smart_init"))
 EXPOSED_BY |= dict.fromkeys(SMART_INIT_KEYS, ("smart_init",))
+EXPOSED_BY |= dict.fromkeys(SMART_INIT_CLASSES, ("smart_init", "mixins_ui", "smartinit_mixin"))
+EXPOSED_BY["SmartInitState"] = ("smart_init",)
+EXPOSED_BY["_SmartInitState"] = ("smart_init", "smartinit_mixin")
 #: A file that keeps a function of the shared name, allowed because the function only imports the shared one, inside its
 #: body, and calls it.
 DELEGATES = {"_apply_fixed_log_k_axis": (f"{UI}monitor_ui.py",)}

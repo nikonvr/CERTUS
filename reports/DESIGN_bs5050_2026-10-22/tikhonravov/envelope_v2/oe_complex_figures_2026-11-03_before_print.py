@@ -80,7 +80,7 @@ def benchmark(out) -> None:
     a.axhline(1.0, color="c", ls="--", lw=1)
     for p in poles:
         a.plot(p[0], -p[1] / 2, "x", color="c", ms=8, mew=2)
-    a.set_title("(a) grid points (dots), poles found from them (x), line $\lambda+i$ nm (dashed)", fontsize=9)
+    a.set_title(r"(a) grid points (dots), poles found from them (x), line $\lambda+i$ nm (dashed)", fontsize=9)
     a.set_xlabel(r"Re $\lambda$ (nm)")
     a.set_ylabel(r"Im $\lambda$ (nm)")
     b = fig.add_subplot(gs[0, 1])

@@ -62,9 +62,8 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | **Phase 4** : `_CorridorRmsePlotMixin`, 10 méthodes dans `certus_index_spline_corridor_rmse_plot.py` ; `rendering.py` sous 1 000 lignes | `7db3b42a` |
 | **Validation complète de la phase 4** : rien de plus que l'état connu (plan, Phase 4) | sur `7db3b42a` |
 | **Phase 5a** : les trois fonctions de calcul des corridors dans `certus_index_spline_corridor_jobs.py` | `2d8cc760` |
-| **Phase 5b** : le mandataire paresseux de la fenêtre dans `certus_index_spline_lazy_app.py` | commit suivant `2d8cc760` |
-| **Phase 5b** (suite du tableau) : commit `7198ce64` |  |
-| **Phase 5c** : `_start_curve_minimum_deep_refit` dans `_CorridorRunMixin` ; Q23 tranchée | commit suivant `7198ce64` |
+| **Phase 5b** : le mandataire paresseux de la fenêtre dans `certus_index_spline_lazy_app.py` | `7198ce64` |
+| **Phase 5c** : `_start_curve_minimum_deep_refit` dans `_CorridorRunMixin` ; Q23 tranchée | `44b24b2a` |
 
 ## En cours
 
@@ -74,7 +73,10 @@ Rien : tout ce qui est fait est commité. La prochaine tâche est la première d
 
 2. Pour toute extraction : `tools/` (`plan_move`, `move`, `manifest`, `contracts`, `protocols`, `born_in`, puis
    `guard` et `lot`).
-4. Phase 5, suite : 5d (les 8 fonctions statiques appelées par le mandataire), puis validation complète.
+4. Phase 5, suite : 5d, une méthode statique par commit, avec `tools/static_to_function.py NOM` puis ruff, `guard`, `lot`.
+   Ordre : `_rmse_from_result_dict` (fait), `_runtime_metrics_from_result_dict`, `_format_lambda_knots_for_log`,
+   `_manual_mesh_change_log_line`, `_summarize_manual_mesh_change`, `_lam_uniform_grid_nm`, `_status_iteration_metric`,
+   `_build_manual_repartition_target_sigma_knots`. `git log --oneline` dit où on en est. Puis validation complète.
 5. Phase 6 : 6a garde-fous étendus aux autres fenêtres, 6b `_UIMixin` hors du MRO, 6c état initialisé dans `__init__`.
 6. Phase 7 : 7a, 7b (arêtes entre familles).
 7. Phase 8 : clôture. Phase 9 : couture de test périmée (Q5).

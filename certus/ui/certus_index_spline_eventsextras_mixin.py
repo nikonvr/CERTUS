@@ -31,6 +31,7 @@ from certus.ui.certus_index_spline_common import (
     logger,
 )
 from certus.ui.certus_index_spline_execution import _plot_spectrum_raw_scatter
+from certus.ui.certus_index_spline_statics import _rmse_from_result_dict
 from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
 from certus.ui.certus_ui import (
     CertusScientificPlot,
@@ -175,21 +176,7 @@ class CertusIndexSplineEventsExtrasMixin:
         self._cleanup_thread()
         self._stop_event = Event()
 
-    @staticmethod
-    def _rmse_from_result_dict(d: dict) -> float:
-        """RMSE displayable for comparison (priority to  rmse  key, else ?MSE)."""
-
-        r = d.get("rmse")
-
-        if r is not None and np.isfinite(float(r)):
-            return float(r)
-
-        m = float(d.get("mse", float("nan")))
-
-        if np.isfinite(m):
-            return float(np.sqrt(max(m, 0.0)))
-
-        return float("inf")
+    _rmse_from_result_dict = staticmethod(_rmse_from_result_dict)
 
     @staticmethod
     def _runtime_metrics_from_result_dict(d: dict | None) -> tuple[float, float]:
@@ -203,7 +190,7 @@ class CertusIndexSplineEventsExtrasMixin:
         except (TypeError, ValueError):
             d_nm = float("nan")
 
-        rmse = CertusIndexSplineApp._rmse_from_result_dict(d)
+        rmse = _rmse_from_result_dict(d)
 
         if not np.isfinite(rmse):
             rmse = float("nan")

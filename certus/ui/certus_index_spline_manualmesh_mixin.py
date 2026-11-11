@@ -15,6 +15,7 @@ from certus.spline.spline_pipeline import (
     worker_spline_manual_sigma_insert,
 )
 from certus.ui.certus_index_spline_common import CertusIndexSplineApp, logger
+from certus.ui.certus_index_spline_statics import _rmse_from_result_dict
 from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
 from certus.ui.certus_ui import GenericWorker
 from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
@@ -428,7 +429,7 @@ class CertusIndexSplineManualMeshMixin:
                 self.logger.info(
                     "INDEX_SPLINE GUI: launching auto_clean | tolerance=+%.5f | seed_rmse=%.8f | seed_d=%.4f | K_selected=%d | delta_ns=%+.6f | force_clean=%s",
                     float(tolerance),
-                    float(CertusIndexSplineApp._rmse_from_result_dict(seed_current)),
+                    float(_rmse_from_result_dict(seed_current)),
                     float(seed_current.get("d_nm", float("nan"))),
                     len(selected_lambda_knots_nm),
                     float(delta_ns),
@@ -590,7 +591,7 @@ class CertusIndexSplineManualMeshMixin:
         if self.logger:
             self.logger.info(
                 "INDEX_SPLINE GUI: manual dialog opened with initial best snapshot | RMSE=%.8f | K=%d",
-                float(CertusIndexSplineApp._rmse_from_result_dict(result)),
+                float(_rmse_from_result_dict(result)),
                 int(seed_sk.size),
             )
         dlg.set_runtime_metrics(seed_d, seed_rmse)

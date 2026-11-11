@@ -1,0 +1,15 @@
+{
+  "phase": "5d - the static helpers of the window become plain functions of certus_index_spline_statics.py, one per commit; the class keeps each one as a static method, the very function; the mixins call the function instead of the lazy stand-in for the window class. Not a pure move: `changed_code` lists every function whose bytecode changes, and why is the same for all, a call `CertusIndexSplineApp.<static>(...)` that became `<static>(...)`.",
+  "note": "changed_code also lists each function of certus_index_spline_statics: its text is the text of the static method, and its code object differs by one flag, CO_METHOD (0x8000000), that Python sets on a function written in a class body. Measured for each by the tool (`flags only`): same co_code, constants, names and variables. Two of them also had a call through the stand-in rewritten (`calls rewritten`).",
+  "moved_objects": [
+    {
+      "from": "certus.ui.certus_index_spline_eventsextras_mixin:CertusIndexSplineEventsExtrasMixin._rmse_from_result_dict",
+      "to": "certus.ui.certus_index_spline_statics:_rmse_from_result_dict"
+    }
+  ],
+  "changed_code": [
+    "certus.ui.certus_index_spline_eventsextras_mixin:CertusIndexSplineEventsExtrasMixin._runtime_metrics_from_result_dict",
+    "certus.ui.certus_index_spline_manualmesh_mixin:CertusIndexSplineManualMeshMixin._open_manual_extra_knots_dialog",
+    "certus.ui.certus_index_spline_statics:_rmse_from_result_dict"
+  ]
+}

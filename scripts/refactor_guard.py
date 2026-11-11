@@ -563,7 +563,8 @@ class _Comparison:
                 self.problems.append(f"GLOBAL    | {where} | `{name}` in {b['module']} {detail}")
 
     def mro(self, identity: str, old_mro: list[str], new_mro: list[str]) -> None:
-        expected = [self.allow.translate(c) for c in old_mro if c not in self.allow.removed_from_mro]
+        # A class that left the bases of a window is still the head of its own MRO.
+        expected = [self.allow.translate(c) for c in old_mro if c not in self.allow.removed_from_mro or c == identity]
         actual = [c for c in new_mro if c not in self.allow.new_classes]
         if expected != actual:
             at = next((i for i, (x, y) in enumerate(zip(expected, actual, strict=False)) if x != y), min(len(expected), len(actual)))

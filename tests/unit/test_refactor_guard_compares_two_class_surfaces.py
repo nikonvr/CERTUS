@@ -267,6 +267,32 @@ def test_a_name_that_left_the_old_module_is_refused(snapshot_of) -> None:
     ]
 
 
+#: A window with an empty mixin among its bases, and the same window without it: the mixin stays defined in its module.
+WINDOW_WITH_AN_EMPTY_BASE = WINDOW.replace(
+    "class Window(OldMixin, Base):", "class EmptyMixin:\n    pass\n\n\nclass Window(OldMixin, EmptyMixin, Base):"
+)
+WINDOW_WITHOUT_IT = WINDOW_WITH_AN_EMPTY_BASE.replace("Window(OldMixin, EmptyMixin, Base)", "Window(OldMixin, Base)")
+
+
+def test_a_class_that_leaves_the_bases_of_the_window_and_stays_defined_passes_with_its_manifest(snapshot_of) -> None:
+    before = snapshot_of("before", {**BEFORE, "win.py": WINDOW_WITH_AN_EMPTY_BASE})
+    after = snapshot_of("after", {**BEFORE, "win.py": WINDOW_WITHOUT_IT})
+    assert "rgpkg.win:EmptyMixin" in before["classes"]["rgpkg.win:Window"]["mro"]
+    assert "rgpkg.win:EmptyMixin" not in after["classes"]["rgpkg.win:Window"]["mro"]
+    assert "rgpkg.win:EmptyMixin" in after["classes"]
+
+    problems, _ = guard.compare(before, after, [{"removed_from_mro": ["rgpkg.win:EmptyMixin"]}])
+
+    assert problems == []
+
+
+def test_a_class_that_leaves_the_bases_of_the_window_is_refused_without_a_manifest(snapshot_of) -> None:
+    before = snapshot_of("before", {**BEFORE, "win.py": WINDOW_WITH_AN_EMPTY_BASE})
+    after = snapshot_of("after", {**BEFORE, "win.py": WINDOW_WITHOUT_IT})
+    problems, _ = guard.compare(before, after)
+    assert kinds(problems) == {"MRO"}
+
+
 def test_an_mro_in_another_order_is_refused(snapshot_of) -> None:
     reordered = {**BEFORE, "win.py": WINDOW.replace("Window(OldMixin, Base)", "Window(Base, OldMixin)")}
     problems, _ = guard.compare(snapshot_of("before", BEFORE), snapshot_of("after", reordered))

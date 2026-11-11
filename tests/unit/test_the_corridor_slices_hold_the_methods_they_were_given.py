@@ -65,11 +65,27 @@ SLICES = {
             "_build_corridor_labels",
         ),
     ),
+    "corridor_interval": (
+        "_CorridorIntervalMixin",
+        (
+            "_apply_corridor_preset_auto_robust",
+            "_sync_corridor_manual_controls",
+            "_generate_corridor_from_current_grid",
+            "_use_robust_corridor_interval",
+            "_corridor_manual_half_width_nm",
+            "_set_corridor_manual_interval_preview",
+            "_set_corridor_manual_bounds_labels",
+            "_corridor_manual_max_half_width_nm",
+            "_reset_corridor_manual_controls",
+            "_on_corridor_manual_slider_changed",
+            "_build_corridor_tab_generate",
+        ),
+    ),
 }
 #: The classes that inherit the slices, and the slices each one takes.
 COMPOSITES = {
-    "settings:_CorridorControlMixin": ("_CorridorRunMixin", "_CorridorRmseViewMixin"),
-    "corridorui_mixin:CertusIndexSplineCorridorUIMixin": ("_CorridorRunMixin", "_CorridorRmseViewMixin"),
+    "settings:_CorridorControlMixin": ("_CorridorRunMixin", "_CorridorRmseViewMixin", "_CorridorIntervalMixin"),
+    "corridorui_mixin:CertusIndexSplineCorridorUIMixin": ("_CorridorRunMixin", "_CorridorRmseViewMixin", "_CorridorIntervalMixin"),
 }
 #: The modules above the corridor group: a slice that imported one at module level would close an import cycle.
 ABOVE = ("common", "ui", "settings", "execution", "rendering", "mixins_ui")

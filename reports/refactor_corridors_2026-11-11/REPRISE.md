@@ -52,7 +52,7 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | **Validation complète de la phase 2** : rien de plus que l'état connu (plan, Phase 2) | sur `de79f62e` |
 | Garde étendue : une méthode peut quitter une classe pour une tranche dont elle n'hérite pas, si le manifeste le dit | `85e5d24f` |
 | **Phase 3a** : `_CorridorRunMixin`, 15 méthodes dans `certus_index_spline_corridor_run.py` | `cdc5ce24` |
-| **Phase 3b** : `_CorridorRmseViewMixin`, 9 méthodes dans `certus_index_spline_corridor_rmse_view.py` | commit suivant `17c9a26c` |
+| **Phase 3b** : `_CorridorRmseViewMixin`, 9 méthodes dans `certus_index_spline_corridor_rmse_view.py` | `32e5d038` |
 
 ## En cours
 

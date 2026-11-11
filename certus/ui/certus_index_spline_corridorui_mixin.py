@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import QApplication, QFrame, QHBoxLayout, QMessageBox, QScr
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.spline.certus_index_spline_corridor_contract import normalize_corridor_live_payload
 from certus.ui.certus_index_spline_common import _worker_corridor_rmse_healer, logger
+from certus.ui.certus_index_spline_corridor_interval import _CorridorIntervalMixin
 from certus.ui.certus_index_spline_corridor_rmse_view import _CorridorRmseViewMixin
 from certus.ui.certus_index_spline_corridor_run import _CorridorRunMixin
 from certus.ui.certus_ui import (
@@ -25,7 +26,7 @@ from certus.ui.certus_ui import (
 from certus.utils.certus_atomic_io import atomic_open
 
 
-class CertusIndexSplineCorridorUIMixin(_CorridorRunMixin, _CorridorRmseViewMixin):
+class CertusIndexSplineCorridorUIMixin(_CorridorRunMixin, _CorridorRmseViewMixin, _CorridorIntervalMixin):
     """CertusIndexSplineCorridorUIMixin."""
 
     def _launch_corridor_rmse_gap_heal(self, tasks: list[tuple[float, dict]]) -> None:
@@ -84,41 +85,6 @@ class CertusIndexSplineCorridorUIMixin(_CorridorRunMixin, _CorridorRmseViewMixin
         k0_txt = f"{k0:.3e}" if np.isfinite(k0) and k0 > 0.0 else "n/a"
         k1_txt = f"{k1:.3e}" if np.isfinite(k1) and k1 > 0.0 else "n/a"
         return f"lambda = {x:.2f} nm | k_min = {k0_txt} | k_nom = {kn_txt} | k_max = {k1_txt}"
-
-    def _use_robust_corridor_interval(self) -> None:
-
-        if not bool(getattr(self, "_corridor_rmse_robust_ok", False)):
-            return
-
-        d_s = np.asarray(getattr(self, "_corridor_rmse_d_vals", []), dtype=np.float64).ravel()
-
-        i_best = int(getattr(self, "_corridor_rmse_best_idx", -1))
-
-        if d_s.size == 0 or i_best < 0 or i_best >= int(d_s.size):
-            return
-
-        float(d_s[i_best])
-
-        d_lo_rb = float(getattr(self, "_corridor_rmse_robust_lo", float("nan")))
-
-        d_hi_rb = float(getattr(self, "_corridor_rmse_robust_hi", float("nan")))
-
-        if not (np.isfinite(d_lo_rb) and np.isfinite(d_hi_rb) and d_hi_rb >= d_lo_rb):
-            return
-
-        half = 0.5 * float(max(0.0, d_hi_rb - d_lo_rb))
-
-        scale = max(1, int(getattr(self, "_corridor_rmse_manual_slider_scale", 100) or 100))
-
-        max_half = self._corridor_manual_max_half_width_nm(d_s)
-
-        half = float(min(max(0.0, half), max_half))
-
-        if hasattr(self, "sl_corridor_manual_half"):
-            self.sl_corridor_manual_half.setValue(round(half * scale))
-            # setValue does not emit valueChanged if unchanged: force visual sync
-            # so vertical interval bars always reflect current robust bounds.
-            self._on_corridor_manual_slider_changed(self.sl_corridor_manual_half.value())
 
     def _build_tab_data_corridor(self) -> QWidget:
         """Tab dedicated to detailed corridor uncertainty data."""

@@ -1,0 +1,87 @@
+{
+  "phase": "3c - _CorridorIntervalMixin: the manual and robust interval of a corridor and its controls, eleven methods moved, text unchanged, to certus_index_spline_corridor_interval.py; _CorridorControlMixin and CertusIndexSplineCorridorUIMixin inherit the slice.",
+  "new_classes": [
+    "certus.ui.certus_index_spline_corridor_interval:_CorridorIntervalMixin"
+  ],
+  "moved_methods": [
+    {
+      "name": "_apply_corridor_preset_auto_robust",
+      "from": "certus.ui.certus_index_spline_settings:_CorridorControlMixin",
+      "to": "certus.ui.certus_index_spline_corridor_interval:_CorridorIntervalMixin"
+    },
+    {
+      "name": "_sync_corridor_manual_controls",
+      "from": "certus.ui.certus_index_spline_settings:_CorridorControlMixin",
+      "to": "certus.ui.certus_index_spline_corridor_interval:_CorridorIntervalMixin"
+    },
+    {
+      "name": "_generate_corridor_from_current_grid",
+      "from": "certus.ui.certus_index_spline_settings:_CorridorControlMixin",
+      "to": "certus.ui.certus_index_spline_corridor_interval:_CorridorIntervalMixin"
+    },
+    {
+      "name": "_use_robust_corridor_interval",
+      "from": "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin",
+      "to": "certus.ui.certus_index_spline_corridor_interval:_CorridorIntervalMixin"
+    },
+    {
+      "name": "_corridor_manual_half_width_nm",
+      "from": "certus.ui.certus_index_spline_manualmesh_mixin:CertusIndexSplineManualMeshMixin",
+      "to": "certus.ui.certus_index_spline_corridor_interval:_CorridorIntervalMixin"
+    },
+    {
+      "name": "_set_corridor_manual_interval_preview",
+      "from": "certus.ui.certus_index_spline_manualmesh_mixin:CertusIndexSplineManualMeshMixin",
+      "to": "certus.ui.certus_index_spline_corridor_interval:_CorridorIntervalMixin"
+    },
+    {
+      "name": "_set_corridor_manual_bounds_labels",
+      "from": "certus.ui.certus_index_spline_manualmesh_mixin:CertusIndexSplineManualMeshMixin",
+      "to": "certus.ui.certus_index_spline_corridor_interval:_CorridorIntervalMixin"
+    },
+    {
+      "name": "_corridor_manual_max_half_width_nm",
+      "from": "certus.ui.certus_index_spline_manualmesh_mixin:CertusIndexSplineManualMeshMixin",
+      "to": "certus.ui.certus_index_spline_corridor_interval:_CorridorIntervalMixin"
+    },
+    {
+      "name": "_reset_corridor_manual_controls",
+      "from": "certus.ui.certus_index_spline_manualmesh_mixin:CertusIndexSplineManualMeshMixin",
+      "to": "certus.ui.certus_index_spline_corridor_interval:_CorridorIntervalMixin"
+    },
+    {
+      "name": "_on_corridor_manual_slider_changed",
+      "from": "certus.ui.certus_index_spline_manualmesh_mixin:CertusIndexSplineManualMeshMixin",
+      "to": "certus.ui.certus_index_spline_corridor_interval:_CorridorIntervalMixin"
+    },
+    {
+      "name": "_build_corridor_tab_generate",
+      "from": "certus.ui.certus_index_spline_rendering:_UIBuilderMixin",
+      "to": "certus.ui.certus_index_spline_corridor_interval:_CorridorIntervalMixin"
+    }
+  ],
+  "added_attributes": [
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._apply_corridor_preset_auto_robust",
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._build_corridor_tab_generate",
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._corridor_manual_half_width_nm",
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._corridor_manual_max_half_width_nm",
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._generate_corridor_from_current_grid",
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._on_corridor_manual_slider_changed",
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._reset_corridor_manual_controls",
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._set_corridor_manual_bounds_labels",
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._set_corridor_manual_interval_preview",
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._sync_corridor_manual_controls",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._build_corridor_tab_generate",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._corridor_manual_half_width_nm",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._corridor_manual_max_half_width_nm",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._on_corridor_manual_slider_changed",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._reset_corridor_manual_controls",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._set_corridor_manual_bounds_labels",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._set_corridor_manual_interval_preview",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._use_robust_corridor_interval"
+  ],
+  "changed_code": [
+    "certus.ui.certus_index_spline_corridor_interval:_CorridorIntervalMixin._apply_corridor_preset_auto_robust"
+  ],
+  "note": "changed_code: the text of _apply_corridor_preset_auto_robust is unchanged. Python 3.15 compiles `logger.debug(...)` in two forms, one when the module assigns `logger` (settings did), one when it imports it (the slice does, as manualmesh_mixin did for _on_corridor_manual_slider_changed, which keeps its bytecode). Measured: 182 instructions before, 183 after, same constants and names; the only difference is `LOAD_ATTR debug + NULL|self` against `LOAD_ATTR debug` then `PUSH_NULL`."
+}

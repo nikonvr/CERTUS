@@ -760,7 +760,17 @@ régénérer `tests/architecture_debt.json` dans le même commit (I12).
   `certus/ui/certus_index_spline_eventsextras_mixin.py`, `certus/ui/certus_index_spline_rendering.py`,
   `certus/ui/certus_index_spline_corridor_ui.py`, `certus/ui/certus_index_spline_corridor_host.py`, `tests/architecture_debt.json`.
   Test : `tests/unit/test_rmse_tab_summary.py`, puis `tests/unit/test_rmse_scatter_pieces.py`, puis LOT.
-- [ ] **3c — `_CorridorIntervalMixin`**
+- [x] **3c — `_CorridorIntervalMixin`** — faite le 2026-11-11 : 11 méthodes déplacées, texte inchangé ; garde avec
+  `manifests/phase_3c.json` : `problems=0`, `GUARD=OK` ; ruff PASS ; lot de contrôle et
+  `test_manual_rmse_grid_integration.py` `280 passed`. `_CorridorControlMixin` n'a plus de méthode propre : il ne porte
+  que son héritage. Plafond de `rendering.py` 1913 → 1835. Contrats : `_CorridorIntervalMixin` 24 noms,
+  `_CorridorControlMixin` 23 → 0, `CertusIndexSplineCorridorUIMixin` 23 → 14 ; protocoles : 3 méthodes ajoutées, 8
+  membres retirés.
+  **Un écart de bytecode, déclaré (`changed_code`) et mesuré** : `_apply_corridor_preset_auto_robust`, texte inchangé.
+  `settings` affectait `logger`, `manualmesh_mixin` l'importait ; une tranche ne peut faire que l'un des deux (leçon de
+  3a), et elle l'importe. Mesure : 182 instructions avant, 183 après, mêmes constantes, mêmes noms ; seule différence,
+  `LOAD_ATTR debug + NULL|self` devient `LOAD_ATTR debug` puis `PUSH_NULL`. `_on_corridor_manual_slider_changed`, qui
+  lit le même journal, garde son bytecode exact.
   Créer : `certus/ui/certus_index_spline_corridor_interval.py`.
   Modifier : `certus/ui/certus_index_spline_settings.py`, `certus/ui/certus_index_spline_corridorui_mixin.py`,
   `certus/ui/certus_index_spline_manualmesh_mixin.py`, `certus/ui/certus_index_spline_rendering.py`,

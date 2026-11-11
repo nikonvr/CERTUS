@@ -33,6 +33,7 @@ from certus.ui.certus_index_spline_common import (
 from certus.ui.certus_index_spline_execution import _plot_spectrum_raw_scatter
 from certus.ui.certus_index_spline_statics import (
     _format_lambda_knots_for_log,
+    _manual_mesh_change_log_line,
     _rmse_from_result_dict,
     _runtime_metrics_from_result_dict,
 )
@@ -275,7 +276,7 @@ class CertusIndexSplineEventsExtrasMixin:
                 manual_dlg.selected_sigma_knots(),
             )
             manual_dlg.append_runtime_log(
-                CertusIndexSplineApp._manual_mesh_change_log_line("Mesh at failure", mesh_summary)
+                _manual_mesh_change_log_line("Mesh at failure", mesh_summary)
             )
             manual_dlg.append_runtime_log(f"Re-optimization error: {s_msg}")
 

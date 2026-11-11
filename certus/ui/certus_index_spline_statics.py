@@ -45,3 +45,30 @@ def _runtime_metrics_from_result_dict(d: dict | None) -> tuple[float, float]:
 def _format_lambda_knots_for_log(lambda_knots_nm: Any, *, precision: int = 1, max_items: int = 200) -> str:
     from certus.spline.spline_pipeline_utils import _format_lambda_knots_nm_for_log
     return _format_lambda_knots_nm_for_log(lambda_knots_nm, precision=precision, max_items=max_items)
+
+
+def _manual_mesh_change_log_line(label: str, summary: dict[str, Any]) -> str:
+
+    k_before = int(summary.get("k_before", 0))
+
+    k_after = int(summary.get("k_after", 0))
+
+    delta_k = int(summary.get("delta_k", 0))
+
+    before_txt = _format_lambda_knots_for_log(summary.get("before_lambda_knots_nm"))
+
+    after_txt = _format_lambda_knots_for_log(summary.get("after_lambda_knots_nm"))
+
+    removed_txt = _format_lambda_knots_for_log(summary.get("removed_lambda_knots_nm"))
+
+    added_txt = _format_lambda_knots_for_log(summary.get("added_lambda_knots_nm"))
+
+    removed_count = int(np.asarray(summary.get("removed_lambda_knots_nm", []), dtype=np.float64).size)
+
+    added_count = int(np.asarray(summary.get("added_lambda_knots_nm", []), dtype=np.float64).size)
+
+    return (
+        f"{str(label).strip()} | K {k_before}->{k_after} (Delta {delta_k:+d}) | "
+        f"before={before_txt} | after={after_txt} | removed={removed_count} {removed_txt} | "
+        f"added={added_count} {added_txt}"
+    )

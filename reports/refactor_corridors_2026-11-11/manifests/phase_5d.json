@@ -13,13 +13,21 @@
     {
       "from": "certus.ui.certus_index_spline_eventsextras_mixin:CertusIndexSplineEventsExtrasMixin._format_lambda_knots_for_log",
       "to": "certus.ui.certus_index_spline_statics:_format_lambda_knots_for_log"
+    },
+    {
+      "from": "certus.ui.certus_index_spline_manualmesh_mixin:CertusIndexSplineManualMeshMixin._manual_mesh_change_log_line",
+      "to": "certus.ui.certus_index_spline_statics:_manual_mesh_change_log_line"
     }
   ],
   "changed_code": [
+    "certus.ui.certus_index_spline_eventsextras_mixin:CertusIndexSplineEventsExtrasMixin._on_worker_err",
     "certus.ui.certus_index_spline_eventsextras_mixin:CertusIndexSplineEventsExtrasMixin._runtime_metrics_from_result_dict",
     "certus.ui.certus_index_spline_manualmesh_mixin:CertusIndexSplineManualMeshMixin._manual_mesh_change_log_line",
     "certus.ui.certus_index_spline_manualmesh_mixin:CertusIndexSplineManualMeshMixin._open_manual_extra_knots_dialog",
+    "certus.ui.certus_index_spline_manualmesh_mixin:CertusIndexSplineManualMeshMixin._start_manual_sigma_insert_worker",
+    "certus.ui.certus_index_spline_manualmesh_mixin:CertusIndexSplineManualMeshMixin._start_manual_sigma_repartition_worker",
     "certus.ui.certus_index_spline_statics:_format_lambda_knots_for_log",
+    "certus.ui.certus_index_spline_statics:_manual_mesh_change_log_line",
     "certus.ui.certus_index_spline_statics:_rmse_from_result_dict",
     "certus.ui.certus_index_spline_statics:_runtime_metrics_from_result_dict"
   ]

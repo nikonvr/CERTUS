@@ -17,6 +17,7 @@ from certus.spline.spline_pipeline import (
 from certus.ui.certus_index_spline_common import CertusIndexSplineApp, logger
 from certus.ui.certus_index_spline_statics import (
     _format_lambda_knots_for_log,
+    _manual_mesh_change_log_line,
     _rmse_from_result_dict,
     _runtime_metrics_from_result_dict,
 )
@@ -39,32 +40,7 @@ class CertusIndexSplineManualMeshMixin:
         from certus.spline.spline_pipeline_utils import _sigma_mesh_change_summary_for_log
         return _sigma_mesh_change_summary_for_log(before_sigma_knots, after_sigma_knots)
 
-    @staticmethod
-    def _manual_mesh_change_log_line(label: str, summary: dict[str, Any]) -> str:
-
-        k_before = int(summary.get("k_before", 0))
-
-        k_after = int(summary.get("k_after", 0))
-
-        delta_k = int(summary.get("delta_k", 0))
-
-        before_txt = _format_lambda_knots_for_log(summary.get("before_lambda_knots_nm"))
-
-        after_txt = _format_lambda_knots_for_log(summary.get("after_lambda_knots_nm"))
-
-        removed_txt = _format_lambda_knots_for_log(summary.get("removed_lambda_knots_nm"))
-
-        added_txt = _format_lambda_knots_for_log(summary.get("added_lambda_knots_nm"))
-
-        removed_count = int(np.asarray(summary.get("removed_lambda_knots_nm", []), dtype=np.float64).size)
-
-        added_count = int(np.asarray(summary.get("added_lambda_knots_nm", []), dtype=np.float64).size)
-
-        return (
-            f"{str(label).strip()} | K {k_before}->{k_after} (Delta {delta_k:+d}) | "
-            f"before={before_txt} | after={after_txt} | removed={removed_count} {removed_txt} | "
-            f"added={added_count} {added_txt}"
-        )
+    _manual_mesh_change_log_line = staticmethod(_manual_mesh_change_log_line)
 
     def _can_offer_manual_extra_knots(self, result: dict) -> bool:
         """True if conditions allow proposing manual extra knot placement."""
@@ -266,7 +242,7 @@ class CertusIndexSplineManualMeshMixin:
                         f"Forced re-optimization (delta ns included) | delta ns={float(delta_ns):+.6f}"
                     )
                     self._manual_knots_dialog.append_runtime_log(
-                        CertusIndexSplineApp._manual_mesh_change_log_line("Requested mesh", mesh_summary)
+                        _manual_mesh_change_log_line("Requested mesh", mesh_summary)
                     )
                     self._manual_knots_dialog.append_runtime_log(
                         f"Local re-optimization launched | active knots: {len(selected_lambda_knots_nm)} | delta ns={float(delta_ns):+.6f}"
@@ -274,7 +250,7 @@ class CertusIndexSplineManualMeshMixin:
                     if self.logger:
                         self.logger.info(
                             "INDEX_SPLINE GUI: manual local re-optimization request | %s | delta_ns=%+.6f",
-                            CertusIndexSplineApp._manual_mesh_change_log_line("requested", mesh_summary),
+                            _manual_mesh_change_log_line("requested", mesh_summary),
                             float(delta_ns),
                         )
                 self._start_manual_sigma_insert_worker(seed_current, selected_lambda_knots_nm, float(delta_ns))
@@ -357,13 +333,13 @@ class CertusIndexSplineManualMeshMixin:
                     f"Automatic repartition {mode_label} launched | active knots: {len(selected_lambda_knots_nm)} | delta ns={float(delta_ns):+.6f}"
                 )
                 self._manual_knots_dialog.append_runtime_log(
-                    CertusIndexSplineApp._manual_mesh_change_log_line("Requested repartition", mesh_summary)
+                    _manual_mesh_change_log_line("Requested repartition", mesh_summary)
                 )
                 if self.logger:
                     self.logger.info(
                         "INDEX_SPLINE GUI: manual auto repartition request | mode=%s | %s | delta_ns=%+.6f",
                         str(mode),
-                        CertusIndexSplineApp._manual_mesh_change_log_line("requested", mesh_summary),
+                        _manual_mesh_change_log_line("requested", mesh_summary),
                         float(delta_ns),
                     )
             self._start_manual_sigma_repartition_worker(
@@ -701,7 +677,7 @@ class CertusIndexSplineManualMeshMixin:
             )
             self.logger.info(
                 "INDEX_SPLINE GUI: manual node tuning worker mesh summary | %s",
-                CertusIndexSplineApp._manual_mesh_change_log_line("target", mesh_summary),
+                _manual_mesh_change_log_line("target", mesh_summary),
             )
             log_index_spline_d_trace(
                 self.logger,
@@ -805,7 +781,7 @@ class CertusIndexSplineManualMeshMixin:
             self.logger.info(
                 "INDEX_SPLINE GUI: manual repartition worker mesh summary | mode=%s | %s",
                 str(mode),
-                CertusIndexSplineApp._manual_mesh_change_log_line("target", mesh_summary),
+                _manual_mesh_change_log_line("target", mesh_summary),
             )
         self._set_worker_running_state(True)
         mode_label = "log(sigma)" if str(mode).strip().lower() == "log" else "sigma"

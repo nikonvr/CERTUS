@@ -62,7 +62,6 @@ class CertusIndexSplineApp(
     _ConfigBuilderMixin,
     _MeshOptimizationMixin,
     _ExcelExportMixin,
-    _UIMixin,
     CertusIndexSplineStateMixin,
     CertusIndexSplineSmartInitMixin,
     CertusIndexSplineManualMeshMixin,

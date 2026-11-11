@@ -1,0 +1,6 @@
+{
+  "phase": "6b - _UIMixin, an empty class, leaves the bases of CertusIndexSplineApp; it stays defined in certus_index_spline_mixins_ui.py and importable from the modules that exposed it.",
+  "removed_from_mro": [
+    "certus.ui.certus_index_spline_mixins_ui:_UIMixin"
+  ]
+}

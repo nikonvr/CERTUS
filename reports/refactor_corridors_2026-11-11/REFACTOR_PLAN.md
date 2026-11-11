@@ -907,7 +907,12 @@ mortes).
   du projet n'est masqué par une classe Qt placée avant elle dans le MRO (0 aujourd'hui, dans les 9 fenêtres).
   Modifier : `tests/unit/test_the_corridor_mixins_declare_what_they_read_on_the_window.py`.
   Test : ce fichier, puis LOT.
-- [ ] **6b (Q7 : oui pour `_UIMixin`)** — Retirer `_UIMixin` des bases de la fenêtre (`ui/certus_index_spline_ui.py:65`), la classe
+- [x] **6b (Q7 : oui pour `_UIMixin`)** — faite le 2026-11-11 : `_UIMixin` (classe vide) n'est plus une base de la
+  fenêtre ; elle reste définie dans `mixins_ui` et importable de `common` et de `certus_index_spline_ui`. Garde avec
+  `manifests/phase_6b.json` (`removed_from_mro`) : `problems=0`, `GUARD=OK` ; `test_gui_smoke.py` `29 passed` ; lot
+  `337 passed`. **La garde avait un défaut**, corrigé dans un commit à part (`ab7f6884`, 2 tests dont 1 rouge avant) :
+  elle retirait la classe sortie aussi de son propre MRO, et signalait un écart sur la classe elle-même.
+  Retirer `_UIMixin` des bases de la fenêtre (`ui/certus_index_spline_ui.py:65`), la classe
   restant définie et importable. `_ConfigBuilderMixin` ne peut sortir du MRO sans retoucher
   `tests/unit/test_gui_smoke.py:226`.
   Test : `tests/unit/test_gui_smoke.py`, puis LOT.

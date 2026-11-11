@@ -6,6 +6,8 @@ from typing import Any
 
 import numpy as np
 
+from certus.utils.certus_index_utils import _lam_uniform_grid
+
 
 def _rmse_from_result_dict(d: dict) -> float:
     """RMSE displayable for comparison (priority to  rmse  key, else ?MSE)."""
@@ -77,3 +79,7 @@ def _manual_mesh_change_log_line(label: str, summary: dict[str, Any]) -> str:
 def _summarize_manual_mesh_change(before_sigma_knots: Any, after_sigma_knots: Any) -> dict[str, Any]:
     from certus.spline.spline_pipeline_utils import _sigma_mesh_change_summary_for_log
     return _sigma_mesh_change_summary_for_log(before_sigma_knots, after_sigma_knots)
+
+
+def _lam_uniform_grid_nm(lo_h: float, hi_h: float, step: float) -> np.ndarray:
+    return _lam_uniform_grid(lo_h, hi_h, step)

@@ -33,6 +33,7 @@ from certus.ui.certus_index_spline_common import (
 from certus.ui.certus_index_spline_execution import _plot_spectrum_raw_scatter
 from certus.ui.certus_index_spline_statics import (
     _format_lambda_knots_for_log,
+    _lam_uniform_grid_nm,
     _manual_mesh_change_log_line,
     _rmse_from_result_dict,
     _runtime_metrics_from_result_dict,
@@ -535,9 +536,7 @@ class CertusIndexSplineEventsExtrasMixin:
 
         self.open_detached_certus_plot(plots[0], title=f"{self.APP_NAME}  {tab_name}")
 
-    @staticmethod
-    def _lam_uniform_grid_nm(lo_h: float, hi_h: float, step: float) -> np.ndarray:
-        return _lam_uniform_grid(lo_h, hi_h, step)
+    _lam_uniform_grid_nm = staticmethod(_lam_uniform_grid_nm)
 
     @staticmethod
     def _lam_piecewise_report_grid_nm(lo: float, hi: float) -> np.ndarray:
@@ -551,17 +550,17 @@ class CertusIndexSplineEventsExtrasMixin:
         a, b = float(lo), float(min(hi, 400.0))
 
         if b >= a - 1e-9:
-            parts.append(CertusIndexSplineApp._lam_uniform_grid_nm(a, b, 2.0))
+            parts.append(_lam_uniform_grid_nm(a, b, 2.0))
 
         a, b = float(max(lo, 400.0)), float(min(hi, 1200.0))
 
         if b >= a - 1e-9:
-            parts.append(CertusIndexSplineApp._lam_uniform_grid_nm(a, b, 5.0))
+            parts.append(_lam_uniform_grid_nm(a, b, 5.0))
 
         a, b = float(max(lo, 1200.0)), float(hi)
 
         if b >= a - 1e-9:
-            parts.append(CertusIndexSplineApp._lam_uniform_grid_nm(a, b, 10.0))
+            parts.append(_lam_uniform_grid_nm(a, b, 10.0))
 
         if not parts:
             return np.array([0.5 * (lo + hi)], dtype=np.float64)

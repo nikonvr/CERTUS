@@ -41,6 +41,7 @@ from certus.spline.certus_index_spline_core import (
     allowed_substrate_names,
 )
 from certus.spline.certus_index_spline_corridor_contract import normalize_corridor_live_payload
+from certus.ui.certus_index_spline_corridor_common import _apply_fixed_log_k_axis
 from certus.ui.certus_ui import (
     CertusCard,
     CertusCollapsible,
@@ -67,22 +68,6 @@ from certus.utils.certus_reset_framework import create_reset_button
 from certus.utils.certus_ux import OBJ, Typography
 
 logger = logging.getLogger("CERTUS_INDEX_SPLINE")
-
-def _apply_fixed_log_k_axis(plot_w: Any | None) -> None:
-    """Force the CERTUS log-k axis convention locally in this module."""
-    if plot_w is None:
-        return
-    try:
-        ymin_log = np.log10(1e-6)
-        ymax_log = np.log10(1e-2)
-        plot_w.setLogMode(False, True)
-        try:
-            plot_w.plotItem.ctrl.logYCheck.setChecked(True)
-        except (AttributeError, RuntimeError):
-            pass
-        plot_w.setYRange(ymin_log, ymax_log, padding=0)
-    except (AttributeError, RuntimeError, TypeError):
-        logger.debug("_apply_fixed_log_k_axis failed", exc_info=True)
 
 
 class _PlotMixin:

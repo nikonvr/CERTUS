@@ -24,12 +24,37 @@ ONE_SOURCE = {
     "_DEFAULT_CORRIDOR_RMSE_DELTA": f"{UI}corridor_common.py",
     "_DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN": f"{UI}corridor_common.py",
     "_CORRIDOR_K_TAB_MIN_HALF_WIDTH": f"{UI}corridor_common.py",
+    "_apply_fixed_log_k_axis": f"{UI}corridor_common.py",
+    "_K_PLOT_YMIN": f"{UI}corridor_common.py",
+    "_K_PLOT_YMAX": f"{UI}corridor_common.py",
 }
 EXPOSED_BY = {
     "_DEFAULT_CORRIDOR_RMSE_DELTA": ("common", "settings", "corridors"),
     "_DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN": ("common", "settings", "corridors"),
     "_CORRIDOR_K_TAB_MIN_HALF_WIDTH": ("common", "settings", "corridors"),
+    "_apply_fixed_log_k_axis": ("common", "execution", "rendering", "corridors", "corridor_tab", "layoutextras_mixin"),
+    "_K_PLOT_YMIN": ("common", "corridors"),
+    "_K_PLOT_YMAX": ("common", "corridors"),
 }
+#: A file that keeps a function of the shared name, allowed because the function only imports the shared one, inside its
+#: body, and calls it.
+DELEGATES = {"_apply_fixed_log_k_axis": (f"{UI}monitor_ui.py",)}
+
+
+def delegation_source(func: ast.AST, name: str) -> str | None:
+    """The module a function delegates `name` to, if its body is `from <module> import <name> [as x]` then one call of it."""
+    if not isinstance(func, ast.FunctionDef):
+        return None
+    body = [n for n in func.body if not (isinstance(n, ast.Expr) and isinstance(n.value, ast.Constant))]
+    if len(body) != 2 or not isinstance(body[0], ast.ImportFrom) or not isinstance(body[1], (ast.Expr, ast.Return)):
+        return None
+    imported, call = body[0], body[1].value
+    if len(imported.names) != 1 or imported.names[0].name != name or imported.level:
+        return None
+    alias = imported.names[0].asname or name
+    if not (isinstance(call, ast.Call) and isinstance(call.func, ast.Name) and call.func.id == alias):
+        return None
+    return imported.module
 
 
 def module_level_definitions() -> dict[str, list[str]]:
@@ -47,6 +72,8 @@ def module_level_definitions() -> dict[str, list[str]]:
                 for target in node.targets if isinstance(node, ast.Assign) else [node.target]:
                     names |= {n.id for n in ast.walk(target) if isinstance(n, ast.Name)}
             for name in names & set(found):
+                if path in DELEGATES.get(name, ()) and delegation_source(node, name):
+                    continue
                 found[name].append(path)
     return found
 
@@ -65,3 +92,13 @@ def test_the_modules_that_expose_a_shared_name_hold_the_same_object(name) -> Non
     for stem in EXPOSED_BY[name]:
         module = importlib.import_module(f"certus.ui.certus_index_spline_{stem}")
         assert getattr(module, name) is getattr(source, name), f"{stem}.{name} is a copy"
+
+
+@pytest.mark.parametrize(("name", "path"), [(name, path) for name, paths in sorted(DELEGATES.items()) for path in paths])
+def test_a_delegate_reaches_the_one_definition(name, path) -> None:
+    source = importlib.import_module(ONE_SOURCE[name].removesuffix(".py").replace("/", "."))
+    tree = ast.parse((ROOT / path).read_text(encoding="utf-8-sig"))
+    targets = [delegation_source(node, name) for node in tree.body if getattr(node, "name", None) == name]
+    assert len(targets) == 1, f"{path} must define {name} once"
+    assert targets[0], f"{path} defines {name} otherwise than by delegating"
+    assert getattr(importlib.import_module(targets[0]), name) is getattr(source, name)

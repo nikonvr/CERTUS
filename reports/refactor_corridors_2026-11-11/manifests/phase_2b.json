@@ -1,0 +1,20 @@
+{
+  "phase": "2b - _apply_fixed_log_k_axis has one definition (corridor_common), with the body common had; common, execution and rendering import it. The only sub-phase that changes a behaviour: which logger hears a failure (plan, 2b, admitted differences 1 to 5).",
+  "moved_objects": [
+    {
+      "from": "certus.ui.certus_index_spline_common:_apply_fixed_log_k_axis",
+      "to": "certus.ui.certus_index_spline_corridor_common:_apply_fixed_log_k_axis"
+    },
+    {
+      "from": "certus.ui.certus_index_spline_execution:_apply_fixed_log_k_axis",
+      "to": "certus.ui.certus_index_spline_corridor_common:_apply_fixed_log_k_axis"
+    },
+    {
+      "from": "certus.ui.certus_index_spline_rendering:_apply_fixed_log_k_axis",
+      "to": "certus.ui.certus_index_spline_corridor_common:_apply_fixed_log_k_axis"
+    }
+  ],
+  "changed_code": [
+    "certus.ui.certus_index_spline_corridor_common:_apply_fixed_log_k_axis"
+  ]
+}

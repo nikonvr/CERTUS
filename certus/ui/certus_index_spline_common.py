@@ -38,6 +38,9 @@ from certus.ui.certus_index_spline_corridors import (
     _CORRIDOR_K_TAB_MIN_HALF_WIDTH,
     _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN,
     _DEFAULT_CORRIDOR_RMSE_DELTA,
+    _K_PLOT_YMAX,
+    _K_PLOT_YMIN,
+    _apply_fixed_log_k_axis,
     _CorridorGenMixin,
     _CorridorWorkerMixin,
     _DataMixin,
@@ -147,32 +150,6 @@ from certus.spline.spline_profile_corridors import (
     quick_pwlnk_refit_result_dict,
 )
 
-_K_PLOT_YMIN: float = 1e-6
-_K_PLOT_YMAX: float = 1e-2
-
-def _apply_fixed_log_k_axis(plot_w: Any | None) -> None:
-    """Force the CERTUS k-plot convention on every k graph."""
-    if plot_w is None:
-        return
-    try:
-        # 1. Force the internal Log mode first
-        plot_w.setLogMode(False, True)
-
-        # 2. Sync the control menu (pyqtgraph 'A' button)
-        # to prevent _apply_sensible_empty_range from breaking things
-        try:
-            plot_w.plotItem.ctrl.logYCheck.setChecked(True)
-        except (AttributeError, RuntimeError):
-            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
-
-        # 3. Set the Y range using log10 exponents
-        # This is the most stable method when Log mode is active
-        ymin_log = np.log10(_K_PLOT_YMIN)
-        ymax_log = np.log10(_K_PLOT_YMAX)
-        plot_w.setYRange(ymin_log, ymax_log, padding=0)
-
-    except (AttributeError, RuntimeError, TypeError):
-        logger.debug("_apply_fixed_log_k_axis failed", exc_info=True)
 
 def _add_spectrum_thickness_badge(
     plot_w: Any | None, x_vals: np.ndarray, y_vals: np.ndarray, d_nm: float

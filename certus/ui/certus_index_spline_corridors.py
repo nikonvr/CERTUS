@@ -26,6 +26,8 @@ from certus.ui.certus_index_spline_corridor_common import (
     _CORRIDOR_K_TAB_MIN_HALF_WIDTH,
     _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN,
     _DEFAULT_CORRIDOR_RMSE_DELTA,
+    _K_PLOT_YMAX,
+    _K_PLOT_YMIN,
     _SCRIPT_DIR,
     _apply_fixed_log_k_axis,
 )

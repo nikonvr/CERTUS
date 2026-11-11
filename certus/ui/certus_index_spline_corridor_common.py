@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from typing import Any
 
@@ -21,19 +22,32 @@ _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN: float = 2.5e-5
 _CORRIDOR_K_TAB_MIN_HALF_WIDTH: float = 1e-4
 
 
+_K_PLOT_YMIN: float = 1e-6
+_K_PLOT_YMAX: float = 1e-2
+
+
 def _apply_fixed_log_k_axis(plot_w: Any | None) -> None:
-    """Force the CERTUS log-k axis convention locally in this module."""
+    """Force the CERTUS k-plot convention on every k graph."""
     if plot_w is None:
         return
     try:
-        ymin_log = np.log10(1e-6)
-        ymax_log = np.log10(1e-2)
+        # 1. Force the internal Log mode first
         plot_w.setLogMode(False, True)
+
+        # 2. Sync the control menu (pyqtgraph 'A' button)
+        # to prevent _apply_sensible_empty_range from breaking things
         try:
             plot_w.plotItem.ctrl.logYCheck.setChecked(True)
         except (AttributeError, RuntimeError):
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+
+        # 3. Set the Y range using log10 exponents
+        # This is the most stable method when Log mode is active
+        ymin_log = np.log10(_K_PLOT_YMIN)
+        ymax_log = np.log10(_K_PLOT_YMAX)
         plot_w.setYRange(ymin_log, ymax_log, padding=0)
+
     except (AttributeError, RuntimeError, TypeError):
-        import logging
-        logging.getLogger("CERTUS").debug("_apply_fixed_log_k_axis failed", exc_info=True)
+        # The window's logger, fetched here: a module-level `logger` in this leaf would have to be re-exported by the
+        # facade, where it would shadow the window's own.
+        logging.getLogger("CERTUS_INDEX_SPLINE").debug("_apply_fixed_log_k_axis failed", exc_info=True)

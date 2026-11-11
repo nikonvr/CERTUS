@@ -611,7 +611,12 @@ partout ailleurs c'est le même objet, importé. Chaque cas ajouté doit échoue
   Vérifier : `refactor_guard compare` — valeurs égales, mêmes noms dans chaque module, `__all__` de `common` inchangé.
   Test : le test nouveau, puis `tests/unit/test_spectral_knot_markers.py`, puis LOT.
 
-- [ ] **2b — `_apply_fixed_log_k_axis` (Q3 : unifier) — seule sous-phase du plan qui change un comportement**
+- [x] **2b — `_apply_fixed_log_k_axis` (Q3 : unifier) — seule sous-phase du plan qui change un comportement** — faite le
+  2026-11-11 : les 7 cas nouveaux du test échouaient avant (`7 failed, 6 passed`) et passent (`13 passed`) ; ruff PASS sur
+  le dépôt ; lot de contrôle et `test_spectral_knot_markers.py` `215 passed` ; garde avec `manifests/phase_2b.json` :
+  `problems=0`, `GUARD=OK`. Écarts au texte ci-dessous : `common` reçoit les trois noms par son import existant de la
+  façade `corridors` (mêmes objets que la feuille) ; plafond de `rendering.py` 1967 → 1952 ; le test admet la délégation
+  de `monitor_ui` par une table `DELEGATES` et vérifie qu'elle atteint la définition unique.
   Référence retenue : le corps de `ui/certus_index_spline_common.py:155-177`.
   Modifier :
   - `certus/ui/certus_index_spline_corridor_common.py` : `import logging` en tête ; y définir `_K_PLOT_YMIN` et

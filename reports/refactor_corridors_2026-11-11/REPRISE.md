@@ -5,7 +5,9 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 
 ## Où est le travail
 
-- Branche `claude/certus-refactor-audit-6cd1fc`, dans le worktree `.claude/worktrees/certus-refactor-audit-6cd1fc`.
+- Branche `claude/reprise-certus1111-926596`, dans le worktree `.claude/worktrees/reprise-certus1111-926596`, depuis la
+  reprise du 2026-11-11 au soir : elle prolonge `claude/certus-refactor-audit-6cd1fc` (avance rapide depuis `bea41352`),
+  dont le worktree reste arrêté à `bea41352`.
 - Ce dossier, `reports/refactor_corridors_2026-11-11/` : le plan, ce fichier, l'instantané de référence
   (`reference_snapshot.json`), les manifestes des phases (`manifests/`).
 - Rien n'est poussé. Pousser publie le dépôt : seulement sur ordre.
@@ -20,7 +22,7 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
    dans la phase, au plan), puis la garde, puis la validation, avant de commiter.
 4. Garde : `python scripts/refactor_guard.py snapshot --out <fichier temporaire>`, puis
    `python scripts/refactor_guard.py compare reports/refactor_corridors_2026-11-11/reference_snapshot.json <fichier temporaire> --manifest reports/refactor_corridors_2026-11-11/manifests/phase_1.json`
-   (ajouter un `--manifest` par phase faite). Attendu : `GUARD=OK`.
+   (ajouter un `--manifest` par phase faite : `phase_2a.json`, `phase_2b.json`, …). Attendu : `GUARD=OK`.
 5. Validation complète : `python scripts/validate_parallel.py`, environ 25 minutes, rien d'autre en même temps.
    **État connu** : `coherence_md` sort en erreur sur 3 commandes mortes de documents de campagne (laissé tel quel sur
    décision) ; un test qui chronomètre peut être rouge en parallèle et vert seul. Tout autre rouge est nouveau.
@@ -42,7 +44,8 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | **Phase 0** : `scripts/refactor_guard.py`, ses 13 tests, instantané de référence, plan déplacé ici | `211d561b` |
 | **Phase 1** : état déclaratif, contrats, 52 tests, manifeste ; toutes les questions ouvertes tranchées (plan, section 4) | `0e3d4b57` |
 | **Audit UX** complet des 11 modules : plan, section 5 (constats A, B, C et feuille de route U1 à U13) | `74de941e` |
-| **Phase 2a** : les trois constantes corridor n'ont plus qu'une définition | commit suivant `74de941e` |
+| **Phase 2a** : les trois constantes corridor n'ont plus qu'une définition | `bea41352` |
+| **Phase 2b** : `_apply_fixed_log_k_axis` et ses deux bornes n'ont plus qu'une définition | commit suivant `bea41352` |
 
 ## En cours
 
@@ -50,8 +53,8 @@ Rien : tout ce qui est fait est commité. La prochaine tâche est la première d
 
 ## À faire, dans l'ordre
 
-1. Phase 2 du plan, suite : 2b `_apply_fixed_log_k_axis`, 2c constantes de fenêtre, 2d clés du
-   smart-init, 2e classes `SmartInitPayload` en double.
+1. Phase 2 du plan, suite : 2c constantes de fenêtre, 2d clés du smart-init, 2e classes `SmartInitPayload` en double ;
+   puis la validation complète de la phase.
 2. Phase 3 : extraction des tranches 3a, 3b, 3c, 3d.
 3. Phase 4 : tracé RMSE(d).
 4. Phase 5 : 5a, 5b, 5c, puis 5d (les 8 fonctions statiques appelées par le mandataire).

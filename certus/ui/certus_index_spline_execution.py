@@ -30,6 +30,7 @@ from certus.spline.spline_objective import _spline_objective_lam_mask
 from certus.spline.spline_pipeline import worker_spline_optimization
 from certus.spline.spline_visual_utils import snap_spline_visual_dict as _snap_spline_visual_dict
 from certus.spline.spline_workers import worker_auto_best_split_knot_refinement
+from certus.ui.certus_index_spline_corridor_common import _apply_fixed_log_k_axis
 from certus.ui.certus_ui import CertusTheme, GenericWorker, get_certus_last_dir, safe_ui_action, set_certus_last_dir
 from certus.utils.certus_index_utils import (
     _rmse_d_lower_envelope_mask,
@@ -40,22 +41,6 @@ from certus.utils.certus_progress_tracker import StepState, build_progress_snaps
 from certus.utils.certus_skeleton import install_skeleton
 
 logger = logging.getLogger("CERTUS_INDEX_SPLINE")
-
-def _apply_fixed_log_k_axis(plot_w: Any | None) -> None:
-    """Force the CERTUS log-k axis convention locally in this module."""
-    if plot_w is None:
-        return
-    try:
-        ymin_log = np.log10(1e-6)
-        ymax_log = np.log10(1e-2)
-        plot_w.setLogMode(False, True)
-        try:
-            plot_w.plotItem.ctrl.logYCheck.setChecked(True)
-        except (AttributeError, RuntimeError):
-            pass
-        plot_w.setYRange(ymin_log, ymax_log, padding=0)
-    except (AttributeError, RuntimeError, TypeError):
-        logger.debug("_apply_fixed_log_k_axis failed", exc_info=True)
 
 from certus.spline.spline_pipeline_utils import _interp_series_at_sigma_knots
 from certus.utils.certus_atomic_io import atomic_open

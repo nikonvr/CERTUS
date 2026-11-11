@@ -238,12 +238,7 @@ def _smart_init_pw_nk_clipboard_df(curve_n: Any, curve_pk: Any) -> pd.DataFrame 
 
 _D_SLIDER_STEPS_DEFAULT = 5000
 
-class _LazyCertusIndexSplineApp:
-    def __getattr__(self, name):
-        from certus.ui.certus_index_spline_ui import CertusIndexSplineApp
-        return getattr(CertusIndexSplineApp, name)
-
-CertusIndexSplineApp = _LazyCertusIndexSplineApp()
+from certus.ui.certus_index_spline_lazy_app import CertusIndexSplineApp, _LazyCertusIndexSplineApp
 
 __all__ = [name for name in dir() if not name.startswith('__')] + [
     '_QS_SPLINE_ORG',

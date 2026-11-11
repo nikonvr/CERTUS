@@ -1,0 +1,15 @@
+{
+  "phase": "5b - the lazy stand-in for the window class, class and instance moved, text unchanged, from certus_index_spline_common.py to certus_index_spline_lazy_app.py; common imports them back and goes on exposing them.",
+  "moved_objects": [
+    {
+      "from": "certus.ui.certus_index_spline_common:_LazyCertusIndexSplineApp",
+      "to": "certus.ui.certus_index_spline_lazy_app:_LazyCertusIndexSplineApp"
+    }
+  ],
+  "rebound": [
+    "certus.ui.certus_index_spline_common:CertusIndexSplineApp",
+    "certus.ui.certus_index_spline_eventsextras_mixin:CertusIndexSplineApp",
+    "certus.ui.certus_index_spline_manualmesh_mixin:CertusIndexSplineApp"
+  ],
+  "note": "rebound: `CertusIndexSplineApp` is still the one instance of _LazyCertusIndexSplineApp, and the three modules still hold the same object. The guard names a value by the module of its class and by its repr, and both now say lazy_app instead of common: that is the move itself, and the only difference the guard reports (15 lines: 3 names, 12 functions that load one of them)."
+}

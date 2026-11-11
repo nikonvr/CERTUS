@@ -78,6 +78,9 @@ CORRIDOR_JOBS = {
 }
 ONE_SOURCE |= dict.fromkeys(CORRIDOR_JOBS, f"{UI}corridor_jobs.py")
 EXPOSED_BY |= CORRIDOR_JOBS
+#: The lazy stand-in for the window class: `lazy_app` defines it, `common` imports it.
+ONE_SOURCE["_LazyCertusIndexSplineApp"] = f"{UI}lazy_app.py"
+EXPOSED_BY["_LazyCertusIndexSplineApp"] = ("common",)
 #: A file that keeps a function of the shared name, allowed because the function only imports the shared one, inside its
 #: body, and calls it.
 DELEGATES = {"_apply_fixed_log_k_axis": (f"{UI}monitor_ui.py",)}
@@ -144,6 +147,21 @@ def test_a_delegate_reaches_the_one_definition(name, path) -> None:
     assert len(targets) == 1, f"{path} must define {name} once"
     assert targets[0], f"{path} defines {name} otherwise than by delegating"
     assert getattr(importlib.import_module(targets[0]), name) is getattr(source, name)
+
+
+def test_the_lazy_window_is_one_object_that_the_corridor_facade_does_not_export() -> None:
+    """The mixins that call the window class outside an instance all hold the one stand-in; the facade CERTUS_INDEX_SPLINE
+    asks the corridor facade before the module of the window, so the stand-in there would hide the real class."""
+    lazy_app = importlib.import_module("certus.ui.certus_index_spline_lazy_app")
+    stand_in = lazy_app.CertusIndexSplineApp
+    assert type(stand_in) is lazy_app._LazyCertusIndexSplineApp
+    for stem in ("common", "eventsextras_mixin", "manualmesh_mixin"):
+        assert importlib.import_module(f"certus.ui.certus_index_spline_{stem}").CertusIndexSplineApp is stand_in, stem
+    window = importlib.import_module("certus.ui.certus_index_spline_ui").CertusIndexSplineApp
+    assert isinstance(window, type)
+    assert stand_in._prepare_worker_restart is window._prepare_worker_restart
+    facade = importlib.import_module("certus.ui.certus_index_spline_corridors")
+    assert all(value is not stand_in for value in vars(facade).values())
 
 
 def test_smart_init_imported_first_and_alone_takes_its_keys_from_common() -> None:

@@ -847,7 +847,14 @@ et `test_the_default_pytest_run_is_quiet.py`) ; ui `1363 passed` ; rest `321 pas
   `ui/certus_index_spline_corridor_worker.py:893` reste tel quel (couture de la façade, I15).
   Test : `tests/unit/test_manual_rmse_grid_integration.py`, puis LOT.
   Q18 : `common` affecte `logger` ; si l'une des trois fonctions le lit, `corridor_jobs` l'affecte aussi.
-- [ ] **5b** — Créer `certus/ui/certus_index_spline_lazy_app.py` : y déplacer `_LazyCertusIndexSplineApp` et son
+- [x] **5b** — faite le 2026-11-11 : classe et instance déplacées, texte inchangé ; `common` les réimporte. Garde avec
+  `manifests/phase_5b.json` : `problems=0`, `GUARD=OK`. Le manifeste déclare `rebound` pour les trois modules qui lient
+  `CertusIndexSplineApp` (`common`, `eventsextras_mixin`, `manualmesh_mixin`) : c'est la même instance, mais la garde
+  nomme une valeur par le module de sa classe et par son `repr`, qui disent maintenant `lazy_app` ; sans cela, 15 écarts,
+  tous de cette nature. ruff PASS ; lot et `test_manual_rmse_grid_integration.py` `312 passed`. Test ajouté au fichier des
+  noms partagés : une seule instance dans les trois modules, elle rend les attributs de la vraie classe, et la façade
+  `corridors` ne l'expose pas (R4).
+  Créer `certus/ui/certus_index_spline_lazy_app.py` : y déplacer `_LazyCertusIndexSplineApp` et son
   instance (`ui/certus_index_spline_common.py:371-376`). Modifier `certus/ui/certus_index_spline_common.py` (réimport).
   Ne pas l'exporter par la façade (R4).
   Test : `tests/unit/test_gui_smoke.py`, puis LOT.

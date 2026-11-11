@@ -776,9 +776,14 @@ régénérer `tests/architecture_debt.json` dans le même commit (I12).
   `certus/ui/certus_index_spline_manualmesh_mixin.py`, `certus/ui/certus_index_spline_rendering.py`,
   `certus/ui/certus_index_spline_corridor_ui.py`, `certus/ui/certus_index_spline_corridor_host.py`, `tests/architecture_debt.json`.
   Test : `tests/unit/test_manual_rmse_grid_integration.py`, puis `tests/unit/test_mwir_gui_flow.py`, puis LOT.
-- [ ] **3d — `_CorridorNkMixin`** — préparée le 2026-11-11 (relevé sur `9c4720cd`) : aucune des 7 méthodes ne lit le
-  journal de module, aucune couture touchée ; la passerelle doit prêter `ExcelTableWidget` en plus. Seul
-  `CertusIndexSplineCorridorUIMixin` hérite de la tranche (§2.2), en dernière base.
+- [x] **3d — `_CorridorNkMixin`** — faite le 2026-11-11 : 7 méthodes déplacées avec `tools/`, texte inchangé, aucun
+  écart de bytecode (aucune ne lit le journal de module) ; garde avec `manifests/phase_3d.json` : `problems=0`,
+  `GUARD=OK` ; ruff PASS ; test principal, tranches et contrats `92 passed` ; lot de contrôle et
+  `test_manual_rmse_grid_integration.py` `285 passed`. Seul `CertusIndexSplineCorridorUIMixin` hérite de la tranche
+  (§2.2), en dernière base ; la passerelle prête `ExcelTableWidget` en plus, toujours en 3 instructions. Plafond de
+  `rendering.py` 1835 → 1781. Contrats : `_CorridorNkMixin` 9 noms, `CertusIndexSplineCorridorUIMixin` 14 → 7,
+  `_CorridorGenMixin` 22 → 17 ; protocoles : 3 membres retirés (`btn_copy_corridor`, `btn_export_corridor`,
+  `table_corridor`, que la tranche crée et lit seule), aucun ajouté. Aucune couture touchée, aucun test existant retouché.
   Créer : `certus/ui/certus_index_spline_corridor_nk.py`.
   Modifier : `certus/ui/certus_index_spline_corridorui_mixin.py`, `certus/ui/certus_index_spline_corridor_gen.py`,
   `certus/ui/certus_index_spline_rendering.py`, `certus/ui/certus_index_spline_corridor_ui.py`,

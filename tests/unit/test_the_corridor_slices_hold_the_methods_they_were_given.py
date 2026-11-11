@@ -81,11 +81,28 @@ SLICES = {
             "_build_corridor_tab_generate",
         ),
     ),
+    "corridor_nk": (
+        "_CorridorNkMixin",
+        (
+            "_interp_corridor_value",
+            "_k_corridor_crosshair_formatter",
+            "_build_tab_data_corridor",
+            "_copy_corridor_to_clipboard",
+            "_export_corridor_csv",
+            "_refresh_corridor_table",
+            "_build_tab_corridor",
+        ),
+    ),
 }
 #: The classes that inherit the slices, and the slices each one takes.
 COMPOSITES = {
     "settings:_CorridorControlMixin": ("_CorridorRunMixin", "_CorridorRmseViewMixin", "_CorridorIntervalMixin"),
-    "corridorui_mixin:CertusIndexSplineCorridorUIMixin": ("_CorridorRunMixin", "_CorridorRmseViewMixin", "_CorridorIntervalMixin"),
+    "corridorui_mixin:CertusIndexSplineCorridorUIMixin": (
+        "_CorridorRunMixin",
+        "_CorridorRmseViewMixin",
+        "_CorridorIntervalMixin",
+        "_CorridorNkMixin",
+    ),
 }
 #: The modules above the corridor group: a slice that imported one at module level would close an import cycle.
 ABOVE = ("common", "ui", "settings", "execution", "rendering", "mixins_ui")

@@ -46,7 +46,6 @@ if TYPE_CHECKING:
         CertusStatusPill,
         CertusStepper,
         EnhancedProgressWidget,
-        ExcelTableWidget,
     )
 
 
@@ -190,14 +189,12 @@ class CorridorWidgetsHost(Protocol):
 
     _idx_tab_corridor: Any
     _idx_tab_corridor_rmse: Any
-    btn_copy_corridor: Any
     btn_corridor_generate_auto_smart_grid: Any
     btn_corridor_generate_from_grid: Any
     btn_corridor_generate_from_partial_grid: Any
     btn_corridor_rmse_export_data: Any
     btn_corridor_rmse_export_envelope_nk: Any
     btn_corridor_rmse_grid_calc: Any
-    btn_export_corridor: Any
     cb_corr_mode: QComboBox
     chk_corr_scientific_nominal: QCheckBox
     chk_corridor_rmse_envelope_only: QCheckBox
@@ -221,7 +218,6 @@ class CorridorWidgetsHost(Protocol):
     sp_corridor_partial_delta_nm: QDoubleSpinBox
     sp_corridor_rmse_delta: QDoubleSpinBox
     sp_corridor_rmse_win: QSpinBox
-    table_corridor: ExcelTableWidget
 
 
 class CorridorHost(IndexSplineRunHost, IndexSplineViewHost, CorridorStateHost, CorridorWidgetsHost, Protocol):
@@ -233,13 +229,12 @@ class CorridorHost(IndexSplineRunHost, IndexSplineViewHost, CorridorStateHost, C
 CONTRACTS: dict[str, tuple[str, ...]] = {
     "_CorridorControlMixin": (),
     "_CorridorGenMixin": (
-        "_apply_cell_style", "_corridor_manual_half_width_nm", "_corridor_profile_source_result",
-        "_corridor_rmse_best_idx", "_corridor_rmse_center_nm", "_corridor_rmse_manual_hi",
-        "_corridor_rmse_manual_lo", "_corridor_rmse_robust_hi", "_corridor_rmse_robust_lo",
-        "_corridor_rmse_robust_ok", "_corridor_rmse_smart_interval", "_lam_piecewise_report_grid_nm",
-        "_plot_result", "_refresh_corridor_rmse_robust_view", "_refresh_data_table",
-        "_update_corridor_rmse_state_bar", "btn_copy_corridor", "btn_export_corridor", "lbl_status", "logger",
-        "sp_corridor_partial_delta_nm", "table_corridor",
+        "_corridor_manual_half_width_nm", "_corridor_profile_source_result", "_corridor_rmse_best_idx",
+        "_corridor_rmse_center_nm", "_corridor_rmse_manual_hi", "_corridor_rmse_manual_lo",
+        "_corridor_rmse_robust_hi", "_corridor_rmse_robust_lo", "_corridor_rmse_robust_ok",
+        "_corridor_rmse_smart_interval", "_plot_result", "_refresh_corridor_rmse_robust_view",
+        "_refresh_data_table", "_update_corridor_rmse_state_bar", "lbl_status", "logger",
+        "sp_corridor_partial_delta_nm",
     ),
     "_CorridorExportMixin": (
         "_corridor_profile_source_result", "_corridor_rmse_d_vals", "_corridor_rmse_manual_active",
@@ -274,10 +269,8 @@ CONTRACTS: dict[str, tuple[str, ...]] = {
         "plot_n_corridor", "tabs_main",
     ),
     "CertusIndexSplineCorridorUIMixin": (
-        "_add_context_page", "_cleanup_thread", "_corridor_k_crosshair_hi", "_corridor_k_crosshair_lam",
-        "_corridor_k_crosshair_lo", "_corridor_k_crosshair_nom", "_create_empty_context_widget",
-        "_ensure_complete_manifest_for_secondary_export", "_last_run_cfg", "_on_worker_done", "_on_worker_err",
-        "btn_run", "btn_stop", "logger",
+        "_cleanup_thread", "_last_run_cfg", "_on_worker_done", "_on_worker_err", "btn_run", "btn_stop",
+        "logger",
     ),
     "_CorridorRunMixin": (
         "_build_opt_config", "_cfg_with_result_substrate", "_cleanup_thread", "_corridor_auto_refine_plan",
@@ -314,5 +307,10 @@ CONTRACTS: dict[str, tuple[str, ...]] = {
         "_plot_corridor_rmse_tab", "_refresh_corridor_rmse_robust_view", "_refresh_corridors_gui_state_labels",
         "cb_corr_mode", "chk_corr_scientific_nominal", "logger", "sp_corr_rmse_delta", "sp_corridor_rmse_delta",
         "sp_corridor_rmse_win",
+    ),
+    "_CorridorNkMixin": (
+        "_add_context_page", "_apply_cell_style", "_corridor_k_crosshair_hi", "_corridor_k_crosshair_lam",
+        "_corridor_k_crosshair_lo", "_corridor_k_crosshair_nom", "_create_empty_context_widget",
+        "_ensure_complete_manifest_for_secondary_export", "_lam_piecewise_report_grid_nm",
     ),
 }

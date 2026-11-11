@@ -9,6 +9,7 @@ from certus.ui.certus_ui import (
     CertusScientificPlot,
     CertusTheme,
     EnhancedProgressWidget,
+    ExcelTableWidget,
     GenericWorker,
     create_styled_button,
     wrap_scientific_plot_with_toolbar,

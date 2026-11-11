@@ -1,0 +1,47 @@
+{
+  "phase": "3d - _CorridorNkMixin: the n/k envelope tab and its data table, seven methods moved, text unchanged, to certus_index_spline_corridor_nk.py; CertusIndexSplineCorridorUIMixin inherits the slice; the gateway lends ExcelTableWidget.",
+  "new_classes": [
+    "certus.ui.certus_index_spline_corridor_nk:_CorridorNkMixin"
+  ],
+  "moved_methods": [
+    {
+      "name": "_interp_corridor_value",
+      "from": "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin",
+      "to": "certus.ui.certus_index_spline_corridor_nk:_CorridorNkMixin"
+    },
+    {
+      "name": "_k_corridor_crosshair_formatter",
+      "from": "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin",
+      "to": "certus.ui.certus_index_spline_corridor_nk:_CorridorNkMixin"
+    },
+    {
+      "name": "_build_tab_data_corridor",
+      "from": "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin",
+      "to": "certus.ui.certus_index_spline_corridor_nk:_CorridorNkMixin"
+    },
+    {
+      "name": "_copy_corridor_to_clipboard",
+      "from": "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin",
+      "to": "certus.ui.certus_index_spline_corridor_nk:_CorridorNkMixin"
+    },
+    {
+      "name": "_export_corridor_csv",
+      "from": "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin",
+      "to": "certus.ui.certus_index_spline_corridor_nk:_CorridorNkMixin"
+    },
+    {
+      "name": "_refresh_corridor_table",
+      "from": "certus.ui.certus_index_spline_corridor_gen:_CorridorGenMixin",
+      "to": "certus.ui.certus_index_spline_corridor_nk:_CorridorNkMixin"
+    },
+    {
+      "name": "_build_tab_corridor",
+      "from": "certus.ui.certus_index_spline_rendering:_UIBuilderMixin",
+      "to": "certus.ui.certus_index_spline_corridor_nk:_CorridorNkMixin"
+    }
+  ],
+  "added_attributes": [
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._build_tab_corridor",
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._refresh_corridor_table"
+  ]
+}

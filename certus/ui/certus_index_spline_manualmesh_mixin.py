@@ -15,7 +15,11 @@ from certus.spline.spline_pipeline import (
     worker_spline_manual_sigma_insert,
 )
 from certus.ui.certus_index_spline_common import CertusIndexSplineApp, logger
-from certus.ui.certus_index_spline_statics import _rmse_from_result_dict, _runtime_metrics_from_result_dict
+from certus.ui.certus_index_spline_statics import (
+    _format_lambda_knots_for_log,
+    _rmse_from_result_dict,
+    _runtime_metrics_from_result_dict,
+)
 from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
 from certus.ui.certus_ui import GenericWorker
 from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
@@ -44,13 +48,13 @@ class CertusIndexSplineManualMeshMixin:
 
         delta_k = int(summary.get("delta_k", 0))
 
-        before_txt = CertusIndexSplineApp._format_lambda_knots_for_log(summary.get("before_lambda_knots_nm"))
+        before_txt = _format_lambda_knots_for_log(summary.get("before_lambda_knots_nm"))
 
-        after_txt = CertusIndexSplineApp._format_lambda_knots_for_log(summary.get("after_lambda_knots_nm"))
+        after_txt = _format_lambda_knots_for_log(summary.get("after_lambda_knots_nm"))
 
-        removed_txt = CertusIndexSplineApp._format_lambda_knots_for_log(summary.get("removed_lambda_knots_nm"))
+        removed_txt = _format_lambda_knots_for_log(summary.get("removed_lambda_knots_nm"))
 
-        added_txt = CertusIndexSplineApp._format_lambda_knots_for_log(summary.get("added_lambda_knots_nm"))
+        added_txt = _format_lambda_knots_for_log(summary.get("added_lambda_knots_nm"))
 
         removed_count = int(np.asarray(summary.get("removed_lambda_knots_nm", []), dtype=np.float64).size)
 

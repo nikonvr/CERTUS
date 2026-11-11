@@ -157,7 +157,7 @@ def main() -> None:
                 body = [line.replace(f"CertusIndexSplineApp.{known}(", f"{known}(") for line in body]
             changed.add(f"{LEAF_MODULE}:{name}")
             functions[name] = body
-            print(f"code    {name}: {difference(before_code, code_of(chr(10).join(body), [name]))}" + ("" if body == before else "  (calls rewritten)"))
+            rewritten = body != before
             lines[start - 1:end] = [f"    {name} = staticmethod({name})"]
             touched = True
             print(f"moved   {stem}:{klass_name}.{name}  lines {start}-{end}")
@@ -172,6 +172,8 @@ def main() -> None:
     if owner is None:
         raise SystemExit(f"no static method {name} in the group")
     write_leaf(functions)
+    after_code = code_of("\n".join(read(LEAF)), [name])  # compiled in the leaf itself: same `from __future__` as the mixin
+    print(f"code    {name}: {difference(before_code, after_code)}" + ("  (calls rewritten)" if rewritten else ""))
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8")) if MANIFEST.is_file() else {
         "phase": "5d - the static helpers of the window become plain functions of certus_index_spline_statics.py, one per "
         "commit; the class keeps each one as a static method, the very function; the mixins call the function instead of "

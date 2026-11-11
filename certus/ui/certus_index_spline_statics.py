@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 
@@ -38,3 +40,8 @@ def _runtime_metrics_from_result_dict(d: dict | None) -> tuple[float, float]:
         rmse = float("nan")
 
     return d_nm, rmse
+
+
+def _format_lambda_knots_for_log(lambda_knots_nm: Any, *, precision: int = 1, max_items: int = 200) -> str:
+    from certus.spline.spline_pipeline_utils import _format_lambda_knots_nm_for_log
+    return _format_lambda_knots_nm_for_log(lambda_knots_nm, precision=precision, max_items=max_items)

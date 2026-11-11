@@ -1033,8 +1033,15 @@ chacun inscrit ses fonctions dans `changed_code` d'un manifeste.
   un worker** sur l'échantillon oublié. Après : `8 passed` ; le bouton répond « No optimization configuration available
   (run a fit first). ». La barre d'état de l'onglet n'était rafraîchie que par un tracé : `_load_defaults` l'appelle
   désormais. Garde `problems=0`, `GUARD=OK` ; LOT, avec `test_certus_reset_framework.py`, `442 passed`.
-- [ ] **10d — Un nom pour `2e-4` (Q12)** : une constante dans `certus_index_spline_corridor_common.py`, utilisée aux
+- [x] **10d — Un nom pour `2e-4` (Q12)** : une constante dans `certus_index_spline_corridor_common.py`, utilisée aux
   trois endroits ; valeur inchangée.
+  Fait le 2026-11-11 : `_DEFAULT_CORRIDOR_ROBUST_RMSE_DELTA`. Le relevé trouve **six** endroits, pas trois : la
+  création du champ (`corridor_tab`), le préréglage (`corridor_interval`), et quatre dans `corridor_rmse_plot` (le
+  repli du nuage, les deux replis de `_prep_rmse_plot_data`, le plancher de la hauteur du tracé). Les six lisent le
+  nom ; la façade `corridors` le réexporte (son test l'exige). `tests/unit/test_the_robust_rmse_delta_has_a_name.py`
+  rend `3 failed` avant, `3 passed` après, et tient qu'aucun module de la fenêtre n'écrit plus le littéral. Garde
+  `problems=0`, `GUARD=OK` ; LOT `419 passed`. Cinq fichiers de code pour un nommage : au-delà des trois de
+  CLAUDE.md §11, assumé parce que la valeur ne change nulle part et que le plan l'annonçait.
 
 ---
 

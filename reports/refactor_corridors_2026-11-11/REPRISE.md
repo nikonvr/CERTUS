@@ -79,7 +79,8 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | **Phase 10a** : une courbe RMSE(d) vide écrit `-1`, plus `None`, dans `_corridor_rmse_best_idx` (Q17) ; test rouge avant (`8 failed`) | `43d48d3f` |
 | **Phase 10b** : la branche morte de `_plot_result` est retirée, `NEVER_ASSIGNED` est vide (Q13) ; test rouge avant (`1 failed`) | `82007a4a` |
 | **Phase 10c** : `_load_defaults` remet les huit attributs corridor écrits pour un échantillon (Q11) ; test rouge avant (`2 failed`) | `5b801bf5` |
-| **Phase 10e** (Q24, trouvée par la mesure de 10c) : `_load_defaults` oublie aussi `_last_worker_result` et `_last_run_cfg` ; avant, « Recalculate RMSE(d) » après un reset relançait la grille sur l'échantillon oublié ; test rouge avant (`4 failed`) | commit « phase 10e » |
+| **Phase 10e** (Q24, trouvée par la mesure de 10c) : `_load_defaults` oublie aussi `_last_worker_result` et `_last_run_cfg` ; avant, « Recalculate RMSE(d) » après un reset relançait la grille sur l'échantillon oublié ; test rouge avant (`4 failed`) | `0267b135` |
+| **Phase 10d** : le `2e-4` de l'intervalle robuste s'appelle `_DEFAULT_CORRIDOR_ROBUST_RMSE_DELTA`, lu aux six endroits (Q12) ; test rouge avant (`3 failed`) | commit « phase 10d » |
 
 ## En cours
 
@@ -87,7 +88,8 @@ Rien : tout ce qui est fait est commité. La prochaine tâche est la première d
 
 ## À faire, dans l'ordre
 
-1. Phase 10, fin : 10d (Q12), avec un test qui échoue avant. Puis validation complète.
+1. Validation complète de la Phase 10 (`python scripts/validate_parallel.py`, rien d'autre en même temps), puis
+   `docs/ETAT.md` à jour.
 2. Phase 7, après la Phase 10 (Q21) : 7a, puis 7b sous le protocole de noyau (oracle avant et après,
    `python scripts/c1_diff.py HEAD`). Puis validation complète.
 3. Feuille de route UX, plan section 5.5 : U1 à U5 d'abord (défauts visibles).

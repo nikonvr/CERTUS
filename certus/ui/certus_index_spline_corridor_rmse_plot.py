@@ -12,6 +12,7 @@ from PyQt6.QtGui import QFont
 
 from certus.spline.certus_corridor_fitter import _fit_local_quadratic_rmse_profile
 from certus.spline.certus_index_spline_corridor_contract import normalize_corridor_live_payload
+from certus.ui.certus_index_spline_corridor_common import _DEFAULT_CORRIDOR_ROBUST_RMSE_DELTA
 from certus.ui.certus_index_spline_corridor_ui import CertusTheme
 
 logger = logging.getLogger("CERTUS_INDEX_SPLINE")
@@ -94,7 +95,7 @@ class _CorridorRmsePlotMixin:
 
         rmse_best = float(r_plot[i_best])
         delta_rb_raw = self.sp_corridor_rmse_delta.value() if hasattr(self, "sp_corridor_rmse_delta") else None
-        delta_rb = float(delta_rb_raw) if delta_rb_raw is not None else 2e-4
+        delta_rb = float(delta_rb_raw) if delta_rb_raw is not None else _DEFAULT_CORRIDOR_ROBUST_RMSE_DELTA
         win_rb_raw = self.sp_corridor_rmse_win.value() if hasattr(self, "sp_corridor_rmse_win") else None
         win_rb = int(win_rb_raw) if win_rb_raw is not None else 3
         live_parab = (
@@ -445,9 +446,9 @@ class _CorridorRmsePlotMixin:
         win_rb = src.get("win_rb", 3)
         if win_rb is None:
             win_rb = 3
-        delta_rb = src.get("delta_rb", 2e-4)
+        delta_rb = src.get("delta_rb", _DEFAULT_CORRIDOR_ROBUST_RMSE_DELTA)
         if delta_rb is None:
-            delta_rb = 2e-4
+            delta_rb = _DEFAULT_CORRIDOR_ROBUST_RMSE_DELTA
 
         rb_ok = bool(src.get("rb_ok", False))
         d_lo_rb = float(src.get("d_lo_rb", np.nan))
@@ -726,7 +727,7 @@ class _CorridorRmsePlotMixin:
             self.plot_corridor_rmse_d.enableAutoRange(axis=pg.ViewBox.YAxis, enable=True)
             self.plot_corridor_rmse_d.autoRange()
         elif not lock_scale:
-            delta_rb_eff = max(delta_rb, 2e-4)
+            delta_rb_eff = max(delta_rb, _DEFAULT_CORRIDOR_ROBUST_RMSE_DELTA)
             y_min_val = rmse_best - 0.25 * delta_rb_eff
             y_max_val = rmse_best + 2.0 * delta_rb_eff
             if rmse_thr is not None and np.isfinite(float(rmse_thr)):

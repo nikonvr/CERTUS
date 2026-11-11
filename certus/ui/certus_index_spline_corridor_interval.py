@@ -12,6 +12,7 @@ from certus.spline.certus_index_spline_core import logger
 from certus.ui.certus_index_spline_corridor_common import (
     _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN,
     _DEFAULT_CORRIDOR_RMSE_DELTA,
+    _DEFAULT_CORRIDOR_ROBUST_RMSE_DELTA,
 )
 from certus.ui.certus_index_spline_corridor_ui import CertusTheme, create_styled_button
 
@@ -44,7 +45,7 @@ class _CorridorIntervalMixin:
             self.sp_corridor_rmse_win.setValue(4)
 
         if hasattr(self, "sp_corridor_rmse_delta"):
-            self.sp_corridor_rmse_delta.setValue(2e-4)
+            self.sp_corridor_rmse_delta.setValue(_DEFAULT_CORRIDOR_ROBUST_RMSE_DELTA)
 
         self._corridor_parabola_half_window_pts = 4
 

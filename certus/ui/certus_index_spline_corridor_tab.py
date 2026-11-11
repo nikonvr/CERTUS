@@ -11,6 +11,7 @@ from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.spline.certus_corridor_utils import enforce_min_k_corridor_half_width
 from certus.ui.certus_index_spline_corridor_common import (
     _CORRIDOR_K_TAB_MIN_HALF_WIDTH,
+    _DEFAULT_CORRIDOR_ROBUST_RMSE_DELTA,
     _apply_fixed_log_k_axis,
 )
 from certus.ui.certus_index_spline_corridor_ui import (
@@ -312,7 +313,7 @@ class _CorridorTabMixin:
 
         self.sp_corridor_rmse_delta.setSingleStep(1e-5)
 
-        self.sp_corridor_rmse_delta.setValue(2e-4)
+        self.sp_corridor_rmse_delta.setValue(_DEFAULT_CORRIDOR_ROBUST_RMSE_DELTA)
 
         self.sp_corridor_rmse_delta.setToolTip(
             "<b>Amplitude DeltaRMSE (Profilage Robuste)</b><br>"

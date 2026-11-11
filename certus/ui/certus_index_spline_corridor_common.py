@@ -18,6 +18,11 @@ _DEFAULT_CORRIDOR_RMSE_DELTA: float = 2.5e-4
 _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN: float = 2.5e-5
 
 
+# RMSE margin of the robust interval drawn under the local parabola of the RMSE(d) tab (sp_corridor_rmse_delta). Not the
+# tolerance of the corridor calculation above (sp_corr_rmse_delta), which goes into the configuration of the solver.
+_DEFAULT_CORRIDOR_ROBUST_RMSE_DELTA: float = 2e-4
+
+
 # Minimum half-width (linear k) applied to the Corridors n/k tab display (consistent envelope + tooltip).
 _CORRIDOR_K_TAB_MIN_HALF_WIDTH: float = 1e-4
 

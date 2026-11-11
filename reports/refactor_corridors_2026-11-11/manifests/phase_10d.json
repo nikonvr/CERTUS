@@ -1,0 +1,11 @@
+{
+  "phase": "10d - the RMSE margin of the robust interval, a bare 2e-4 written six times, is _DEFAULT_CORRIDOR_ROBUST_RMSE_DELTA of certus_index_spline_corridor_common (Q12); same value.",
+  "changed_code": [
+    "certus.ui.certus_index_spline_corridor_tab:_CorridorTabMixin._build_corridor_tab_rmse_controls",
+    "certus.ui.certus_index_spline_corridor_interval:_CorridorIntervalMixin._apply_corridor_preset_auto_robust",
+    "certus.ui.certus_index_spline_corridor_rmse_plot:_CorridorRmsePlotMixin._plot_rmse_data_scatter",
+    "certus.ui.certus_index_spline_corridor_rmse_plot:_CorridorRmsePlotMixin._prep_rmse_plot_data",
+    "certus.ui.certus_index_spline_corridor_rmse_plot:_CorridorRmsePlotMixin._plot_corridor_rmse_tab"
+  ],
+  "note": "changed_code: in each function the literal 2e-4 becomes a read of the module-level name, whose value is 2e-4. No value changes. The plan counted three places; the relevé found six (the two fallbacks of _prep_rmse_plot_data and the floor of the height of the plot were not counted). tests/unit/test_the_robust_rmse_delta_has_a_name.py fails on the code before (3 failed)."
+}

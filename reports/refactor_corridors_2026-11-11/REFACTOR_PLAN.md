@@ -776,7 +776,9 @@ régénérer `tests/architecture_debt.json` dans le même commit (I12).
   `certus/ui/certus_index_spline_manualmesh_mixin.py`, `certus/ui/certus_index_spline_rendering.py`,
   `certus/ui/certus_index_spline_corridor_ui.py`, `certus/ui/certus_index_spline_corridor_host.py`, `tests/architecture_debt.json`.
   Test : `tests/unit/test_manual_rmse_grid_integration.py`, puis `tests/unit/test_mwir_gui_flow.py`, puis LOT.
-- [ ] **3d — `_CorridorNkMixin`**
+- [ ] **3d — `_CorridorNkMixin`** — préparée le 2026-11-11 (relevé sur `9c4720cd`) : aucune des 7 méthodes ne lit le
+  journal de module, aucune couture touchée ; la passerelle doit prêter `ExcelTableWidget` en plus. Seul
+  `CertusIndexSplineCorridorUIMixin` hérite de la tranche (§2.2), en dernière base.
   Créer : `certus/ui/certus_index_spline_corridor_nk.py`.
   Modifier : `certus/ui/certus_index_spline_corridorui_mixin.py`, `certus/ui/certus_index_spline_corridor_gen.py`,
   `certus/ui/certus_index_spline_rendering.py`, `certus/ui/certus_index_spline_corridor_ui.py`,
@@ -795,6 +797,10 @@ Sortie de la phase : `_CorridorControlMixin` et `CertusIndexSplineCorridorUIMixi
   là où le code le lit) ; `tests/architecture_debt.json` (le fichier passe sous 1 500 lignes : il quitte la liste).
 - Test : `tests/unit/test_rmse_scatter_pieces.py`, puis `tests/unit/test_rmse_tab_summary.py`, puis LOT.
 - La retouche du test part dans le même commit que le déplacement et se limite à cette ligne.
+- **Liaison de `logger` (Q18)** : les dix méthodes viennent d'un seul module, `rendering`, qui **affecte** `logger` ;
+  deux le lisent (`_plot_rmse_data_scatter`, `_plot_corridor_rmse_tab`). Le nouveau module l'affecte donc aussi
+  (`logger = logging.getLogger("CERTUS_INDEX_SPLINE")`), et ne l'importe pas : le bytecode reste identique. Six
+  méthodes lisent `pg`, que le test remplace dans `rendering` : c'est la couture que la retouche de Q1 suit.
 
 ### [ ] Phase 5 — Découpler les mixins de la fenêtre
 
@@ -803,6 +809,7 @@ Sortie de la phase : `_CorridorControlMixin` et `CertusIndexSplineCorridorUIMixi
   Modifier `certus/ui/certus_index_spline_common.py` (réimport, mêmes objets). L'import retardé
   `ui/certus_index_spline_corridor_worker.py:893` reste tel quel (couture de la façade, I15).
   Test : `tests/unit/test_manual_rmse_grid_integration.py`, puis LOT.
+  Q18 : `common` affecte `logger` ; si l'une des trois fonctions le lit, `corridor_jobs` l'affecte aussi.
 - [ ] **5b** — Créer `certus/ui/certus_index_spline_lazy_app.py` : y déplacer `_LazyCertusIndexSplineApp` et son
   instance (`ui/certus_index_spline_common.py:371-376`). Modifier `certus/ui/certus_index_spline_common.py` (réimport).
   Ne pas l'exporter par la façade (R4).
@@ -834,6 +841,7 @@ Sortie de la phase : `_CorridorControlMixin` et `CertusIndexSplineCorridorUIMixi
 ### [ ] Phase 7 — Découplage entre familles (chantier séparé, Q10)
 
 Chaque arête se traite seule, par descente de l'utilitaire dans un module partagé et réexport à l'ancien emplacement.
+**Placée après la Phase 10 (Q21)** : c'est un autre chantier, et 7b touche au calcul.
 La liste des tests propres à chaque famille est à compléter par un Grep du nom déplacé dans `tests/` en début de sous-phase.
 
 - [ ] **7a** — `_resolve_strat_indices_db_path` : `certus/workers/certus_strat_workers.py` → module partagé ;
@@ -843,11 +851,20 @@ La liste des tests propres à chaque famille est à compléter par un Grep du no
   `certus/workers/certus_design_workers.py:53`, `certus/core/certus_re_worker_utils.py:35`,
   `certus/physics/gradient_analytic.py:1115`.
   Test : `tests/unit/test_gui_apps_smoke.py`, puis LOT.
+  **Protocole de noyau, obligatoire (Q21)** : `physics/gradient_analytic.py` et `utils/certus_index_utils.py` citent
+  Numba ; les modifier change la clé du cache (premier passage à froid). Avant : oracle (`pytest tests/oracle/`).
+  Après : oracle, puis `python scripts/c1_diff.py HEAD`, froid contre froid, avant de commiter (CLAUDE.md §2 et §5).
+  Le module partagé doit être au niveau de `physics` ou en dessous (`domain`) : `physics` l'importe, et un module de
+  `utils` laisserait l'arête montante en place. Si `c1_diff` ne rend pas « C1 TENU » : annuler, ne pas corriger en avant.
 
 ### [ ] Phase 8 — Clôture
 
 - Régénérer `tests/architecture_debt.json` ; lancer la suite complète ; comparer l'instantané final à la référence de
-  Phase 0 avec le manifeste cumulé ; retirer l'instantané de référence.
+  Phase 0 avec le manifeste cumulé. **L'instantané de référence reste (Q20)** : les Phases 9, 10, 7 et la feuille de
+  route UX déclarent leurs écarts dans un manifeste, donc contre cette référence, et c'est un résultat versionné de
+  `reports/`.
+- Relever, sans les retirer, les imports que les déplacements ont laissés sans lecteur dans les modules d'origine
+  (principe 6 : un module garde les noms qu'il exposait) ; mettre `docs/ETAT.md` à jour.
 - Test : suite complète, puis `tests/unit/test_the_architecture_debt_only_shrinks.py` seul.
 
 ### [ ] Phase 9 — Réparer la couture de test périmée (Q5 ; un commit de test, aucun code de production)
@@ -909,7 +926,19 @@ repose sur une lecture du code ou une mesure.
 | Q15 | Imports relatifs existants : les convertir ? | **Non : la règle vaut pour le code nouveau.** | Les 43 imports sont dans `physics`, `spline`, `domain`, `core` : les convertir touche des fichiers à noyaux compilés (clé du cache Numba, contrôle au bit) pour un gain nul ici. Un test de Phase 1 tient déjà le groupe INDEX SPLINE en imports absolus. |
 | Q17 | `_corridor_rmse_best_idx` reçoit `None` : voulu ? | **Non : c'est un `-1` oublié, défaut latent.** Correctif en Phase 10. | Ses lecteurs font `int(getattr(self, "_corridor_rmse_best_idx", -1))` : avec `None`, la conversion lève `TypeError`. `None` est affecté quand la courbe tracée est vide. |
 
-Il ne reste aucune question ouverte.
+**Tranchés par l'assistant le 2026-11-11 au soir, à la relecture des étapes restantes demandée par 👤**
+
+| # | Question | Décision | Ce qui la fonde |
+|---|---|---|---|
+| Q18 | Comment lier `logger` dans un module nouveau ? | **Comme le module d'origine quand il est unique** (affecté pour ce qui vient de `rendering`, `common`, `settings` ; importé du cœur spline pour ce qui l'importait). Quand deux origines diffèrent, on importe, et l'écart de la méthode minoritaire est déclaré (`changed_code`) et mesuré. | Mesuré en 3a et 3c : Python 3.15 ne compile pas `logger.debug(...)` de la même façon selon que le nom est lié par un import ou par une affectation. |
+| Q20 | Retirer l'instantané de référence à la clôture ? | **Non.** | Les Phases 9, 10, 7 et la feuille de route UX s'appuient sur la garde ; `reports/` ne se vide pas (CLAUDE.md §3). |
+| Q21 | Phase 7 : où, et sous quel contrôle ? | **Après la Phase 10** ; 7b sous le protocole de noyau (oracle avant et après, `c1_diff.py HEAD`). | Relevé : `gradient_analytic.py` et `certus_index_utils.py` citent Numba ; le plan n'y prévoyait que des tests d'interface. |
+
+**Proposé à 👤, non appliqué** — Q19 : avancer la Phase 9 juste après la Phase 3. La méthode que la couture vise est
+à sa place définitive depuis 3a, et d'ici la Phase 9 deux tests de `test_mwir_gui_flow.py` lancent un vrai fil de
+calcul qu'ils n'attendent pas, à chaque validation. Cela revient sur l'ordre que 👤 a fixé en Q5 : à lui de le dire.
+
+Il ne reste aucune autre question ouverte.
 
 ---
 

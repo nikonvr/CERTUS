@@ -33,6 +33,8 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 - Trancher soi-même les questions ouvertes, le plus intelligemment possible, et consigner la décision (plan, section 4).
 - Inscrire toute tâche faite ou à faire dans ce fichier de reprise.
 - Viser une UX « top 1 % mondial » : audit UX complet, à ajouter à l'audit (plan, section 5).
+- Nuit du 2026-11-11 : poursuivre en autonomie, « autorisation sur tout ». Lu comme : trancher et commiter sans
+  demander. Rien n'est poussé pour autant (dépôt public : pousser reste un ordre explicite).
 
 ## Fait
 
@@ -53,6 +55,8 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | Garde étendue : une méthode peut quitter une classe pour une tranche dont elle n'hérite pas, si le manifeste le dit | `85e5d24f` |
 | **Phase 3a** : `_CorridorRunMixin`, 15 méthodes dans `certus_index_spline_corridor_run.py` | `cdc5ce24` |
 | **Phase 3b** : `_CorridorRmseViewMixin`, 9 méthodes dans `certus_index_spline_corridor_rmse_view.py` | `32e5d038` |
+| **Phase 3c** : `_CorridorIntervalMixin`, 11 méthodes dans `certus_index_spline_corridor_interval.py` | `9c4720cd` |
+| Outils d'extraction d'une tranche (`tools/`, six étapes, mode d'emploi en tête de chaque fichier), Q18, Q20, Q21 tranchées, 3d préparée | commit suivant `9c4720cd` |
 
 ## En cours
 
@@ -60,8 +64,8 @@ Rien : tout ce qui est fait est commité. La prochaine tâche est la première d
 
 ## À faire, dans l'ordre
 
-2. Phase 3, suite : extraction des tranches 3c, 3d (mode d'emploi : les leçons de 3a, au plan), puis validation
-   complète de la phase.
+2. Phase 3, fin : extraction de la tranche 3d avec `tools/` (`plan_move`, `move`, `manifest`, `contracts`,
+   `protocols`, `born_in`, puis `guard` et `lot`), puis validation complète de la phase.
 3. Phase 4 : tracé RMSE(d).
 4. Phase 5 : 5a, 5b, 5c, puis 5d (les 8 fonctions statiques appelées par le mandataire).
 5. Phase 6 : 6a garde-fous étendus aux autres fenêtres, 6b `_UIMixin` hors du MRO, 6c état initialisé dans `__init__`.

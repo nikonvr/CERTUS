@@ -33,6 +33,7 @@ LOT = [
     U + "test_spectral_knot_markers.py",
     # a list of modules by what they use: a move can empty an entry (the full validation of Phase 3 found it)
     U + "test_progress_imports.py",
+    U + "test_the_window_statics_are_plain_functions_the_mixins_call.py",
 ]
 
 if __name__ == "__main__":

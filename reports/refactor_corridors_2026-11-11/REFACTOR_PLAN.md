@@ -867,7 +867,23 @@ et `test_the_default_pytest_run_is_quiet.py`) ; ui `1363 passed` ; rest `321 pas
   Déplacer `_start_curve_minimum_deep_refit` dans `_CorridorRunMixin`. Modifier
   `certus/ui/certus_index_spline_corridor_run.py`, `certus/ui/certus_index_spline_eventsextras_mixin.py`.
   Test : `tests/unit/test_post_opt_option_unlock.py`, puis LOT.
-- [ ] **5d (Q6 : oui, pour les 8 méthodes statiques)** — Remplacer les appels `CertusIndexSplineApp.<statique>(…)` par des fonctions pures d'un module
+- [x] **5d (Q6 : oui, pour les 8 méthodes statiques)** — faite le 2026-11-11, huit commits (`bdba59cb` à `d7b068d7`),
+  avec `tools/static_to_function.py`. Module feuille : `certus/ui/certus_index_spline_statics.py`. Chaque méthode y
+  devient une fonction, texte inchangé ; la classe garde le nom (`nom = staticmethod(nom)`, la fonction même) ; les
+  appels `CertusIndexSplineApp.<statique>(…)` des mixins deviennent `<statique>(…)`. À chaque commit : ruff PASS, garde
+  `problems=0`, `GUARD=OK`, lot `313 passed`. `manifests/phase_5d.json` : 8 `moved_objects`, 16 `changed_code` — les 8
+  fonctions du module feuille et les 8 appelants. Appelants : `_open_manual_extra_knots_dialog`,
+  `_start_manual_sigma_insert_worker`, `_start_manual_sigma_repartition_worker` (`manualmesh_mixin`) ; `_on_worker_err`,
+  `_lam_piecewise_report_grid_nm`, `_format_post_optimization_status` (`eventsextras_mixin`) ; et deux des statiques
+  elles-mêmes, `_runtime_metrics_from_result_dict` et `_manual_mesh_change_log_line`, réécrites quand elles étaient
+  encore dans leur classe.
+  **Un écart que le plan n'avait pas prévu, mesuré** : une fonction qui quitte un corps de classe perd le drapeau
+  `CO_METHOD` (`0x8000000`) de son objet code (Python 3.14 et suivants). Pour les huit, l'outil compile avant et après
+  et rend `flags only` : mêmes `co_code`, constantes, noms et variables. D'où leur présence dans `changed_code`.
+  Reste par le mandataire : `_prepare_worker_restart` seul (5 appels dans `manualmesh_mixin`, 1 dans `corridor_run`),
+  comme décidé en Q6. Test nouveau : `tests/unit/test_the_window_statics_are_plain_functions_the_mixins_call.py`
+  (`13 passed`), entré dans le lot.
+  Remplacer les appels `CertusIndexSplineApp.<statique>(…)` par des fonctions pures d'un module
   feuille, les méthodes statiques devenant des alias. Ce n'est plus un déplacement pur : `refactor_guard` doit recevoir la
   liste exacte des fonctions dont le bytecode change, et rien d'autre ne doit bouger.
   Test : `tests/unit/test_mwir_gui_flow.py`, puis LOT.

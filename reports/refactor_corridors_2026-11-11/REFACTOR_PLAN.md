@@ -834,7 +834,13 @@ et `test_the_default_pytest_run_is_quiet.py`) ; ui `1363 passed` ; rest `321 pas
   (`logger = logging.getLogger("CERTUS_INDEX_SPLINE")`), et ne l'importe pas : le bytecode reste identique. Six
   méthodes lisent `pg`, que le test remplace dans `rendering` : c'est la couture que la retouche de Q1 suit.
 
-### [ ] Phase 5 — Découpler les mixins de la fenêtre
+### [x] Phase 5 — Découpler les mixins de la fenêtre — faite le 2026-11-11
+
+**Validation de la phase** (`validate_parallel.py`, `55f2d194`, Python 3.15.2) : rien de plus que l'état connu. ruff
+PASS ; oracle `1196 passed` ; unit `5946 passed` et 1 artefact de charge, vert seul en série
+(`test_strat_phase_a_state_coherence.py`, un test STRAT) ; ui `1366 passed` ; rest `320 passed` et l'artefact habituel,
+vert seul ; performance `29 passed` ; `check_claude_md`, `check_docs` PASS ; `coherence_md` : l'échec connu (3 commandes
+mortes).
 
 - [x] **5a** — faite le 2026-11-11 : les 3 fonctions déplacées, texte inchangé ; aucune ne lit `logger` (Q18 sans
   objet), aucune couture sur leurs globaux. `common` les réimporte (mêmes objets). Garde avec `manifests/phase_5a.json`

@@ -40,25 +40,23 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | Correctif ruff B905, `zip(..., strict=False)` dans un script de campagne | `9d011d68` |
 | Correctif échappement invalide, chaîne brute dans un script de campagne | `15d518aa` |
 | **Phase 0** : `scripts/refactor_guard.py`, ses 13 tests, instantané de référence, plan déplacé ici | `211d561b` |
-| **Phase 1** : état déclaratif, contrats, 52 tests, manifeste ; toutes les questions ouvertes tranchées (plan, section 4) | commit suivant `211d561b` |
+| **Phase 1** : état déclaratif, contrats, 52 tests, manifeste ; toutes les questions ouvertes tranchées (plan, section 4) | `0e3d4b57` |
+| **Audit UX** complet des 11 modules : plan, section 5 (constats A, B, C et feuille de route U1 à U13) | commit suivant `0e3d4b57` |
 
 ## En cours
 
-- **Audit UX complet** (section 5 du plan) : commencé. Outil du dépôt `scripts/audit_ux_certus.py`, captures d'écran
-  hors écran (gardées hors du dépôt : elles peuvent montrer des chemins de fichiers récents), balayages statiques.
-  Premier constat déjà relevé : 8 libellés montrent un « ? » à la place d'un symbole perdu (`Demi-fen?tre`,
-  `interval ? [..]`, `? QWOT`).
+Rien : tout ce qui est fait est commité. La prochaine tâche est la première de la liste ci-dessous.
 
 ## À faire, dans l'ordre
 
-1. Audit UX complet (lecture, captures d'écran hors écran, outil `scripts/audit_ux_certus.py`), ajouté au plan en
-   section 5, avec une feuille de route priorisée.
-3. Phase 2 du plan : 2a constantes corridor, 2b `_apply_fixed_log_k_axis`, 2c constantes de fenêtre, 2d clés du
+1. Phase 2 du plan : 2a constantes corridor, 2b `_apply_fixed_log_k_axis`, 2c constantes de fenêtre, 2d clés du
    smart-init, 2e classes `SmartInitPayload` en double.
-4. Phase 3 : extraction des tranches 3a, 3b, 3c, 3d.
-5. Phase 4 : tracé RMSE(d).
-6. Phase 5 : 5a, 5b, 5c, puis 5d (les 8 fonctions statiques appelées par le mandataire).
-7. Phase 6 : 6a garde-fous étendus aux autres fenêtres, 6b `_UIMixin` hors du MRO, 6c état initialisé dans `__init__`.
-8. Phase 7 : 7a, 7b (arêtes entre familles).
-9. Phase 8 : clôture. Phase 9 : couture de test périmée (Q5).
-10. Phase 10 : correctifs révélés par l'audit, un commit chacun, chacun avec un test qui échoue avant (Q17, Q13, Q11, Q12).
+2. Phase 3 : extraction des tranches 3a, 3b, 3c, 3d.
+3. Phase 4 : tracé RMSE(d).
+4. Phase 5 : 5a, 5b, 5c, puis 5d (les 8 fonctions statiques appelées par le mandataire).
+5. Phase 6 : 6a garde-fous étendus aux autres fenêtres, 6b `_UIMixin` hors du MRO, 6c état initialisé dans `__init__`.
+6. Phase 7 : 7a, 7b (arêtes entre familles).
+7. Phase 8 : clôture. Phase 9 : couture de test périmée (Q5).
+8. Phase 10 : correctifs révélés par l'audit, un commit chacun, chacun avec un test qui échoue avant (Q17, Q13, Q11, Q12).
+9. Feuille de route UX, plan section 5.5 : U1 à U5 d'abord (défauts visibles) ; dans les fichiers du groupe INDEX SPLINE,
+   seulement après la Phase 8. Hors de ce groupe, elles peuvent commencer quand on veut.

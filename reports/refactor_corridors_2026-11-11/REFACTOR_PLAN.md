@@ -847,3 +847,111 @@ repose sur une lecture du code ou une mesure.
 | Q17 | `_corridor_rmse_best_idx` reçoit `None` : voulu ? | **Non : c'est un `-1` oublié, défaut latent.** Correctif en Phase 10. | Ses lecteurs font `int(getattr(self, "_corridor_rmse_best_idx", -1))` : avec `None`, la conversion lève `TypeError`. `None` est affecté quand la courbe tracée est vide. |
 
 Il ne reste aucune question ouverte.
+
+---
+
+## 5. Audit UX — viser le premier centile
+
+Demandé le 2026-11-11. Objet : les 11 modules graphiques de la suite, pas seulement INDEX SPLINE.
+
+### 5.1 Méthode, et ce qu'elle ne voit pas
+
+| Source | Ce qu'elle donne |
+|---|---|
+| `python scripts/audit_ux_certus.py`, 1920×1080 | **0 module en défaut sur 11** : part du tracé, clavier, tables, infobulles, taille des cibles. |
+| Mesures sur l'arbre de widgets, 1440×900, un processus par module | libellés et en-têtes tronqués, textes en double, emojis, langue, tailles de police, temps de construction. |
+| 14 captures hors écran (11 en clair, 3 en sombre), 1440×900 | hiérarchie, densité, cohérence visuelle. Non versionnées. |
+| Balayages du code de `certus/ui` | symboles perdus, titres, dialogues, raccourcis. |
+
+**Limites, à garder en tête.** Le rendu est hors écran : sur les captures, deux cartes paraissaient vides (STRAT, METAL)
+alors que l'arbre de widgets les montre peuplées — artefact de capture. Aucun constat ci-dessous ne repose donc sur une
+capture seule ; ceux qui en dépendent sont marqués « à confirmer à l'écran ». Non couverts : un parcours complet avec des
+données réelles, les dialogues secondaires, la réactivité pendant un calcul, un écran HiDPI réel, un lecteur d'écran, et
+tout essai avec de vrais utilisateurs. « Premier centile » ne se prouve pas sans eux.
+
+### 5.2 Ce qui est déjà au niveau
+
+- Le socle ergonomique est mesuré et tenu par une centaine de tests `tests/ui/test_ux_*` et un cliquet.
+- Toutes les fenêtres se construisent en moins d'une seconde (de 187 ms à 911 ms).
+- Thème sombre complet ; visite guidée au premier lancement ; bandeau d'indicateurs en tête de chaque module ; palette
+  de commandes ; confirmation avant de fermer pendant un calcul ; états vides avec appel à l'action dans RE.
+
+### 5.3 Constats
+
+**A — Défauts visibles, peu risqués à corriger**
+
+| # | Constat | Preuve | Modules |
+|---|---|---|---|
+| A1 | **Des symboles perdus s'affichent « ? ».** Huit chaînes : `interval ? [..]`, `Deltad code ? [..]`, `? best d*`, `manual .. ? [..]`, `? QWOT`, `(or ? if monotonicity active)`, et l'infobulle `Demi-fen?tre locale`. Un nettoyage d'encodage a retiré les caractères non ASCII. | balayage du code | INDEX SPLINE, base commune |
+| A2 | **Le même nettoyage a ôté les tirets des titres** : `"CERTUS  Reverse Engineering"`, `"CERTUS  Index Spline Optimization"` (double espace). | balayage du code | RE, INDEX SPLINE |
+| A3 | **Titres de fenêtre sans règle** : vide pour SUBSTRATE INDEX ; sans nom de module pour METAL SINGLE ; `CERTUS_RE  CERTUS  Reverse Engineering` (le nom deux fois, un tiret bas) ; la version dans un seul. | mesure | 6 sur 11 |
+| A4 | **16 libellés tronqués à 1440×900.** INDEX SPLINE : « Nominal thickness (nm): » demande 138 px et en a 84 ; « Substrate (n) & layer thickness » 187 pour 113. « Copy Logs » déborde dans 5 modules. En-têtes de table coupés : « λ min (nm) », « λ max (nm) » (DESIGN), « n@lambda₀ » (RE), « Mat. » (FIELD). | mesure | 8 sur 11 |
+| A5 | **« Zoom 100% » deux fois dans la barre d'état** de DESIGN, STRAT et RE ; dans INDEX SPLINE, un « Zoom 100% » est placé sous la barre de menus, qui le recouvre. | mesure | 4 |
+| A6 | **Deux toasts identiques au démarrage de DESIGN** (« Evaluation OK. RMSE: 0.368035 »), posés sur « Add Target » et « Remove ». | mesure (deux boutons de fermeture) et capture | DESIGN |
+| A7 | **Conflit de raccourci journalisé au démarrage** : `Ctrl+S` demandé pour « save » alors qu'il est déjà pris. | journal | DESIGN |
+| A8 | **Deux langues.** Infobulles en français dans une interface anglaise : « Mode d'exécution du solveur : … » (STRAT), « Amplitude DeltaRMSE (Profilage Robuste) », « Demi-fen?tre » (INDEX SPLINE). | mesure | STRAT, INDEX SPLINE |
+| A9 | **Cinq dialogues d'erreur montrent le texte brut de l'exception.** | balayage du code | suite |
+| A10 | Le mot du logo est illisible en thème sombre ; le bouton de thème n'a pas de glyphe dans 5 modules. | capture seule : **à confirmer à l'écran** | — |
+
+**B — Incohérences de la suite**
+
+| # | Constat | Preuve |
+|---|---|---|
+| B1 | **Trois façons de montrer le déroulé** : pastilles numérotées (INDEX SPLINE), ligne à flèches (DESIGN, RE, METAL), phrase à points médians (STRAT). | captures |
+| B2 | **Le même geste, quatre vocabulaires** : « RUN FULL WORKFLOW » / « STOP Calculation » (STRAT), « Run » / « Halt » (METAL), « Run RE » (RE), « Run » (INDEX SPLINE). Trois casses : capitales, titre, phrase. | mesure |
+| B3 | **FIELD parle un autre langage visuel** : onglets encadrés, boutons marine, champs d'aspect natif, boutons carrés dans la visite guidée. | capture |
+| B4 | **Le bleu « action principale » est donné à des actions secondaires** : « Show Details » (STRAT), « Logs » (DESIGN), « Scientific Documentation » (HUB), « Detach ». L'œil ne trouve pas le geste suivant. | captures |
+| B5 | « Clear / Reset » est brun, hors palette, en haut et pleine largeur dans FIELD, en bas ailleurs. | captures |
+| B6 | **Les icônes sont des emojis** (42 textes, les 9 tuiles du HUB) : rendu qui dépend du système, styles hétérogènes ; METAL SINGLE et METAL BILAYER ont la même. Compteurs de barre d'état sans libellé : « ♟ 0 \| 🎲 0 \| 🌈 0 », et « 0 \| 0 \| 0 » dans METAL. | mesure |
+| B7 | **Six à sept tailles de police par fenêtre** (de 8 à 14 pt, plus les héritées) : pas d'échelle typographique. | mesure |
+| B8 | Noms d'en-tête sans règle : « STRAT », « RE », « INDEX-SPLINE », « CERTUS-METAL-SINGLE ». | captures |
+| B9 | Neuf onglets dans INDEX SPLINE et dans DESIGN, dont un nommé « CERTUS », et trois « Data ». | mesure |
+| B10 | Barres d'outils des tracés en texte seul, répétées sur chaque graphe ; « Pub copy » est du jargon. | capture |
+
+**C — Écart au premier centile**
+
+| # | Constat | Preuve |
+|---|---|---|
+| C1 | Tracés vides aux axes 0 à 1 au lieu d'un état vide qui dit quoi faire (INDEX SPLINE, FIELD), alors que RE a de vrais états vides. | captures |
+| C2 | Espace perdu au démarrage : la zone de synthèse est vide sous le bandeau (DESIGN, RE, METAL) ; l'accueil de STRAT est occupé par des slogans plutôt que par des actions (exemple, récents, reprise). | captures |
+| C3 | HUB : près de la moitié de l'écran vide, pas de reprise de session, une liste sans libellé. | capture |
+| C4 | **175 boîtes de dialogue modales** (22 critiques, 78 avertissements, 75 informations) pour 88 toasts : l'information interrompt. | balayage du code |
+| C5 | Aide contextuelle : aucun texte de barre d'état ni « Qu'est-ce que c'est ? » ; tout passe par l'infobulle et F1. | balayage du code |
+| C6 | Densité : DESIGN montre 89 contrôles à l'ouverture, INDEX SPLINE 49. | mesure |
+| C7 | Pas de reprise d'un calcul ou d'une session après une coupure (à auditer : c'est la demande de reprise, côté produit). | non mesuré |
+
+### 5.4 Position par dimension (jugement, pas mesure)
+
+| Dimension | Aujourd'hui | Ce qui manque pour le premier centile |
+|---|---|---|
+| Performance perçue | forte | la tenir pendant un calcul |
+| Retour d'état, prévention d'erreur | forte | moins de modales, erreurs qui disent quoi faire |
+| Accessibilité | bonne, testée | un essai avec lecteur d'écran |
+| Efficacité experte | bonne | la palette comme chemin principal, raccourcis sans conflit |
+| Premier usage | correcte | états vides et accueils orientés action |
+| Finition visuelle | inégale | icônes, typographie, rien de tronqué, symboles restaurés |
+| Rédaction | inégale | une langue, un vocabulaire, pas de slogans |
+| **Cohérence de la suite** | **faible** | un seul système pour onze modules : c'est le premier écart |
+
+### 5.5 Feuille de route UX
+
+Chaque étape est un commit ou une série courte, avec un test qui échoue avant et qui devient un cliquet. Les étapes U1 à
+U5 corrigent des défauts visibles à faible risque : elles passent en premier. Dans les fichiers du groupe INDEX SPLINE,
+elles viennent **après** la clôture du refactoring (Phase 8) — plusieurs chaînes sont dans des méthodes que la Phase 4
+déplace à l'identique — et chacune inscrit ses fonctions dans `changed_code` d'un manifeste.
+
+| # | Étape | Constats | Test cliquet à ajouter |
+|---|---|---|---|
+| U1 | Texte sans perte : restaurer les symboles et les tirets, une seule langue | A1, A2, A8 | aucune chaîne visible avec « ? » entre deux lettres ou double espace ; aucune infobulle en français, sur les 11 modules |
+| U2 | Un format de titre et de nom pour les 11 fenêtres | A3, B8 | titre non vide, au format unique |
+| U3 | Rien de tronqué à 1366×768 ni à 1440×900 | A4 | 0 libellé et 0 en-tête tronqué, mesuré par l'outil d'audit |
+| U4 | Une barre d'état commune : un seul zoom, des compteurs libellés | A5, B6 | aucun texte d'état en double ; aucun compteur sans nom |
+| U5 | Toasts dédoublonnés, raccourcis sans conflit | A6, A7 | deux toasts identiques n'en font qu'un ; aucun avertissement de raccourci au démarrage |
+| U6 | Un système d'actions : un vocabulaire (Run, Stop, Reset), une seule action principale par écran, le style destructif des jetons | B2, B4, B5 | vocabulaire et nombre d'actions principales mesurés |
+| U7 | FIELD rejoint le système ; un seul composant de déroulé | B1, B3 | — |
+| U8 | Des icônes vectorielles à la place des emojis | B6 | aucun emoji dans un libellé |
+| U9 | Une échelle typographique à quatre tailles | B7 | nombre de tailles par fenêtre |
+| U10 | États vides actionnables partout ; accueils de STRAT et du HUB orientés action | C1, C2, C3 | chaque tracé vide dit quoi faire |
+| U11 | Messages : l'information en toast, la modale pour les décisions, des erreurs qui disent la cause et le geste | A9, C4 | aucun texte d'exception brut dans un dialogue |
+| U12 | Reprise d'une session et d'un calcul après coupure — à spécifier : elle touche au calcul | C7 | — |
+| U13 | Ce que cet audit ne pouvait pas faire : écran réel et HiDPI, thème sombre, lecteur d'écran, cinq utilisateurs sur trois tâches | A10 | — |

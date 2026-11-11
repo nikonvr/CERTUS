@@ -1,0 +1,7 @@
+{
+  "phase": "10a - an RMSE(d) curve with no point left writes -1, not None, in _corridor_rmse_best_idx (Q17); the state table and the state protocol declare an int.",
+  "changed_code": [
+    "certus.ui.certus_index_spline_corridor_rmse_plot:_CorridorRmsePlotMixin._plot_rmse_data_scatter"
+  ],
+  "note": "changed_code: one constant of one statement, None -> -1, on the branch taken when the plotted curve is empty. Every reader does int(getattr(self, '_corridor_rmse_best_idx', -1)) and raised TypeError on None; tests/unit/test_an_empty_rmse_curve_leaves_no_minimum_index.py fails on the code before (8 failed)."
+}

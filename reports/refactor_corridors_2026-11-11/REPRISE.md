@@ -5,9 +5,10 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 
 ## Où est le travail
 
-- Branche `claude/reprise-certus1111-926596`, dans le worktree `.claude/worktrees/reprise-certus1111-926596`, depuis la
-  reprise du 2026-11-11 au soir : elle prolonge `claude/certus-refactor-audit-6cd1fc` (avance rapide depuis `bea41352`),
-  dont le worktree reste arrêté à `bea41352`.
+- Branche `claude/certus-1111-reprise-60e136`, dans le worktree `.claude/worktrees/certus-1111-reprise-60e136`, depuis
+  la reprise du 2026-11-11 à 23 h : elle prolonge `claude/reprise-certus1111-926596` (avance rapide depuis `8088dc4c`,
+  fin de la Phase 9), qui prolongeait `claude/certus-refactor-audit-6cd1fc` (arrêtée à `bea41352`). Les deux worktrees
+  précédents restent arrêtés à ces commits.
 - Ce dossier, `reports/refactor_corridors_2026-11-11/` : le plan, ce fichier, l'instantané de référence
   (`reference_snapshot.json`), les manifestes des phases (`manifests/`).
 - Rien n'est poussé. Pousser publie le dépôt : seulement sur ordre.
@@ -35,6 +36,8 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 - Viser une UX « top 1 % mondial » : audit UX complet, à ajouter à l'audit (plan, section 5).
 - Nuit du 2026-11-11 : poursuivre en autonomie, « autorisation sur tout ». Lu comme : trancher et commiter sans
   demander. Rien n'est poussé pour autant (dépôt public : pousser reste un ordre explicite).
+- 2026-11-11, 23 h : « tourne en mode 100 % autonome, je te donne toute autorisation ». Même lecture : tout enchaîner
+  et commiter, ne rien pousser.
 
 ## Fait
 
@@ -73,6 +76,7 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | **Phase 8, clôture** : registre de dette exact, garde finale `GUARD=OK` avec les 17 manifestes, relevé des 56 imports sans lecteur | `9c57ffd8` |
 | **Validation complète des phases 6 et 8** : rien de plus que l'état connu (plan, Phase 6) | sur `9c57ffd8` |
 | **Phase 9** : les deux tests de `test_mwir_gui_flow.py` remplacent `GenericWorker` là où la méthode le lit ; preuve faite que le vrai était construit | commit suivant `d9db99a7` |
+| **Phase 10a** : une courbe RMSE(d) vide écrit `-1`, plus `None`, dans `_corridor_rmse_best_idx` (Q17) ; test rouge avant (`8 failed`) | commit « phase 10a » |
 
 ## En cours
 
@@ -80,8 +84,8 @@ Rien : tout ce qui est fait est commité. La prochaine tâche est la première d
 
 ## À faire, dans l'ordre
 
-1. Phase 10 : correctifs révélés par l'audit, un commit chacun, chacun avec un test qui échoue avant : 10a (Q17), 10b
-   (Q13), 10c (Q11), 10d (Q12). Puis validation complète.
+1. Phase 10, suite : 10b (Q13), 10c (Q11), 10d (Q12), un commit chacun, chacun avec un test qui échoue avant. Puis
+   validation complète.
 2. Phase 7, après la Phase 10 (Q21) : 7a, puis 7b sous le protocole de noyau (oracle avant et après,
    `python scripts/c1_diff.py HEAD`). Puis validation complète.
 3. Feuille de route UX, plan section 5.5 : U1 à U5 d'abord (défauts visibles).

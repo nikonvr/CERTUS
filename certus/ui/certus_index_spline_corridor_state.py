@@ -70,7 +70,7 @@ CORRIDOR_STATE: dict[str, CorridorStateEntry] = {
     # The RMSE(d) curve and what was read on it.
     "_corridor_rmse_d_vals": CorridorStateEntry("np.ndarray", _no_points, _RMSE_TAB, True, ("[]",)),
     "_corridor_rmse_vals": CorridorStateEntry("np.ndarray", _no_points, _RMSE_TAB, True, ("[]",)),
-    "_corridor_rmse_best_idx": CorridorStateEntry("int | None", lambda: -1, _RMSE_TAB, True, ("-1",)),
+    "_corridor_rmse_best_idx": CorridorStateEntry("int", lambda: -1, _RMSE_TAB, True, ("-1",)),
     "_corridor_rmse_center_nm": CorridorStateEntry("float", _nan, _RMSE_TAB, True, _NAN),
     "_corridor_rmse_robust_lo": CorridorStateEntry("float", _nan, _RMSE_TAB, True, _NAN),
     "_corridor_rmse_robust_hi": CorridorStateEntry("float", _nan, _RMSE_TAB, True, _NAN),

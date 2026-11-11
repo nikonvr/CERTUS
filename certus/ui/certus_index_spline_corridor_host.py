@@ -166,7 +166,7 @@ class CorridorStateHost(Protocol):
     _corridor_k_crosshair_lo: np.ndarray | list
     _corridor_k_crosshair_nom: np.ndarray | list
     _corridor_rmse_base_snapshot: dict | None
-    _corridor_rmse_best_idx: int | None
+    _corridor_rmse_best_idx: int
     _corridor_rmse_center_nm: float
     _corridor_rmse_curvature_label: Any
     _corridor_rmse_d_vals: np.ndarray

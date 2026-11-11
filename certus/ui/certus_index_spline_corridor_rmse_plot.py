@@ -79,7 +79,7 @@ class _CorridorRmsePlotMixin:
         self._plot_the_reversal_and_fallback_points(d_vis, r_vis, status_vis, m_rev)
         bp_dir_left, bp_dir_right, bp_events = self._plot_the_breakpoint_events(src, d_plot, r_plot)
         if r_plot.size == 0 or d_plot.size == 0:
-            self._corridor_rmse_best_idx = None
+            self._corridor_rmse_best_idx = -1
             return
         i_best = int(np.argmin(r_plot))
         self._corridor_rmse_best_idx = i_best

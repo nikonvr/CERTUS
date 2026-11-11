@@ -29,6 +29,10 @@
     {
       "from": "certus.ui.certus_index_spline_eventsextras_mixin:CertusIndexSplineEventsExtrasMixin._status_iteration_metric",
       "to": "certus.ui.certus_index_spline_statics:_status_iteration_metric"
+    },
+    {
+      "from": "certus.ui.certus_index_spline_manualmesh_mixin:CertusIndexSplineManualMeshMixin._build_manual_repartition_target_sigma_knots",
+      "to": "certus.ui.certus_index_spline_statics:_build_manual_repartition_target_sigma_knots"
     }
   ],
   "changed_code": [
@@ -40,6 +44,7 @@
     "certus.ui.certus_index_spline_manualmesh_mixin:CertusIndexSplineManualMeshMixin._open_manual_extra_knots_dialog",
     "certus.ui.certus_index_spline_manualmesh_mixin:CertusIndexSplineManualMeshMixin._start_manual_sigma_insert_worker",
     "certus.ui.certus_index_spline_manualmesh_mixin:CertusIndexSplineManualMeshMixin._start_manual_sigma_repartition_worker",
+    "certus.ui.certus_index_spline_statics:_build_manual_repartition_target_sigma_knots",
     "certus.ui.certus_index_spline_statics:_format_lambda_knots_for_log",
     "certus.ui.certus_index_spline_statics:_lam_uniform_grid_nm",
     "certus.ui.certus_index_spline_statics:_manual_mesh_change_log_line",

@@ -104,3 +104,21 @@ def _status_iteration_metric(
         except (TypeError, ValueError):
             continue
     return "iters [cubic-spline-sigma-polish]", 0
+
+
+def _build_manual_repartition_target_sigma_knots(selected_lambda_knots_nm: list[float], *, mode: str) -> np.ndarray:
+    selected_lam = np.asarray(selected_lambda_knots_nm, dtype=np.float64).ravel()
+    selected_lam = selected_lam[np.isfinite(selected_lam) & (selected_lam > 0.0)]
+    if selected_lam.size < 2:
+        return np.empty(0, dtype=np.float64)
+    sigma_active = np.unique(np.sort(1.0 / np.maximum(selected_lam, 1e-30)))
+    if sigma_active.size < 2:
+        return np.empty(0, dtype=np.float64)
+    sigma_lo = float(np.min(sigma_active))
+    sigma_hi = float(np.max(sigma_active))
+    k_target = int(sigma_active.size)
+    if str(mode).strip().lower() == "log":
+        return np.exp(np.linspace(np.log(max(sigma_lo, 1e-30)), np.log(max(sigma_hi, 1e-30)), k_target)).astype(
+            np.float64
+        )
+    return np.linspace(sigma_lo, sigma_hi, k_target, dtype=np.float64)

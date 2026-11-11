@@ -16,6 +16,7 @@ from certus.spline.spline_pipeline import (
 )
 from certus.ui.certus_index_spline_common import CertusIndexSplineApp, logger
 from certus.ui.certus_index_spline_statics import (
+    _build_manual_repartition_target_sigma_knots,
     _format_lambda_knots_for_log,
     _manual_mesh_change_log_line,
     _rmse_from_result_dict,
@@ -319,7 +320,7 @@ class CertusIndexSplineManualMeshMixin:
                 self._manual_knots_dialog.set_runtime_progress(0.0, f"Starting auto repartition {mode_label}")
                 d_seed, rmse_seed = _runtime_metrics_from_result_dict(seed_current)
                 self._manual_knots_dialog.set_runtime_metrics(d_seed, rmse_seed)
-                target_sigma_knots = CertusIndexSplineApp._build_manual_repartition_target_sigma_knots(
+                target_sigma_knots = _build_manual_repartition_target_sigma_knots(
                     selected_lambda_knots_nm,
                     mode=mode,
                 )
@@ -690,23 +691,7 @@ class CertusIndexSplineManualMeshMixin:
         install_skeleton(self.tabs_main, label="Manual knots...")
         self._worker.start()
 
-    @staticmethod
-    def _build_manual_repartition_target_sigma_knots(selected_lambda_knots_nm: list[float], *, mode: str) -> np.ndarray:
-        selected_lam = np.asarray(selected_lambda_knots_nm, dtype=np.float64).ravel()
-        selected_lam = selected_lam[np.isfinite(selected_lam) & (selected_lam > 0.0)]
-        if selected_lam.size < 2:
-            return np.empty(0, dtype=np.float64)
-        sigma_active = np.unique(np.sort(1.0 / np.maximum(selected_lam, 1e-30)))
-        if sigma_active.size < 2:
-            return np.empty(0, dtype=np.float64)
-        sigma_lo = float(np.min(sigma_active))
-        sigma_hi = float(np.max(sigma_active))
-        k_target = int(sigma_active.size)
-        if str(mode).strip().lower() == "log":
-            return np.exp(np.linspace(np.log(max(sigma_lo, 1e-30)), np.log(max(sigma_hi, 1e-30)), k_target)).astype(
-                np.float64
-            )
-        return np.linspace(sigma_lo, sigma_hi, k_target, dtype=np.float64)
+    _build_manual_repartition_target_sigma_knots = staticmethod(_build_manual_repartition_target_sigma_knots)
 
     def _start_manual_sigma_repartition_worker(
         self, result: dict, selected_lambda_knots_nm: list[float], delta_ns: float, *, mode: str
@@ -717,7 +702,7 @@ class CertusIndexSplineManualMeshMixin:
         if cfg_base is None:
             return
 
-        target_sigma_knots = CertusIndexSplineApp._build_manual_repartition_target_sigma_knots(
+        target_sigma_knots = _build_manual_repartition_target_sigma_knots(
             selected_lambda_knots_nm,
             mode=mode,
         )

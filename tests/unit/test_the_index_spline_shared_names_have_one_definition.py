@@ -28,6 +28,26 @@ ONE_SOURCE = {
     "_K_PLOT_YMIN": f"{UI}corridor_common.py",
     "_K_PLOT_YMAX": f"{UI}corridor_common.py",
 }
+#: The settings keys and the defaults of the window: the spline core defines them, the interface imports them.
+WINDOW_CONSTANTS = (
+    "_QS_SPLINE_ORG",
+    "_QS_SPLINE_APP",
+    "_QS_LAST_SPECTRUM",
+    "_QS_SPECTRUM_FIT_T",
+    "_QS_SPECTRUM_FIT_TREL",
+    "_QS_SPECTRUM_FIT_R",
+    "_QS_SPECTRUM_WT",
+    "_QS_SPECTRUM_WR",
+    "_QS_SPLINE_UNCERTAINTY_DEFAULTS_REV",
+    "_QS_MAIN_SPLITTER_STATE",
+    "_QS_MAIN_SPLITTER_LAYOUT_REV",
+    "_QS_RIGHT_SPLITTER_STATE",
+    "_MAIN_SPLITTER_LAYOUT_REV",
+    "_UNCERTAINTY_DEFAULTS_REV",
+    "SIO2_DEFAULT_D_LO_NM",
+    "SIO2_DEFAULT_D_HI_NM",
+)
+ONE_SOURCE |= dict.fromkeys(WINDOW_CONSTANTS, "certus/spline/certus_index_spline_core.py")
 EXPOSED_BY = {
     "_DEFAULT_CORRIDOR_RMSE_DELTA": ("common", "settings", "corridors"),
     "_DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN": ("common", "settings", "corridors"),
@@ -36,6 +56,8 @@ EXPOSED_BY = {
     "_K_PLOT_YMIN": ("common", "corridors"),
     "_K_PLOT_YMAX": ("common", "corridors"),
 }
+EXPOSED_BY |= dict.fromkeys(WINDOW_CONSTANTS, ("common",))
+EXPOSED_BY |= dict.fromkeys(("_QS_SPLINE_ORG", "_QS_SPLINE_APP"), ("common", "smart_init"))
 #: A file that keeps a function of the shared name, allowed because the function only imports the shared one, inside its
 #: body, and calls it.
 DELEGATES = {"_apply_fixed_log_k_axis": (f"{UI}monitor_ui.py",)}

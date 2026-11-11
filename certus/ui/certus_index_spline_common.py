@@ -34,6 +34,24 @@ import pyqtgraph as pg
 from certus.core.certus_core import (
     create_module_environment,
 )
+from certus.spline.certus_index_spline_core import (
+    _MAIN_SPLITTER_LAYOUT_REV,
+    _QS_LAST_SPECTRUM,
+    _QS_MAIN_SPLITTER_LAYOUT_REV,
+    _QS_MAIN_SPLITTER_STATE,
+    _QS_RIGHT_SPLITTER_STATE,
+    _QS_SPECTRUM_FIT_R,
+    _QS_SPECTRUM_FIT_T,
+    _QS_SPECTRUM_FIT_TREL,
+    _QS_SPECTRUM_WR,
+    _QS_SPECTRUM_WT,
+    _QS_SPLINE_APP,
+    _QS_SPLINE_ORG,
+    _QS_SPLINE_UNCERTAINTY_DEFAULTS_REV,
+    _UNCERTAINTY_DEFAULTS_REV,
+    SIO2_DEFAULT_D_HI_NM,
+    SIO2_DEFAULT_D_LO_NM,
+)
 from certus.ui.certus_index_spline_corridors import (
     _CORRIDOR_K_TAB_MIN_HALF_WIDTH,
     _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN,
@@ -73,55 +91,20 @@ _SCRIPT_DIR = _env["script_dir"]
 
 logger = logging.getLogger("CERTUS_INDEX_SPLINE")
 
-_QS_SPLINE_ORG = "CERTUS"
-
-_QS_SPLINE_APP = "INDEX_SPLINE"
-
-_QS_LAST_SPECTRUM = "last_spectrum_path"
-
-_QS_SPECTRUM_FIT_T = "spectrum_fit_t"
-
-_QS_SPECTRUM_FIT_TREL = "spectrum_fit_trel"
-
-_QS_SPECTRUM_FIT_R = "spectrum_fit_r"
-
-_QS_SPECTRUM_WT = "spectrum_weight_t"
-
-_QS_SPECTRUM_WR = "spectrum_weight_r"
-
 _QS_NK_PROFILE_INTERP = "nk_profile_interp"
 
 _QS_SPLINE_SIMPLE_AUTO_UNCERTAINTY = "spline_simple_auto_uncertainty"
-
-_QS_SPLINE_UNCERTAINTY_DEFAULTS_REV = "spline_uncertainty_defaults_rev"
 
 _QS_SMART_INIT_DEEP = "smart_init_deep_pglobal_after_manual"
 
 _QS_SMART_INIT_TWO_PHASE = "smart_init_deep_two_phase_enabled"
 
-_QS_MAIN_SPLITTER_STATE = "main_splitter_state"
-
-_QS_MAIN_SPLITTER_LAYOUT_REV = "main_splitter_layout_rev"
-
-_QS_RIGHT_SPLITTER_STATE = "right_splitter_state"
-
-_MAIN_SPLITTER_LAYOUT_REV: int = 4
-
-# Increment to reapply corridor / bootstrap / SiO2 defaults once on existing workstations.
-
-_UNCERTAINTY_DEFAULTS_REV: int = 12
-
-
-
-
+# _UNCERTAINTY_DEFAULTS_REV (spline core): increment it to reapply corridor / bootstrap / SiO2 defaults once on existing
+# workstations.
 
 # INDEX-SPLINE defaults for thin SiO2 layers (~1.6-1.8 ?m) on sapphire, TSIO2-type spectra (UV-IR, T/Tsub).
 
 # Aligned on a validated session (Fast profile, mesh K=14 if lambda_max > 4000 nm, RMSE window 250-5000 nm).
-
-SIO2_DEFAULT_D_LO_NM: float = 1600.0
-
-SIO2_DEFAULT_D_HI_NM: float = 1800.0
 
 SIO2_DEFAULT_NK_PROFILE_INTERP: str = "smooth"
 

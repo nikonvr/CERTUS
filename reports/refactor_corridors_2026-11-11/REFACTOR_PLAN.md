@@ -648,7 +648,11 @@ partout ailleurs c'est le même objet, importé. Chaque cas ajouté doit échoue
   (`test_apply_fixed_log_k_axis_forces_requested_bounds`), puis
   `tests/unit/test_the_corridors_split_keeps_every_name_and_the_layering_where_it_was.py`, puis LOT.
 
-- [ ] **2c — Constantes de fenêtre (Q4 : source = cœur spline)** (valeurs égales, aucun comportement changé)
+- [x] **2c — Constantes de fenêtre (Q4 : source = cœur spline)** (valeurs égales, aucun comportement changé) — faite le
+  2026-11-11 : les cas nouveaux échouaient avant (`18 failed, 27 passed` : les 16 définitions, et l'identité des deux
+  flottants `SIO2_DEFAULT_D_*`) et passent (`45 passed`) ; ruff PASS ; lot de contrôle `247 passed` ; garde avec
+  `manifests/phase_2c.json` : `problems=0`, `GUARD=OK`. Le commentaire de `_UNCERTAINTY_DEFAULTS_REV` reste dans
+  `common`, où il renvoie au cœur.
   Source, **non modifiée** : `certus/spline/certus_index_spline_core.py:43-45, 2095-2107` (16 noms). Ce fichier est au
   registre à 2 108 lignes (§1.6) : il ne reçoit rien.
   Modifier :

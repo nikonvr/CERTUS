@@ -38,6 +38,8 @@ from PyQt6.QtWidgets import (
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.spline.certus_index_spline_core import (
+    _QS_SPLINE_APP,
+    _QS_SPLINE_ORG,
     SPLINE_PWL_K_NODES,
     rmse_at_spline_stage_x0_init,
 )
@@ -65,8 +67,6 @@ from certus.utils.certus_ux import Typography
 
 logger = logging.getLogger("CERTUS_INDEX_SPLINE.smart_init")
 
-_QS_SPLINE_ORG = "CERTUS"
-_QS_SPLINE_APP = "INDEX_SPLINE"
 _QS_SMART_INIT_DEEP = "smart_init_deep_pglobal_after_manual"
 _QS_SMART_INIT_TWO_PHASE = "smart_init_deep_two_phase_enabled"
 

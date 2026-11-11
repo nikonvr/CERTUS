@@ -50,6 +50,11 @@ from certus.spline.certus_index_spline_core import (
     normalize_spectrum_dataframe,
 )
 from certus.spline.spline_pipeline import worker_run_corridor_profile_after_nl_choice
+from certus.ui.certus_index_spline_corridor_common import (
+    _CORRIDOR_K_TAB_MIN_HALF_WIDTH,
+    _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN,
+    _DEFAULT_CORRIDOR_RMSE_DELTA,
+)
 from certus.ui.certus_ui import (
     GenericWorker,
     safe_ui_action,
@@ -58,10 +63,6 @@ from certus.utils.certus_data import read_data_file_robust
 from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
 from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
 from certus.utils.certus_qsettings import certus_settings
-
-_DEFAULT_CORRIDOR_RMSE_DELTA: float = 2.5e-4
-_DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN: float = 2.5e-5
-_CORRIDOR_K_TAB_MIN_HALF_WIDTH: float = 1e-4
 
 logger = logging.getLogger("CERTUS_INDEX_SPLINE")
 

@@ -490,7 +490,10 @@ hors périmètre ; une validation est bonne quand elle ne montre rien de plus.
 `tests/unit/test_project_imports_resolve.py`, `tests/unit/test_the_architecture_debt_only_shrinks.py`,
 `tests/unit/test_a_module_that_was_in_an_import_cycle_imports_first_and_alone.py`,
 `tests/unit/test_mwir_gui_flow.py`, `tests/unit/test_post_opt_option_unlock.py`,
-`tests/integration/test_suite_ui_instantiation.py`.
+`tests/integration/test_suite_ui_instantiation.py`, `tests/unit/test_certus_is_written_in_english.py`,
+`tests/unit/test_tests_destroy_the_windows_they_build.py` (le garde-fou que le lot d'origine ne couvrait pas et que la
+validation de Phase 1 a fait tomber), et les fichiers de test créés par les phases déjà faites. La validation complète
+se lance à la fin de chaque phase entière, pas de chaque sous-phase.
 
 ### [x] Phase 0 — Filet (aucun code de production modifié) — faite le 2026-11-11
 
@@ -597,7 +600,10 @@ Test nouveau, créé en 2a, complété en 2b, 2c puis 2d : `tests/unit/test_the_
 Par analyse syntaxique, chaque nom listé n'est défini ou affecté au niveau module que dans un seul fichier de `certus/` ;
 partout ailleurs c'est le même objet, importé. Chaque cas ajouté doit échouer sur le code d'avant sa sous-phase.
 
-- [ ] **2a — Constantes corridor** (valeurs égales, aucun comportement changé)
+- [x] **2a — Constantes corridor** (valeurs égales, aucun comportement changé) — faite le 2026-11-11 : le test nouveau
+  échouait avant (`6 failed`) et passe ; ruff PASS sur le dépôt ; lot de contrôle `191 passed` ; garde avec
+  `manifests/phase_2a.json` : `problems=0`, `GUARD=OK`. Les deux commentaires qui expliquaient les valeurs ont suivi
+  les définitions dans `corridor_common`.
   Créer : le test ci-dessus, avec le cas des trois constantes.
   Modifier : `certus/ui/certus_index_spline_common.py` (lignes 110-115) et `certus/ui/certus_index_spline_settings.py`
   (lignes 62-64) : remplacer la définition de `_DEFAULT_CORRIDOR_RMSE_DELTA`, `_DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN`,

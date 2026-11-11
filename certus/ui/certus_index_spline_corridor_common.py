@@ -10,12 +10,14 @@ import numpy as np
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
+# d corridor (abs / adaptive): defaults tightened ~4x vs legacy (1e-3 / 1e-4).
 _DEFAULT_CORRIDOR_RMSE_DELTA: float = 2.5e-4
 
 
 _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN: float = 2.5e-5
 
 
+# Minimum half-width (linear k) applied to the Corridors n/k tab display (consistent envelope + tooltip).
 _CORRIDOR_K_TAB_MIN_HALF_WIDTH: float = 1e-4
 
 

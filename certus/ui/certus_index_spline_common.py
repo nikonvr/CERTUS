@@ -35,6 +35,9 @@ from certus.core.certus_core import (
     create_module_environment,
 )
 from certus.ui.certus_index_spline_corridors import (
+    _CORRIDOR_K_TAB_MIN_HALF_WIDTH,
+    _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN,
+    _DEFAULT_CORRIDOR_RMSE_DELTA,
     _CorridorGenMixin,
     _CorridorWorkerMixin,
     _DataMixin,
@@ -105,14 +108,9 @@ _MAIN_SPLITTER_LAYOUT_REV: int = 4
 
 _UNCERTAINTY_DEFAULTS_REV: int = 12
 
-# d corridor (abs / adaptive): defaults tightened ~4x vs legacy (1e-3 / 1e-4).
 
-_DEFAULT_CORRIDOR_RMSE_DELTA: float = 2.5e-4
 
-_DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN: float = 2.5e-5
 
-# Minimum half-width (linear k) applied to the Corridors n/k tab display (consistent envelope + tooltip).
-_CORRIDOR_K_TAB_MIN_HALF_WIDTH: float = 1e-4
 
 # INDEX-SPLINE defaults for thin SiO2 layers (~1.6-1.8 ?m) on sapphire, TSIO2-type spectra (UV-IR, T/Tsub).
 

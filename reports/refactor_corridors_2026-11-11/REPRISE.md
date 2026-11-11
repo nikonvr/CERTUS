@@ -41,7 +41,8 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | Correctif échappement invalide, chaîne brute dans un script de campagne | `15d518aa` |
 | **Phase 0** : `scripts/refactor_guard.py`, ses 13 tests, instantané de référence, plan déplacé ici | `211d561b` |
 | **Phase 1** : état déclaratif, contrats, 52 tests, manifeste ; toutes les questions ouvertes tranchées (plan, section 4) | `0e3d4b57` |
-| **Audit UX** complet des 11 modules : plan, section 5 (constats A, B, C et feuille de route U1 à U13) | commit suivant `0e3d4b57` |
+| **Audit UX** complet des 11 modules : plan, section 5 (constats A, B, C et feuille de route U1 à U13) | `74de941e` |
+| **Phase 2a** : les trois constantes corridor n'ont plus qu'une définition | commit suivant `74de941e` |
 
 ## En cours
 
@@ -49,7 +50,7 @@ Rien : tout ce qui est fait est commité. La prochaine tâche est la première d
 
 ## À faire, dans l'ordre
 
-1. Phase 2 du plan : 2a constantes corridor, 2b `_apply_fixed_log_k_axis`, 2c constantes de fenêtre, 2d clés du
+1. Phase 2 du plan, suite : 2b `_apply_fixed_log_k_axis`, 2c constantes de fenêtre, 2d clés du
    smart-init, 2e classes `SmartInitPayload` en double.
 2. Phase 3 : extraction des tranches 3a, 3b, 3c, 3d.
 3. Phase 4 : tracé RMSE(d).

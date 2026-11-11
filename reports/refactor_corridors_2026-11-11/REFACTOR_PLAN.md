@@ -749,7 +749,12 @@ régénérer `tests/architecture_debt.json` dans le même commit (I12).
   Q5 : `tests/unit/test_mwir_gui_flow.py` n'est pas retouché ici. `GenericWorker` reste importé dans `corridorui_mixin`
   (la couture `:399, 435` doit y trouver ce nom) ; `_start_deferred_corridor_worker`, une fois déplacée, le lit par la
   passerelle, comme elle le lisait dans `settings` : ce que ces deux tests construisent ne change pas.
-- [ ] **3b — `_CorridorRmseViewMixin`**
+- [x] **3b — `_CorridorRmseViewMixin`** — faite le 2026-11-11 : 9 méthodes déplacées, texte inchangé ; garde avec
+  `manifests/phase_3b.json` : `problems=0`, `GUARD=OK` ; ruff PASS ; lot de contrôle, `test_rmse_tab_summary.py` et
+  `test_rmse_scatter_pieces.py` `366 passed`. La passerelle prête deux noms de plus (`CertusCard`,
+  `wrap_scientific_plot_with_toolbar`), toujours en 3 instructions ; plafond de `rendering.py` 1952 → 1913 ; la table
+  d'état suit (`_corridor_rmse_grid_live_t0` naît dans la tranche) ; contrats : `_CorridorRmseViewMixin` 15 noms,
+  `_CorridorControlMixin` 30 → 23, `CertusIndexSplineCorridorUIMixin` 32 → 23 ; protocoles : 1 nom ajouté, 3 retirés.
   Créer : `certus/ui/certus_index_spline_corridor_rmse_view.py`.
   Modifier : `certus/ui/certus_index_spline_corridorui_mixin.py`, `certus/ui/certus_index_spline_settings.py`,
   `certus/ui/certus_index_spline_eventsextras_mixin.py`, `certus/ui/certus_index_spline_rendering.py`,

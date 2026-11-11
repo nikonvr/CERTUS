@@ -599,34 +599,6 @@ class CertusIndexSplineEventsExtrasMixin:
 
         return panel
 
-    @staticmethod
-    def _robust_interval_from_local_quadratic(
-        d_s: np.ndarray,
-        r_s: np.ndarray,
-        i_best: int,
-        delta_rmse: float,
-        half_window_pts: int,
-    ) -> tuple[bool, float, float, float, float]:
-
-        fit = _fit_local_quadratic_rmse_profile(
-            d_s,
-            r_s,
-            i_best,
-            half_window_pts,
-            delta_rmse,
-        )
-
-        if not bool(fit.get("ok", False)):
-            return False, float("nan"), float("nan"), float("nan"), float("nan")
-
-        return (
-            True,
-            float(fit.get("d_lo", float("nan"))),
-            float(fit.get("d_hi", float("nan"))),
-            float(fit.get("slope_at_anchor", float("nan"))),
-            float(fit.get("curvature", float("nan"))),
-        )
-
     def _detach_current_plot(self) -> None:
 
         w = self.tabs_main.currentWidget()

@@ -73,7 +73,7 @@
     "certus/spline/certus_corridor_orchestrator_utils.py": 1791,
     "certus/spline/certus_index_spline_core.py": 2108,
     "certus/spline/spline_workers.py": 1997,
-    "certus/ui/certus_index_spline_rendering.py": 1952,
+    "certus/ui/certus_index_spline_rendering.py": 1913,
     "certus/ui/certus_metal_base_app.py": 1809,
     "certus/ui/certus_metal_single_gui.py": 1502,
     "certus/ui/certus_re_excel_mixin.py": 2223,

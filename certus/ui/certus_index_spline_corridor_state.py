@@ -48,7 +48,7 @@ def _empty_list() -> list:
 
 
 _INIT = "ui:CertusIndexSplineApp.__init__"
-_RMSE_TAB = "corridorui_mixin:CertusIndexSplineCorridorUIMixin._build_tab_corridor_rmse"
+_RMSE_TAB = "corridor_rmse_view:_CorridorRmseViewMixin._build_tab_corridor_rmse"
 _PRESET = "settings:_CorridorControlMixin._apply_corridor_preset_auto_robust"
 _K_TAB = "corridor_tab:_CorridorTabMixin._plot_corridor_tab"
 _RMSE_PLOT = "rendering:_PlotMixin._plot_corridor_rmse_tab"

@@ -57,6 +57,7 @@ class IndexSplineRunHost(Protocol):
     _best_live_result: dict | None
     _last_result: dict | None
     _last_run_cfg: SplineOptConfig | None
+    _last_worker_result: dict | None
     _manual_knots_dialog: Any
     _stop_event: Event
     df: pd.DataFrame | None
@@ -67,7 +68,6 @@ class IndexSplineRunHost(Protocol):
     def _apply_cell_style(self, item: QTableWidgetItem, val: float) -> None: ...
     def _apply_corridor_payload_from_interval(self, *, source: dict[str, Any], display: dict[str, Any], d_lo: float, d_hi: float, status_prefix: str) -> bool: ...
     def _apply_corridor_preset_auto_robust(self) -> None: ...
-    def _build_corridor_labels(self, ctx_lay: QVBoxLayout) -> None: ...
     def _build_corridor_tab_generate(self, lay_generate: QVBoxLayout) -> None: ...
     def _build_corridor_tab_rmse_controls(self, lay_rmse: QVBoxLayout) -> None: ...
     def _build_opt_config(self, *, notify: bool = ...) -> SplineOptConfig | None: ...
@@ -107,7 +107,6 @@ class IndexSplineRunHost(Protocol):
     def _on_corridor_manual_slider_changed(self, _value: int) -> None: ...
     def _on_corridor_rmse_grid_live_update(self, payload: object) -> None: ...
     def _on_corridor_rmse_lock_scale_toggled(self, _checked: bool) -> None: ...
-    def _on_corridor_rmse_plot_clicked(self, ev: Any) -> None: ...
     def _on_progress(self, v: int, msg: str) -> None: ...
     def _on_worker_done(self, result: object) -> None: ...
     def _on_worker_err(self, msg: str) -> None: ...
@@ -211,7 +210,6 @@ class CorridorWidgetsHost(Protocol):
     lbl_corr_rmse_delta: QLabel
     lbl_corridor_rmse_grid_progress: QLabel
     lbl_corridor_rmse_robust_compact: QLabel
-    lbl_corridor_rmse_state: QLabel
     lbl_corridor_rmse_summary: QLabel
     lbl_corridors_run_state: QLabel
     lbl_corridors_state_adv: QLabel
@@ -241,15 +239,13 @@ class CorridorHost(IndexSplineRunHost, IndexSplineViewHost, CorridorStateHost, C
 CONTRACTS: dict[str, tuple[str, ...]] = {
     "_CorridorControlMixin": (
         "_apply_corridor_payload_from_interval", "_corridor_manual_half_width_nm",
-        "_corridor_manual_max_half_width_nm", "_corridor_profile_source_result", "_corridor_rmse_best_idx",
-        "_corridor_rmse_center_nm", "_corridor_rmse_d_vals", "_corridor_rmse_manual_active",
+        "_corridor_manual_max_half_width_nm", "_corridor_rmse_center_nm", "_corridor_rmse_manual_active",
         "_corridor_rmse_manual_hi", "_corridor_rmse_manual_lo", "_corridor_rmse_manual_slider_scale",
         "_corridor_rmse_robust_hi", "_corridor_rmse_robust_lo", "_corridor_rmse_robust_ok",
-        "_corridor_rmse_vals", "_refresh_corridor_rmse_robust_view", "_reset_corridor_manual_controls",
-        "_set_corridor_manual_bounds_labels", "_set_corridor_manual_interval_preview",
-        "btn_corridor_manual_robust", "btn_generate_manual_corridor", "cb_corr_mode",
-        "chk_corr_scientific_nominal", "lbl_corridor_rmse_summary", "logger", "plot_corridor_rmse_d",
-        "sl_corridor_manual_half", "sp_corr_rmse_delta", "sp_corridor_rmse_delta", "sp_corridor_rmse_win",
+        "_reset_corridor_manual_controls", "_set_corridor_manual_bounds_labels",
+        "_set_corridor_manual_interval_preview", "btn_corridor_manual_robust", "btn_generate_manual_corridor",
+        "cb_corr_mode", "chk_corr_scientific_nominal", "logger", "sl_corridor_manual_half",
+        "sp_corr_rmse_delta", "sp_corridor_rmse_delta", "sp_corridor_rmse_win",
     ),
     "_CorridorGenMixin": (
         "_apply_cell_style", "_corridor_manual_half_width_nm", "_corridor_profile_source_result",
@@ -293,16 +289,13 @@ CONTRACTS: dict[str, tuple[str, ...]] = {
         "plot_n_corridor", "tabs_main",
     ),
     "CertusIndexSplineCorridorUIMixin": (
-        "_add_context_page", "_apply_corridor_preset_auto_robust", "_build_corridor_labels",
-        "_build_corridor_tab_generate", "_build_corridor_tab_rmse_controls", "_cleanup_thread",
-        "_corridor_k_crosshair_hi", "_corridor_k_crosshair_lam", "_corridor_k_crosshair_lo",
-        "_corridor_k_crosshair_nom", "_corridor_manual_max_half_width_nm", "_corridor_rmse_best_idx",
-        "_corridor_rmse_d_vals", "_corridor_rmse_manual_slider_scale", "_corridor_rmse_robust_hi",
-        "_corridor_rmse_robust_lo", "_corridor_rmse_robust_ok", "_create_empty_context_widget",
-        "_ensure_complete_manifest_for_secondary_export", "_last_run_cfg", "_on_corridor_manual_slider_changed",
-        "_on_corridor_rmse_plot_clicked", "_on_worker_done", "_on_worker_err", "_plot_corridor_rmse_tab",
-        "btn_run", "btn_stop", "lbl_corridor_rmse_state", "logger", "sl_corridor_manual_half",
-        "sp_corridor_rmse_delta", "sp_corridor_rmse_win",
+        "_add_context_page", "_cleanup_thread", "_corridor_k_crosshair_hi", "_corridor_k_crosshair_lam",
+        "_corridor_k_crosshair_lo", "_corridor_k_crosshair_nom", "_corridor_manual_max_half_width_nm",
+        "_corridor_rmse_best_idx", "_corridor_rmse_d_vals", "_corridor_rmse_manual_slider_scale",
+        "_corridor_rmse_robust_hi", "_corridor_rmse_robust_lo", "_corridor_rmse_robust_ok",
+        "_create_empty_context_widget", "_ensure_complete_manifest_for_secondary_export", "_last_run_cfg",
+        "_on_corridor_manual_slider_changed", "_on_worker_done", "_on_worker_err", "btn_run", "btn_stop",
+        "logger", "sl_corridor_manual_half",
     ),
     "_CorridorRunMixin": (
         "_build_opt_config", "_cfg_with_result_substrate", "_cleanup_thread", "_corridor_auto_refine_plan",
@@ -322,5 +315,12 @@ CONTRACTS: dict[str, tuple[str, ...]] = {
         "plot_corridor_rmse_d", "progress_widget", "sp_corr_alpha", "sp_corr_rmse_delta",
         "sp_corridor_breakpoint_lookback", "sp_corridor_grid_d_step_nm", "sp_corridor_grid_n_points",
         "sp_corridor_partial_delta_nm",
+    ),
+    "_CorridorRmseViewMixin": (
+        "_add_context_page", "_apply_corridor_preset_auto_robust", "_build_corridor_tab_generate",
+        "_build_corridor_tab_rmse_controls", "_corridor_rmse_best_idx", "_corridor_rmse_d_vals",
+        "_corridor_rmse_robust_hi", "_corridor_rmse_robust_lo", "_corridor_rmse_robust_ok",
+        "_corridor_rmse_vals", "_last_result", "_last_worker_result", "_plot_corridor_rmse_tab",
+        "sp_corridor_rmse_delta", "sp_corridor_rmse_win",
     ),
 }

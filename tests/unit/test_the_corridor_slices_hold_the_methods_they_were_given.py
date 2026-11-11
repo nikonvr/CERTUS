@@ -51,11 +51,25 @@ SLICES = {
             "_on_corridor_rmse_grid_live_update",
         ),
     ),
+    "corridor_rmse_view": (
+        "_CorridorRmseViewMixin",
+        (
+            "_build_tab_corridor_rmse",
+            "_refresh_corridor_rmse_robust_view",
+            "_update_corridor_rmse_state_bar",
+            "_corridor_profile_source_result",
+            "_set_corridor_rmse_view_data_bounds",
+            "_on_corridor_rmse_lock_scale_toggled",
+            "_on_corridor_rmse_plot_clicked",
+            "_robust_interval_from_local_quadratic",
+            "_build_corridor_labels",
+        ),
+    ),
 }
 #: The classes that inherit the slices, and the slices each one takes.
 COMPOSITES = {
-    "settings:_CorridorControlMixin": ("_CorridorRunMixin",),
-    "corridorui_mixin:CertusIndexSplineCorridorUIMixin": ("_CorridorRunMixin",),
+    "settings:_CorridorControlMixin": ("_CorridorRunMixin", "_CorridorRmseViewMixin"),
+    "corridorui_mixin:CertusIndexSplineCorridorUIMixin": ("_CorridorRunMixin", "_CorridorRmseViewMixin"),
 }
 #: The modules above the corridor group: a slice that imported one at module level would close an import cycle.
 ABOVE = ("common", "ui", "settings", "execution", "rendering", "mixins_ui")

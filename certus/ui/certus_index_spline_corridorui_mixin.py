@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import QApplication, QFrame, QHBoxLayout, QMessageBox, QScr
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.spline.certus_index_spline_corridor_contract import normalize_corridor_live_payload
 from certus.ui.certus_index_spline_common import _worker_corridor_rmse_healer, logger
+from certus.ui.certus_index_spline_corridor_rmse_view import _CorridorRmseViewMixin
 from certus.ui.certus_index_spline_corridor_run import _CorridorRunMixin
 from certus.ui.certus_ui import (
     CertusCard,
@@ -24,7 +25,7 @@ from certus.ui.certus_ui import (
 from certus.utils.certus_atomic_io import atomic_open
 
 
-class CertusIndexSplineCorridorUIMixin(_CorridorRunMixin):
+class CertusIndexSplineCorridorUIMixin(_CorridorRunMixin, _CorridorRmseViewMixin):
     """CertusIndexSplineCorridorUIMixin."""
 
     def _launch_corridor_rmse_gap_heal(self, tasks: list[tuple[float, dict]]) -> None:
@@ -83,182 +84,6 @@ class CertusIndexSplineCorridorUIMixin(_CorridorRunMixin):
         k0_txt = f"{k0:.3e}" if np.isfinite(k0) and k0 > 0.0 else "n/a"
         k1_txt = f"{k1:.3e}" if np.isfinite(k1) and k1 > 0.0 else "n/a"
         return f"lambda = {x:.2f} nm | k_min = {k0_txt} | k_nom = {kn_txt} | k_max = {k1_txt}"
-
-    def _build_tab_corridor_rmse(self) -> QWidget:
-        """Tab Corridor RMSE(d). Orchestrator."""
-        ctx_w = QWidget()
-        ctx_lay = QVBoxLayout(ctx_w)
-        ctx_lay.setContentsMargins(0, 0, 0, 0)
-        ctx_lay.setSpacing(6)
-        self._build_corridor_labels(ctx_lay)
-        panel = QWidget()
-        lay = QVBoxLayout(panel)
-        rmse_section = CertusCard("1 — Recalculate RMSE(d)")
-        generate_section = CertusCard("2 — Generate corridor n/k")
-        self._build_corridor_tab_rmse_controls(rmse_section.body)
-        self._build_corridor_tab_generate(generate_section.body)
-        ctx_lay.addWidget(rmse_section)
-        ctx_lay.addWidget(generate_section)
-
-        self.plot_corridor_rmse_d = CertusScientificPlot(
-            title="Corridor profile: RMSE(d)", y_label="RMSE", x_label="d (nm)"
-        )
-        self.plot_corridor_rmse_d.showGrid(x=True, y=True, alpha=0.25)
-        self._corridor_rmse_d_vals = np.array([], dtype=np.float64)
-        self._corridor_rmse_vals = np.array([], dtype=np.float64)
-        self._corridor_rmse_best_idx = -1
-        self._corridor_rmse_center_nm = float("nan")
-        self._corridor_rmse_grid_live_t0: float = float("nan")
-        self._corridor_rmse_live_last_plot_ts: float = float("nan")
-        self._corridor_rmse_live_plot_min_interval_s: float = 0.12
-        self._corridor_rmse_robust_lo = float("nan")
-        self._corridor_rmse_robust_hi = float("nan")
-        self._corridor_rmse_robust_ok = False
-        self._corridor_rmse_curve = self.plot_corridor_rmse_d.plot(
-            [],
-            [],
-            pen=pg.mkPen(CertusTheme.PRIMARY, width=2.5),
-            name="RMSE(d)",
-        )
-        self._corridor_rmse_curve.setZValue(10)
-        self._corridor_rmse_best_marker = pg.InfiniteLine(
-            angle=90,
-            movable=False,
-            pen=pg.mkPen(CertusTheme.SUCCESS, width=1.5, style=Qt.PenStyle.DashLine),
-        )
-        self.plot_corridor_rmse_d.addItem(self._corridor_rmse_best_marker)
-
-        self.sp_corridor_rmse_delta.valueChanged.connect(self._refresh_corridor_rmse_robust_view)
-        self.sp_corridor_rmse_win.valueChanged.connect(self._refresh_corridor_rmse_robust_view)
-
-        _scene = self.plot_corridor_rmse_d.plotItem.scene()
-        if _scene is not None:
-            _scene.sigMouseClicked.connect(self._on_corridor_rmse_plot_clicked)
-
-        # Plot area on the LEFT
-        lay.addWidget(wrap_scientific_plot_with_toolbar(self, self.plot_corridor_rmse_d), 1)
-
-        self._apply_corridor_preset_auto_robust()
-        ctx_lay.addStretch(1)
-        sa_ctx = QScrollArea()
-        sa_ctx.setWidgetResizable(True)
-        sa_ctx.setFrameShape(QFrame.Shape.NoFrame)
-        sa_ctx.setStyleSheet("background: transparent;")
-        sa_ctx.setWidget(ctx_w)
-        self._add_context_page(sa_ctx)
-
-        return panel
-
-    def _refresh_corridor_rmse_robust_view(self) -> None:
-
-        src = self._corridor_profile_source_result()
-
-        if src is None:
-            return
-
-        try:
-            self._plot_corridor_rmse_tab(src)
-
-        except NUMERICAL_FAULT_EXCEPTIONS:
-            logger.debug("Corridor RMSE robust refresh failed", exc_info=True)
-
-    def _update_corridor_rmse_state_bar(self, src: dict[str, Any] | None = None) -> None:
-
-        if not hasattr(self, "lbl_corridor_rmse_state"):
-            return
-
-        if not isinstance(src, dict):
-            src = self._corridor_profile_source_result()
-
-        if not isinstance(src, dict):
-            self.lbl_corridor_rmse_state.setText("Step 1/3: Recalculate RMSE(d) to begin.")
-            return
-
-        src = normalize_corridor_live_payload(src)
-        d_s = np.asarray(src.get("profile_d_values_nm", []), dtype=np.float64).ravel()
-        if d_s.size == 0:
-            self.lbl_corridor_rmse_state.setText("Step 1/3: Recalculate RMSE(d) to begin.")
-            return
-
-        has_manual = bool(src.get("manual_corridor_active", False))
-        d_min = float(np.nanmin(d_s)) if np.any(np.isfinite(d_s)) else float("nan")
-        d_max = float(np.nanmax(d_s)) if np.any(np.isfinite(d_s)) else float("nan")
-
-        if has_manual:
-            self.lbl_corridor_rmse_state.setText(
-                f"Step 3/3: Corridor generated | grid {int(d_s.size)} points | d-range [{d_min:.2f}, {d_max:.2f}] nm"
-            )
-        else:
-            self.lbl_corridor_rmse_state.setText(
-                f"Step 2/3: Select an interval, then generate the corridor | grid {int(d_s.size)} points | d-range [{d_min:.2f}, {d_max:.2f}] nm"
-            )
-
-    def _corridor_profile_source_result(self) -> dict[str, Any] | None:
-
-        for cand in (self._last_result, self._last_worker_result):
-            if not isinstance(cand, dict):
-                continue
-
-            d_prof = np.asarray(cand.get("profile_d_values_nm", []), dtype=np.float64).ravel()
-
-            r_prof = np.asarray(cand.get("profile_d_rmse_values", []), dtype=np.float64).ravel()
-
-            if d_prof.size > 0 and r_prof.size == d_prof.size:
-                return cand
-
-        return self._last_result
-
-    def _set_corridor_rmse_view_data_bounds(self, d_vals: np.ndarray, r_vals: np.ndarray) -> None:
-        """Sets the scale of the RMSE(d) graph to the min/max bounds of the data."""
-
-        if not hasattr(self, "plot_corridor_rmse_d"):
-            return
-
-        xd = np.asarray(d_vals, dtype=np.float64).ravel()
-
-        yd = np.asarray(r_vals, dtype=np.float64).ravel()
-
-        m = np.isfinite(xd) & np.isfinite(yd)
-
-        xd = xd[m]
-
-        yd = yd[m]
-
-        if xd.size == 0 or yd.size == 0:
-            return
-
-        x_lo = float(np.min(xd))
-
-        x_hi = float(np.max(xd))
-
-        y_lo = float(np.min(yd))
-
-        y_hi = float(np.max(yd))
-
-        x_span = max(1e-12, x_hi - x_lo)
-
-        y_span = max(1e-12, y_hi - y_lo)
-
-        x_pad = max(0.25, 0.02 * x_span)
-
-        y_pad = max(1e-8, 0.04 * y_span)
-
-        self.plot_corridor_rmse_d.plotItem.setXRange(x_lo - x_pad, x_hi + x_pad, padding=0.0)
-
-        self.plot_corridor_rmse_d.plotItem.setYRange(y_lo - y_pad, y_hi + y_pad, padding=0.0)
-
-    def _on_corridor_rmse_lock_scale_toggled(self, _checked: bool) -> None:
-
-        src = self._corridor_profile_source_result()
-
-        if src is None:
-            return
-
-        try:
-            self._plot_corridor_rmse_tab(src)
-
-        except NUMERICAL_FAULT_EXCEPTIONS:
-            logger.debug("Corridor RMSE lock-scale refresh failed", exc_info=True)
 
     def _use_robust_corridor_interval(self) -> None:
 

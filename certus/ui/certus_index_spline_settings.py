@@ -55,6 +55,7 @@ from certus.ui.certus_index_spline_corridor_common import (
     _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN,
     _DEFAULT_CORRIDOR_RMSE_DELTA,
 )
+from certus.ui.certus_index_spline_corridor_rmse_view import _CorridorRmseViewMixin
 from certus.ui.certus_index_spline_corridor_run import _CorridorRunMixin
 from certus.ui.certus_ui import (
     GenericWorker,
@@ -748,7 +749,7 @@ class _SettingsMixin:
 
         self._update_epured_visibility()
 
-class _CorridorControlMixin(_CorridorRunMixin):
+class _CorridorControlMixin(_CorridorRunMixin, _CorridorRmseViewMixin):
     """Mixin containing corridor RMSE grid control, display and worker management."""
 
     def _apply_corridor_preset_auto_robust(self) -> None:
@@ -955,62 +956,4 @@ class _CorridorControlMixin(_CorridorRunMixin):
                 self,
                 "Generate corridor (grid)",
                 "Unable to generate n/k corridor from the current RMSE(d) grid.",
-            )
-
-    def _on_corridor_rmse_plot_clicked(self, ev: Any) -> None:
-
-        if not hasattr(self, "plot_corridor_rmse_d"):
-            return
-
-        d_s = np.asarray(getattr(self, "_corridor_rmse_d_vals", []), dtype=np.float64).ravel()
-
-        r_s = np.asarray(getattr(self, "_corridor_rmse_vals", []), dtype=np.float64).ravel()
-
-        if d_s.size == 0 or r_s.size != d_s.size:
-            return
-
-        try:
-            vb = self.plot_corridor_rmse_d.plotItem.vb
-
-            p = vb.mapSceneToView(ev.scenePos())
-
-            x = float(p.x())
-
-        except NUMERICAL_FAULT_EXCEPTIONS:
-            return
-
-        if not np.isfinite(x):
-            return
-
-        i_sel = int(np.argmin(np.abs(d_s - x)))
-
-        d_sel = float(d_s[i_sel])
-
-        r_sel = float(r_s[i_sel])
-
-        i_best = int(getattr(self, "_corridor_rmse_best_idx", -1))
-
-        if i_best < 0 or i_best >= d_s.size:
-            i_best = int(np.argmin(r_s))
-
-        d_best = float(d_s[i_best])
-
-        r_best = float(r_s[i_best])
-
-        d_lo_rb = float(getattr(self, "_corridor_rmse_robust_lo", float("nan")))
-
-        d_hi_rb = float(getattr(self, "_corridor_rmse_robust_hi", float("nan")))
-
-        rb_ok = bool(getattr(self, "_corridor_rmse_robust_ok", False))
-
-        if hasattr(self, "lbl_corridor_rmse_summary"):
-            tail = (
-                f" | robust interval ? [{d_lo_rb:.3f}, {d_hi_rb:.3f}] nm"
-                if rb_ok and np.isfinite(d_lo_rb) and np.isfinite(d_hi_rb)
-                else ""
-            )
-
-            self.lbl_corridor_rmse_summary.setText(
-                f"Best computed thickness: d* = {d_best:.3f} nm | RMSE(d*) = {r_best:.6f} | "
-                f"selected: d = {d_sel:.3f} nm, RMSE = {r_sel:.6f}, DeltaRMSE = {r_sel - r_best:+.6e}{tail}"
             )

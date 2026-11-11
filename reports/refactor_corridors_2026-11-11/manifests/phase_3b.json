@@ -1,0 +1,66 @@
+{
+  "phase": "3b - _CorridorRmseViewMixin: the RMSE(d) tab as a view, nine methods moved, text unchanged, to certus_index_spline_corridor_rmse_view.py; _CorridorControlMixin and CertusIndexSplineCorridorUIMixin inherit the slice; the gateway lends CertusCard and wrap_scientific_plot_with_toolbar.",
+  "new_classes": [
+    "certus.ui.certus_index_spline_corridor_rmse_view:_CorridorRmseViewMixin"
+  ],
+  "moved_methods": [
+    {
+      "name": "_build_tab_corridor_rmse",
+      "from": "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin",
+      "to": "certus.ui.certus_index_spline_corridor_rmse_view:_CorridorRmseViewMixin"
+    },
+    {
+      "name": "_refresh_corridor_rmse_robust_view",
+      "from": "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin",
+      "to": "certus.ui.certus_index_spline_corridor_rmse_view:_CorridorRmseViewMixin"
+    },
+    {
+      "name": "_update_corridor_rmse_state_bar",
+      "from": "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin",
+      "to": "certus.ui.certus_index_spline_corridor_rmse_view:_CorridorRmseViewMixin"
+    },
+    {
+      "name": "_corridor_profile_source_result",
+      "from": "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin",
+      "to": "certus.ui.certus_index_spline_corridor_rmse_view:_CorridorRmseViewMixin"
+    },
+    {
+      "name": "_set_corridor_rmse_view_data_bounds",
+      "from": "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin",
+      "to": "certus.ui.certus_index_spline_corridor_rmse_view:_CorridorRmseViewMixin"
+    },
+    {
+      "name": "_on_corridor_rmse_lock_scale_toggled",
+      "from": "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin",
+      "to": "certus.ui.certus_index_spline_corridor_rmse_view:_CorridorRmseViewMixin"
+    },
+    {
+      "name": "_on_corridor_rmse_plot_clicked",
+      "from": "certus.ui.certus_index_spline_settings:_CorridorControlMixin",
+      "to": "certus.ui.certus_index_spline_corridor_rmse_view:_CorridorRmseViewMixin"
+    },
+    {
+      "name": "_robust_interval_from_local_quadratic",
+      "from": "certus.ui.certus_index_spline_eventsextras_mixin:CertusIndexSplineEventsExtrasMixin",
+      "to": "certus.ui.certus_index_spline_corridor_rmse_view:_CorridorRmseViewMixin"
+    },
+    {
+      "name": "_build_corridor_labels",
+      "from": "certus.ui.certus_index_spline_rendering:_UIBuilderMixin",
+      "to": "certus.ui.certus_index_spline_corridor_rmse_view:_CorridorRmseViewMixin"
+    }
+  ],
+  "added_attributes": [
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._build_corridor_labels",
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._on_corridor_rmse_plot_clicked",
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._robust_interval_from_local_quadratic",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._build_corridor_labels",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._build_tab_corridor_rmse",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._corridor_profile_source_result",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._on_corridor_rmse_lock_scale_toggled",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._refresh_corridor_rmse_robust_view",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._robust_interval_from_local_quadratic",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._set_corridor_rmse_view_data_bounds",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._update_corridor_rmse_state_bar"
+  ]
+}

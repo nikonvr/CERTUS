@@ -5,9 +5,11 @@ from __future__ import annotations
 from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
 from certus.ui.certus_plot import plot_widget_plot_finite
 from certus.ui.certus_ui import (
+    CertusCard,
     CertusScientificPlot,
     CertusTheme,
     EnhancedProgressWidget,
     GenericWorker,
     create_styled_button,
+    wrap_scientific_plot_with_toolbar,
 )

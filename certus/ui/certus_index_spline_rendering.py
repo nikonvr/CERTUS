@@ -1858,45 +1858,6 @@ class _UIBuilderMixin:
                 else:
                     self.info_split.setSizes([900, 0])
 
-    def _build_corridor_labels(self, ctx_lay: QVBoxLayout) -> None:
-        hint = QLabel(
-            "<b>RMSE(d) corridor profile</b> at all points calculated during profiling. "
-            "Raw scatter (unconnected). The <b>parabola</b> is fitted to the min-RMSE envelope by thickness.<br>"
-            "<span style='color:#ff8c00;'>&#9646;</span> = Smart Deltad (automatic interval) | "
-            "<span style='color:#7a3cff;'>&#9646;</span> = local robust interval | "
-            "<span style='color:#ff4d4f;'>&#9646;</span> = manual selection."
-        )
-        hint.setWordWrap(True)
-        hint.setStyleSheet(CertusTheme.get_hint_text_style())
-        ctx_lay.addWidget(hint)
-
-        self.lbl_corridor_rmse_summary = QLabel("No corridor RMSE profile available yet.")
-        self.lbl_corridor_rmse_summary.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: {Typography.BODY_LG}pt;")
-        self.lbl_corridor_rmse_summary.setToolTip(
-            "<b>Final quality summary</b><br>"
-            "Displays the globally optimized thickness d* found on the grid "
-            "as well as the RMSE corresponding to the absolute minimum."
-        )
-        ctx_lay.addWidget(self.lbl_corridor_rmse_summary)
-
-        self.lbl_corridor_rmse_robust_compact = QLabel("Robust interval: -")
-        self.lbl_corridor_rmse_robust_compact.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: {Typography.BODY_LG}pt;")
-        self.lbl_corridor_rmse_robust_compact.setToolTip(
-            "<b>Robust interval (compact format)</b><br>"
-            "Displays the center and half-width in the form "
-            "<code>xxx.xx nm +/- xxx.nm</code>."
-        )
-        ctx_lay.addWidget(self.lbl_corridor_rmse_robust_compact)
-
-        self.lbl_corridor_rmse_state = QLabel("Step 1/3: Recalculate RMSE(d) to start.")
-        self.lbl_corridor_rmse_state.setStyleSheet(CertusTheme.get_hint_text_style())
-        self.lbl_corridor_rmse_state.setToolTip(
-            "<b>Progress / Diagnostic</b><br>"
-            "Displays the current pipeline step (Calculation, Fit, or Export) "
-            "and any alert messages related to convergence."
-        )
-        ctx_lay.addWidget(self.lbl_corridor_rmse_state)
-
     def _build_tab_corridor(self) -> QWidget:
         ctx_w = QWidget()
         ctx_lay = QVBoxLayout(ctx_w)

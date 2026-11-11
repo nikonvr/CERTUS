@@ -39,7 +39,12 @@ from PyQt6.QtWidgets import QMainWindow
 from certus.ui.certus_base_app import CertusBaseApp
 from certus.ui.certus_index_spline_corridor_common import _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN
 from certus.ui.certus_index_spline_corridor_host import CONTRACTS
-from certus.ui.certus_index_spline_corridor_state import CORRIDOR_STATE, GRAPHIC_OBJECTS, NEVER_ASSIGNED
+from certus.ui.certus_index_spline_corridor_state import (
+    CORRIDOR_STATE,
+    GRAPHIC_OBJECTS,
+    NEVER_ASSIGNED,
+    initial_corridor_state,
+)
 from certus.ui.certus_index_spline_ui import CertusIndexSplineApp
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -298,6 +303,29 @@ def test_the_default_of_an_attribute_is_what_its_fallback_gives(name) -> None:
     names = {"np": np, "_DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN": _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN}
     for spelling in entry.fallbacks:
         assert alike(entry.default(), eval(spelling, names)), f"{name}: default {entry.default()!r}, fallback {spelling}"
+
+
+def test_the_constructor_starts_from_fresh_defaults_that_two_windows_do_not_share() -> None:
+    first, second = initial_corridor_state(), initial_corridor_state()
+    assert list(first) == list(CORRIDOR_STATE)
+    for name, entry in CORRIDOR_STATE.items():
+        assert alike(first[name], entry.default()), name
+    assert [n for n in first if isinstance(first[n], (list, dict, np.ndarray)) and first[n] is second[n]] == []
+
+
+def test_what_the_constructor_still_assigns_by_hand_is_the_default_of_the_table() -> None:
+    """The constructor sets the whole table first, then six of its attributes again, with their type: the same values."""
+    constructor = "ui:CertusIndexSplineApp.__init__"
+    [init] = [function for where, function in scopes(ROOT / "certus" / "ui" / "certus_index_spline_ui.py") if where == constructor]
+    by_hand = {}
+    for node in ast.walk(init):
+        if isinstance(node, (ast.Assign, ast.AnnAssign)) and node.value is not None:
+            for target in node.targets if isinstance(node, ast.Assign) else [node.target]:
+                if isinstance(target, ast.Attribute) and is_self(target.value) and target.attr.startswith("_corridor_"):
+                    by_hand[target.attr] = ast.unparse(node.value)
+    assert sorted(by_hand) == sorted(name for name, entry in CORRIDOR_STATE.items() if entry.born_in == constructor)
+    for name, spelling in by_hand.items():
+        assert alike(CORRIDOR_STATE[name].default(), eval(spelling, {"np": np})), name
 
 
 # =============================================================================

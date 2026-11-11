@@ -5,10 +5,12 @@ modules, and they are born in three kinds of places: the constructor of the wind
 tab, and, for the rest, whichever function first computes them. A reader that may run before that birth goes through
 `getattr(self, name, fallback)`.
 
-This table declares each of them: its type, the value it has before any corridor was computed, the function where it is
-born, whether `_load_defaults` puts it back, and the fallback expressions the code passes to `getattr` today. It
-initialises nothing and no code reads it yet: tests/unit/test_the_corridor_mixins_declare_what_they_read_on_the_window.py
-holds the code to it, so that a new attribute, a new fallback or a moved birth place has to be written down here.
+This table declares each of them: its type, the value it has before any corridor was computed, the function where the
+corridor code first sets it, whether `_load_defaults` puts it back, and the fallback expressions the code passes to
+`getattr` today. The constructor of the window reads it, first thing, to give every attribute that value
+(`initial_corridor_state`): no reader depends any more on which function ran before it, and a fallback of `getattr` is
+only what a fake host of the tests gets. tests/unit/test_the_corridor_mixins_declare_what_they_read_on_the_window.py
+holds the code to the table, so that a new attribute, a new fallback or a moved birth place has to be written down here.
 """
 
 from __future__ import annotations
@@ -99,6 +101,11 @@ CORRIDOR_STATE: dict[str, CorridorStateEntry] = {
     "_corridor_k_crosshair_lo": CorridorStateEntry("np.ndarray | list", _empty_list, _K_TAB, False, ("[]",)),
     "_corridor_k_crosshair_hi": CorridorStateEntry("np.ndarray | list", _empty_list, _K_TAB, False, ("[]",)),
 }
+
+def initial_corridor_state() -> dict[str, Any]:
+    """A fresh value for every attribute of the table: what a window holds before any corridor was computed."""
+    return {name: entry.default() for name, entry in CORRIDOR_STATE.items()}
+
 
 #: Graphic objects of the RMSE(d) tab: their readers check `hasattr`, they have no value before the tab is built.
 GRAPHIC_OBJECTS: tuple[str, ...] = ("_corridor_rmse_curve", "_corridor_rmse_best_marker")

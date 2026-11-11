@@ -894,7 +894,7 @@ mortes).
   liste exacte des fonctions dont le bytecode change, et rien d'autre ne doit bouger.
   Test : `tests/unit/test_mwir_gui_flow.py`, puis LOT.
 
-### [ ] Phase 6 — Assainir l'héritage (garde-fous, puis options)
+### [x] Phase 6 — Assainir l'héritage (garde-fous, puis options) — faite le 2026-11-11
 
 - [x] **6a** — faite le 2026-11-11 (tests seuls, aucun code de production). Un balayage en interpréteur neuf mesure les
   neuf fenêtres de `scripts/refactor_guard.py` ; `OVERRIDES_OF` porte, pour les huit autres fenêtres, la liste de leurs
@@ -916,7 +916,16 @@ mortes).
   restant définie et importable. `_ConfigBuilderMixin` ne peut sortir du MRO sans retoucher
   `tests/unit/test_gui_smoke.py:226`.
   Test : `tests/unit/test_gui_smoke.py`, puis LOT.
-- [ ] **6c (Q8 : oui)** — Initialiser tout l'état du tableau §2.5 au début de `__init__`. Préalable vérifié : aucun
+- [x] **6c (Q8 : oui)** — faite le 2026-11-11 : `corridor_state.initial_corridor_state()` rend une valeur neuve par
+  attribut de la table, et le constructeur de la fenêtre les pose en tête, avant `_setup_logger`. Garde avec
+  `manifests/phase_6c.json` (`changed_code` : `__init__` seul) : `problems=0`, `GUARD=OK`. Test qui échoue avant, dans
+  `test_suite_ui_instantiation.py` : une fenêtre neuve porte tout `CORRIDOR_STATE` (avant : 9 attributs manquaient, ceux
+  qui naissaient au premier tracé ou à la première grille). Deux tests de table : les défauts sont neufs à chaque appel
+  (deux fenêtres ne partagent ni liste ni tableau) ; les six attributs que le constructeur affectait déjà gardent leur
+  ligne, typée, et leur littéral est tenu égal au défaut de la table. Ces six lignes restent parce que
+  `_corridor_rmse_manual_slider_scale` n'est affecté nulle part ailleurs : les retirer ferait tomber deux garde-fous qui
+  lisent les affectations dans le source. Aucun lecteur ne change : tous passent le repli par `np.asarray`.
+  Initialiser tout l'état du tableau §2.5 au début de `__init__`. Préalable vérifié : aucun
   `hasattr` ne garde ces attributs, et ni `vars(self)` ni `self.__dict__` ne sont lus dans le groupe ou la base.
   Modifier : `certus/ui/certus_index_spline_ui.py`, `certus/ui/certus_index_spline_corridor_state.py`.
   Test : `tests/integration/test_suite_ui_instantiation.py`, puis LOT.

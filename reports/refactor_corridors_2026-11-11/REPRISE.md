@@ -68,7 +68,8 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | **Validation complète de la phase 5** : rien de plus que l'état connu (plan, Phase 5) | sur `55f2d194` |
 | **Phase 6a** : garde-fous d'héritage étendus aux huit autres fenêtres, plus celui de F11 (aucun nom masqué par Qt) | `18be2a5b` |
 | Garde : une classe sortie des bases d'une fenêtre reste en tête de son propre MRO | `ab7f6884` |
-| **Phase 6b** : `_UIMixin` hors des bases de la fenêtre | commit suivant `ab7f6884` |
+| **Phase 6b** : `_UIMixin` hors des bases de la fenêtre | `a0150bc9` |
+| **Phase 6c** : le constructeur donne à tout l'état corridor sa valeur par défaut, depuis la table | commit suivant `a0150bc9` |
 
 ## En cours
 
@@ -78,7 +79,7 @@ Rien : tout ce qui est fait est commité. La prochaine tâche est la première d
 
 2. Pour toute extraction : `tools/` (`plan_move`, `move`, `manifest`, `contracts`, `protocols`, `born_in`, puis
    `guard` et `lot`).
-5. Phase 6, suite : 6c état initialisé dans `__init__`, puis validation complète.
+5. Phase 6, fin : validation complète (`python scripts/validate_parallel.py`), puis la consigner au plan.
 6. Phase 7 : 7a, 7b (arêtes entre familles).
 7. Phase 8 : clôture. Phase 9 : couture de test périmée (Q5).
 8. Phase 10 : correctifs révélés par l'audit, un commit chacun, chacun avec un test qui échoue avant (Q17, Q13, Q11, Q12).

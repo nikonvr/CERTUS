@@ -50,3 +50,16 @@ def test_ui_instantiation(qapp, module_name, class_name):
     
     # Verify the window was created
     assert app_window is not None
+
+
+def test_the_spline_window_is_born_with_the_whole_corridor_state(qapp):
+    """A window nobody used yet holds every attribute of CORRIDOR_STATE: no corridor code depends on what ran before it.
+
+    Before the constructor set them, nine of them existed only once a plot or a grid had run, and their readers went
+    through `getattr(self, name, fallback)`.
+    """
+    from certus.ui.certus_index_spline_corridor_state import CORRIDOR_STATE
+
+    window = importlib.import_module("CERTUS_INDEX_SPLINE").CertusIndexSplineApp()
+
+    assert [name for name in CORRIDOR_STATE if name not in vars(window)] == []

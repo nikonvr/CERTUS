@@ -29,6 +29,7 @@ from certus.ui.certus_index_spline_common import (
     _UIMixin,
     _worker_corridor_rmse_regular_grid,
 )
+from certus.ui.certus_index_spline_corridor_state import initial_corridor_state
 from certus.ui.certus_index_spline_corridorui_mixin import CertusIndexSplineCorridorUIMixin
 from certus.ui.certus_index_spline_eventsextras_mixin import CertusIndexSplineEventsExtrasMixin
 from certus.ui.certus_index_spline_layoutextras_mixin import CertusIndexSplineLayoutExtrasMixin
@@ -85,6 +86,10 @@ class CertusIndexSplineApp(
     def __init__(self) -> None:
 
         super().__init__()
+
+        # The corridor state, whole and at its defaults, before anything can read it (the table of corridor_state).
+        for name, value in initial_corridor_state().items():
+            setattr(self, name, value)
 
         self._setup_logger(self.APP_NAME)
 

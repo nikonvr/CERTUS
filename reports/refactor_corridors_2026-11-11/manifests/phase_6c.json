@@ -1,0 +1,7 @@
+{
+  "phase": "6c - the constructor of CertusIndexSplineApp gives every attribute of CORRIDOR_STATE its default, first thing; certus_index_spline_corridor_state.py gains initial_corridor_state().",
+  "changed_code": [
+    "certus.ui.certus_index_spline_ui:CertusIndexSplineApp.__init__"
+  ],
+  "note": "changed_code: three statements added at the head of __init__, a loop that sets each attribute of the table to a fresh default. The six corridor attributes the constructor already assigned keep their statement: the same values, checked against the table by a test."
+}

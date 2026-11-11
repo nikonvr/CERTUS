@@ -1,0 +1,3 @@
+{
+  "phase": "2d - the two smart-init settings keys keep one definition (common); smart_init imports them at module level. Values equal; importing smart_init now loads common first."
+}

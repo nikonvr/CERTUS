@@ -46,7 +46,8 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | **Audit UX** complet des 11 modules : plan, section 5 (constats A, B, C et feuille de route U1 à U13) | `74de941e` |
 | **Phase 2a** : les trois constantes corridor n'ont plus qu'une définition | `bea41352` |
 | **Phase 2b** : `_apply_fixed_log_k_axis` et ses deux bornes n'ont plus qu'une définition | `4be1b0af` |
-| **Phase 2c** : les 16 constantes de fenêtre n'ont plus qu'une définition, dans le cœur spline | commit suivant `4be1b0af` |
+| **Phase 2c** : les 16 constantes de fenêtre n'ont plus qu'une définition, dans le cœur spline | `133becde` |
+| **Phase 2d** : les deux clés du smart-init n'ont plus qu'une définition, dans `common` | commit suivant `133becde` |
 
 ## En cours
 
@@ -54,7 +55,7 @@ Rien : tout ce qui est fait est commité. La prochaine tâche est la première d
 
 ## À faire, dans l'ordre
 
-1. Phase 2 du plan, suite : 2d clés du smart-init, 2e classes `SmartInitPayload` en double ;
+1. Phase 2 du plan, suite : 2e classes `SmartInitPayload` en double ;
    puis la validation complète de la phase.
 2. Phase 3 : extraction des tranches 3a, 3b, 3c, 3d.
 3. Phase 4 : tracé RMSE(d).

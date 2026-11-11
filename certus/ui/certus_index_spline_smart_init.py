@@ -52,6 +52,7 @@ from certus.spline.spline_smart_init import (
     build_smart_manual_sigma_knots_from_preview_grid,
     interp_n_L_pwlnk_to_sigmas,
 )
+from certus.ui.certus_index_spline_common import _QS_SMART_INIT_DEEP, _QS_SMART_INIT_TWO_PHASE
 from certus.ui.certus_smart_init_curve_editor import SmartInitNKCurveEditorDialog
 from certus.ui.certus_ui import (
     CertusCard,
@@ -66,9 +67,6 @@ from certus.utils.certus_qsettings import certus_settings
 from certus.utils.certus_ux import Typography
 
 logger = logging.getLogger("CERTUS_INDEX_SPLINE.smart_init")
-
-_QS_SMART_INIT_DEEP = "smart_init_deep_pglobal_after_manual"
-_QS_SMART_INIT_TWO_PHASE = "smart_init_deep_two_phase_enabled"
 
 
 class SmartInitPayload(BaseModel):

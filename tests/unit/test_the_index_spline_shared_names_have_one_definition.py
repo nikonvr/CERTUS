@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import ast
 import importlib
+import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -48,6 +50,9 @@ WINDOW_CONSTANTS = (
     "SIO2_DEFAULT_D_HI_NM",
 )
 ONE_SOURCE |= dict.fromkeys(WINDOW_CONSTANTS, "certus/spline/certus_index_spline_core.py")
+#: The two smart-init keys: `common` defines them, `smart_init` imports them.
+SMART_INIT_KEYS = ("_QS_SMART_INIT_DEEP", "_QS_SMART_INIT_TWO_PHASE")
+ONE_SOURCE |= dict.fromkeys(SMART_INIT_KEYS, f"{UI}common.py")
 EXPOSED_BY = {
     "_DEFAULT_CORRIDOR_RMSE_DELTA": ("common", "settings", "corridors"),
     "_DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN": ("common", "settings", "corridors"),
@@ -58,6 +63,7 @@ EXPOSED_BY = {
 }
 EXPOSED_BY |= dict.fromkeys(WINDOW_CONSTANTS, ("common",))
 EXPOSED_BY |= dict.fromkeys(("_QS_SPLINE_ORG", "_QS_SPLINE_APP"), ("common", "smart_init"))
+EXPOSED_BY |= dict.fromkeys(SMART_INIT_KEYS, ("smart_init",))
 #: A file that keeps a function of the shared name, allowed because the function only imports the shared one, inside its
 #: body, and calls it.
 DELEGATES = {"_apply_fixed_log_k_axis": (f"{UI}monitor_ui.py",)}
@@ -124,3 +130,25 @@ def test_a_delegate_reaches_the_one_definition(name, path) -> None:
     assert len(targets) == 1, f"{path} must define {name} once"
     assert targets[0], f"{path} defines {name} otherwise than by delegating"
     assert getattr(importlib.import_module(targets[0]), name) is getattr(source, name)
+
+
+def test_smart_init_imported_first_and_alone_takes_its_keys_from_common() -> None:
+    """`smart_init` now imports `common` at module level: in a fresh interpreter that must not close an import cycle."""
+    script = "; ".join(
+        [
+            "import sys",
+            "import certus.ui.certus_index_spline_smart_init as smart_init",
+            "common = sys.modules.get('certus.ui.certus_index_spline_common')",
+            "assert common is not None, 'smart_init did not load common'",
+            f"assert all(getattr(smart_init, n) is getattr(common, n) for n in {SMART_INIT_KEYS!r})",
+        ]
+    )
+    done = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=ROOT,
+        env={**os.environ, "QT_QPA_PLATFORM": "offscreen"},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert done.returncode == 0, done.stderr[-2000:]

@@ -669,7 +669,11 @@ partout ailleurs c'est le même objet, importé. Chaque cas ajouté doit échoue
   `common` s'importe toujours seul et en premier (I13).
   Test : le test nouveau, puis `tests/unit/test_gui_smoke.py`, puis LOT.
 
-- [ ] **2d — Clés du smart-init (Q16 : source = `common`)** (valeurs égales, aucun comportement changé)
+- [x] **2d — Clés du smart-init (Q16 : source = `common`)** (valeurs égales, aucun comportement changé) — faite le
+  2026-11-11 : les cas nouveaux échouaient avant (`3 failed, 47 passed`) et passent ; ruff PASS ; les trois tests cités
+  ci-dessous et le lot de contrôle `255 passed` ; garde avec `manifests/phase_2d.json` : `problems=0`, `GUARD=OK`. Le
+  cas « seul et en premier » lance un interpréteur neuf et y exige que `smart_init` ait chargé `common` et en tienne
+  les deux clés.
   Source, **non modifiée** : `certus/ui/certus_index_spline_common.py:92-94` (`_QS_SMART_INIT_DEEP`,
   `_QS_SMART_INIT_TWO_PHASE`).
   Modifier :

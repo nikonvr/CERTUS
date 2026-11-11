@@ -989,7 +989,6 @@ repose sur une lecture du code ou une mesure.
 | # | Question | Décision | Ce qui la fonde |
 |---|---|---|---|
 | Q22 | Un test qui tient une liste de modules « par ce qu'ils lisent » devient rouge quand la méthode lectrice déménage : le retoucher ? | **Oui : l'entrée suit la méthode**, dans un commit de test à part, et le test entre dans le lot. | `tests/unit/test_progress_imports.py` le demande lui-même (« take it off the list ») et l'a déjà fait une fois (`corridor_worker`, S5.3). Ce n'est pas une couture : aucun comportement n'est épinglé, seulement l'adresse d'un lecteur. |
-
 | Q23 | Une tranche peut-elle importer `lazy_app`, qui n'est ni du groupe corridor ni la passerelle ? | **Oui, lui seul**, tant qu'il reste une feuille. | Le plan (§2.3) place `_start_curve_minimum_deep_refit` dans la tranche avec son appel au mandataire. Passer par la passerelle ferait une 4e instruction d'import (I4 en veut 3). `lazy_app` n'importe rien au niveau module : aucun cycle possible ; un test le tient. |
 
 **Proposé à 👤, non appliqué** — Q19 : avancer la Phase 9 juste après la Phase 3. La méthode que la couture vise est

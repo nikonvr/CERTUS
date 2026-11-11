@@ -34,6 +34,9 @@ from PyQt6.QtCore import (
 from certus.core.certus_core import (
     get_resource_path,
 )
+
+# Moved to the core, under STRAT and FIELD; imported back because modules and scripts read it here.
+from certus.core.certus_indices_db import _resolve_strat_indices_db_path
 from certus.core.certus_strat_core import (
     APP_CONTEXT,
     SYM_DEFAULT_CONTINUITY_WEIGHT,
@@ -1726,19 +1729,6 @@ class PlotRenderWorker(QObject):
 
         except Exception as e:
             self.error.emit(str(e))
-
-
-def _resolve_strat_indices_db_path() -> str:
-    """Return canonical indices DB path for STRAT, with legacy fallback."""
-
-    preferred = str(Path(get_resource_path(str(Path("example") / "database_index" / "indices.xlsx"))).resolve())
-
-    if Path(preferred).exists():
-        return preferred
-
-    legacy = str(Path(get_resource_path("clues.xlsx")).resolve())
-
-    return legacy
 
 
 # Backward compatibility aliases

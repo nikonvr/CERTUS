@@ -83,6 +83,7 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | **Phase 10c** : `_load_defaults` remet les huit attributs corridor écrits pour un échantillon (Q11) ; test rouge avant (`2 failed`) | `5b801bf5` |
 | **Phase 10e** (Q24, trouvée par la mesure de 10c) : `_load_defaults` oublie aussi `_last_worker_result` et `_last_run_cfg` ; avant, « Recalculate RMSE(d) » après un reset relançait la grille sur l'échantillon oublié ; test rouge avant (`4 failed`) | `0267b135` |
 | **Phase 10d** : le `2e-4` de l'intervalle robuste s'appelle `_DEFAULT_CORRIDOR_ROBUST_RMSE_DELTA`, lu aux six endroits (Q12) ; test rouge avant (`3 failed`) | `e9f68946` |
+| **Phase 7a** : `_resolve_strat_indices_db_path` descend dans `certus/core/certus_indices_db.py` ; FIELD n'importe plus rien de STRAT ; test rouge avant (`4 failed`) | commit « phase 7a » |
 | **Validation complète de la phase 10** : rien de plus que l'état connu ; un rouge dû au cache Numba de l'arbre neuf, vert sur cache vierge ([note](cache_numba_arbre_neuf.md)) | sur `e9f68946` |
 
 ## En cours
@@ -91,8 +92,8 @@ Rien : tout ce qui est fait est commité. La prochaine tâche est la première d
 
 ## À faire, dans l'ordre
 
-1. Phase 7, après la Phase 10 (Q21) : 7a, puis 7b sous le protocole de noyau (oracle avant et après,
-   `python scripts/c1_diff.py HEAD`). Puis validation complète.
+1. Phase 7, suite : 7b sous le protocole de noyau (oracle avant et après, `python scripts/c1_diff.py HEAD`, froid
+   contre froid). Puis validation complète.
 2. Feuille de route UX, plan section 5.5 : U1 à U5 d'abord (défauts visibles).
 
 Outils : pour une extraction, `tools/` (`plan_move`, `move`, `manifest`, `contracts`, `protocols`, `born_in`, puis `guard`

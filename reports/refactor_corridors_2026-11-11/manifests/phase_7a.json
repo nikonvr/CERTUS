@@ -1,0 +1,10 @@
+{
+  "phase": "7a - _resolve_strat_indices_db_path moves from the STRAT workers to certus.core.certus_indices_db; the workers import it back; the FIELD window takes it from the core and imports nothing of STRAT any more.",
+  "moved_objects": [
+    {
+      "from": "certus.workers.certus_strat_workers:_resolve_strat_indices_db_path",
+      "to": "certus.core.certus_indices_db:_resolve_strat_indices_db_path"
+    }
+  ],
+  "note": "A move: the body is the same, and it calls the same get_resource_path of certus.core.certus_core. tests/unit/test_the_field_window_imports_nothing_of_strat.py fails on the code before (4 failed, 1 passed)."
+}

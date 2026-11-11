@@ -84,6 +84,8 @@ NAMESPACES = (
     "certus/spline/certus_index_spline_excel_export.py",
     "certus/workers/certus_strat_workers.py",
     "certus/utils/certus_index_utils.py",
+    # where phase 7 of the corridor refactoring puts what the two modules above shared with other programs
+    "certus/core/certus_indices_db.py",
 )
 FACADES = ("CERTUS_INDEX_SPLINE",)
 #: Pairs of classes (by name) that follow one another in an MRO and have to go on doing so.

@@ -941,9 +941,17 @@ Chaque arête se traite seule, par descente de l'utilitaire dans un module parta
 **Placée après la Phase 10 (Q21)** : c'est un autre chantier, et 7b touche au calcul.
 La liste des tests propres à chaque famille est à compléter par un Grep du nom déplacé dans `tests/` en début de sous-phase.
 
-- [ ] **7a** — `_resolve_strat_indices_db_path` : `certus/workers/certus_strat_workers.py` → module partagé ;
+- [x] **7a** — `_resolve_strat_indices_db_path` : `certus/workers/certus_strat_workers.py` → module partagé ;
   modifier `certus/ui/certus_field_ui.py:15`.
   Test : `tests/unit/test_gui_apps_smoke.py`, puis LOT.
+  Fait le 2026-11-12 : la fonction est dans `certus/core/certus_indices_db.py` (le cœur : ni Qt, ni worker ; elle
+  appelle le même `get_resource_path` de `certus_core`), les workers STRAT la réimportent, FIELD la prend au cœur.
+  `tests/unit/test_the_field_window_imports_nothing_of_strat.py` rend `4 failed, 1 passed` avant, `5 passed` après :
+  plus aucun module de FIELD n'importe un module de STRAT, à quelque niveau que ce soit. La garde regarde désormais le
+  nouveau module (`NAMESPACES`) et a exigé le bytecode exact : le nouveau module n'a pas de `from __future__ import
+  annotations`, que les workers STRAT n'ont pas non plus. `problems=0`, `GUARD=OK` ; LOT avec `test_gui_apps_smoke`,
+  le gel, FIELD et les workers STRAT : `413 passed`. Clé du cache Numba inchangée (`832213ea6465`). Registre de dette :
+  `certus_strat_workers.py` 1746 → 1736 lignes.
 - [ ] **7b** — `spectral_rmse_weights` : `certus/utils/certus_index_utils.py` → module partagé ; modifier
   `certus/workers/certus_design_workers.py:53`, `certus/core/certus_re_worker_utils.py:35`,
   `certus/physics/gradient_analytic.py:1115`.

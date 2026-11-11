@@ -5,11 +5,16 @@
     {
       "from": "certus.ui.certus_index_spline_eventsextras_mixin:CertusIndexSplineEventsExtrasMixin._rmse_from_result_dict",
       "to": "certus.ui.certus_index_spline_statics:_rmse_from_result_dict"
+    },
+    {
+      "from": "certus.ui.certus_index_spline_eventsextras_mixin:CertusIndexSplineEventsExtrasMixin._runtime_metrics_from_result_dict",
+      "to": "certus.ui.certus_index_spline_statics:_runtime_metrics_from_result_dict"
     }
   ],
   "changed_code": [
     "certus.ui.certus_index_spline_eventsextras_mixin:CertusIndexSplineEventsExtrasMixin._runtime_metrics_from_result_dict",
     "certus.ui.certus_index_spline_manualmesh_mixin:CertusIndexSplineManualMeshMixin._open_manual_extra_knots_dialog",
-    "certus.ui.certus_index_spline_statics:_rmse_from_result_dict"
+    "certus.ui.certus_index_spline_statics:_rmse_from_result_dict",
+    "certus.ui.certus_index_spline_statics:_runtime_metrics_from_result_dict"
   ]
 }

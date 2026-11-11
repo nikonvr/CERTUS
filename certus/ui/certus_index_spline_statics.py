@@ -19,3 +19,22 @@ def _rmse_from_result_dict(d: dict) -> float:
         return float(np.sqrt(max(m, 0.0)))
 
     return float("inf")
+
+
+def _runtime_metrics_from_result_dict(d: dict | None) -> tuple[float, float]:
+
+    if not isinstance(d, dict):
+        return float("nan"), float("nan")
+
+    try:
+        d_nm = float(d.get("d_nm", float("nan")))
+
+    except (TypeError, ValueError):
+        d_nm = float("nan")
+
+    rmse = _rmse_from_result_dict(d)
+
+    if not np.isfinite(rmse):
+        rmse = float("nan")
+
+    return d_nm, rmse

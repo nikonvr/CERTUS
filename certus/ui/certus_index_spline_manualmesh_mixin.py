@@ -15,7 +15,7 @@ from certus.spline.spline_pipeline import (
     worker_spline_manual_sigma_insert,
 )
 from certus.ui.certus_index_spline_common import CertusIndexSplineApp, logger
-from certus.ui.certus_index_spline_statics import _rmse_from_result_dict
+from certus.ui.certus_index_spline_statics import _rmse_from_result_dict, _runtime_metrics_from_result_dict
 from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
 from certus.ui.certus_ui import GenericWorker
 from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
@@ -246,7 +246,7 @@ class CertusIndexSplineManualMeshMixin:
                 if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
                     self._manual_knots_dialog.clear_runtime_log()
                     self._manual_knots_dialog.set_runtime_progress(0.0, "Starting local re-optimization")
-                    d_seed, rmse_seed = CertusIndexSplineApp._runtime_metrics_from_result_dict(seed_current)
+                    d_seed, rmse_seed = _runtime_metrics_from_result_dict(seed_current)
                     self._manual_knots_dialog.set_runtime_metrics(d_seed, rmse_seed)
                     mesh_summary = CertusIndexSplineApp._summarize_manual_mesh_change(
                         getattr(
@@ -298,7 +298,7 @@ class CertusIndexSplineManualMeshMixin:
             if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
                 self._manual_knots_dialog.clear_runtime_log()
                 self._manual_knots_dialog.set_runtime_progress(0.0, "Starting autoshift delta ns")
-                d_seed, rmse_seed = CertusIndexSplineApp._runtime_metrics_from_result_dict(seed_current)
+                d_seed, rmse_seed = _runtime_metrics_from_result_dict(seed_current)
                 self._manual_knots_dialog.set_runtime_metrics(d_seed, rmse_seed)
                 self._manual_knots_dialog.append_runtime_log(
                     "Automatic Brent search for best substrate shift in [-0.01, 0.01]..."
@@ -339,7 +339,7 @@ class CertusIndexSplineManualMeshMixin:
                 mode_label = "log(sigma)" if str(mode).strip().lower() == "log" else "sigma"
                 self._manual_knots_dialog.clear_runtime_log()
                 self._manual_knots_dialog.set_runtime_progress(0.0, f"Starting auto repartition {mode_label}")
-                d_seed, rmse_seed = CertusIndexSplineApp._runtime_metrics_from_result_dict(seed_current)
+                d_seed, rmse_seed = _runtime_metrics_from_result_dict(seed_current)
                 self._manual_knots_dialog.set_runtime_metrics(d_seed, rmse_seed)
                 target_sigma_knots = CertusIndexSplineApp._build_manual_repartition_target_sigma_knots(
                     selected_lambda_knots_nm,
@@ -417,7 +417,7 @@ class CertusIndexSplineManualMeshMixin:
                     self._manual_knots_dialog.set_runtime_progress(0.0, "Starting force clean...")
                 else:
                     self._manual_knots_dialog.set_runtime_progress(0.0, "Starting clean...")
-                d_seed, rmse_seed = CertusIndexSplineApp._runtime_metrics_from_result_dict(seed_current)
+                d_seed, rmse_seed = _runtime_metrics_from_result_dict(seed_current)
                 self._manual_knots_dialog.set_runtime_metrics(d_seed, rmse_seed)
                 if force_clean:
                     self._manual_knots_dialog.append_runtime_log("Force clean: removing least penalizing knot...")
@@ -467,7 +467,7 @@ class CertusIndexSplineManualMeshMixin:
             if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
                 self._manual_knots_dialog.clear_runtime_log()
                 self._manual_knots_dialog.set_runtime_progress(0.0, "Starting auto add one...")
-                d_seed, rmse_seed = CertusIndexSplineApp._runtime_metrics_from_result_dict(seed_current)
+                d_seed, rmse_seed = _runtime_metrics_from_result_dict(seed_current)
                 self._manual_knots_dialog.set_runtime_metrics(d_seed, rmse_seed)
                 self._manual_knots_dialog.append_runtime_log(
                     "Auto add one: testing all mid-gap insertion candidates..."
@@ -505,7 +505,7 @@ class CertusIndexSplineManualMeshMixin:
             dlg_ref.clear_runtime_log()
             dlg_ref.append_runtime_log(f"Recall best config: RMSE={rmse_best:.8f} | K={K_best}")
             dlg_ref.set_runtime_progress(100.0, f"Best config restored (K={K_best})")
-            d_best, r_best = CertusIndexSplineApp._runtime_metrics_from_result_dict(best_result)
+            d_best, r_best = _runtime_metrics_from_result_dict(best_result)
             dlg_ref.set_runtime_metrics(d_best, r_best)
             dlg_ref.adopt_sigma_knots(best_sk)
             opt_delta_ns = best_result.get("substrate_n_offset")
@@ -559,7 +559,7 @@ class CertusIndexSplineManualMeshMixin:
             dlg_ref.clear_runtime_log()
             dlg_ref.append_runtime_log(f"Recall best config for K={K_best}: RMSE={rmse_best:.8f}")
             dlg_ref.set_runtime_progress(100.0, f"Best config restored (K={K_best})")
-            d_best, r_best = CertusIndexSplineApp._runtime_metrics_from_result_dict(best_result)
+            d_best, r_best = _runtime_metrics_from_result_dict(best_result)
             dlg_ref.set_runtime_metrics(d_best, r_best)
             dlg_ref.adopt_sigma_knots(best_sk)
             opt_delta_ns = best_result.get("substrate_n_offset")
@@ -584,7 +584,7 @@ class CertusIndexSplineManualMeshMixin:
         dlg.finished.connect(_on_dialog_finished)
         self._manual_knots_dialog = dlg
         dlg.clear_runtime_log()
-        seed_d, seed_rmse = CertusIndexSplineApp._runtime_metrics_from_result_dict(result)
+        seed_d, seed_rmse = _runtime_metrics_from_result_dict(result)
         # Initialize per-K best tracking with the current solution at dialog open
         seed_sk = np.asarray(result.get("sigma_knots", []), dtype=np.float64).ravel()
         dlg.update_best_config(result, seed_sk)

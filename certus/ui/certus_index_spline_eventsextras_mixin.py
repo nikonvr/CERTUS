@@ -31,7 +31,7 @@ from certus.ui.certus_index_spline_common import (
     logger,
 )
 from certus.ui.certus_index_spline_execution import _plot_spectrum_raw_scatter
-from certus.ui.certus_index_spline_statics import _rmse_from_result_dict
+from certus.ui.certus_index_spline_statics import _rmse_from_result_dict, _runtime_metrics_from_result_dict
 from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
 from certus.ui.certus_ui import (
     CertusScientificPlot,
@@ -178,24 +178,7 @@ class CertusIndexSplineEventsExtrasMixin:
 
     _rmse_from_result_dict = staticmethod(_rmse_from_result_dict)
 
-    @staticmethod
-    def _runtime_metrics_from_result_dict(d: dict | None) -> tuple[float, float]:
-
-        if not isinstance(d, dict):
-            return float("nan"), float("nan")
-
-        try:
-            d_nm = float(d.get("d_nm", float("nan")))
-
-        except (TypeError, ValueError):
-            d_nm = float("nan")
-
-        rmse = _rmse_from_result_dict(d)
-
-        if not np.isfinite(rmse):
-            rmse = float("nan")
-
-        return d_nm, rmse
+    _runtime_metrics_from_result_dict = staticmethod(_runtime_metrics_from_result_dict)
 
     @staticmethod
     def _format_lambda_knots_for_log(lambda_knots_nm: Any, *, precision: int = 1, max_items: int = 200) -> str:

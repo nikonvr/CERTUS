@@ -21,7 +21,7 @@ Rien n'a été exécuté, aucun fichier `.md` n'a été lu, aucun fichier source
 - `tests/architecture_debt.json` (pas un `.py`) : relevé par recherche ciblée le 2026-11-11, après l'arbitrage Q2 (§1.6) ;
   sa lecture complète reste une tâche de Phase 0.
 
-**Arbitrages** : Q1 à Q5 et Q16 sont tranchés (section 4) ; les Phases 2b, 2c, 2d et 9 en découlent. Les numéros de ligne sont ceux
+**Arbitrages** : tous tranchés (section 4) ; les Phases 2b à 2e, 9 et 10 en découlent. Reprise : `REPRISE.md`. Les numéros de ligne sont ceux
 de l'audit : chaque phase décale les suivantes, on repère donc par le nom.
 
 **Ce que « garanti sans régression » veut dire ici** : la garantie n'est pas une affirmation de ce plan, c'est un mécanisme.
@@ -539,15 +539,57 @@ hors périmètre ; une validation est bonne quand elle ne montre rien de plus.
   `321 passed` ; performance `29 passed`. Seul rouge : `coherence_md`, l'échec connu.
 - **Non fait** : `docs/ETAT.md` n'a pas été mis à jour.
 
-### [ ] Phase 1 — Contrats et état déclaratif (ajouts purs)
+### [x] Phase 1 — Contrats et état déclaratif (ajouts purs) — faite le 2026-11-11
 
-- Créer : `certus/ui/certus_index_spline_corridor_state.py` ; `certus/ui/certus_index_spline_corridor_host.py` ;
-  `tests/unit/test_the_corridor_mixins_declare_what_they_read_on_the_window.py` (T1 à T6) ;
-  `tests/unit/test_no_module_shadows_the_standard_library.py` (R9).
-- Modifier : rien.
-- Si T3 révèle deux défauts différents pour un même attribut : ne rien corriger, ouvrir un arbitrage.
-- Test : `tests/unit/test_the_corridor_mixins_declare_what_they_read_on_the_window.py`, puis LOT.
-- Sortie : `refactor_guard compare` sans aucun écart.
+- **Créés** : `certus/ui/certus_index_spline_corridor_state.py` ; `certus/ui/certus_index_spline_corridor_host.py` ;
+  `tests/unit/test_the_corridor_mixins_declare_what_they_read_on_the_window.py` (T1 à T6, 48 tests) ;
+  `tests/unit/test_no_module_shadows_the_standard_library.py` (R9, 4 tests) ;
+  `reports/refactor_corridors_2026-11-11/manifests/phase_1.json`. Aucun fichier existant modifié.
+- **Le contrat, tel qu'il est construit.** `CONTRACTS` donne pour chaque mixin corridor la liste **exacte** des noms
+  qu'il lit sur `self` sans les définir (lectures directes, `getattr` / `hasattr`, `self.__class__.x`, `type(self).x`, et
+  le mandataire `CertusIndexSplineApp.x`) ; le test exige l'égalité, dans les deux sens. Les protocoles typent l'union de
+  ces noms : signatures recopiées mécaniquement des méthodes de la fenêtre, type des widgets pris sur leur constructeur.
+  Un test vérifie que chaque méthode déclarée a les mêmes paramètres que celle de la fenêtre.
+
+  | Mixin | Noms lus sur la fenêtre |
+  |---|---|
+  | `_CorridorControlMixin` | 72 |
+  | `_CorridorWorkerMixin` (avec `_CorridorTabMixin`) | 56 |
+  | `CertusIndexSplineCorridorUIMixin` | 44 |
+  | `_CorridorGenMixin` | 29 |
+  | `_CorridorExportMixin` | 15 |
+  | `_CorridorTabMixin` | 14 |
+
+  150 membres en tout : `IndexSplineRunHost` 85, `IndexSplineViewHost` 6, `CorridorStateHost` 24, `CorridorWidgetsHost`
+  35 ; 13 sont typés `Any` (valeur construite de plus d'une façon).
+- **L'état** : `CORRIDOR_STATE` compte 31 attributs ; s'y ajoutent 2 objets graphiques gardés par `hasattr` et 1 nom lu
+  mais jamais affecté (`_corridor_rmse_profile_win`, Q13). Les tests exigent que la table nomme tout attribut
+  `_corridor_*` que le groupe affecte, que chacun naisse dans la fonction indiquée, que `reset` dise ce que fait
+  `_load_defaults`, et que chaque repli de `getattr` soit celui de la table.
+- **Ce que la phase a appris**
+  - T3 : **aucun attribut n'a deux replis différents.** Pas d'arbitrage à ouvrir de ce côté. Le repli diffère parfois de
+    la valeur de naissance par le type seulement (`[]` pour un tableau vide `float64`).
+  - Quatre widgets que les mixins corridors lisent ne sont posés par aucune classe de la fenêtre : `lbl_corridors_state_adv`,
+    `cb_corr_mode`, `sp_corr_rmse_delta`, `chk_corr_scientific_nominal` sont écrits **sur** la fenêtre, de l'extérieur, par
+    le constructeur de `ui/certus_index_spline_managers_ui.py:268, 284, 332, 353` (`app.x = …`). C'est le site de création
+    que §2.4 laissait à relever ; les tests en tiennent compte.
+  - `_corridor_rmse_best_idx` reçoit `None` dans `_PlotMixin._plot_rmse_data_scatter` (`ui/certus_index_spline_rendering.py:306`)
+    alors que partout ailleurs « pas de minimum » vaut `-1`, repli compris : Q17.
+  - Sept attributs d'état ne sont lus par aucun mixin corridor (les six réglages du préréglage robuste et
+    `_corridor_rmse_curvature_label`) : leurs lecteurs sont dans `mixins_ui` et `rendering`.
+  - R9 : rien à la racine ni sous `certus/` ne porte le nom d'un module standard ; aucun import relatif dans le groupe.
+- **Preuves** : les deux fichiers de test, `52 passed` ; contrôle négatif (un repli `100` changé en `101`) : 1 échec,
+  fichier restauré ; LOT `132 passed` ; garde sans manifeste : 6 classes nouvelles et rien d'autre ; avec
+  `manifests/phase_1.json` : `problems=0`, `GUARD=OK`.
+- **Validation** (`validate_parallel.py`) : oracle `1188 passed` ; unit `5836 passed` ; ui `1358 passed` ; rest
+  `321 passed` ; performance `29 passed`. Un rouge nouveau, réel, causé par la phase et corrigé : le garde-fou
+  `tests/unit/test_tests_destroy_the_windows_they_build.py` prenait le test des contrats pour un test qui construit une
+  fenêtre, parce qu'il y lisait des noms de fenêtre écrits en chaînes à côté d'un `getattr` ; le test compare
+  maintenant les classes elles-mêmes. Rejoué : le garde-fou et les fichiers de la phase, `58 passed`. La validation
+  complète n'a pas été relancée après cette retouche de deux lignes d'un fichier de test. Reste rouge : `coherence_md`,
+  l'échec connu ; un artefact de charge, vert seul (`test_the_default_pytest_run_is_quiet.py`).
+- **Pour la Phase 3** : toute classe du MRO dont le nom contient « Corridor » doit avoir son entrée dans `CONTRACTS`.
+  Chaque sous-phase 3x y inscrit sa tranche et retire des mixins d'origine les noms que leurs méthodes parties lisaient.
 
 ### [ ] Phase 2 — Sources uniques (quatre sous-phases, un commit chacune)
 
@@ -634,6 +676,14 @@ partout ailleurs c'est le même objet, importé. Chaque cas ajouté doit échoue
   `tests/unit/test_the_architecture_debt_only_shrinks.py`, puis
   `tests/ui/test_the_two_unplugged_windows_are_plugged_back.py`, puis LOT.
 
+- [ ] **2e — Classes du smart-init en double (Q9)** — sous condition
+  Préalable, avant toute écriture : comparer les deux définitions de `SmartInitPayload` et de ses deux classes d'état,
+  dans `certus/ui/certus_index_spline_smart_init.py` et `certus/ui/certus_index_spline_state_ui.py` — champs, valeurs par
+  défaut, empreintes des méthodes dans l'instantané. **Au moindre écart : s'arrêter, le consigner, ne rien unifier.**
+  Modifier : `certus/ui/certus_index_spline_smart_init.py` importe les trois classes de `state_ui` au lieu de les
+  définir ; le test nouveau gagne le cas des trois noms.
+  Test : le test nouveau, puis `tests/ui/test_the_two_unplugged_windows_are_plugged_back.py`, puis LOT.
+
 ### [ ] Phase 3 — Extraction des tranches (déplacements purs, aucun test retouché)
 
 Une sous-phase par tranche, dans cet ordre. Pour chacune : créer le module, y coller les méthodes de §2.3 à
@@ -697,7 +747,7 @@ Sortie de la phase : `_CorridorControlMixin` et `CertusIndexSplineCorridorUIMixi
 - [ ] **5c** — Déplacer `_start_curve_minimum_deep_refit` dans `_CorridorRunMixin`. Modifier
   `certus/ui/certus_index_spline_corridor_run.py`, `certus/ui/certus_index_spline_eventsextras_mixin.py`.
   Test : `tests/unit/test_post_opt_option_unlock.py`, puis LOT.
-- [ ] **5d (option, Q6)** — Remplacer les appels `CertusIndexSplineApp.<statique>(…)` par des fonctions pures d'un module
+- [ ] **5d (Q6 : oui, pour les 8 méthodes statiques)** — Remplacer les appels `CertusIndexSplineApp.<statique>(…)` par des fonctions pures d'un module
   feuille, les méthodes statiques devenant des alias. Ce n'est plus un déplacement pur : `refactor_guard` doit recevoir la
   liste exacte des fonctions dont le bytecode change, et rien d'autre ne doit bouger.
   Test : `tests/unit/test_mwir_gui_flow.py`, puis LOT.
@@ -705,14 +755,15 @@ Sortie de la phase : `_CorridorControlMixin` et `CertusIndexSplineCorridorUIMixi
 ### [ ] Phase 6 — Assainir l'héritage (garde-fous, puis options)
 
 - [ ] **6a** — Le test T4 à T6 de la Phase 1 est étendu aux huit autres fenêtres de
-  `tests/unit/test_self_attributes_are_defined.py:35-45`, avec leur liste blanche de redéfinitions.
+  `tests/unit/test_self_attributes_are_defined.py:35-45`, avec leur liste blanche de redéfinitions. Il gagne le garde-fou de F11 (Q10) : aucun attribut défini par une classe
+  du projet n'est masqué par une classe Qt placée avant elle dans le MRO (0 aujourd'hui, dans les 9 fenêtres).
   Modifier : `tests/unit/test_the_corridor_mixins_declare_what_they_read_on_the_window.py`.
   Test : ce fichier, puis LOT.
-- [ ] **6b (option, Q7)** — Retirer `_UIMixin` des bases de la fenêtre (`ui/certus_index_spline_ui.py:65`), la classe
+- [ ] **6b (Q7 : oui pour `_UIMixin`)** — Retirer `_UIMixin` des bases de la fenêtre (`ui/certus_index_spline_ui.py:65`), la classe
   restant définie et importable. `_ConfigBuilderMixin` ne peut sortir du MRO sans retoucher
   `tests/unit/test_gui_smoke.py:226`.
   Test : `tests/unit/test_gui_smoke.py`, puis LOT.
-- [ ] **6c (option, Q8)** — Initialiser tout l'état du tableau §2.5 au début de `__init__`. Préalable vérifié : aucun
+- [ ] **6c (Q8 : oui)** — Initialiser tout l'état du tableau §2.5 au début de `__init__`. Préalable vérifié : aucun
   `hasattr` ne garde ces attributs, et ni `vars(self)` ni `self.__dict__` ne sont lus dans le groupe ou la base.
   Modifier : `certus/ui/certus_index_spline_ui.py`, `certus/ui/certus_index_spline_corridor_state.py`.
   Test : `tests/integration/test_suite_ui_instantiation.py`, puis LOT.
@@ -746,6 +797,23 @@ La liste des tests propres à chaque famille est à compléter par un Grep du no
 - Si la Phase 0 a montré que le faux worker était déjà utilisé : la phase est annulée, et I7 est corrigé.
 - Test : `tests/unit/test_mwir_gui_flow.py`.
 
+### [ ] Phase 10 — Correctifs révélés par l'audit (un commit chacun, chacun avec un test qui échoue avant)
+
+Ces changements modifient un comportement : ils viennent après la clôture, jamais dans une phase de déplacement, et
+chacun inscrit ses fonctions dans `changed_code` d'un manifeste.
+
+- [ ] **10a — `-1`, pas `None` (Q17)** : `_plot_rmse_data_scatter` affecte `-1` à `_corridor_rmse_best_idx` quand la
+  courbe est vide. Test : courbe vide tracée, puis lecture par un des lecteurs, sans `TypeError`. La table d'état
+  redevient `int`.
+- [ ] **10b — Branche morte (Q13)** : retirer de `_plot_result` le bloc qui lit `_corridor_rmse_profile_win` ;
+  `NEVER_ASSIGNED` devient vide.
+- [ ] **10c — Remise à zéro complète (Q11)** : d'abord le test qui montre l'intervalle périmé après `_load_defaults` ;
+  s'il échoue comme prévu, `_load_defaults` remet à leur valeur par défaut `_corridor_rmse_smart_interval`, les deux
+  exports, la grille demandée et les quatre tableaux du réticule ; la colonne `reset` de la table suit. Si le test
+  n'arrive pas à produire le défaut : ne rien changer, et le dire.
+- [ ] **10d — Un nom pour `2e-4` (Q12)** : une constante dans `certus_index_spline_corridor_common.py`, utilisée aux
+  trois endroits ; valeur inchangée.
+
 ---
 
 ## 4. Arbitrages requis
@@ -761,26 +829,21 @@ La liste des tests propres à chaque famille est à compléter par un Grep du no
 | Q5 | Couture de test périmée sur `GenericWorker` ? | **Conserver** pendant la migration, **réparer après**, dans un commit de test séparé. | Note en 3a ; constat en Phase 0 ; Phase 9. |
 | Q16 | `_QS_SMART_INIT_DEEP` et `_QS_SMART_INIT_TWO_PHASE`, en double hors du cœur : quelle source ? | **`ui/certus_index_spline_common.py`** ; `smart_init` les importe. Préalable vérifié : `common` n'importe `smart_init` à aucun niveau. | Phase 2d ; `smart_init` dépend désormais du carrefour `common`. |
 
-**Intention métier ambiguë — je ne devine pas**
+**Tranchés par l'assistant le 2026-11-11, sur consigne de 👤 (« réponds toi-même aux questions »)** — chaque décision
+repose sur une lecture du code ou une mesure.
 
-- **Q11 — Remise à zéro incomplète.** `_load_defaults` ne remet pas à zéro `_corridor_rmse_smart_interval`,
-  `_corridor_rmse_parab_export`, `_corridor_rmse_robust_export`, `_corridor_rmse_requested_grid` ni les
-  `_corridor_k_crosshair_*` (`ui/certus_index_spline_state_mixin.py:79-202`). Voulu, ou oubli ?
-- **Q12 — Deux valeurs par défaut voisines.** `sp_corridor_rmse_delta` reçoit `2e-4`
-  (`ui/certus_index_spline_settings.py:1044`) alors que `sp_corr_rmse_delta` reçoit `_DEFAULT_CORRIDOR_RMSE_DELTA` =
-  `2.5e-4` (`:1035`). Deux réglages distincts, ou une constante oubliée ?
-- **Q13 — Branche morte.** `ui/certus_index_spline_execution.py:910-916` lit `_corridor_rmse_profile_win`, que rien
-  n'affecte, et appelle `update_profile`, qui n'existe pas. Supprimer, ou fonctionnalité à venir ?
+| # | Question | Décision | Ce qui la fonde |
+|---|---|---|---|
+| Q6 | Phase 5d : remplacer le mandataire par des fonctions pures ? | **Oui, pour les 8 méthodes statiques seulement** (33 appels), une par commit, en dernier de la Phase 5. Les 6 appels à `_prepare_worker_restart` restent. | Relevé : 10 noms passent par le mandataire, dont 8 statiques. En faire des fonctions d'un module feuille supprime le rappel du mixin vers la fenêtre ; la méthode statique reste comme alias, donc les tests ne bougent pas. `_prepare_worker_restart` est appelée hors instance sur de faux hôtes (I9) : y toucher casserait ces tests. |
+| Q7 | Phase 6b : sortir les mixins vides du MRO ? | **Oui pour `_UIMixin`** (la classe reste définie et importable). **Non pour `_ConfigBuilderMixin`**. | Le second est épinglé par `tests/unit/test_gui_smoke.py` (I6). |
+| Q8 | Phase 6c : initialiser tout l'état corridor dans le constructeur ? | **Oui**, après les Phases 3 à 5, avec un test qui échoue avant. | La Phase 1 l'a rendu sûr : chaque repli de `getattr` donne la valeur par défaut de la table, et aucun `hasattr` ne garde un attribut d'état. Initialiser tôt ne change aucune valeur lue, et donne à l'état un seul lieu de naissance (F2). |
+| Q9 | Les classes du smart-init en double : ce chantier ou un autre ? | **Ce chantier, Phase 2e**, à condition que les deux définitions soient identiques, ce qui se vérifie avant. | Les mixins importent déjà la copie de `state_ui`. Depuis Q16, `smart_init` charge `common`, donc `state_ui` : l'import n'ajoute aucune dépendance. Deux classes pydantic de même nom qui divergeraient seraient un défaut silencieux. |
+| Q10 | Phase 7, puis F11, F10, F15, signaux redéfinis ? | **Phase 7 : oui**, en fin de chantier. **F11 : ne pas toucher à l'ordre des bases**, mais poser le garde-fou en 6a. **F10, F15 et les signaux : autre chantier.** | Mesuré dans l'instantané de référence : dans les 9 fenêtres, **aucune** méthode du projet n'est masquée par une classe Qt. F11 est un piège, pas un défaut actif ; inverser les bases changerait le MRO de 9 fenêtres pour un gain nul. Un test « aucun attribut du projet masqué par Qt » tient le piège fermé. |
+| Q11 | Remise à zéro incomplète : voulu ou oubli ? | **Oubli probable : à prouver par un test, puis à corriger en Phase 10.** | `_load_defaults` vide la courbe RMSE(d) sans retracer l'onglet : `_corridor_rmse_smart_interval` garde l'intervalle de l'échantillon précédent. La génération de `_CorridorGenMixin` le prend en premier choix dès qu'il est fini, et `_plot_corridor_rmse_tab` sort tôt, sans le remettre à `None`, quand le résultat n'a pas de profil. C'est le chemin suspect d'un corridor calculé sur un intervalle périmé. |
+| Q12 | `2e-4` et `2.5e-4` : deux réglages, ou une constante oubliée ? | **Deux réglages distincts : ne rien unifier.** En Phase 10, donner un nom à `2e-4`. | `sp_corr_rmse_delta` (2.5e-4) est la tolérance du **calcul** du corridor : elle part dans la configuration du solveur. `sp_corridor_rmse_delta` (2e-4) est l'amplitude de l'**intervalle robuste** affiché sous la parabole. `2e-4` est écrit trois fois, de façon cohérente (création, préréglage, repli) ; le nommer évite qu'on le confonde avec l'autre. |
+| Q13 | Branche morte : supprimer ? | **Oui**, Phase 10. | `_corridor_rmse_profile_win` n'est affecté nulle part (un test de Phase 1 le tient) : le `getattr` rend toujours `None`, le bloc ne s'exécute jamais, et la méthode qu'il appellerait n'existe pas. |
+| Q14 | Noms trompeurs (`_on_worker_done` dans le mixin corridor, `_DataMixin` dans le groupe corridor) : acceptable ? | **Oui, pour ce chantier.** | Les renommer exige de retoucher les tests qui épinglent ces méthodes par classe et par texte (I2, I7, I8), sans gain de comportement. Dette de nommage notée. |
+| Q15 | Imports relatifs existants : les convertir ? | **Non : la règle vaut pour le code nouveau.** | Les 43 imports sont dans `physics`, `spline`, `domain`, `core` : les convertir touche des fichiers à noyaux compilés (clé du cache Numba, contrôle au bit) pour un gain nul ici. Un test de Phase 1 tient déjà le groupe INDEX SPLINE en imports absolus. |
+| Q17 | `_corridor_rmse_best_idx` reçoit `None` : voulu ? | **Non : c'est un `-1` oublié, défaut latent.** Correctif en Phase 10. | Ses lecteurs font `int(getattr(self, "_corridor_rmse_best_idx", -1))` : avec `None`, la conversion lève `TypeError`. `None` est affecté quand la courbe tracée est vide. |
 
-**Options — le plan avance sans elles**
-
-- **Q6** — Phase 5d : remplacer le mandataire par des fonctions pures (bytecode modifié sur une quarantaine de sites) ?
-- **Q7** — Phase 6b : sortir les mixins vides du MRO ?
-- **Q8** — Phase 6c : initialiser tout l'état corridor dans `__init__` ?
-- **Q9** — `SmartInitPayload` en double (F7) : dans ce chantier ou un autre ?
-- **Q10** — Phase 7, et au-delà l'ordre des bases de `CertusBaseApp` (F11), les signaux redéfinis, l'emplacement de
-  `_ExcelExportMixin` (F10) et de `CertusREApp` (F15) : dans ce chantier ou un autre ?
-- **Q14** — `_on_worker_done` et ses trois étapes resteront dans `_CorridorWorkerMixin`, et `_DataMixin` dans le groupe
-  corridor, parce que des tests les y épinglent (I2, I7, I8). Le nom restera trompeur : acceptable ?
-- **Q15** — Imports relatifs existants (43 occurrences dans 20 fichiers de `physics`, `spline`, `domain`, `core`) :
-  la règle « imports absolus » vaut-elle pour le code nouveau seulement (défaut), ou faut-il les convertir ?
+Il ne reste aucune question ouverte.

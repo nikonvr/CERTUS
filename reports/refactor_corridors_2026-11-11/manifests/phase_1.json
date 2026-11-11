@@ -1,0 +1,11 @@
+{
+  "phase": "1 - contracts and declared state: two new modules, nothing existing touched",
+  "new_classes": [
+    "certus.ui.certus_index_spline_corridor_host:CorridorHost",
+    "certus.ui.certus_index_spline_corridor_host:CorridorStateHost",
+    "certus.ui.certus_index_spline_corridor_host:CorridorWidgetsHost",
+    "certus.ui.certus_index_spline_corridor_host:IndexSplineRunHost",
+    "certus.ui.certus_index_spline_corridor_host:IndexSplineViewHost",
+    "certus.ui.certus_index_spline_corridor_state:CorridorStateEntry"
+  ]
+}

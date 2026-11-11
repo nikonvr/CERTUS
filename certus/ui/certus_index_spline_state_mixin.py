@@ -82,6 +82,10 @@ class CertusIndexSplineStateMixin:
 
         self._last_result = None
 
+        # The last run goes with it: the corridor tabs take their source in its raw result, and the grid in its configuration.
+        self._last_worker_result = None
+        self._last_run_cfg = None
+
         self._corridor_rmse_base_snapshot = None
 
         self._best_live_rmse = float("inf")
@@ -204,6 +208,7 @@ class CertusIndexSplineStateMixin:
             self.lbl_corridor_rmse_summary.setText("No corridor RMSE profile available yet.")
         if hasattr(self, "lbl_corridor_rmse_robust_compact"):
             self.lbl_corridor_rmse_robust_compact.setText("Robust interval: -")
+        self._update_corridor_rmse_state_bar()
 
         self._refresh_data_table()
 

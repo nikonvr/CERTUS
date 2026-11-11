@@ -1,0 +1,7 @@
+{
+  "phase": "10e - _load_defaults forgets the last run too: its raw result and its configuration (Q24), and puts the state bar of the RMSE(d) tab back to its first step.",
+  "changed_code": [
+    "certus.ui.certus_index_spline_state_mixin:CertusIndexSplineStateMixin._load_defaults"
+  ],
+  "note": "changed_code: two assignments to None at the head of the function, and one call to _update_corridor_rmse_state_bar after the labels of the tab are put back. Measured on a window before the change: after _load_defaults the RMSE(d) tab still had the forgotten sample as its source, a setting of the tab drew its curve again, and Recalculate RMSE(d) built a worker on it. Five tests of tests/ui/test_load_defaults_forgets_the_previous_corridor.py were added; four fail on the code before."
+}

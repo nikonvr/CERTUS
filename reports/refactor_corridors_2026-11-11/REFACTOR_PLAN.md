@@ -1024,10 +1024,15 @@ chacun inscrit ses fonctions dans `changed_code` d'un manifeste.
   **Ce que la mesure a corrigé dans Q11** : le tracé ne « sort » pas « tôt » sur un résultat sans profil, il remet
   bien l'intervalle à `None`. L'état périmé n'atteint donc `Generate corridor (auto smart)` que si le retracé échoue.
   Le défaut qui se voit est ailleurs, et la mesure l'a trouvé : Q24, sous-phase 10e.
-- [ ] **10e — Le reset oublie aussi le dernier résultat brut (Q24)** : `_load_defaults` remet `_last_worker_result` et
+- [x] **10e — Le reset oublie aussi le dernier résultat brut (Q24)** : `_load_defaults` remet `_last_worker_result` et
   `_last_run_cfg` à `None`. Test, sur une vraie fenêtre, qui échoue avant : après le reset, l'onglet RMSE(d) n'a plus de
   source, sa barre d'état revient à l'étape 1, bouger un réglage de l'onglet ne retrace pas l'échantillon précédent, et
   l'intervalle manuel reste vide.
+  Fait le 2026-11-11. Cinq tests ajoutés à `tests/ui/test_load_defaults_forgets_the_previous_corridor.py` : `4 failed`
+  avant, dont celui qui remplace `GenericWorker` par un refus — après un reset, « Recalculate RMSE(d) » **construisait
+  un worker** sur l'échantillon oublié. Après : `8 passed` ; le bouton répond « No optimization configuration available
+  (run a fit first). ». La barre d'état de l'onglet n'était rafraîchie que par un tracé : `_load_defaults` l'appelle
+  désormais. Garde `problems=0`, `GUARD=OK` ; LOT, avec `test_certus_reset_framework.py`, `442 passed`.
 - [ ] **10d — Un nom pour `2e-4` (Q12)** : une constante dans `certus_index_spline_corridor_common.py`, utilisée aux
   trois endroits ; valeur inchangée.
 

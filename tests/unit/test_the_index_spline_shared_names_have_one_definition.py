@@ -70,6 +70,14 @@ EXPOSED_BY |= dict.fromkeys(SMART_INIT_KEYS, ("smart_init",))
 EXPOSED_BY |= dict.fromkeys(SMART_INIT_CLASSES, ("smart_init", "mixins_ui", "smartinit_mixin"))
 EXPOSED_BY["SmartInitState"] = ("smart_init",)
 EXPOSED_BY["_SmartInitState"] = ("smart_init", "smartinit_mixin")
+#: The three jobs of a corridor worker thread: `corridor_jobs` defines them, `common` and their callers import them.
+CORRIDOR_JOBS = {
+    "_worker_corridor_rmse_regular_grid": ("common", "ui"),
+    "_worker_corridor_rmse_healer": ("common", "corridorui_mixin"),
+    "_worker_curve_minimum_deep_refit": ("common", "eventsextras_mixin"),
+}
+ONE_SOURCE |= dict.fromkeys(CORRIDOR_JOBS, f"{UI}corridor_jobs.py")
+EXPOSED_BY |= CORRIDOR_JOBS
 #: A file that keeps a function of the shared name, allowed because the function only imports the shared one, inside its
 #: body, and calls it.
 DELEGATES = {"_apply_fixed_log_k_axis": (f"{UI}monitor_ui.py",)}

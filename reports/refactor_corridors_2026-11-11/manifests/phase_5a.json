@@ -1,0 +1,17 @@
+{
+  "phase": "5a - the three jobs of a corridor worker thread, moved, text unchanged, from certus_index_spline_common.py to certus_index_spline_corridor_jobs.py; common imports them back and goes on exposing them.",
+  "moved_objects": [
+    {
+      "from": "certus.ui.certus_index_spline_common:_worker_corridor_rmse_regular_grid",
+      "to": "certus.ui.certus_index_spline_corridor_jobs:_worker_corridor_rmse_regular_grid"
+    },
+    {
+      "from": "certus.ui.certus_index_spline_common:_worker_corridor_rmse_healer",
+      "to": "certus.ui.certus_index_spline_corridor_jobs:_worker_corridor_rmse_healer"
+    },
+    {
+      "from": "certus.ui.certus_index_spline_common:_worker_curve_minimum_deep_refit",
+      "to": "certus.ui.certus_index_spline_corridor_jobs:_worker_curve_minimum_deep_refit"
+    }
+  ]
+}

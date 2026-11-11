@@ -61,6 +61,7 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | **Validation complète de la phase 3** : un rouge réel dû à 3a (`test_progress_imports.py`, liste de modules), corrigé (Q22) ; le reste est l'état connu (plan, Phase 3) | sur `d3118167`, correctif au commit suivant |
 | **Phase 4** : `_CorridorRmsePlotMixin`, 10 méthodes dans `certus_index_spline_corridor_rmse_plot.py` ; `rendering.py` sous 1 000 lignes | `7db3b42a` |
 | **Validation complète de la phase 4** : rien de plus que l'état connu (plan, Phase 4) | sur `7db3b42a` |
+| **Phase 5a** : les trois fonctions de calcul des corridors dans `certus_index_spline_corridor_jobs.py` | `91859ec1`, amendé |
 
 ## En cours
 
@@ -70,7 +71,7 @@ Rien : tout ce qui est fait est commité. La prochaine tâche est la première d
 
 2. Pour toute extraction : `tools/` (`plan_move`, `move`, `manifest`, `contracts`, `protocols`, `born_in`, puis
    `guard` et `lot`).
-4. Phase 5 : 5a, 5b, 5c, puis 5d (les 8 fonctions statiques appelées par le mandataire).
+4. Phase 5, suite : 5b, 5c, puis 5d (les 8 fonctions statiques appelées par le mandataire), puis validation complète.
 5. Phase 6 : 6a garde-fous étendus aux autres fenêtres, 6b `_UIMixin` hors du MRO, 6c état initialisé dans `__init__`.
 6. Phase 7 : 7a, 7b (arêtes entre familles).
 7. Phase 8 : clôture. Phase 9 : couture de test périmée (Q5).

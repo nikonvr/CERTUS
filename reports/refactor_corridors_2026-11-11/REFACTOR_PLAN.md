@@ -836,7 +836,12 @@ et `test_the_default_pytest_run_is_quiet.py`) ; ui `1363 passed` ; rest `321 pas
 
 ### [ ] Phase 5 — Découpler les mixins de la fenêtre
 
-- [ ] **5a** — Créer `certus/ui/certus_index_spline_corridor_jobs.py` : y déplacer `_worker_corridor_rmse_regular_grid`,
+- [x] **5a** — faite le 2026-11-11 : les 3 fonctions déplacées, texte inchangé ; aucune ne lit `logger` (Q18 sans
+  objet), aucune couture sur leurs globaux. `common` les réimporte (mêmes objets). Garde avec `manifests/phase_5a.json`
+  (`moved_objects`) : `problems=0`, `GUARD=OK` ; ruff PASS ; lot et `test_manual_rmse_grid_integration.py` `309 passed`.
+  Le module est tenu par `test_the_index_spline_shared_names_have_one_definition.py` : une définition, dans
+  `corridor_jobs` ; `common` et les trois lecteurs (`ui`, `corridorui_mixin`, `eventsextras_mixin`) tiennent le même objet.
+  Créer `certus/ui/certus_index_spline_corridor_jobs.py` : y déplacer `_worker_corridor_rmse_regular_grid`,
   `_worker_corridor_rmse_healer`, `_worker_curve_minimum_deep_refit` (`ui/certus_index_spline_common.py:278, 319, 348`).
   Modifier `certus/ui/certus_index_spline_common.py` (réimport, mêmes objets). L'import retardé
   `ui/certus_index_spline_corridor_worker.py:893` reste tel quel (couture de la façade, I15).

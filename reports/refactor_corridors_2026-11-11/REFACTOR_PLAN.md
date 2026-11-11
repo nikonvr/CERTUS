@@ -994,7 +994,15 @@ Preuve faite : l'assertion `isinstance(app._worker, _FakeWorker)`, ajoutée seul
 - Si la Phase 0 a montré que le faux worker était déjà utilisé : la phase est annulée, et I7 est corrigé.
 - Test : `tests/unit/test_mwir_gui_flow.py`.
 
-### [ ] Phase 10 — Correctifs révélés par l'audit (un commit chacun, chacun avec un test qui échoue avant)
+### [x] Phase 10 — Correctifs révélés par l'audit (un commit chacun, chacun avec un test qui échoue avant) — faite le 2026-11-11
+
+**Validation complète, sur `e9f68946`** (`validate_parallel.py`, 16 workers, 2026-11-11 23:23 à 2026-11-12 00:03) : ruff,
+`check_claude_md`, `check_docs` PASS ; `coherence_md` FAIL (état connu) ; oracle `1196 passed` ; ui `1374 passed` ; reste
+`321 passed` et un artefact vert seul (`test_bare_substrate_transmission_bounds`) ; performance `29 passed` ; unit, rejouée
+sur cache Numba vierge, `5973 passed` et deux artefacts verts seuls (un test qui chronomètre,
+`test_the_slit_profile_is_inert_when_absent_or_zero`). Le premier passage de `unit` avait un rouge réel, sans rapport avec
+la phase : un test « au bit » d'un noyau STRAT, rouge tant que le cache Numba de cet arbre neuf restait en place, vert
+sur cache vierge ([`cache_numba_arbre_neuf.md`](cache_numba_arbre_neuf.md)). Rien d'autre que l'état connu.
 
 Ces changements modifient un comportement : ils viennent après la clôture, jamais dans une phase de déplacement, et
 chacun inscrit ses fonctions dans `changed_code` d'un manifeste.

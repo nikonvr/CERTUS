@@ -27,6 +27,8 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 5. Validation complète : `python scripts/validate_parallel.py`, environ 25 minutes, rien d'autre en même temps.
    **État connu** : `coherence_md` sort en erreur sur 3 commandes mortes de documents de campagne (laissé tel quel sur
    décision) ; un test qui chronomètre peut être rouge en parallèle et vert seul. Tout autre rouge est nouveau.
+   Un test « au bit » d'un noyau rouge même seul : le rejouer avec `NUMBA_CACHE_DIR` sur un dossier neuf avant de
+   conclure ([`cache_numba_arbre_neuf.md`](cache_numba_arbre_neuf.md)).
 
 ## Consignes reçues de 👤 (2026-11-11)
 
@@ -80,7 +82,8 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | **Phase 10b** : la branche morte de `_plot_result` est retirée, `NEVER_ASSIGNED` est vide (Q13) ; test rouge avant (`1 failed`) | `82007a4a` |
 | **Phase 10c** : `_load_defaults` remet les huit attributs corridor écrits pour un échantillon (Q11) ; test rouge avant (`2 failed`) | `5b801bf5` |
 | **Phase 10e** (Q24, trouvée par la mesure de 10c) : `_load_defaults` oublie aussi `_last_worker_result` et `_last_run_cfg` ; avant, « Recalculate RMSE(d) » après un reset relançait la grille sur l'échantillon oublié ; test rouge avant (`4 failed`) | `0267b135` |
-| **Phase 10d** : le `2e-4` de l'intervalle robuste s'appelle `_DEFAULT_CORRIDOR_ROBUST_RMSE_DELTA`, lu aux six endroits (Q12) ; test rouge avant (`3 failed`) | commit « phase 10d » |
+| **Phase 10d** : le `2e-4` de l'intervalle robuste s'appelle `_DEFAULT_CORRIDOR_ROBUST_RMSE_DELTA`, lu aux six endroits (Q12) ; test rouge avant (`3 failed`) | `e9f68946` |
+| **Validation complète de la phase 10** : rien de plus que l'état connu ; un rouge dû au cache Numba de l'arbre neuf, vert sur cache vierge ([note](cache_numba_arbre_neuf.md)) | sur `e9f68946` |
 
 ## En cours
 
@@ -88,11 +91,9 @@ Rien : tout ce qui est fait est commité. La prochaine tâche est la première d
 
 ## À faire, dans l'ordre
 
-1. Validation complète de la Phase 10 (`python scripts/validate_parallel.py`, rien d'autre en même temps), puis
-   `docs/ETAT.md` à jour.
-2. Phase 7, après la Phase 10 (Q21) : 7a, puis 7b sous le protocole de noyau (oracle avant et après,
+1. Phase 7, après la Phase 10 (Q21) : 7a, puis 7b sous le protocole de noyau (oracle avant et après,
    `python scripts/c1_diff.py HEAD`). Puis validation complète.
-3. Feuille de route UX, plan section 5.5 : U1 à U5 d'abord (défauts visibles).
+2. Feuille de route UX, plan section 5.5 : U1 à U5 d'abord (défauts visibles).
 
 Outils : pour une extraction, `tools/` (`plan_move`, `move`, `manifest`, `contracts`, `protocols`, `born_in`, puis `guard`
 et `lot`) ; `tools/static_to_function.py` pour une méthode statique ; `tools/unread_imports.py` pour le relevé de clôture.

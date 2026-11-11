@@ -37,6 +37,7 @@ from certus.ui.certus_index_spline_statics import (
     _manual_mesh_change_log_line,
     _rmse_from_result_dict,
     _runtime_metrics_from_result_dict,
+    _status_iteration_metric,
     _summarize_manual_mesh_change,
 )
 from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
@@ -830,26 +831,7 @@ class CertusIndexSplineEventsExtrasMixin:
         x_encoding = str(result.get("x_encoding", "")).strip().lower()
         return x_encoding.startswith("split_")
 
-    @staticmethod
-    def _status_iteration_metric(
-        display_dict: dict,
-        fallback_dict: dict,
-    ) -> tuple[str, int]:
-
-        for key, label in (
-            ("nit_total", "evals [global optimizer]"),
-            ("nit_combined", "evals [global optimizer]"),
-            ("nfev_lbfgsb", "evals [L-BFGS-B local-polish]"),
-            ("nit_polish", "iters [cubic-spline-sigma-polish]"),
-        ):
-            raw = display_dict.get(key, fallback_dict.get(key, None))
-            if raw is None:
-                continue
-            try:
-                return label, max(0, int(raw))
-            except (TypeError, ValueError):
-                continue
-        return "iters [cubic-spline-sigma-polish]", 0
+    _status_iteration_metric = staticmethod(_status_iteration_metric)
 
     @staticmethod
     def _format_post_optimization_status(display: dict, fallback_result: dict | None = None) -> str:
@@ -862,7 +844,7 @@ class CertusIndexSplineEventsExtrasMixin:
         mse_value = float(display_dict.get("mse", 0.0))
         d_nm_value = float(display_dict.get("d_nm", float("nan")))
         d_01_txt = f"{float(d_nm_value):.1f}" if np.isfinite(float(d_nm_value)) else "n/a"
-        iter_label, iter_value = CertusIndexSplineApp._status_iteration_metric(
+        iter_label, iter_value = _status_iteration_metric(
             display_dict,
             fallback_dict,
         )

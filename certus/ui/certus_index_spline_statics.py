@@ -83,3 +83,24 @@ def _summarize_manual_mesh_change(before_sigma_knots: Any, after_sigma_knots: An
 
 def _lam_uniform_grid_nm(lo_h: float, hi_h: float, step: float) -> np.ndarray:
     return _lam_uniform_grid(lo_h, hi_h, step)
+
+
+def _status_iteration_metric(
+    display_dict: dict,
+    fallback_dict: dict,
+) -> tuple[str, int]:
+
+    for key, label in (
+        ("nit_total", "evals [global optimizer]"),
+        ("nit_combined", "evals [global optimizer]"),
+        ("nfev_lbfgsb", "evals [L-BFGS-B local-polish]"),
+        ("nit_polish", "iters [cubic-spline-sigma-polish]"),
+    ):
+        raw = display_dict.get(key, fallback_dict.get(key, None))
+        if raw is None:
+            continue
+        try:
+            return label, max(0, int(raw))
+        except (TypeError, ValueError):
+            continue
+    return "iters [cubic-spline-sigma-polish]", 0

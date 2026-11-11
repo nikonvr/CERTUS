@@ -20,6 +20,7 @@ from certus.ui.certus_index_spline_statics import (
     _manual_mesh_change_log_line,
     _rmse_from_result_dict,
     _runtime_metrics_from_result_dict,
+    _summarize_manual_mesh_change,
 )
 from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
 from certus.ui.certus_ui import GenericWorker
@@ -35,10 +36,7 @@ class CertusIndexSplineManualMeshMixin:
         from certus.spline.spline_pipeline_utils import _sorted_finite_sigma_knots_for_log
         return _sorted_finite_sigma_knots_for_log(sigma_knots)
 
-    @staticmethod
-    def _summarize_manual_mesh_change(before_sigma_knots: Any, after_sigma_knots: Any) -> dict[str, Any]:
-        from certus.spline.spline_pipeline_utils import _sigma_mesh_change_summary_for_log
-        return _sigma_mesh_change_summary_for_log(before_sigma_knots, after_sigma_knots)
+    _summarize_manual_mesh_change = staticmethod(_summarize_manual_mesh_change)
 
     _manual_mesh_change_log_line = staticmethod(_manual_mesh_change_log_line)
 
@@ -228,7 +226,7 @@ class CertusIndexSplineManualMeshMixin:
                     self._manual_knots_dialog.set_runtime_progress(0.0, "Starting local re-optimization")
                     d_seed, rmse_seed = _runtime_metrics_from_result_dict(seed_current)
                     self._manual_knots_dialog.set_runtime_metrics(d_seed, rmse_seed)
-                    mesh_summary = CertusIndexSplineApp._summarize_manual_mesh_change(
+                    mesh_summary = _summarize_manual_mesh_change(
                         getattr(
                             dlg,
                             "_base_sigma_knots",
@@ -325,7 +323,7 @@ class CertusIndexSplineManualMeshMixin:
                     selected_lambda_knots_nm,
                     mode=mode,
                 )
-                mesh_summary = CertusIndexSplineApp._summarize_manual_mesh_change(
+                mesh_summary = _summarize_manual_mesh_change(
                     np.sort(1.0 / np.maximum(np.asarray(selected_lambda_knots_nm, dtype=np.float64).ravel(), 1e-30)),
                     target_sigma_knots,
                 )
@@ -665,7 +663,7 @@ class CertusIndexSplineManualMeshMixin:
         if self.logger:
             K_cur = int(np.asarray(result.get("sigma_knots", []), dtype=np.float64).size)
             rr = float(result.get("rmse", float("nan")))
-            mesh_summary = CertusIndexSplineApp._summarize_manual_mesh_change(
+            mesh_summary = _summarize_manual_mesh_change(
                 np.asarray(result.get("sigma_knots", []), dtype=np.float64).ravel(),
                 target_sigma_knots,
             )
@@ -768,7 +766,7 @@ class CertusIndexSplineManualMeshMixin:
         self._worker.signals.error.connect(self._cleanup_thread)
         self._worker_role = f"manual_repartition_{str(mode).strip().lower()}"
         if self.logger:
-            mesh_summary = CertusIndexSplineApp._summarize_manual_mesh_change(
+            mesh_summary = _summarize_manual_mesh_change(
                 np.asarray(result.get("sigma_knots", []), dtype=np.float64).ravel(),
                 target_sigma_knots,
             )

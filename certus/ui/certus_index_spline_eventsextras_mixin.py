@@ -36,6 +36,7 @@ from certus.ui.certus_index_spline_statics import (
     _manual_mesh_change_log_line,
     _rmse_from_result_dict,
     _runtime_metrics_from_result_dict,
+    _summarize_manual_mesh_change,
 )
 from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
 from certus.ui.certus_ui import (
@@ -271,7 +272,7 @@ class CertusIndexSplineEventsExtrasMixin:
         if role in manual_pipeline_roles and isinstance(manual_dlg, ManualSigmaKnotDialog):
             manual_dlg.set_runtime_busy(False)
             manual_dlg.set_runtime_progress(100.0, "Error")
-            mesh_summary = CertusIndexSplineApp._summarize_manual_mesh_change(
+            mesh_summary = _summarize_manual_mesh_change(
                 getattr(manual_dlg, "_base_sigma_knots", np.asarray([], dtype=np.float64)),
                 manual_dlg.selected_sigma_knots(),
             )

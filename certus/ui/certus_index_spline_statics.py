@@ -72,3 +72,8 @@ def _manual_mesh_change_log_line(label: str, summary: dict[str, Any]) -> str:
         f"before={before_txt} | after={after_txt} | removed={removed_count} {removed_txt} | "
         f"added={added_count} {added_txt}"
     )
+
+
+def _summarize_manual_mesh_change(before_sigma_knots: Any, after_sigma_knots: Any) -> dict[str, Any]:
+    from certus.spline.spline_pipeline_utils import _sigma_mesh_change_summary_for_log
+    return _sigma_mesh_change_summary_for_log(before_sigma_knots, after_sigma_knots)

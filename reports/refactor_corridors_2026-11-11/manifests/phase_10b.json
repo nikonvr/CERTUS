@@ -1,0 +1,7 @@
+{
+  "phase": "10b - _plot_result no longer reads _corridor_rmse_profile_win, an attribute nothing ever set (Q13); NEVER_ASSIGNED is empty.",
+  "changed_code": [
+    "certus.ui.certus_index_spline_execution:_RunMixin._plot_result"
+  ],
+  "note": "changed_code: a block of seven lines removed. It ran only when getattr(self, '_corridor_rmse_profile_win', None) was not None, and no module sets that attribute; the method it called on the value, update_profile, is defined nowhere. The new test of tests/unit/test_the_corridor_mixins_declare_what_they_read_on_the_window.py fails on the code before (1 failed)."
+}

@@ -76,7 +76,8 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | **Phase 8, clôture** : registre de dette exact, garde finale `GUARD=OK` avec les 17 manifestes, relevé des 56 imports sans lecteur | `9c57ffd8` |
 | **Validation complète des phases 6 et 8** : rien de plus que l'état connu (plan, Phase 6) | sur `9c57ffd8` |
 | **Phase 9** : les deux tests de `test_mwir_gui_flow.py` remplacent `GenericWorker` là où la méthode le lit ; preuve faite que le vrai était construit | commit suivant `d9db99a7` |
-| **Phase 10a** : une courbe RMSE(d) vide écrit `-1`, plus `None`, dans `_corridor_rmse_best_idx` (Q17) ; test rouge avant (`8 failed`) | commit « phase 10a » |
+| **Phase 10a** : une courbe RMSE(d) vide écrit `-1`, plus `None`, dans `_corridor_rmse_best_idx` (Q17) ; test rouge avant (`8 failed`) | `43d48d3f` |
+| **Phase 10b** : la branche morte de `_plot_result` est retirée, `NEVER_ASSIGNED` est vide (Q13) ; test rouge avant (`1 failed`) | commit « phase 10b » |
 
 ## En cours
 
@@ -84,7 +85,7 @@ Rien : tout ce qui est fait est commité. La prochaine tâche est la première d
 
 ## À faire, dans l'ordre
 
-1. Phase 10, suite : 10b (Q13), 10c (Q11), 10d (Q12), un commit chacun, chacun avec un test qui échoue avant. Puis
+1. Phase 10, suite : 10c (Q11), 10d (Q12), un commit chacun, chacun avec un test qui échoue avant. Puis
    validation complète.
 2. Phase 7, après la Phase 10 (Q21) : 7a, puis 7b sous le protocole de noyau (oracle avant et après,
    `python scripts/c1_diff.py HEAD`). Puis validation complète.

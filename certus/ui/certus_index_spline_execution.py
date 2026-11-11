@@ -892,14 +892,6 @@ class _RunMixin:
         else:
             _log_tgt.info("%s", _msg)
 
-        win = getattr(self, "_corridor_rmse_profile_win", None)
-        if win is not None and win.isVisible():
-            d_prof = np.asarray(r.get("profile_d_values_nm", []), dtype=np.float64)
-            r_prof = np.asarray(r.get("profile_d_rmse_values", []), dtype=np.float64)
-            if d_prof.size > 0 and r_prof.size == d_prof.size:
-                rmse_thresh = r.get("profile_d_rmse_thresh")
-                win.update_profile(d_prof, r_prof, rmse_thresh)
-
         self._update_overview_tab(r, lam_s, tt_s, rt_s, n_s, k_s, lam_exp, d_nm)
 
     def _update_overview_tab(self, r: dict, lam_s, tt_s, rt_s, n_s, k_s, lam_exp, d_nm) -> None:

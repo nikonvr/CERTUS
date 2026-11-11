@@ -110,5 +110,5 @@ def initial_corridor_state() -> dict[str, Any]:
 #: Graphic objects of the RMSE(d) tab: their readers check `hasattr`, they have no value before the tab is built.
 GRAPHIC_OBJECTS: tuple[str, ...] = ("_corridor_rmse_curve", "_corridor_rmse_best_marker")
 
-#: Read through `getattr(self, name, None)` and set by nothing: the branch that reads it never runs.
-NEVER_ASSIGNED: tuple[str, ...] = ("_corridor_rmse_profile_win",)
+#: Read through `getattr(self, name, None)` and set by nothing: a branch that never runs. None is left, and a test keeps it so.
+NEVER_ASSIGNED: tuple[str, ...] = ()

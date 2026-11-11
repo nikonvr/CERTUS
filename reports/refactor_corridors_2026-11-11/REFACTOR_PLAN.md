@@ -1005,8 +1005,13 @@ chacun inscrit ses fonctions dans `changed_code` d'un manifeste.
   Fait le 2026-11-11 : `tests/unit/test_an_empty_rmse_curve_leaves_no_minimum_index.py` rend `8 failed` sur le code
   d'avant (`TypeError` dans `_on_corridor_manual_slider_changed` et `_use_robust_corridor_interval`), `8 passed` après ;
   garde `problems=0`, `GUARD=OK` ; LOT `407 passed`.
-- [ ] **10b — Branche morte (Q13)** : retirer de `_plot_result` le bloc qui lit `_corridor_rmse_profile_win` ;
+- [x] **10b — Branche morte (Q13)** : retirer de `_plot_result` le bloc qui lit `_corridor_rmse_profile_win` ;
   `NEVER_ASSIGNED` devient vide.
+  Fait le 2026-11-11 : `test_nothing_looks_up_a_corridor_attribute_that_nothing_sets` (dans
+  `test_the_corridor_mixins_declare_what_they_read_on_the_window.py`) rend `1 failed` avant, et tient la propriété
+  générale : aucun `getattr`/`hasattr` du groupe ne vise un attribut `_corridor_…` que rien n'affecte. Le bouchon
+  `_corridor_rmse_profile_win=None` de `tests/unit/test_spectral_knot_markers.py` part avec le bloc. Garde
+  `problems=0`, `GUARD=OK` ; LOT `408 passed`.
 - [ ] **10c — Remise à zéro complète (Q11)** : d'abord le test qui montre l'intervalle périmé après `_load_defaults` ;
   s'il échoue comme prévu, `_load_defaults` remet à leur valeur par défaut `_corridor_rmse_smart_interval`, les deux
   exports, la grille demandée et les quatre tableaux du réticule ; la colonne `reset` de la table suit. Si le test

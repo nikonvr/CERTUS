@@ -134,7 +134,6 @@ def test_plot_result_adds_large_t_knot_markers(monkeypatch) -> None:
         # It is a no-op here for the same reason as its neighbours: this test is
         # about the knot markers drawn on plot_T, not about the overview tab.
         _update_overview_tab=lambda *_args, **_kwargs: None,
-        _corridor_rmse_profile_win=None,
     )
     result = {
         "lam_nm": np.array([400.0, 500.0, 600.0, 700.0], dtype=np.float64),

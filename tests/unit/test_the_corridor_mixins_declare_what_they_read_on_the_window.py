@@ -269,6 +269,17 @@ def test_an_attribute_is_born_where_the_table_says_and_reset_when_it_says() -> N
         assert entry.reset == (name in reset), f"{name}: reset={entry.reset}, and _load_defaults says otherwise"
 
 
+def test_nothing_looks_up_a_corridor_attribute_that_nothing_sets() -> None:
+    """`_plot_result` read `_corridor_rmse_profile_win` through getattr, with None as fallback. Nothing ever set it: the
+    block under it never ran, and the method it would have called on the value exists nowhere (audit, Q13)."""
+    looked_up = {
+        name for path in GROUP for call in ast.walk(tree(path)) if (name := guarded(call)) is not None and name.startswith("_corridor_")
+    }
+    set_or_defined = {name for name in looked_up if name in set_somewhere() or hasattr(CertusIndexSplineApp, name)}
+    assert sorted(looked_up - set_or_defined) == []
+    assert NEVER_ASSIGNED == ()
+
+
 def fallbacks_in_the_code() -> dict[str, set[str]]:
     found: dict[str, set[str]] = {}
     for path in GROUP:

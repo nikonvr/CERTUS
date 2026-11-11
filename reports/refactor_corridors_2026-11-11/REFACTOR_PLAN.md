@@ -896,6 +896,11 @@ mortes).
 
 ### [x] Phase 6 — Assainir l'héritage (garde-fous, puis options) — faite le 2026-11-11
 
+**Validation de la phase, et de la clôture** (`validate_parallel.py`, `9c57ffd8`, Python 3.15.2) : rien de plus que
+l'état connu. ruff PASS ; oracle `1196 passed` ; unit `5960 passed` et 3 artefacts de charge, verts seuls en série (trois
+tests qui chronomètrent ou attendent un délai) ; ui `1366 passed` ; rest `322 passed` ; performance `29 passed` ;
+`check_claude_md`, `check_docs` PASS ; `coherence_md` : l'échec connu (3 commandes mortes).
+
 - [x] **6a** — faite le 2026-11-11 (tests seuls, aucun code de production). Un balayage en interpréteur neuf mesure les
   neuf fenêtres de `scripts/refactor_guard.py` ; `OVERRIDES_OF` porte, pour les huit autres fenêtres, la liste de leurs
   redéfinitions d'aujourd'hui (de 0 pour le HUB à 30 pour RE). Tenu pour les neuf : aucun mixin n'a de constructeur,
@@ -949,7 +954,22 @@ La liste des tests propres à chaque famille est à compléter par un Grep du no
   Le module partagé doit être au niveau de `physics` ou en dessous (`domain`) : `physics` l'importe, et un module de
   `utils` laisserait l'arête montante en place. Si `c1_diff` ne rend pas « C1 TENU » : annuler, ne pas corriger en avant.
 
-### [ ] Phase 8 — Clôture
+### [x] Phase 8 — Clôture — faite le 2026-11-11
+
+- `python scripts/metrics.py --dette tests/architecture_debt.json` ne change rien : le registre était exact (chaque
+  phase a réécrit ses plafonds). `test_the_architecture_debt_only_shrinks.py` seul : `18 passed`.
+- Instantané final contre la référence de Phase 0, avec les 17 manifestes de `manifests/` (`tools/guard.py`) :
+  `problems=0`, `GUARD=OK`.
+- Suite complète : la validation de `9c57ffd8`, ci-dessus (Phase 6).
+- Imports laissés sans lecteur par les déplacements : 56 noms dans 10 modules, listés et laissés en place dans
+  [`imports_sans_lecteur.md`](imports_sans_lecteur.md) (`tools/unread_imports.py`).
+- Ce que le chantier a changé, mesuré : `rendering.py` 1967 → 979 lignes, `settings.py` 1388 → 754,
+  `corridorui_mixin.py` 483 → 59, `common.py` 401 → 266 ; cinq tranches par fonctionnalité (`corridor_run` 786 lignes,
+  `corridor_rmse_view` 327, `corridor_interval` 447, `corridor_nk` 275, `corridor_rmse_plot` 822), plus `corridor_jobs`,
+  `lazy_app`, `statics` ; le mandataire de la fenêtre n'est plus lu que pour `_prepare_worker_restart` (6 appels, contre
+  plus de 40 sites). 37 commits depuis la Phase 0, aucun poussé.
+
+Consignes d'origine de la phase :
 
 - Régénérer `tests/architecture_debt.json` ; lancer la suite complète ; comparer l'instantané final à la référence de
   Phase 0 avec le manifeste cumulé. **L'instantané de référence reste (Q20)** : les Phases 9, 10, 7 et la feuille de

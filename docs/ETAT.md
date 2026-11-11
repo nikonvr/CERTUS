@@ -14,7 +14,8 @@
 > `grep -n "ALG-02" docs/AUDITS.md`), preuves dans `reports/` (le `bilan.md` d'un dossier).
 
 **Refactoring des corridors d'INDEX SPLINE (2026-11-11, en cours)** : branche `claude/reprise-certus1111-926596`, non
-poussée ; phases 0 à 2 faites et validées ; fait, en cours, reste à faire et mode de reprise dans
+poussée ; phases 0 à 6 et clôture (8) faites et validées, restent 9, 10, 7 et la feuille de route UX ; fait, en cours,
+reste à faire et mode de reprise dans
 [`REPRISE.md`](../reports/refactor_corridors_2026-11-11/REPRISE.md), détail dans le plan du même dossier.
 
 **RICL (2026-11-05)** : précontrôle GO ; protocole de charge au sommet et sélection des tours cohérents, témoin nominal,

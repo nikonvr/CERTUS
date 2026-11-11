@@ -69,7 +69,9 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | **Phase 6a** : garde-fous d'héritage étendus aux huit autres fenêtres, plus celui de F11 (aucun nom masqué par Qt) | `18be2a5b` |
 | Garde : une classe sortie des bases d'une fenêtre reste en tête de son propre MRO | `ab7f6884` |
 | **Phase 6b** : `_UIMixin` hors des bases de la fenêtre | `a0150bc9` |
-| **Phase 6c** : le constructeur donne à tout l'état corridor sa valeur par défaut, depuis la table | commit suivant `a0150bc9` |
+| **Phase 6c** : le constructeur donne à tout l'état corridor sa valeur par défaut, depuis la table | `fce0ee90` |
+| **Phase 8, clôture** : registre de dette exact, garde finale `GUARD=OK` avec les 17 manifestes, relevé des 56 imports sans lecteur | `9c57ffd8` |
+| **Validation complète des phases 6 et 8** : rien de plus que l'état connu (plan, Phase 6) | sur `9c57ffd8` |
 
 ## En cours
 
@@ -77,11 +79,12 @@ Rien : tout ce qui est fait est commité. La prochaine tâche est la première d
 
 ## À faire, dans l'ordre
 
-2. Pour toute extraction : `tools/` (`plan_move`, `move`, `manifest`, `contracts`, `protocols`, `born_in`, puis
-   `guard` et `lot`).
-5. Phase 6, fin : validation complète (`python scripts/validate_parallel.py`), puis la consigner au plan.
-6. Phase 7 : 7a, 7b (arêtes entre familles).
-7. Phase 8 : clôture. Phase 9 : couture de test périmée (Q5).
-8. Phase 10 : correctifs révélés par l'audit, un commit chacun, chacun avec un test qui échoue avant (Q17, Q13, Q11, Q12).
-9. Feuille de route UX, plan section 5.5 : U1 à U5 d'abord (défauts visibles) ; dans les fichiers du groupe INDEX SPLINE,
-   seulement après la Phase 8. Hors de ce groupe, elles peuvent commencer quand on veut.
+1. Phase 9 : couture de test périmée (Q5), un commit de test.
+2. Phase 10 : correctifs révélés par l'audit, un commit chacun, chacun avec un test qui échoue avant : 10a (Q17), 10b
+   (Q13), 10c (Q11), 10d (Q12). Puis validation complète.
+3. Phase 7, après la Phase 10 (Q21) : 7a, puis 7b sous le protocole de noyau (oracle avant et après,
+   `python scripts/c1_diff.py HEAD`). Puis validation complète.
+4. Feuille de route UX, plan section 5.5 : U1 à U5 d'abord (défauts visibles).
+
+Outils : pour une extraction, `tools/` (`plan_move`, `move`, `manifest`, `contracts`, `protocols`, `born_in`, puis `guard`
+et `lot`) ; `tools/static_to_function.py` pour une méthode statique ; `tools/unread_imports.py` pour le relevé de clôture.

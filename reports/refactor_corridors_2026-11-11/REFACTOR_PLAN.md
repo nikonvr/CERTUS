@@ -716,7 +716,7 @@ partout ailleurs c'est le même objet, importé. Chaque cas ajouté doit échoue
   définir ; le test nouveau gagne le cas des trois noms.
   Test : le test nouveau, puis `tests/ui/test_the_two_unplugged_windows_are_plugged_back.py`, puis LOT.
 
-### [ ] Phase 3 — Extraction des tranches (déplacements purs, aucun test retouché)
+### [x] Phase 3 — Extraction des tranches (déplacements purs ; un registre de test suit, Q22) — faite le 2026-11-11
 
 Une sous-phase par tranche, dans cet ordre. Pour chacune : créer le module, y coller les méthodes de §2.3 à
 l'identique, importer leurs globaux depuis les mêmes origines (R2, R3), ajouter la tranche aux bases des classes de
@@ -792,6 +792,17 @@ régénérer `tests/architecture_debt.json` dans le même commit (I12).
 
 Sortie de la phase : `_CorridorControlMixin` et `CertusIndexSplineCorridorUIMixin` ne portent plus que leur héritage
 (et `_launch_corridor_rmse_gap_heal` pour le second) ; `certus/ui/certus_index_spline_ui.py` est intact.
+
+**Validation de la phase** (`validate_parallel.py`, `d3118167`, Python 3.15.2) : `VALIDATION=NO-GO`. ruff PASS ; oracle
+`1192 passed` ; unit `5918 passed`, 2 rouges en parallèle ; ui `1362 passed` ; rest `320 passed` et le même artefact de
+charge, vert seul en série ; performance `29 passed` ; `check_claude_md`, `check_docs` PASS ; `coherence_md` : l'échec
+connu (3 commandes mortes). Des deux rouges de unit, l'un est le test qui chronomètre
+(`test_bench_kernels_measures_ratios_and_alerts_on_a_regression.py`), vert seul en série ; l'autre est **réel et dû à
+3a** : `tests/unit/test_progress_imports.py` tient une liste des modules qui lisent `build_progress_snapshot`, et
+`settings` n'en fait plus partie depuis que `_start_deferred_corridor_worker` est dans `corridor_run`. Le lot de
+contrôle ne lançait pas ce test. Corrigé dans un commit à part (Q22) : l'entrée de la liste désigne `corridor_run` ; le
+fichier `12 passed`, et il entre dans le lot (`tools/lot.py`). La validation complète n'a pas été relancée après ce
+commit, qui ne touche qu'une liste de test : la prochaine est celle de la Phase 4.
 
 ### [ ] Phase 4 — Tracé RMSE(d) (déplacement pur + une retouche mécanique de test, accordée par Q1)
 
@@ -938,6 +949,12 @@ repose sur une lecture du code ou une mesure.
 | Q18 | Comment lier `logger` dans un module nouveau ? | **Comme le module d'origine quand il est unique** (affecté pour ce qui vient de `rendering`, `common`, `settings` ; importé du cœur spline pour ce qui l'importait). Quand deux origines diffèrent, on importe, et l'écart de la méthode minoritaire est déclaré (`changed_code`) et mesuré. | Mesuré en 3a et 3c : Python 3.15 ne compile pas `logger.debug(...)` de la même façon selon que le nom est lié par un import ou par une affectation. |
 | Q20 | Retirer l'instantané de référence à la clôture ? | **Non.** | Les Phases 9, 10, 7 et la feuille de route UX s'appuient sur la garde ; `reports/` ne se vide pas (CLAUDE.md §3). |
 | Q21 | Phase 7 : où, et sous quel contrôle ? | **Après la Phase 10** ; 7b sous le protocole de noyau (oracle avant et après, `c1_diff.py HEAD`). | Relevé : `gradient_analytic.py` et `certus_index_utils.py` citent Numba ; le plan n'y prévoyait que des tests d'interface. |
+
+**Tranché par l'assistant dans la nuit du 2026-11-11, en autonomie**
+
+| # | Question | Décision | Ce qui la fonde |
+|---|---|---|---|
+| Q22 | Un test qui tient une liste de modules « par ce qu'ils lisent » devient rouge quand la méthode lectrice déménage : le retoucher ? | **Oui : l'entrée suit la méthode**, dans un commit de test à part, et le test entre dans le lot. | `tests/unit/test_progress_imports.py` le demande lui-même (« take it off the list ») et l'a déjà fait une fois (`corridor_worker`, S5.3). Ce n'est pas une couture : aucun comportement n'est épinglé, seulement l'adresse d'un lecteur. |
 
 **Proposé à 👤, non appliqué** — Q19 : avancer la Phase 9 juste après la Phase 3. La méthode que la couture vise est
 à sa place définitive depuis 3a, et d'ici la Phase 9 deux tests de `test_mwir_gui_flow.py` lancent un vrai fil de

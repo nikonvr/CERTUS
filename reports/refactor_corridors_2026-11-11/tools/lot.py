@@ -31,6 +31,8 @@ LOT = [
     U + "test_the_index_spline_shared_names_have_one_definition.py",
     U + "test_the_corridor_slices_hold_the_methods_they_were_given.py",
     U + "test_spectral_knot_markers.py",
+    # a list of modules by what they use: a move can empty an entry (the full validation of Phase 3 found it)
+    U + "test_progress_imports.py",
 ]
 
 if __name__ == "__main__":

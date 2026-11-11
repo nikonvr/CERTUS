@@ -804,7 +804,18 @@ contrôle ne lançait pas ce test. Corrigé dans un commit à part (Q22) : l'ent
 fichier `12 passed`, et il entre dans le lot (`tools/lot.py`). La validation complète n'a pas été relancée après ce
 commit, qui ne touche qu'une liste de test : la prochaine est celle de la Phase 4.
 
-### [ ] Phase 4 — Tracé RMSE(d) (déplacement pur + une retouche mécanique de test, accordée par Q1)
+### [x] Phase 4 — Tracé RMSE(d) (déplacement pur + une retouche mécanique de test, accordée par Q1) — faite le 2026-11-11
+
+Faite avec `tools/` : 10 méthodes déplacées dans `_CorridorRmsePlotMixin`, texte inchangé, aucun écart de bytecode
+(`logger` affecté comme dans `rendering`, Q18) ; aucune aide de niveau module à déplacer (relevé : les dix méthodes ne
+lisent que des noms importés et `logger`). Garde avec `manifests/phase_4.json` : `problems=0`, `GUARD=OK`, sans couture
+à reconnaître puisque le test suit le code ; ruff PASS ; `test_rmse_scatter_pieces.py` et `test_rmse_tab_summary.py`
+`92 passed` ; lot de contrôle et les trois tests RMSE `395 passed`. `rendering.py` : 1781 → 978 lignes, sorti de
+`fichiers_longs`. Contrats : `_CorridorRmsePlotMixin` 18 noms (ces lectures n'étaient pas déclarées tant que les
+méthodes étaient dans `_PlotMixin`) ; protocoles : 2 méthodes ajoutées, 5 attributs typés à la main
+(`_corridor_rmse_curvature_label` dans l'état ; `_corridor_rmse_curve`, `_corridor_rmse_best_marker`,
+`chk_corridor_rmse_live_parabola`, `chk_corridor_rmse_lock_scale` dans les widgets), aucun retiré. Table d'état : 2
+renvois `born_in` repointés.
 
 - Créer : `certus/ui/certus_index_spline_corridor_rmse_plot.py` (les 10 méthodes de §2.3 et les aides de niveau module
   qu'elles utilisent, R3).

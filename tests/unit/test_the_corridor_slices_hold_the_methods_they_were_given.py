@@ -93,6 +93,21 @@ SLICES = {
             "_build_tab_corridor",
         ),
     ),
+    "corridor_rmse_plot": (
+        "_CorridorRmsePlotMixin",
+        (
+            "_plot_rmse_data_scatter",
+            "_plot_the_reversal_and_fallback_points",
+            "_plot_the_breakpoint_events",
+            "_draw_the_local_parabola",
+            "_corridor_profile_arrays",
+            "_prep_rmse_plot_data",
+            "_draw_corridor_curvature_label",
+            "_plot_corridor_rmse_tab",
+            "_manual_grid_note",
+            "_write_the_rmse_summary",
+        ),
+    ),
 }
 #: The classes that inherit the slices, and the slices each one takes.
 COMPOSITES = {
@@ -103,6 +118,7 @@ COMPOSITES = {
         "_CorridorIntervalMixin",
         "_CorridorNkMixin",
     ),
+    "rendering:_PlotMixin": ("_CorridorRmsePlotMixin",),
 }
 #: The modules above the corridor group: a slice that imported one at module level would close an import cycle.
 ABOVE = ("common", "ui", "settings", "execution", "rendering", "mixins_ui")

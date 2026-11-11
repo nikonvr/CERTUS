@@ -127,6 +127,8 @@ class IndexSplineRunHost(Protocol):
     @staticmethod
     def _rmse_from_result_dict(d: dict) -> float: ...
     @staticmethod
+    def _robust_interval_from_local_quadratic(d_s: np.ndarray, r_s: np.ndarray, i_best: int, delta_rmse: float, half_window_pts: int) -> tuple[bool, float, float, float, float]: ...
+    @staticmethod
     def _runtime_metrics_from_result_dict(d: dict | None) -> tuple[float, float]: ...
     def _schedule_corridor_auto_refine(self, seed: dict, *, rerun_corridor: bool, origin: str) -> bool: ...
     def _set_corridor_grid_busy(self, busy: bool) -> None: ...
@@ -139,6 +141,7 @@ class IndexSplineRunHost(Protocol):
     def _start_manual_sigma_insert_worker(self, result: dict, selected_lambda_knots_nm: list[float], delta_ns: float = ...) -> None: ...
     @staticmethod
     def _summarize_manual_mesh_change(before_sigma_knots: Any, after_sigma_knots: Any) -> dict[str, Any]: ...
+    def _sync_corridor_manual_controls(self, d_s: np.ndarray, i_best: int) -> None: ...
     def _update_corridor_rmse_state_bar(self, src: dict[str, Any] | None = ...) -> None: ...
     def export_excel(self, auto_export: bool = ...) -> None: ...
     def log(self, msg: str, lvl: str = ...) -> None: ...
@@ -166,6 +169,7 @@ class CorridorStateHost(Protocol):
     _corridor_rmse_base_snapshot: dict | None
     _corridor_rmse_best_idx: int | None
     _corridor_rmse_center_nm: float
+    _corridor_rmse_curvature_label: Any
     _corridor_rmse_d_vals: np.ndarray
     _corridor_rmse_grid_live_t0: float
     _corridor_rmse_live_last_plot_ts: float
@@ -187,6 +191,8 @@ class CorridorStateHost(Protocol):
 class CorridorWidgetsHost(Protocol):
     """The widgets and the graphic objects of the corridor tabs."""
 
+    _corridor_rmse_best_marker: pg.InfiniteLine
+    _corridor_rmse_curve: pg.PlotDataItem
     _idx_tab_corridor: Any
     _idx_tab_corridor_rmse: Any
     btn_corridor_generate_auto_smart_grid: Any
@@ -198,6 +204,8 @@ class CorridorWidgetsHost(Protocol):
     cb_corr_mode: QComboBox
     chk_corr_scientific_nominal: QCheckBox
     chk_corridor_rmse_envelope_only: QCheckBox
+    chk_corridor_rmse_live_parabola: QCheckBox
+    chk_corridor_rmse_lock_scale: QCheckBox
     lbl_corr_alpha: QLabel
     lbl_corr_rmse_delta: QLabel
     lbl_corridor_rmse_grid_progress: QLabel
@@ -312,5 +320,13 @@ CONTRACTS: dict[str, tuple[str, ...]] = {
         "_add_context_page", "_apply_cell_style", "_corridor_k_crosshair_hi", "_corridor_k_crosshair_lam",
         "_corridor_k_crosshair_lo", "_corridor_k_crosshair_nom", "_create_empty_context_widget",
         "_ensure_complete_manifest_for_secondary_export", "_lam_piecewise_report_grid_nm",
+    ),
+    "_CorridorRmsePlotMixin": (
+        "_add_curve", "_corridor_rmse_best_marker", "_corridor_rmse_curvature_label", "_corridor_rmse_curve",
+        "_corridor_rmse_manual_active", "_corridor_rmse_manual_hi", "_corridor_rmse_manual_lo",
+        "_corridor_rmse_smart_interval", "_robust_interval_from_local_quadratic",
+        "_sync_corridor_manual_controls", "_update_corridor_rmse_state_bar", "chk_corridor_rmse_live_parabola",
+        "chk_corridor_rmse_lock_scale", "lbl_corridor_rmse_robust_compact", "lbl_corridor_rmse_summary",
+        "plot_corridor_rmse_d", "sp_corridor_rmse_delta", "sp_corridor_rmse_win",
     ),
 }

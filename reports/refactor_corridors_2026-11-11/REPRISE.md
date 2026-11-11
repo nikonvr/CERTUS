@@ -59,6 +59,7 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | Outils d'extraction d'une tranche (`tools/`, six étapes, mode d'emploi en tête de chaque fichier), Q18, Q20, Q21 tranchées, 3d préparée | `24dc5a0b` |
 | **Phase 3d** : `_CorridorNkMixin`, 7 méthodes dans `certus_index_spline_corridor_nk.py` | `d3118167` |
 | **Validation complète de la phase 3** : un rouge réel dû à 3a (`test_progress_imports.py`, liste de modules), corrigé (Q22) ; le reste est l'état connu (plan, Phase 3) | sur `d3118167`, correctif au commit suivant |
+| **Phase 4** : `_CorridorRmsePlotMixin`, 10 méthodes dans `certus_index_spline_corridor_rmse_plot.py` ; `rendering.py` sous 1 000 lignes | commit suivant `50fcfde3` |
 
 ## En cours
 
@@ -68,7 +69,7 @@ Rien : tout ce qui est fait est commité. La prochaine tâche est la première d
 
 2. Pour toute extraction : `tools/` (`plan_move`, `move`, `manifest`, `contracts`, `protocols`, `born_in`, puis
    `guard` et `lot`).
-3. Phase 4 : tracé RMSE(d).
+3. Phase 4 : validation complète (`python scripts/validate_parallel.py`), puis la consigner au plan.
 4. Phase 5 : 5a, 5b, 5c, puis 5d (les 8 fonctions statiques appelées par le mandataire).
 5. Phase 6 : 6a garde-fous étendus aux autres fenêtres, 6b `_UIMixin` hors du MRO, 6c état initialisé dans `__init__`.
 6. Phase 7 : 7a, 7b (arêtes entre familles).

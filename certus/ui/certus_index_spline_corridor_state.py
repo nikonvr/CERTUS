@@ -51,7 +51,7 @@ _INIT = "ui:CertusIndexSplineApp.__init__"
 _RMSE_TAB = "corridor_rmse_view:_CorridorRmseViewMixin._build_tab_corridor_rmse"
 _PRESET = "corridor_interval:_CorridorIntervalMixin._apply_corridor_preset_auto_robust"
 _K_TAB = "corridor_tab:_CorridorTabMixin._plot_corridor_tab"
-_RMSE_PLOT = "rendering:_PlotMixin._plot_corridor_rmse_tab"
+_RMSE_PLOT = "corridor_rmse_plot:_CorridorRmsePlotMixin._plot_corridor_rmse_tab"
 _NAN = ("float('nan')",)
 
 CORRIDOR_STATE: dict[str, CorridorStateEntry] = {
@@ -77,7 +77,7 @@ CORRIDOR_STATE: dict[str, CorridorStateEntry] = {
     "_corridor_rmse_parab_export": CorridorStateEntry("dict | None", _nothing, _RMSE_PLOT, False, ("None",)),
     "_corridor_rmse_robust_export": CorridorStateEntry("dict | None", _nothing, _RMSE_PLOT, False, ("None",)),
     "_corridor_rmse_curvature_label": CorridorStateEntry(
-        "Any", _nothing, "rendering:_PlotMixin._draw_corridor_curvature_label", False, ("None",)
+        "Any", _nothing, "corridor_rmse_plot:_CorridorRmsePlotMixin._draw_corridor_curvature_label", False, ("None",)
     ),
     # The interval chosen by hand.
     "_corridor_rmse_manual_active": CorridorStateEntry("bool", lambda: False, _INIT, True, ("False",)),

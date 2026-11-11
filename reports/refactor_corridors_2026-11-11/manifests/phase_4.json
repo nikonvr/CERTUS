@@ -1,0 +1,59 @@
+{
+  "phase": "4 - _CorridorRmsePlotMixin: the drawing of the RMSE(d) tab, ten methods moved, text unchanged, to certus_index_spline_corridor_rmse_plot.py; _PlotMixin inherits the slice; the one test that replaces pg follows the code (Q1).",
+  "new_classes": [
+    "certus.ui.certus_index_spline_corridor_rmse_plot:_CorridorRmsePlotMixin"
+  ],
+  "moved_methods": [
+    {
+      "name": "_plot_rmse_data_scatter",
+      "from": "certus.ui.certus_index_spline_rendering:_PlotMixin",
+      "to": "certus.ui.certus_index_spline_corridor_rmse_plot:_CorridorRmsePlotMixin"
+    },
+    {
+      "name": "_plot_the_reversal_and_fallback_points",
+      "from": "certus.ui.certus_index_spline_rendering:_PlotMixin",
+      "to": "certus.ui.certus_index_spline_corridor_rmse_plot:_CorridorRmsePlotMixin"
+    },
+    {
+      "name": "_plot_the_breakpoint_events",
+      "from": "certus.ui.certus_index_spline_rendering:_PlotMixin",
+      "to": "certus.ui.certus_index_spline_corridor_rmse_plot:_CorridorRmsePlotMixin"
+    },
+    {
+      "name": "_draw_the_local_parabola",
+      "from": "certus.ui.certus_index_spline_rendering:_PlotMixin",
+      "to": "certus.ui.certus_index_spline_corridor_rmse_plot:_CorridorRmsePlotMixin"
+    },
+    {
+      "name": "_corridor_profile_arrays",
+      "from": "certus.ui.certus_index_spline_rendering:_PlotMixin",
+      "to": "certus.ui.certus_index_spline_corridor_rmse_plot:_CorridorRmsePlotMixin"
+    },
+    {
+      "name": "_prep_rmse_plot_data",
+      "from": "certus.ui.certus_index_spline_rendering:_PlotMixin",
+      "to": "certus.ui.certus_index_spline_corridor_rmse_plot:_CorridorRmsePlotMixin"
+    },
+    {
+      "name": "_draw_corridor_curvature_label",
+      "from": "certus.ui.certus_index_spline_rendering:_PlotMixin",
+      "to": "certus.ui.certus_index_spline_corridor_rmse_plot:_CorridorRmsePlotMixin"
+    },
+    {
+      "name": "_plot_corridor_rmse_tab",
+      "from": "certus.ui.certus_index_spline_rendering:_PlotMixin",
+      "to": "certus.ui.certus_index_spline_corridor_rmse_plot:_CorridorRmsePlotMixin"
+    },
+    {
+      "name": "_manual_grid_note",
+      "from": "certus.ui.certus_index_spline_rendering:_PlotMixin",
+      "to": "certus.ui.certus_index_spline_corridor_rmse_plot:_CorridorRmsePlotMixin"
+    },
+    {
+      "name": "_write_the_rmse_summary",
+      "from": "certus.ui.certus_index_spline_rendering:_PlotMixin",
+      "to": "certus.ui.certus_index_spline_corridor_rmse_plot:_CorridorRmsePlotMixin"
+    }
+  ],
+  "added_attributes": []
+}

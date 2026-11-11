@@ -1,0 +1,14 @@
+{
+  "phase": "5c - _start_curve_minimum_deep_refit moved, text unchanged, from CertusIndexSplineEventsExtrasMixin to _CorridorRunMixin, which now holds the whole life cycle of a corridor run; the slice reads the lazy stand-in for the window in lazy_app and the job in corridor_jobs.",
+  "moved_methods": [
+    {
+      "name": "_start_curve_minimum_deep_refit",
+      "from": "certus.ui.certus_index_spline_eventsextras_mixin:CertusIndexSplineEventsExtrasMixin",
+      "to": "certus.ui.certus_index_spline_corridor_run:_CorridorRunMixin"
+    }
+  ],
+  "added_attributes": [
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._start_curve_minimum_deep_refit",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._start_curve_minimum_deep_refit"
+  ]
+}

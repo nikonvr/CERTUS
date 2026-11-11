@@ -63,6 +63,8 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | **Validation complète de la phase 4** : rien de plus que l'état connu (plan, Phase 4) | sur `7db3b42a` |
 | **Phase 5a** : les trois fonctions de calcul des corridors dans `certus_index_spline_corridor_jobs.py` | `2d8cc760` |
 | **Phase 5b** : le mandataire paresseux de la fenêtre dans `certus_index_spline_lazy_app.py` | commit suivant `2d8cc760` |
+| **Phase 5b** (suite du tableau) : commit `7198ce64` |  |
+| **Phase 5c** : `_start_curve_minimum_deep_refit` dans `_CorridorRunMixin` ; Q23 tranchée | commit suivant `7198ce64` |
 
 ## En cours
 
@@ -72,7 +74,7 @@ Rien : tout ce qui est fait est commité. La prochaine tâche est la première d
 
 2. Pour toute extraction : `tools/` (`plan_move`, `move`, `manifest`, `contracts`, `protocols`, `born_in`, puis
    `guard` et `lot`).
-4. Phase 5, suite : 5c, puis 5d (les 8 fonctions statiques appelées par le mandataire), puis validation complète.
+4. Phase 5, suite : 5d (les 8 fonctions statiques appelées par le mandataire), puis validation complète.
 5. Phase 6 : 6a garde-fous étendus aux autres fenêtres, 6b `_UIMixin` hors du MRO, 6c état initialisé dans `__init__`.
 6. Phase 7 : 7a, 7b (arêtes entre familles).
 7. Phase 8 : clôture. Phase 9 : couture de test périmée (Q5).

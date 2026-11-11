@@ -49,6 +49,7 @@ SLICES = {
             "_merge_rmse_grid_promotion_into_nominal",
             "_on_corr_mode_changed",
             "_on_corridor_rmse_grid_live_update",
+            "_start_curve_minimum_deep_refit",
         ),
     ),
     "corridor_rmse_view": (
@@ -123,6 +124,8 @@ COMPOSITES = {
 #: The modules above the corridor group: a slice that imported one at module level would close an import cycle.
 ABOVE = ("common", "ui", "settings", "execution", "rendering", "mixins_ui")
 GATEWAY = f"{UI}corridor_ui"
+#: The lazy stand-in for the window class: a leaf, that a slice may import because it imports nothing itself.
+LAZY_WINDOW = f"{UI}lazy_app"
 
 
 def slice_class(stem: str) -> type:
@@ -169,5 +172,13 @@ def test_a_slice_module_imports_nothing_of_the_window_at_module_level(stem) -> N
     imported += [alias.name for node in tree.body if isinstance(node, ast.Import) for alias in node.names]
     above = [m for m in imported if m in {UI + s for s in ABOVE} or (m.startswith(UI) and m.endswith("_mixin"))]
     assert above == [], f"{stem} imports a module that is above the corridor group"
-    interface = [m for m in imported if m.startswith("certus.ui.") and not m.startswith(f"{UI}corridor")]
+    interface = [m for m in imported if m.startswith("certus.ui.") and not m.startswith(f"{UI}corridor") and m != LAZY_WINDOW]
     assert interface == [], f"{stem} imports the interface layer itself: take the name from {GATEWAY}"
+
+
+def test_the_lazy_window_module_is_a_leaf() -> None:
+    """A slice may import it at module level only because it imports nothing there: the window is imported at the call."""
+    tree = ast.parse((ROOT / f"{LAZY_WINDOW.replace('.', '/')}.py").read_text(encoding="utf-8-sig"))
+    imported = [node.module or "" for node in tree.body if isinstance(node, ast.ImportFrom)]
+    imported += [alias.name for node in tree.body if isinstance(node, ast.Import) for alias in node.names]
+    assert imported == ["__future__"]

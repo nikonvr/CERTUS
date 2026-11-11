@@ -858,7 +858,13 @@ et `test_the_default_pytest_run_is_quiet.py`) ; ui `1363 passed` ; rest `321 pas
   instance (`ui/certus_index_spline_common.py:371-376`). Modifier `certus/ui/certus_index_spline_common.py` (réimport).
   Ne pas l'exporter par la façade (R4).
   Test : `tests/unit/test_gui_smoke.py`, puis LOT.
-- [ ] **5c** — Déplacer `_start_curve_minimum_deep_refit` dans `_CorridorRunMixin`. Modifier
+- [x] **5c** — faite le 2026-11-11 : méthode déplacée, texte inchangé, bytecode identique (elle ne lit pas `logger`).
+  Garde avec `manifests/phase_5c.json` : `problems=0`, `GUARD=OK` ; ruff PASS ; lot et
+  `test_manual_rmse_grid_integration.py` `313 passed`. La tranche lit le mandataire dans `lazy_app` et la fonction de
+  calcul dans `corridor_jobs`, jamais dans `common` (R1). Le test des tranches l'admet pour `lazy_app` seul, et tient
+  que ce module n'importe rien au niveau module (Q23). Contrats : `_CorridorRunMixin` 58 → 57 ; protocoles : 1 méthode
+  retirée (la tranche la fournit).
+  Déplacer `_start_curve_minimum_deep_refit` dans `_CorridorRunMixin`. Modifier
   `certus/ui/certus_index_spline_corridor_run.py`, `certus/ui/certus_index_spline_eventsextras_mixin.py`.
   Test : `tests/unit/test_post_opt_option_unlock.py`, puis LOT.
 - [ ] **5d (Q6 : oui, pour les 8 méthodes statiques)** — Remplacer les appels `CertusIndexSplineApp.<statique>(…)` par des fonctions pures d'un module
@@ -983,6 +989,8 @@ repose sur une lecture du code ou une mesure.
 | # | Question | Décision | Ce qui la fonde |
 |---|---|---|---|
 | Q22 | Un test qui tient une liste de modules « par ce qu'ils lisent » devient rouge quand la méthode lectrice déménage : le retoucher ? | **Oui : l'entrée suit la méthode**, dans un commit de test à part, et le test entre dans le lot. | `tests/unit/test_progress_imports.py` le demande lui-même (« take it off the list ») et l'a déjà fait une fois (`corridor_worker`, S5.3). Ce n'est pas une couture : aucun comportement n'est épinglé, seulement l'adresse d'un lecteur. |
+
+| Q23 | Une tranche peut-elle importer `lazy_app`, qui n'est ni du groupe corridor ni la passerelle ? | **Oui, lui seul**, tant qu'il reste une feuille. | Le plan (§2.3) place `_start_curve_minimum_deep_refit` dans la tranche avec son appel au mandataire. Passer par la passerelle ferait une 4e instruction d'import (I4 en veut 3). `lazy_app` n'importe rien au niveau module : aucun cycle possible ; un test le tient. |
 
 **Proposé à 👤, non appliqué** — Q19 : avancer la Phase 9 juste après la Phase 3. La méthode que la couture vise est
 à sa place définitive depuis 3a, et d'ici la Phase 9 deux tests de `test_mwir_gui_flow.py` lancent un vrai fil de

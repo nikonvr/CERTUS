@@ -315,61 +315,6 @@ class CertusIndexSplineEventsExtrasMixin:
 
         self._refresh_post_optimization_option_controls()
 
-    def _start_curve_minimum_deep_refit(self, seed: dict) -> bool:
-        """Launches ``quick_pwlnk_refit_result_dict`` (L-BFGS-B on d + nodes) from the grid minimum seed."""
-        if self._worker is not None and self._worker.isRunning():
-            QMessageBox.information(self, "Optimization", "A calculation is already in progress.")
-            return False
-        cfg = self._last_run_cfg
-        if cfg is None:
-            cfg = self._build_opt_config(notify=False)
-        if cfg is None:
-            QMessageBox.warning(
-                self,
-                "Optimization",
-                "No optimization configuration available (run a fit first).",
-            )
-            return False
-        cfg = self._cfg_with_result_substrate(cfg, seed)
-        polish = int(getattr(cfg, "polish_maxfun", 10000) or 10000)
-        deep_maxfun = int(max(4000, min(24000, round(1.5 * float(polish)))))
-        CertusIndexSplineApp._prepare_worker_restart(self)
-        self._worker = GenericWorker(
-            _worker_curve_minimum_deep_refit,
-            cfg,
-            dict(seed),
-            self._stop_event,
-            deep_maxfun=deep_maxfun,
-        )
-        self._worker.signals.progress.connect(self._on_progress)
-        self._worker.signals.finished.connect(self._on_worker_done)
-        self._worker.signals.error.connect(self._on_worker_err)
-        self._worker.signals.finished.connect(self._cleanup_thread)
-        self._worker.signals.error.connect(self._cleanup_thread)
-        self._worker_role = "curve_min_deep"
-        self.btn_run.setEnabled(False)
-        self.btn_stop.setEnabled(True)
-        self._prog_ui_last = 0
-        self._prog_reset_bar()
-        sd = float(seed.get("d_nm", float("nan")))
-        self.lbl_status.setText(
-            f"Grid minimum? Deep L-BFGS-B polish (d+nodes, maxfun={deep_maxfun}) from d={sd:.3f} nm"
-        )
-        if self.logger:
-            self.logger.info(
-                "GUI curve-min deep refit | start | deep_maxfun=%d | seed_d_nm=%s",
-                deep_maxfun,
-                (f"{sd:.6f}" if np.isfinite(sd) else "n/a"),
-            )
-            log_index_spline_d_trace(
-                self.logger,
-                "GUI: deep polish from the RMSE(d) grid minimum",
-                seed.get("d_nm"),
-                detail=f"deep_maxfun={deep_maxfun}",
-            )
-        self._worker.start()
-        return True
-
     def _wire_worker_signals(self, progress_fn) -> None:
         """Wire the standard progress/live callbacks for a worker run."""
         self._worker.kwargs["progress_cb"] = progress_fn

@@ -817,6 +817,11 @@ méthodes étaient dans `_PlotMixin`) ; protocoles : 2 méthodes ajoutées, 5 at
 `chk_corridor_rmse_live_parabola`, `chk_corridor_rmse_lock_scale` dans les widgets), aucun retiré. Table d'état : 2
 renvois `born_in` repointés.
 
+**Validation de la phase** (`validate_parallel.py`, `7db3b42a`, Python 3.15.2) : rien de plus que l'état connu. ruff
+PASS ; oracle `1193 passed` ; unit `5924 passed` et 2 artefacts de charge, verts seuls en série (le test qui chronomètre,
+et `test_the_default_pytest_run_is_quiet.py`) ; ui `1363 passed` ; rest `321 passed` ; performance `29 passed` ;
+`check_claude_md`, `check_docs` PASS ; `coherence_md` : l'échec connu (3 commandes mortes).
+
 - Créer : `certus/ui/certus_index_spline_corridor_rmse_plot.py` (les 10 méthodes de §2.3 et les aides de niveau module
   qu'elles utilisent, R3).
 - Modifier : `certus/ui/certus_index_spline_rendering.py` (`_PlotMixin` hérite de la tranche et réimporte les aides) ;

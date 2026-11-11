@@ -1012,10 +1012,22 @@ chacun inscrit ses fonctions dans `changed_code` d'un manifeste.
   générale : aucun `getattr`/`hasattr` du groupe ne vise un attribut `_corridor_…` que rien n'affecte. Le bouchon
   `_corridor_rmse_profile_win=None` de `tests/unit/test_spectral_knot_markers.py` part avec le bloc. Garde
   `problems=0`, `GUARD=OK` ; LOT `408 passed`.
-- [ ] **10c — Remise à zéro complète (Q11)** : d'abord le test qui montre l'intervalle périmé après `_load_defaults` ;
+- [x] **10c — Remise à zéro complète (Q11)** : d'abord le test qui montre l'intervalle périmé après `_load_defaults` ;
   s'il échoue comme prévu, `_load_defaults` remet à leur valeur par défaut `_corridor_rmse_smart_interval`, les deux
   exports, la grille demandée et les quatre tableaux du réticule ; la colonne `reset` de la table suit. Si le test
   n'arrive pas à produire le défaut : ne rien changer, et le dire.
+  Fait le 2026-11-11. Mesuré sur une vraie fenêtre : après `_load_defaults`, `_corridor_rmse_smart_interval` vaut
+  encore `(98.0, 102.0)`, l'intervalle de l'échantillon tracé avant. `tests/ui/test_load_defaults_forgets_the_previous_corridor.py`
+  rend `2 failed, 1 passed` avant, `3 passed` après ; il tient aussi la liste des attributs qui ne sont pas d'un
+  échantillon (réglages, horloges, objet graphique), les seuls à ne pas être remis. Garde `problems=0`, `GUARD=OK` ;
+  LOT `411 passed`.
+  **Ce que la mesure a corrigé dans Q11** : le tracé ne « sort » pas « tôt » sur un résultat sans profil, il remet
+  bien l'intervalle à `None`. L'état périmé n'atteint donc `Generate corridor (auto smart)` que si le retracé échoue.
+  Le défaut qui se voit est ailleurs, et la mesure l'a trouvé : Q24, sous-phase 10e.
+- [ ] **10e — Le reset oublie aussi le dernier résultat brut (Q24)** : `_load_defaults` remet `_last_worker_result` et
+  `_last_run_cfg` à `None`. Test, sur une vraie fenêtre, qui échoue avant : après le reset, l'onglet RMSE(d) n'a plus de
+  source, sa barre d'état revient à l'étape 1, bouger un réglage de l'onglet ne retrace pas l'échantillon précédent, et
+  l'intervalle manuel reste vide.
 - [ ] **10d — Un nom pour `2e-4` (Q12)** : une constante dans `certus_index_spline_corridor_common.py`, utilisée aux
   trois endroits ; valeur inchangée.
 
@@ -1065,6 +1077,12 @@ repose sur une lecture du code ou une mesure.
 |---|---|---|---|
 | Q22 | Un test qui tient une liste de modules « par ce qu'ils lisent » devient rouge quand la méthode lectrice déménage : le retoucher ? | **Oui : l'entrée suit la méthode**, dans un commit de test à part, et le test entre dans le lot. | `tests/unit/test_progress_imports.py` le demande lui-même (« take it off the list ») et l'a déjà fait une fois (`corridor_worker`, S5.3). Ce n'est pas une couture : aucun comportement n'est épinglé, seulement l'adresse d'un lecteur. |
 | Q23 | Une tranche peut-elle importer `lazy_app`, qui n'est ni du groupe corridor ni la passerelle ? | **Oui, lui seul**, tant qu'il reste une feuille. | Le plan (§2.3) place `_start_curve_minimum_deep_refit` dans la tranche avec son appel au mandataire. Passer par la passerelle ferait une 4e instruction d'import (I4 en veut 3). `lazy_app` n'importe rien au niveau module : aucun cycle possible ; un test le tient. |
+
+**Tranché par l'assistant dans la nuit du 2026-11-11 au 12, en autonomie, sur une mesure**
+
+| # | Question | Décision | Ce qui la fonde |
+|---|---|---|---|
+| Q24 | `_load_defaults` oublie `_last_result` mais garde `_last_worker_result` et `_last_run_cfg` : voulu ? | **Non : oubli. Correctif en 10e**, un commit à part de 10c (C3). | Mesuré sur une vraie fenêtre, résultat à profil tracé puis `_load_defaults` : `_corridor_profile_source_result()` rend encore le résultat brut de l'échantillon précédent ; la barre d'état de l'onglet annonce « Step 2/3 … grid 11 points » ; bouger `sp_corridor_rmse_delta` retrace toute la courbe précédente (11 points, `d* = 100.000 nm`) ; `_corridor_rmse_manual_lo/hi`, que `_load_defaults` met à `nan`, ne le sont plus à sa sortie (un retracé part de l'intérieur de la fonction). `btn_corridor_rmse_grid_calc` n'est grisé que pendant un calcul : après un reset, « Recalculate RMSE(d) » relancerait la grille sur la configuration et le résultat de l'échantillon oublié. Un nouveau run remet déjà `_last_worker_result` à `None` (`certus_index_spline_execution.py`, début de run) : le reset est le seul endroit qui l'oublie. |
 
 **Proposé à 👤, non appliqué** — Q19 : avancer la Phase 9 juste après la Phase 3. La méthode que la couture vise est
 à sa place définitive depuis 3a, et d'ici la Phase 9 deux tests de `test_mwir_gui_flow.py` lancent un vrai fil de

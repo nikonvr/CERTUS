@@ -61,7 +61,7 @@ CORRIDOR_STATE: dict[str, CorridorStateEntry] = {
     "_corridor_rmse_base_snapshot": CorridorStateEntry("dict | None", _nothing, _INIT, True, ()),
     "_corridor_auto_refine_plan": CorridorStateEntry("dict[str, Any] | None", _nothing, _INIT, True, ("None",)),
     "_corridor_rmse_requested_grid": CorridorStateEntry(
-        "np.ndarray", lambda: np.array([]), "corridor_worker:_CorridorWorkerMixin._start_corridor_rmse_grid_recalc", False,
+        "np.ndarray", lambda: np.array([]), "corridor_worker:_CorridorWorkerMixin._start_corridor_rmse_grid_recalc", True,
         ("np.array([])",),
     ),
     "_corridor_rmse_grid_live_t0": CorridorStateEntry("float", _nan, _RMSE_TAB, False, _NAN),
@@ -75,9 +75,9 @@ CORRIDOR_STATE: dict[str, CorridorStateEntry] = {
     "_corridor_rmse_robust_lo": CorridorStateEntry("float", _nan, _RMSE_TAB, True, _NAN),
     "_corridor_rmse_robust_hi": CorridorStateEntry("float", _nan, _RMSE_TAB, True, _NAN),
     "_corridor_rmse_robust_ok": CorridorStateEntry("bool", lambda: False, _RMSE_TAB, True, ("False",)),
-    "_corridor_rmse_smart_interval": CorridorStateEntry("tuple[float, float] | None", _nothing, _RMSE_PLOT, False, ("None",)),
-    "_corridor_rmse_parab_export": CorridorStateEntry("dict | None", _nothing, _RMSE_PLOT, False, ("None",)),
-    "_corridor_rmse_robust_export": CorridorStateEntry("dict | None", _nothing, _RMSE_PLOT, False, ("None",)),
+    "_corridor_rmse_smart_interval": CorridorStateEntry("tuple[float, float] | None", _nothing, _RMSE_PLOT, True, ("None",)),
+    "_corridor_rmse_parab_export": CorridorStateEntry("dict | None", _nothing, _RMSE_PLOT, True, ("None",)),
+    "_corridor_rmse_robust_export": CorridorStateEntry("dict | None", _nothing, _RMSE_PLOT, True, ("None",)),
     "_corridor_rmse_curvature_label": CorridorStateEntry(
         "Any", _nothing, "corridor_rmse_plot:_CorridorRmsePlotMixin._draw_corridor_curvature_label", False, ("None",)
     ),
@@ -95,11 +95,11 @@ CORRIDOR_STATE: dict[str, CorridorStateEntry] = {
     "_corridor_adaptive_rmse_min": CorridorStateEntry(
         "float", lambda: float(_DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN), _PRESET, False, ("_DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN",)
     ),
-    # The crosshair of the k corridor: nothing sets these before the first plot, and their readers get an empty list.
-    "_corridor_k_crosshair_lam": CorridorStateEntry("np.ndarray | list", _empty_list, _K_TAB, False, ("[]",)),
-    "_corridor_k_crosshair_nom": CorridorStateEntry("np.ndarray | list", _empty_list, _K_TAB, False, ("[]",)),
-    "_corridor_k_crosshair_lo": CorridorStateEntry("np.ndarray | list", _empty_list, _K_TAB, False, ("[]",)),
-    "_corridor_k_crosshair_hi": CorridorStateEntry("np.ndarray | list", _empty_list, _K_TAB, False, ("[]",)),
+    # The crosshair of the k corridor: an empty list before the first plot and after a reset, and their readers take it.
+    "_corridor_k_crosshair_lam": CorridorStateEntry("np.ndarray | list", _empty_list, _K_TAB, True, ("[]",)),
+    "_corridor_k_crosshair_nom": CorridorStateEntry("np.ndarray | list", _empty_list, _K_TAB, True, ("[]",)),
+    "_corridor_k_crosshair_lo": CorridorStateEntry("np.ndarray | list", _empty_list, _K_TAB, True, ("[]",)),
+    "_corridor_k_crosshair_hi": CorridorStateEntry("np.ndarray | list", _empty_list, _K_TAB, True, ("[]",)),
 }
 
 def initial_corridor_state() -> dict[str, Any]:

@@ -190,6 +190,16 @@ class CertusIndexSplineStateMixin:
 
         self._corridor_rmse_robust_ok = False
 
+        # What the two corridor tabs and the grid recalculation wrote for the sample that is being forgotten.
+        self._corridor_rmse_smart_interval = None
+        self._corridor_rmse_parab_export = None
+        self._corridor_rmse_robust_export = None
+        self._corridor_rmse_requested_grid = np.array([])
+        self._corridor_k_crosshair_lam = []
+        self._corridor_k_crosshair_nom = []
+        self._corridor_k_crosshair_lo = []
+        self._corridor_k_crosshair_hi = []
+
         if hasattr(self, "lbl_corridor_rmse_summary"):
             self.lbl_corridor_rmse_summary.setText("No corridor RMSE profile available yet.")
         if hasattr(self, "lbl_corridor_rmse_robust_compact"):

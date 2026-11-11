@@ -1,0 +1,7 @@
+{
+  "phase": "10c - _load_defaults puts back the eight attributes of the corridor state that the corridor tabs and the grid recalculation write for a sample (Q11); the reset column of the state table follows.",
+  "changed_code": [
+    "certus.ui.certus_index_spline_state_mixin:CertusIndexSplineStateMixin._load_defaults"
+  ],
+  "note": "changed_code: eight assignments added, each to the default of CORRIDOR_STATE. Measured on a window before the change: after _load_defaults, _corridor_rmse_smart_interval was still (98.0, 102.0), the interval of the sample drawn before. tests/ui/test_load_defaults_forgets_the_previous_corridor.py fails on the code before (2 failed, 1 passed)."
+}

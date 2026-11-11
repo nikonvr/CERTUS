@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import QApplication, QFrame, QHBoxLayout, QMessageBox, QScr
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.spline.certus_index_spline_corridor_contract import normalize_corridor_live_payload
 from certus.ui.certus_index_spline_common import _worker_corridor_rmse_healer, logger
+from certus.ui.certus_index_spline_corridor_run import _CorridorRunMixin
 from certus.ui.certus_ui import (
     CertusCard,
     CertusScientificPlot,
@@ -23,54 +24,8 @@ from certus.ui.certus_ui import (
 from certus.utils.certus_atomic_io import atomic_open
 
 
-class CertusIndexSplineCorridorUIMixin:
+class CertusIndexSplineCorridorUIMixin(_CorridorRunMixin):
     """CertusIndexSplineCorridorUIMixin."""
-
-    def _schedule_corridor_auto_refine(
-        self,
-        seed: dict,
-        *,
-        rerun_corridor: bool,
-        origin: str,
-    ) -> bool:
-        """Schedule a strict refinement chain after corridor improvement."""
-        if not isinstance(seed, dict):
-            return False
-        self._corridor_auto_refine_plan = {
-            "stage": "deep",
-            "rerun_corridor": bool(rerun_corridor),
-            "origin": str(origin or "corridor"),
-        }
-        if self.logger:
-            self.logger.info(
-                "AUTO-REFINE [%s] scheduled | chain=deep-polish -> [conditional-corridor-rerun] | rerun_corridor=%s",
-                str(origin or "corridor"),
-                "yes" if bool(rerun_corridor) else "no",
-            )
-        if self._start_curve_minimum_deep_refit(dict(seed)):
-            return True
-        self._corridor_auto_refine_plan = None
-        return False
-
-    def _continue_corridor_auto_refine_after_deep(self) -> bool:
-        """Continue refinement chain when deep polish is done."""
-        plan = self._corridor_auto_refine_plan
-        if not isinstance(plan, dict) or str(plan.get("stage", "")) != "deep":
-            return False
-        seed_now = self._manual_postprocess_seed_result()
-        if not isinstance(seed_now, dict):
-            self._corridor_auto_refine_plan = None
-            return False
-        if bool(plan.get("rerun_corridor", False)):
-            if self.logger:
-                self.logger.info(
-                    "AUTO-REFINE [%s] deep-polish done | rerunning corridor profiling.",
-                    plan.get("origin", "corridor"),
-                )
-            self._corridor_auto_refine_plan = None
-            return bool(self._start_deferred_corridor_worker(dict(seed_now)))
-        self._corridor_auto_refine_plan = None
-        return False
 
     def _launch_corridor_rmse_gap_heal(self, tasks: list[tuple[float, dict]]) -> None:
         """Starts the gap healing worker after the grid, outside the ``finished`` handler (prevents ``_cleanup_thread``)."""
@@ -206,17 +161,6 @@ class CertusIndexSplineCorridorUIMixin:
 
         except NUMERICAL_FAULT_EXCEPTIONS:
             logger.debug("Corridor RMSE robust refresh failed", exc_info=True)
-
-    def _set_corridor_grid_completed_badge(self) -> None:
-
-        if hasattr(self, "pb_corridor_rmse_grid"):
-            self.pb_corridor_rmse_grid.stop(final_message="Done")
-
-        if hasattr(self, "lbl_corridor_rmse_grid_progress"):
-            base = str(self.lbl_corridor_rmse_grid_progress.text() or "").strip()
-
-            if "Final fit updated" not in base:
-                self.lbl_corridor_rmse_grid_progress.setText(f"{base} | Final fit updated")
 
     def _update_corridor_rmse_state_bar(self, src: dict[str, Any] | None = None) -> None:
 
@@ -424,60 +368,3 @@ class CertusIndexSplineCorridorUIMixin:
                             for c in range(self.table_corridor.columnCount())
                         ]
                     )
-
-    def _refresh_corridors_gui_state_labels(self) -> None:
-        """Refresh corridor state badges for the post-optimization controls."""
-
-        role = str(getattr(self, "_worker_role", "idle") or "idle")
-        unlocked = isinstance(getattr(self, "_last_result", None), dict)
-
-        if role == "rmse_grid":
-            rich = f'Corridors: <span style="color:{CertusTheme.PRIMARY};"><b>calculation in progress...</b></span>'
-        elif not unlocked:
-            rich = (
-                f'Corridors: <span style="color:{CertusTheme.TEXT_SUB};"><b>available after optimization</b></span>'
-            )
-
-        elif bool(
-            self._last_result.get("profile_d_enabled", False)
-            or self._last_result.get("profile_d_values_nm") is not None
-        ):
-            rich = f'Corridors: <span style="color:{CertusTheme.SUCCESS};"><b>already computed</b></span>'
-
-        else:
-            rich = f'Corridors: <span style="color:{CertusTheme.PRIMARY};"><b>ready to launch</b></span>'
-
-        if hasattr(self, "lbl_corridors_run_state"):
-            self.lbl_corridors_run_state.setText(rich)
-
-        if hasattr(self, "lbl_corridors_state_adv"):
-            self.lbl_corridors_state_adv.setText(rich)
-
-        if hasattr(self, "lbl_corridors_tab_state"):
-            self.lbl_corridors_tab_state.setText(rich)
-
-    def _on_btn_corridor_clicked(self) -> None:
-
-        seed = self._manual_postprocess_seed_result()
-        if not isinstance(seed, dict):
-            QMessageBox.information(
-                self,
-                "Corridors",
-                "Run an optimization first to have a base result.",
-            )
-            return
-        if self.logger:
-            self.logger.info(
-                "Corridors manual trigger | base=%s",
-                "standard",
-            )
-        if not self._start_deferred_corridor_worker(seed):
-            QMessageBox.warning(
-                self,
-                "Corridors",
-                "Unable to start manual corridor calculation from the current result.",
-            )
-
-    def _on_corridor_chk_state_changed(self, *_args) -> None:
-
-        self._refresh_corridors_gui_state_labels()

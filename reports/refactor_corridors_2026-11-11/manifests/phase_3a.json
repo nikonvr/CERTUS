@@ -1,0 +1,104 @@
+{
+  "phase": "3a - _CorridorRunMixin: the life cycle of a corridor run, fifteen methods moved, text unchanged, to certus_index_spline_corridor_run.py; _CorridorControlMixin and CertusIndexSplineCorridorUIMixin inherit the slice.",
+  "new_classes": [
+    "certus.ui.certus_index_spline_corridor_run:_CorridorRunMixin"
+  ],
+  "moved_methods": [
+    {
+      "name": "_start_deferred_corridor_worker",
+      "from": "certus.ui.certus_index_spline_settings:_CorridorControlMixin",
+      "to": "certus.ui.certus_index_spline_corridor_run:_CorridorRunMixin"
+    },
+    {
+      "name": "_finish_curve_minimum_deep_worker_done",
+      "from": "certus.ui.certus_index_spline_settings:_CorridorControlMixin",
+      "to": "certus.ui.certus_index_spline_corridor_run:_CorridorRunMixin"
+    },
+    {
+      "name": "_finish_rmse_heal_worker_done",
+      "from": "certus.ui.certus_index_spline_settings:_CorridorControlMixin",
+      "to": "certus.ui.certus_index_spline_corridor_run:_CorridorRunMixin"
+    },
+    {
+      "name": "_set_corridor_grid_busy",
+      "from": "certus.ui.certus_index_spline_settings:_CorridorControlMixin",
+      "to": "certus.ui.certus_index_spline_corridor_run:_CorridorRunMixin"
+    },
+    {
+      "name": "_set_corridor_grid_progress_ui",
+      "from": "certus.ui.certus_index_spline_settings:_CorridorControlMixin",
+      "to": "certus.ui.certus_index_spline_corridor_run:_CorridorRunMixin"
+    },
+    {
+      "name": "_schedule_corridor_auto_refine",
+      "from": "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin",
+      "to": "certus.ui.certus_index_spline_corridor_run:_CorridorRunMixin"
+    },
+    {
+      "name": "_continue_corridor_auto_refine_after_deep",
+      "from": "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin",
+      "to": "certus.ui.certus_index_spline_corridor_run:_CorridorRunMixin"
+    },
+    {
+      "name": "_set_corridor_grid_completed_badge",
+      "from": "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin",
+      "to": "certus.ui.certus_index_spline_corridor_run:_CorridorRunMixin"
+    },
+    {
+      "name": "_refresh_corridors_gui_state_labels",
+      "from": "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin",
+      "to": "certus.ui.certus_index_spline_corridor_run:_CorridorRunMixin"
+    },
+    {
+      "name": "_on_btn_corridor_clicked",
+      "from": "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin",
+      "to": "certus.ui.certus_index_spline_corridor_run:_CorridorRunMixin"
+    },
+    {
+      "name": "_on_corridor_chk_state_changed",
+      "from": "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin",
+      "to": "certus.ui.certus_index_spline_corridor_run:_CorridorRunMixin"
+    },
+    {
+      "name": "_is_rmse_d_grid_worker_finalize_dict",
+      "from": "certus.ui.certus_index_spline_eventsextras_mixin:CertusIndexSplineEventsExtrasMixin",
+      "to": "certus.ui.certus_index_spline_corridor_run:_CorridorRunMixin"
+    },
+    {
+      "name": "_merge_rmse_grid_promotion_into_nominal",
+      "from": "certus.ui.certus_index_spline_eventsextras_mixin:CertusIndexSplineEventsExtrasMixin",
+      "to": "certus.ui.certus_index_spline_corridor_run:_CorridorRunMixin"
+    },
+    {
+      "name": "_on_corr_mode_changed",
+      "from": "certus.ui.certus_index_spline_eventsextras_mixin:CertusIndexSplineEventsExtrasMixin",
+      "to": "certus.ui.certus_index_spline_corridor_run:_CorridorRunMixin"
+    },
+    {
+      "name": "_on_corridor_rmse_grid_live_update",
+      "from": "certus.ui.certus_index_spline_corridor_gen:_CorridorGenMixin",
+      "to": "certus.ui.certus_index_spline_corridor_run:_CorridorRunMixin"
+    }
+  ],
+  "added_attributes": [
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._finish_curve_minimum_deep_worker_done",
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._finish_rmse_heal_worker_done",
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._is_rmse_d_grid_worker_finalize_dict",
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._merge_rmse_grid_promotion_into_nominal",
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._on_corr_mode_changed",
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._on_corridor_rmse_grid_live_update",
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._set_corridor_grid_busy",
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._set_corridor_grid_progress_ui",
+    "certus.ui.certus_index_spline_corridorui_mixin:CertusIndexSplineCorridorUIMixin._start_deferred_corridor_worker",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._continue_corridor_auto_refine_after_deep",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._is_rmse_d_grid_worker_finalize_dict",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._merge_rmse_grid_promotion_into_nominal",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._on_btn_corridor_clicked",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._on_corr_mode_changed",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._on_corridor_chk_state_changed",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._on_corridor_rmse_grid_live_update",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._refresh_corridors_gui_state_labels",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._schedule_corridor_auto_refine",
+    "certus.ui.certus_index_spline_settings:_CorridorControlMixin._set_corridor_grid_completed_badge"
+  ]
+}

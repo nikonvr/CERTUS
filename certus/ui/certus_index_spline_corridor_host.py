@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from threading import Event
 
     import numpy as np
+    import pandas as pd
     import pyqtgraph as pg
     from PyQt6.QtWidgets import (
         QCheckBox,
@@ -56,10 +57,9 @@ class IndexSplineRunHost(Protocol):
     _best_live_result: dict | None
     _last_result: dict | None
     _last_run_cfg: SplineOptConfig | None
-    _last_worker_result: dict | None
     _manual_knots_dialog: Any
     _stop_event: Event
-    _worker_role: str
+    df: pd.DataFrame | None
     logger: logging.Logger | None
 
     def _add_context_page(self, widget: QWidget) -> QWidget: ...
@@ -75,7 +75,6 @@ class IndexSplineRunHost(Protocol):
     @staticmethod
     def _cfg_with_result_substrate(cfg_base: SplineOptConfig, result: dict) -> SplineOptConfig: ...
     def _cleanup_thread(self) -> None: ...
-    def _continue_corridor_auto_refine_after_deep(self) -> bool: ...
     def _corridor_manual_half_width_nm(self) -> float: ...
     def _corridor_manual_max_half_width_nm(self, d_s: np.ndarray) -> float: ...
     def _corridor_profile_source_result(self) -> dict[str, Any] | None: ...
@@ -105,7 +104,6 @@ class IndexSplineRunHost(Protocol):
     def _manual_mesh_change_log_line(label: str, summary: dict[str, Any]) -> str: ...
     def _manual_postprocess_seed_result(self) -> dict | None: ...
     def _merge_rmse_grid_promotion_into_nominal(self, promoted: dict, *, adoption_log_tag: str) -> None: ...
-    def _on_corr_mode_changed(self, _idx: int = ...) -> None: ...
     def _on_corridor_manual_slider_changed(self, _value: int) -> None: ...
     def _on_corridor_rmse_grid_live_update(self, payload: object) -> None: ...
     def _on_corridor_rmse_lock_scale_toggled(self, _checked: bool) -> None: ...
@@ -123,7 +121,6 @@ class IndexSplineRunHost(Protocol):
     def _prog_reset_bar(self) -> None: ...
     def _prompt_manual_extra_knots(self, result: dict) -> tuple[list[float], float] | None: ...
     def _refresh_corridor_rmse_robust_view(self) -> None: ...
-    def _refresh_corridors_gui_state_labels(self) -> None: ...
     def _refresh_data_table(self, result_override: dict | None = ...) -> None: ...
     def _refresh_manual_dialog_preview(self, dialog: ManualSigmaKnotDialog | None, preview_result: dict | None) -> None: ...
     def _refresh_post_optimization_option_controls(self, *_args) -> None: ...
@@ -144,7 +141,6 @@ class IndexSplineRunHost(Protocol):
     def _start_auto_best_second_stage(self) -> None: ...
     def _start_corridor_rmse_grid_recalc(self) -> None: ...
     def _start_curve_minimum_deep_refit(self, seed: dict) -> bool: ...
-    def _start_deferred_corridor_worker(self, result: dict) -> bool: ...
     def _start_manual_sigma_insert_worker(self, result: dict, selected_lambda_knots_nm: list[float], delta_ns: float = ...) -> None: ...
     @staticmethod
     def _summarize_manual_mesh_change(before_sigma_knots: Any, after_sigma_knots: Any) -> dict[str, Any]: ...
@@ -211,6 +207,8 @@ class CorridorWidgetsHost(Protocol):
     cb_corr_mode: QComboBox
     chk_corr_scientific_nominal: QCheckBox
     chk_corridor_rmse_envelope_only: QCheckBox
+    lbl_corr_alpha: QLabel
+    lbl_corr_rmse_delta: QLabel
     lbl_corridor_rmse_grid_progress: QLabel
     lbl_corridor_rmse_robust_compact: QLabel
     lbl_corridor_rmse_state: QLabel
@@ -223,6 +221,7 @@ class CorridorWidgetsHost(Protocol):
     plot_k_corridor: CertusScientificPlot
     plot_n_corridor: CertusScientificPlot
     sl_corridor_manual_half: QSlider
+    sp_corr_alpha: QDoubleSpinBox
     sp_corr_rmse_delta: QDoubleSpinBox
     sp_corridor_breakpoint_lookback: QSpinBox
     sp_corridor_grid_d_step_nm: QDoubleSpinBox
@@ -241,39 +240,25 @@ class CorridorHost(IndexSplineRunHost, IndexSplineViewHost, CorridorStateHost, C
 #: Corridor mixin -> the names it reads on the window and does not define itself, sorted.
 CONTRACTS: dict[str, tuple[str, ...]] = {
     "_CorridorControlMixin": (
-        "_apply_corridor_payload_from_interval", "_build_opt_config", "_cfg_with_result_substrate",
-        "_cleanup_thread", "_continue_corridor_auto_refine_after_deep", "_corridor_manual_half_width_nm",
+        "_apply_corridor_payload_from_interval", "_corridor_manual_half_width_nm",
         "_corridor_manual_max_half_width_nm", "_corridor_profile_source_result", "_corridor_rmse_best_idx",
-        "_corridor_rmse_center_nm", "_corridor_rmse_d_vals", "_corridor_rmse_grid_live_t0",
-        "_corridor_rmse_manual_active", "_corridor_rmse_manual_hi", "_corridor_rmse_manual_lo",
-        "_corridor_rmse_manual_slider_scale", "_corridor_rmse_robust_hi", "_corridor_rmse_robust_lo",
-        "_corridor_rmse_robust_ok", "_corridor_rmse_vals", "_display_result_prefer_best_live",
-        "_finish_corridor_rmse_d_grid_worker_done", "_format_post_optimization_status", "_last_run_cfg",
-        "_on_corr_mode_changed", "_on_corridor_rmse_grid_live_update", "_on_progress", "_on_worker_done",
-        "_on_worker_err", "_plot_result", "_post_optimization_ready_status", "_prepare_worker_restart",
-        "_prog_reset_bar", "_refresh_corridor_rmse_robust_view", "_refresh_corridors_gui_state_labels",
-        "_refresh_data_table", "_refresh_post_optimization_option_controls", "_reset_corridor_manual_controls",
-        "_rmse_from_result_dict", "_set_corridor_manual_bounds_labels", "_set_corridor_manual_interval_preview",
-        "_stepper", "_stop_event", "btn_corridor_generate_auto_smart_grid", "btn_corridor_generate_from_grid",
-        "btn_corridor_generate_from_partial_grid", "btn_corridor_manual_robust",
-        "btn_corridor_rmse_export_data", "btn_corridor_rmse_export_envelope_nk", "btn_corridor_rmse_grid_calc",
-        "btn_generate_manual_corridor", "btn_run", "btn_stop", "cb_corr_mode", "chk_corr_scientific_nominal",
-        "chk_corridor_rmse_envelope_only", "export_excel", "lbl_corridor_rmse_grid_progress",
-        "lbl_corridor_rmse_summary", "lbl_status", "logger", "pb_corridor_rmse_grid", "plot_corridor_rmse_d",
-        "progress_widget", "sl_corridor_manual_half", "sp_corr_rmse_delta", "sp_corridor_breakpoint_lookback",
-        "sp_corridor_grid_d_step_nm", "sp_corridor_grid_n_points", "sp_corridor_partial_delta_nm",
-        "sp_corridor_rmse_delta", "sp_corridor_rmse_win",
+        "_corridor_rmse_center_nm", "_corridor_rmse_d_vals", "_corridor_rmse_manual_active",
+        "_corridor_rmse_manual_hi", "_corridor_rmse_manual_lo", "_corridor_rmse_manual_slider_scale",
+        "_corridor_rmse_robust_hi", "_corridor_rmse_robust_lo", "_corridor_rmse_robust_ok",
+        "_corridor_rmse_vals", "_refresh_corridor_rmse_robust_view", "_reset_corridor_manual_controls",
+        "_set_corridor_manual_bounds_labels", "_set_corridor_manual_interval_preview",
+        "btn_corridor_manual_robust", "btn_generate_manual_corridor", "cb_corr_mode",
+        "chk_corr_scientific_nominal", "lbl_corridor_rmse_summary", "logger", "plot_corridor_rmse_d",
+        "sl_corridor_manual_half", "sp_corr_rmse_delta", "sp_corridor_rmse_delta", "sp_corridor_rmse_win",
     ),
     "_CorridorGenMixin": (
         "_apply_cell_style", "_corridor_manual_half_width_nm", "_corridor_profile_source_result",
-        "_corridor_rmse_best_idx", "_corridor_rmse_center_nm", "_corridor_rmse_live_last_plot_ts",
-        "_corridor_rmse_live_plot_min_interval_s", "_corridor_rmse_manual_hi", "_corridor_rmse_manual_lo",
-        "_corridor_rmse_robust_hi", "_corridor_rmse_robust_lo", "_corridor_rmse_robust_ok",
-        "_corridor_rmse_smart_interval", "_lam_piecewise_report_grid_nm", "_plot_corridor_rmse_tab",
+        "_corridor_rmse_best_idx", "_corridor_rmse_center_nm", "_corridor_rmse_manual_hi",
+        "_corridor_rmse_manual_lo", "_corridor_rmse_robust_hi", "_corridor_rmse_robust_lo",
+        "_corridor_rmse_robust_ok", "_corridor_rmse_smart_interval", "_lam_piecewise_report_grid_nm",
         "_plot_result", "_refresh_corridor_rmse_robust_view", "_refresh_data_table",
-        "_set_corridor_grid_progress_ui", "_set_corridor_rmse_view_data_bounds",
-        "_update_corridor_rmse_state_bar", "_worker_role", "btn_copy_corridor", "btn_export_corridor",
-        "lbl_status", "logger", "plot_corridor_rmse_d", "sp_corridor_partial_delta_nm", "table_corridor",
+        "_update_corridor_rmse_state_bar", "btn_copy_corridor", "btn_export_corridor", "lbl_status", "logger",
+        "sp_corridor_partial_delta_nm", "table_corridor",
     ),
     "_CorridorExportMixin": (
         "_corridor_profile_source_result", "_corridor_rmse_d_vals", "_corridor_rmse_manual_active",
@@ -310,17 +295,32 @@ CONTRACTS: dict[str, tuple[str, ...]] = {
     "CertusIndexSplineCorridorUIMixin": (
         "_add_context_page", "_apply_corridor_preset_auto_robust", "_build_corridor_labels",
         "_build_corridor_tab_generate", "_build_corridor_tab_rmse_controls", "_cleanup_thread",
-        "_corridor_auto_refine_plan", "_corridor_k_crosshair_hi", "_corridor_k_crosshair_lam",
-        "_corridor_k_crosshair_lo", "_corridor_k_crosshair_nom", "_corridor_manual_max_half_width_nm",
-        "_corridor_rmse_best_idx", "_corridor_rmse_d_vals", "_corridor_rmse_manual_slider_scale",
-        "_corridor_rmse_robust_hi", "_corridor_rmse_robust_lo", "_corridor_rmse_robust_ok",
-        "_create_empty_context_widget", "_ensure_complete_manifest_for_secondary_export", "_last_result",
-        "_last_run_cfg", "_last_worker_result", "_manual_postprocess_seed_result",
-        "_on_corridor_manual_slider_changed", "_on_corridor_rmse_plot_clicked", "_on_worker_done",
-        "_on_worker_err", "_plot_corridor_rmse_tab", "_set_corridor_grid_busy",
-        "_start_curve_minimum_deep_refit", "_start_deferred_corridor_worker", "btn_run", "btn_stop",
-        "lbl_corridor_rmse_grid_progress", "lbl_corridor_rmse_state", "lbl_corridors_run_state",
-        "lbl_corridors_state_adv", "lbl_corridors_tab_state", "logger", "pb_corridor_rmse_grid",
-        "sl_corridor_manual_half", "sp_corridor_rmse_delta", "sp_corridor_rmse_win",
+        "_corridor_k_crosshair_hi", "_corridor_k_crosshair_lam", "_corridor_k_crosshair_lo",
+        "_corridor_k_crosshair_nom", "_corridor_manual_max_half_width_nm", "_corridor_rmse_best_idx",
+        "_corridor_rmse_d_vals", "_corridor_rmse_manual_slider_scale", "_corridor_rmse_robust_hi",
+        "_corridor_rmse_robust_lo", "_corridor_rmse_robust_ok", "_create_empty_context_widget",
+        "_ensure_complete_manifest_for_secondary_export", "_last_run_cfg", "_on_corridor_manual_slider_changed",
+        "_on_corridor_rmse_plot_clicked", "_on_worker_done", "_on_worker_err", "_plot_corridor_rmse_tab",
+        "btn_run", "btn_stop", "lbl_corridor_rmse_state", "logger", "sl_corridor_manual_half",
+        "sp_corridor_rmse_delta", "sp_corridor_rmse_win",
+    ),
+    "_CorridorRunMixin": (
+        "_build_opt_config", "_cfg_with_result_substrate", "_cleanup_thread", "_corridor_auto_refine_plan",
+        "_corridor_rmse_d_vals", "_corridor_rmse_grid_live_t0", "_corridor_rmse_live_last_plot_ts",
+        "_corridor_rmse_live_plot_min_interval_s", "_display_result_prefer_best_live",
+        "_finish_corridor_rmse_d_grid_worker_done", "_format_post_optimization_status", "_last_run_cfg",
+        "_manual_postprocess_seed_result", "_on_progress", "_on_worker_done", "_on_worker_err",
+        "_plot_corridor_rmse_tab", "_plot_result", "_post_optimization_ready_status", "_prepare_worker_restart",
+        "_prog_reset_bar", "_refresh_data_table", "_refresh_post_optimization_option_controls",
+        "_rmse_from_result_dict", "_set_corridor_rmse_view_data_bounds", "_start_curve_minimum_deep_refit",
+        "_stepper", "_stop_event", "btn_corridor_generate_auto_smart_grid", "btn_corridor_generate_from_grid",
+        "btn_corridor_generate_from_partial_grid", "btn_corridor_rmse_export_data",
+        "btn_corridor_rmse_export_envelope_nk", "btn_corridor_rmse_grid_calc", "btn_run", "btn_stop",
+        "cb_corr_mode", "chk_corr_scientific_nominal", "chk_corridor_rmse_envelope_only", "df", "export_excel",
+        "lbl_corr_alpha", "lbl_corr_rmse_delta", "lbl_corridor_rmse_grid_progress", "lbl_corridors_run_state",
+        "lbl_corridors_state_adv", "lbl_corridors_tab_state", "lbl_status", "logger", "pb_corridor_rmse_grid",
+        "plot_corridor_rmse_d", "progress_widget", "sp_corr_alpha", "sp_corr_rmse_delta",
+        "sp_corridor_breakpoint_lookback", "sp_corridor_grid_d_step_nm", "sp_corridor_grid_n_points",
+        "sp_corridor_partial_delta_nm",
     ),
 }

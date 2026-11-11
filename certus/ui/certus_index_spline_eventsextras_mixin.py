@@ -315,60 +315,6 @@ class CertusIndexSplineEventsExtrasMixin:
 
         self._refresh_post_optimization_option_controls()
 
-    @staticmethod
-    def _is_rmse_d_grid_worker_finalize_dict(r: object) -> bool:
-        """True if ``r`` is the final dict from the RMSE(d) grid worker (not a full solver result)."""
-        if not isinstance(r, dict):
-            return False
-        st = str(r.get("profile_d_status", ""))
-        return st in {"manual_grid", "manual_grid_empty"}
-
-    def _merge_rmse_grid_promotion_into_nominal(self, promoted: dict, *, adoption_log_tag: str) -> None:
-        """Merges a promoted dict (global-opt or grid minimum) into ``_last_result`` and refreshes the UI."""
-        prev_nominal = dict(self._last_result) if isinstance(self._last_result, dict) else {}
-        merged_nominal = dict(prev_nominal)
-        merged_nominal.update(promoted)
-        if merged_nominal.get("lam_nm") is None:
-            lam_prev = prev_nominal.get("lam_nm")
-            if lam_prev is not None:
-                merged_nominal["lam_nm"] = np.asarray(lam_prev, dtype=np.float64).ravel().copy()
-            elif self.df is not None and "lambda" in self.df.columns:
-                merged_nominal["lam_nm"] = ensure_lam_nm_array(self.df["lambda"].to_numpy(dtype=np.float64))
-            if self.logger:
-                self.logger.warning(
-                    "GUI RMSE(d) regular grid [%s] | promoted result missing lam_nm; fallback applied.",
-                    adoption_log_tag,
-                )
-        self._last_result = merged_nominal
-        if self.logger:
-            rmse_after_replace = self._rmse_from_result_dict(self._last_result)
-            self.logger.info(
-                "GUI RMSE(d) regular grid [%s] | nominal merged | rmse_after_replace=%s | d_nm=%s",
-                adoption_log_tag,
-                (f"{rmse_after_replace:.8f}" if np.isfinite(rmse_after_replace) else "n/a"),
-                (
-                    f"{float(self._last_result.get('d_nm', float('nan'))):.6f}"
-                    if np.isfinite(float(self._last_result.get("d_nm", float("nan"))))
-                    else "n/a"
-                ),
-            )
-            log_index_spline_d_trace(
-                self.logger,
-                "GUI: adoption grille RMSE(d) → nominal _last_result",
-                self._last_result.get("d_nm"),
-                detail=(
-                    "tag="
-                    + str(adoption_log_tag)
-                    + " rmse="
-                    + (f"{rmse_after_replace:.8f}" if np.isfinite(rmse_after_replace) else "n/a")
-                ),
-            )
-        try:
-            self._plot_result(self._last_result, plot_source="promotion_grille_rmse")
-            self._refresh_data_table()
-        except (ValueError, TypeError, AttributeError, RuntimeError):
-            logger.debug("Failed to refresh plot after RMSE grid promotion", exc_info=True)
-
     def _start_curve_minimum_deep_refit(self, seed: dict) -> bool:
         """Launches ``quick_pwlnk_refit_result_dict`` (L-BFGS-B on d + nodes) from the grid minimum seed."""
         if self._worker is not None and self._worker.isRunning():
@@ -955,33 +901,6 @@ class CertusIndexSplineEventsExtrasMixin:
         self._stop_event.set()
 
         self.lbl_status.setText("Stop requested...")
-
-    def _on_corr_mode_changed(self, _idx: int = 0) -> None:
-        """Show alpha vs Delta RMSE spinboxes according to corridor mode (LR hides both thresholds)."""
-
-        if not hasattr(self, "cb_corr_mode"):
-            return
-
-        m = str(self.cb_corr_mode.currentData() or "abs_delta_adaptive")
-
-        show_alpha = m == "alpha"
-
-        show_delta = m in ("abs_delta", "abs_delta_adaptive")
-
-        if hasattr(self, "sp_corr_alpha"):
-            self.sp_corr_alpha.setVisible(show_alpha)
-
-        if hasattr(self, "lbl_corr_alpha"):
-            self.lbl_corr_alpha.setVisible(show_alpha)
-
-        if hasattr(self, "sp_corr_rmse_delta"):
-            self.sp_corr_rmse_delta.setVisible(show_delta)
-
-        if hasattr(self, "lbl_corr_rmse_delta"):
-            self.lbl_corr_rmse_delta.setVisible(show_delta)
-
-        if hasattr(self, "chk_corr_scientific_nominal"):
-            self.chk_corr_scientific_nominal.setVisible(show_delta)
 
     def _refresh_post_optimization_option_controls(self, *_args) -> None:
 

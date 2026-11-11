@@ -724,7 +724,23 @@ compatibilité (R5), conserver dans les modules d'origine les noms qu'ils exposa
 de déplacement, lancer `refactor_guard compare`, puis les tests. Si `certus_index_spline_rendering.py` raccourcit,
 régénérer `tests/architecture_debt.json` dans le même commit (I12).
 
-- [ ] **3a — `_CorridorRunMixin`**
+- [x] **3a — `_CorridorRunMixin`** — faite le 2026-11-11 : 15 méthodes déplacées, texte inchangé ; garde avec
+  `manifests/phase_3a.json` : `problems=0`, `GUARD=OK` ; ruff PASS ; `test_mwir_gui_flow.py`,
+  `test_post_opt_option_unlock.py` et le test nouveau `33 passed` ; lot de contrôle `269 passed`. Ce que la sous-phase a
+  appris, et qui vaut pour 3b à 3d :
+  - **Un nom lié par `import` et un nom affecté ne donnent pas le même bytecode** (Python 3.15 : `logger.debug(...)`
+    n'est pas compilé pareil). `logger` est donc **importé** du cœur spline (`certus.spline.certus_index_spline_core`,
+    même objet que celui de `common`), jamais réaffecté dans une tranche.
+  - **La garde ne savait pas dire « cette méthode a quitté sa classe pour une tranche dont elle n'hérite pas »**
+    (`_CorridorGenMixin`, `CertusIndexSplineEventsExtrasMixin`). Étendue dans un commit à part (`85e5d24f`, 4 tests,
+    dont 3 rouges avant) : l'entrée `moved_methods` l'autorise si la classe d'arrivée définit la méthode, inchangée.
+  - Les classes de compatibilité héritent de méthodes qu'elles ne définissaient pas : `added_attributes` au manifeste.
+  - Contrats : `CONTRACTS` régénéré depuis le code (`_CorridorRunMixin` 58 noms ; `_CorridorControlMixin` 72 → 30,
+    `CertusIndexSplineCorridorUIMixin` 44 → 32, `_CorridorGenMixin` 29 → 22) ; protocoles : 4 noms ajoutés (`df`,
+    `lbl_corr_alpha`, `lbl_corr_rmse_delta`, `sp_corr_alpha`), 6 retirés (désormais fournis par la tranche).
+  - Test nouveau (R6) : `tests/unit/test_the_corridor_slices_hold_the_methods_they_were_given.py` — la fenêtre prend
+    chaque méthode dans sa tranche, la tranche est un mixin nu, ordre canonique des bases, aucun import montant.
+  - La passerelle `corridor_ui` n'a pas eu à changer ; aucune couture de test touchée ; aucun test existant retouché.
   Créer : `certus/ui/certus_index_spline_corridor_run.py`.
   Modifier : `certus/ui/certus_index_spline_settings.py`, `certus/ui/certus_index_spline_corridorui_mixin.py`,
   `certus/ui/certus_index_spline_eventsextras_mixin.py`, `certus/ui/certus_index_spline_corridor_gen.py`,

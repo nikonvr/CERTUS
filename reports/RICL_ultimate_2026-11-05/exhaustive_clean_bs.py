@@ -40,7 +40,7 @@ TGT = np.full(LAM.size, 0.5)
 
 def merge(seq, d):
     s, x = [], []
-    for m, t in zip(seq, d):
+    for m, t in zip(seq, d, strict=False):
         if s and m == s[-1]:
             x[-1] += t
         else:

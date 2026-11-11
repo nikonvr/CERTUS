@@ -896,7 +896,13 @@ mortes).
 
 ### [ ] Phase 6 — Assainir l'héritage (garde-fous, puis options)
 
-- [ ] **6a** — Le test T4 à T6 de la Phase 1 est étendu aux huit autres fenêtres de
+- [x] **6a** — faite le 2026-11-11 (tests seuls, aucun code de production). Un balayage en interpréteur neuf mesure les
+  neuf fenêtres de `scripts/refactor_guard.py` ; `OVERRIDES_OF` porte, pour les huit autres fenêtres, la liste de leurs
+  redéfinitions d'aujourd'hui (de 0 pour le HUB à 30 pour RE). Tenu pour les neuf : aucun mixin n'a de constructeur,
+  aucune classe n'est un protocole ni une base abstraite, et **aucun nom d'une classe du projet n'est masqué par une
+  classe Qt placée avant elle dans le MRO** (mesuré : 0 dans les neuf ; le garde-fou détecte un cas construit,
+  `M.close` masqué par `QWidget`). Le fichier `67 passed`.
+  Le test T4 à T6 de la Phase 1 est étendu aux huit autres fenêtres de
   `tests/unit/test_self_attributes_are_defined.py:35-45`, avec leur liste blanche de redéfinitions. Il gagne le garde-fou de F11 (Q10) : aucun attribut défini par une classe
   du projet n'est masqué par une classe Qt placée avant elle dans le MRO (0 aujourd'hui, dans les 9 fenêtres).
   Modifier : `tests/unit/test_the_corridor_mixins_declare_what_they_read_on_the_window.py`.

@@ -15,6 +15,11 @@ Two modules declare it now, and this test holds the code to them, by reading the
 Three properties of the inheritance are frozen with them: no name is defined by two classes of the window apart from the
 listed overrides of the base class, no mixin has a constructor (the window calls QMainWindow's, a mixin's would never
 run), and no mixin is a protocol or an abstract base (its metaclass would clash with the one of QMainWindow).
+
+The last section holds the eight other windows of the suite to the same three properties, each with the list of the
+names it overrides today, and all nine to a fourth one. `CertusBaseApp(QMainWindow, thirteen mixins)` puts the Qt class
+first: a name that one of these mixins defined and that QMainWindow or one of its bases also has would never be reached,
+and nothing would say so. No such name exists; the test keeps it so.
 """
 
 from __future__ import annotations
@@ -22,6 +27,9 @@ from __future__ import annotations
 import abc
 import ast
 import inspect
+import json
+import subprocess
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -312,3 +320,144 @@ def test_no_mixin_of_the_window_has_a_constructor() -> None:
 def test_no_mixin_of_the_window_is_a_protocol_or_an_abstract_base() -> None:
     offenders = [k.__name__ for k in PROJECT if getattr(k, "_is_protocol", False) or isinstance(k, abc.ABCMeta)]
     assert offenders == []
+
+
+# =============================================================================
+# The other windows of the suite
+# =============================================================================
+#: What `python -c` measures, in a fresh interpreter, on the windows scripts/refactor_guard.py lists: importing the nine
+#: of them here would leave their modules, and what these patch at import, in the interpreter of the other tests.
+SWEEP = r"""
+import abc, importlib, importlib.util, json, os, sys
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+sys.path.insert(0, os.getcwd())
+spec = importlib.util.spec_from_file_location("certus_scripts_refactor_guard", os.path.join("scripts", "refactor_guard.py"))
+guard = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = guard
+spec.loader.exec_module(guard)
+MACHINERY = set(json.loads(sys.argv[1]))
+
+
+def project(klass):
+    return klass.__module__.startswith(("certus", "CERTUS"))
+
+
+report = {}
+for window in guard.WINDOWS:
+    module, _, name = window.partition(":")
+    mro = getattr(importlib.import_module(module), name).__mro__
+    own = [k for k in mro if project(k)]
+    twice = sorted(
+        n for n in set().union(*(set(vars(k)) for k in own)) - MACHINERY if sum(n in vars(k) for k in own) > 1
+    )
+    hidden = sorted(
+        f"{k.__name__}.{n} (hidden by {q.__name__})"
+        for i, k in enumerate(mro) if project(k)
+        for q in mro[:i] if not project(q) and q is not object
+        for n in set(vars(k)) - MACHINERY if n in vars(q)
+    )
+    report[window] = {
+        "twice": twice,
+        "constructors": [k.__name__ for k in own if "__init__" in vars(k)],
+        "protocols": [k.__name__ for k in own if getattr(k, "_is_protocol", False) or isinstance(k, abc.ABCMeta)],
+        "hidden": hidden,
+    }
+print("SWEEP=" + json.dumps(report))
+"""
+
+#: The names two classes of a window define, window by window: a subclass or a mixin over the base class, on purpose.
+#: INDEX SPLINE is not here: `OVERRIDES`, above, is its list.
+SPLINE_WINDOW = f"{CertusIndexSplineApp.__module__}:{CertusIndexSplineApp.__name__}"
+OVERRIDES_OF = {
+    "certus.ui.certus_design_ui:CertusDesignApp": {
+        "APP_NAME", "APP_TITLE", "DEFAULT_HEIGHT", "DEFAULT_WIDTH", "MIN_HEIGHT", "MIN_WIDTH",
+        "_COMPUTATION_THREADS", "__init__", "_apply_config", "_apply_theme", "_build_status_bar",
+        "_collect_config", "_config_load_problems", "_get_default_splitter_sizes",
+        "_get_substrate_info_display", "_on_front_thickness_updated", "_on_layer_added", "_on_layer_deleted",
+        "_on_qwot_changed_connection", "_on_warmup_done", "_post_load_config", "_post_save_config",
+        "_pre_save_smart_cleanup", "_trigger_post_undo_action", "_update_busy_ui", "closeEvent",
+        "smart_cleanup",
+    },
+    "certus.ui.certus_field_ui:CertusFieldApp": {
+        "APP_NAME", "APP_TITLE", "__init__", "_apply_config", "_collect_config", "_get_plot_targets",
+        "_post_load_config", "_post_save_config", "copy_logs_to_clipboard", "detach_current_plot",
+        "reattach_plot",
+    },
+    "certus.ui.certus_index_ui:CertusIndexApp": {
+        "APP_NAME", "APP_TITLE", "DEFAULT_HEIGHT", "DEFAULT_WIDTH", "MIN_HEIGHT", "MIN_WIDTH",
+        "_COMPUTATION_THREADS", "__init__", "_apply_config", "_apply_theme", "_apply_ui_zoom",
+        "_build_log_container", "_build_ui", "_collect_config", "_config_load_problems",
+        "_get_config_file_filter", "_get_log_widget", "_on_error", "_post_load_config", "_post_save_config",
+        "_update_zoom_status", "_warmup_numba", "closeEvent", "detach_current_plot", "sig_numba_error",
+        "sig_numba_ready",
+    },
+    "CERTUS_RE:CertusREApp": {
+        "APP_NAME", "APP_TITLE", "DEFAULT_HEIGHT", "DEFAULT_WIDTH", "MIN_HEIGHT", "MIN_WIDTH",
+        "_COMPUTATION_THREADS", "__init__", "_add_front_row", "_apply_theme", "_apply_ui_zoom",
+        "_build_status_bar", "_collect_config", "_get_default_splitter_sizes", "_get_front_stack",
+        "_get_plot_info", "_get_substrate_info_display", "_merge_adjacent_layers", "_on_layer_added",
+        "_on_layer_deleted", "_on_qwot_changed_connection", "_stack_info_front_table_cols",
+        "_trigger_post_undo_action", "_update_busy_ui", "_update_layer_count", "_update_qwot_from_ep",
+        "_update_target_table_headers", "_update_thickness_display", "closeEvent", "load_config",
+    },
+    "certus.ui.certus_strat_ui:CertusStratApp": {
+        "APP_NAME", "APP_TITLE", "DEFAULT_HEIGHT", "DEFAULT_WIDTH", "MIN_HEIGHT", "MIN_WIDTH", "__init__",
+        "_apply_theme", "_apply_ui_zoom", "_build_log_container", "_collect_config", "_get_log_widget",
+        "_save_undo_state", "_warmup_numba", "closeEvent", "save_config", "sig_numba_error", "sig_numba_ready",
+        "timerEvent",
+    },
+    "certus.ui.certus_metal_single_gui:CertusMetalSingleApp": {
+        "MODULE_ID", "_COMPUTATION_THREADS", "__init__", "_apply_config", "_apply_config_dict", "_apply_theme",
+        "_collect_config", "_create_material_params_group", "_create_physical_params_group",
+        "_do_export_results", "_get_config_dict", "_get_log_widget", "_post_load_config", "_post_save_config",
+        "_setup_parameter_grid", "_setup_plots", "_warmup_numba", "closeEvent", "detach_current_plot",
+        "eventFilter", "load_target_file", "reattach_plot", "sig_numba_error", "sig_numba_ready",
+        "start_optimization",
+    },
+    "certus.ui.certus_metal_bilayer_gui:CertusMetalBilayerApp": {
+        "APP_NAME", "EXPORT_FAILURE_LOG", "MODULE_ID", "_COMPUTATION_THREADS", "__init__", "_apply_config",
+        "_apply_config_dict", "_apply_theme", "_collect_config", "_create_labeled_input",
+        "_create_live_params_group", "_create_material_params_group", "_create_physical_params_group",
+        "_do_export_results", "_get_config_dict", "_get_log_widget", "_load_defaults", "_post_load_config",
+        "_post_save_config", "_setup_parameter_grid", "_setup_plots", "_warmup_numba", "closeEvent",
+        "detach_current_plot", "eventFilter", "reattach_plot", "sig_numba_error", "sig_numba_ready",
+        "start_optimization",
+    },
+    "CERTUS_HUB:CertusHub": set(),
+}
+
+
+@pytest.fixture(scope="module")
+def windows() -> dict[str, dict[str, list[str]]]:
+    out = subprocess.run(
+        [sys.executable, "-c", SWEEP, json.dumps(sorted(CLASS_MACHINERY))], capture_output=True, text=True, cwd=ROOT, timeout=900
+    )
+    assert out.returncode == 0, out.stderr[-1500:]
+    [line] = [x for x in out.stdout.splitlines() if x.startswith("SWEEP=")]
+    return json.loads(line.removeprefix("SWEEP="))
+
+
+def test_the_sweep_sees_the_nine_windows(windows) -> None:
+    assert set(windows) == set(OVERRIDES_OF) | {SPLINE_WINDOW}
+    assert sorted(windows[SPLINE_WINDOW]["twice"]) == sorted(OVERRIDES)
+
+
+@pytest.mark.parametrize("window", sorted(OVERRIDES_OF))
+def test_no_name_is_defined_by_two_classes_of_another_window_but_its_listed_overrides(windows, window) -> None:
+    twice = set(windows[window]["twice"])
+    assert sorted(twice - OVERRIDES_OF[window]) == [], f"{window}: defined twice, and not listed"
+    assert sorted(OVERRIDES_OF[window] - twice) == [], f"{window}: no longer defined twice, take them off the list"
+
+
+def test_no_mixin_of_any_window_has_a_constructor(windows) -> None:
+    offenders = {w: [k for k in found["constructors"] if "Mixin" in k] for w, found in windows.items()}
+    assert {w: ks for w, ks in offenders.items() if ks} == {}
+
+
+def test_no_class_of_any_window_is_a_protocol_or_an_abstract_base(windows) -> None:
+    assert {w: found["protocols"] for w, found in windows.items() if found["protocols"]} == {}
+
+
+def test_no_name_of_a_project_class_is_hidden_by_a_qt_class_placed_before_it(windows) -> None:
+    assert {w: found["hidden"] for w, found in windows.items() if found["hidden"]} == {}

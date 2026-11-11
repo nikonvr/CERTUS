@@ -66,6 +66,7 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | **Phase 5c** : `_start_curve_minimum_deep_refit` dans `_CorridorRunMixin` ; Q23 tranchée | `44b24b2a` |
 | **Phase 5d** : les 8 méthodes statiques sont des fonctions de `certus_index_spline_statics.py`, 8 commits, plus le test | `bdba59cb` à `d7b068d7`, test `55f2d194` |
 | **Validation complète de la phase 5** : rien de plus que l'état connu (plan, Phase 5) | sur `55f2d194` |
+| **Phase 6a** : garde-fous d'héritage étendus aux huit autres fenêtres, plus celui de F11 (aucun nom masqué par Qt) | commit suivant `93023626` |
 
 ## En cours
 
@@ -75,7 +76,7 @@ Rien : tout ce qui est fait est commité. La prochaine tâche est la première d
 
 2. Pour toute extraction : `tools/` (`plan_move`, `move`, `manifest`, `contracts`, `protocols`, `born_in`, puis
    `guard` et `lot`).
-5. Phase 6 : 6a garde-fous étendus aux autres fenêtres, 6b `_UIMixin` hors du MRO, 6c état initialisé dans `__init__`.
+5. Phase 6, suite : 6b `_UIMixin` hors du MRO, 6c état initialisé dans `__init__`, puis validation complète.
 6. Phase 7 : 7a, 7b (arêtes entre familles).
 7. Phase 8 : clôture. Phase 9 : couture de test périmée (Q5).
 8. Phase 10 : correctifs révélés par l'audit, un commit chacun, chacun avec un test qui échoue avant (Q17, Q13, Q11, Q12).

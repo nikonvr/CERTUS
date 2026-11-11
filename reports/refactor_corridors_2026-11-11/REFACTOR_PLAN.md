@@ -594,7 +594,14 @@ se lance à la fin de chaque phase entière, pas de chaque sous-phase.
 - **Pour la Phase 3** : toute classe du MRO dont le nom contient « Corridor » doit avoir son entrée dans `CONTRACTS`.
   Chaque sous-phase 3x y inscrit sa tranche et retire des mixins d'origine les noms que leurs méthodes parties lisaient.
 
-### [ ] Phase 2 — Sources uniques (quatre sous-phases, un commit chacune)
+### [x] Phase 2 — Sources uniques (cinq sous-phases, un commit chacune) — faite le 2026-11-11
+
+**Validation de la phase** (`validate_parallel.py`, `de79f62e`, Python 3.15.2) : ruff PASS ; oracle `1188 passed` ; unit
+`5894 passed` ; ui `1358 passed` ; rest `320 passed` et 1 artefact de charge, vert seul en série
+(`test_bare_substrate_transmission_bounds`, déjà vu en Phase 0) ; performance `29 passed` ; `check_claude_md`,
+`check_docs` PASS. Seul rouge : `coherence_md`, l'échec connu (3 commandes mortes). Sa section F signale en plus 5
+renvois `fichier.py:N` de ce plan qui ne pointent plus sur leur symbole : les numéros de ligne du plan sont ceux du
+relevé de Phase 0 (`15d518aa`), et chaque phase qui déplace du code en décale d'autres. Ce n'est pas un échec de l'outil.
 
 Test nouveau, créé en 2a, complété en 2b, 2c puis 2d : `tests/unit/test_the_index_spline_shared_names_have_one_definition.py`.
 Par analyse syntaxique, chaque nom listé n'est défini ou affecté au niveau module que dans un seul fichier de `certus/` ;

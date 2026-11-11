@@ -29,7 +29,7 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 
 ## Consignes reçues de 👤 (2026-11-11)
 
-- Enchaîner les phases sans s'arrêter entre elles.
+- Enchaîner les phases en boucle, sans s'arrêter entre elles : un travail soigné mais rapide.
 - Trancher soi-même les questions ouvertes, le plus intelligemment possible, et consigner la décision (plan, section 4).
 - Inscrire toute tâche faite ou à faire dans ce fichier de reprise.
 - Viser une UX « top 1 % mondial » : audit UX complet, à ajouter à l'audit (plan, section 5).
@@ -48,16 +48,15 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | **Phase 2b** : `_apply_fixed_log_k_axis` et ses deux bornes n'ont plus qu'une définition | `4be1b0af` |
 | **Phase 2c** : les 16 constantes de fenêtre n'ont plus qu'une définition, dans le cœur spline | `133becde` |
 | **Phase 2d** : les deux clés du smart-init n'ont plus qu'une définition, dans `common` | `d16346d9` |
-| **Phase 2e** : les trois classes du smart-init n'ont plus qu'une définition, dans `state_ui` | commit suivant `d16346d9` |
+| **Phase 2e** : les trois classes du smart-init n'ont plus qu'une définition, dans `state_ui` | `de79f62e` |
+| **Validation complète de la phase 2** : rien de plus que l'état connu (plan, Phase 2) | sur `de79f62e` |
 
 ## En cours
 
-**Validation complète de la phase 2** (`python scripts/validate_parallel.py`), à lancer ou à relancer si elle a été
-coupée : rien d'autre en même temps. Tout le code de la phase 2 est commité.
+Rien : tout ce qui est fait est commité. La prochaine tâche est la première de la liste ci-dessous.
 
 ## À faire, dans l'ordre
 
-1. Validation complète de la phase 2, puis cocher la Phase 2 au plan.
 2. Phase 3 : extraction des tranches 3a, 3b, 3c, 3d.
 3. Phase 4 : tracé RMSE(d).
 4. Phase 5 : 5a, 5b, 5c, puis 5d (les 8 fonctions statiques appelées par le mandataire).

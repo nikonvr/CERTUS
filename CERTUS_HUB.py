@@ -513,12 +513,8 @@ class CertusHub(CertusDialogMixin, QMainWindow):
         # Documentation Button style 2026
 
         self.btn_docs = QPushButton(" Scientific Documentation")
-        try:
-            from certus.utils.certus_ux import OBJ
-
-            self.btn_docs.setObjectName(OBJ.PRIMARY_BUTTON)
-        except ImportError:
-            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+        # Neutral, not primary (U6): the next step of the hub is a module tile. Not a ghost either: the bar is a band
+        # of the inverse colour, on which the ink of a transparent button disappears.
 
         self.btn_docs.setToolTip("Open the full scientific documentation for the CERTUS suite (HTML reference).")
 

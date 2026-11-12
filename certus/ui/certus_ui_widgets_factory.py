@@ -246,7 +246,9 @@ def create_header_logo_widget(
         lbl_title = AutoShrinkTitleLabel(
             title_text, 
             default_size=16, 
-            min_size=9, 
+            # Floors in px. 9 and 8 px painted METAL's header at 6.0 and 5.2 pt, under the smallest size of the scale
+            # (Typography.CAPTION, 8 pt; measured 2026-11-13). 12 px is 9 pt, 11 px is 8 pt: below, the label wraps.
+            min_size=12,
             color=CertusTheme.TEXT_MAIN, 
             weight=800
         )
@@ -256,7 +258,7 @@ def create_header_logo_widget(
             lbl_sub = AutoShrinkTitleLabel(
                 subtitle_text, 
                 default_size=12, 
-                min_size=8, 
+                min_size=11,
                 color=CertusTheme.TEXT_SUB, 
                 weight=500
             )

@@ -252,8 +252,9 @@ class AutoShrinkTitleLabel(QLabel):
             if bound.height() <= rect.height():
                 break
             current_size -= 1
-            
-        self._update_style(current_size)
+
+        # When no size fits, the loop leaves one pixel UNDER the floor: the floor is a floor (U9).
+        self._update_style(max(current_size, self._min_size))
 
 #: Minimum height of a click target, matching the suite-wide floor checked by
 #: tests/ui/test_ux_button_min_height.py.

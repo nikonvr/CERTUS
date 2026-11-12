@@ -240,7 +240,6 @@ class CertusRELayoutMixin:
         btn_lay.setSpacing(12)
 
         self.load_re_btn = QPushButton(" Load RE file (Excel)")
-        self.load_re_btn.setObjectName(OBJ.PRIMARY_BUTTON)
         self.load_re_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.load_re_btn.setToolTip("Select and load a previously saved R/E inversion file.")
@@ -268,7 +267,6 @@ class CertusRELayoutMixin:
         lay.addLayout(btn_lay)
 
         self.display_re_results_btn = QPushButton(" Display results")
-        self.display_re_results_btn.setObjectName(OBJ.PRIMARY_BUTTON)
         self.display_re_results_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.display_re_results_btn.setToolTip(
@@ -561,7 +559,6 @@ class CertusRELayoutMixin:
         # Evaluate
 
         self.eval_btn = QPushButton("Evaluate")
-        self.eval_btn.setObjectName(OBJ.PRIMARY_BUTTON)
         self.eval_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.eval_btn.setToolTip("Compute RMSE and spectral curves for current stack (Ctrl+E)")
@@ -588,7 +585,6 @@ class CertusRELayoutMixin:
 
         self.substrate_info_btn = QPushButton(" Stack Info")
 
-        self.substrate_info_btn.setObjectName(OBJ.PRIMARY_BUTTON)
         self.substrate_info_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.substrate_info_btn.setToolTip("Substrate summary and stack structure in QWOT in a separate window.")
@@ -803,7 +799,7 @@ class CertusRELayoutMixin:
 
         self.detach_btn = QPushButton("Detach")
 
-        self.detach_btn.setStyleSheet(CertusTheme.get_button_style("primary"))
+        self.detach_btn.setObjectName(OBJ.GHOST_BUTTON)
 
         self.detach_btn.setToolTip("Open the front layer table in a separate floating window.")
 
@@ -923,7 +919,7 @@ class CertusRELayoutMixin:
 
         self.log_btn = QPushButton("Show Details")
 
-        self.log_btn.setStyleSheet(CertusTheme.get_button_style("primary"))
+        self.log_btn.setObjectName(OBJ.GHOST_BUTTON)
 
         self.log_btn.setToolTip("Toggle log panel and detail view.")
 

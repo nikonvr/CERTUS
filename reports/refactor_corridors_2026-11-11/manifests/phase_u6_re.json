@@ -1,0 +1,7 @@
+{
+  "phase": "U6 (RE) - one primary action, 'Run RE': loading the file, displaying the results, evaluating and the stack info keep the neutral style of the application sheet; Detach and Show Details become ghosts.",
+  "changed_code": [
+    "certus.ui.certus_re_layout_mixin:CertusRELayoutMixin._build_re_workflow_group"
+  ],
+  "note": "Object names and style sheets only. _build_action_buttons is already declared by phase_u6_vocabulary.json; the detach and log buttons are built in functions outside the snapshot. The file loses 4 lines and its ceiling in tests/architecture_debt.json follows (1750 -> 1746). Decision Q30 of the plan."
+}

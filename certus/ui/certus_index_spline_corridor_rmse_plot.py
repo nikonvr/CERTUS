@@ -685,7 +685,7 @@ class _CorridorRmsePlotMixin:
                 self.lbl_corridor_rmse_robust_compact.setText("Robust interval: -")
         try:
             self.plot_corridor_rmse_d.plotItem.setTitle(
-                f"Corridor profile RMSE(d) ? best d* = {d_best:.3f} nm (RMSE {rmse_best:.6f})",
+                f"Corridor profile RMSE(d) — best d* = {d_best:.3f} nm (RMSE {rmse_best:.6f})",
                 color=CertusTheme.PRIMARY,
                 size="10pt",
             )
@@ -775,7 +775,7 @@ class _CorridorRmsePlotMixin:
         _smart_note = ""
         if getattr(self, "_corridor_rmse_smart_interval", None) is not None:
             _s_lo, _s_hi = self._corridor_rmse_smart_interval
-            _smart_note = f" | Deltad code ? [{_s_lo:.3f}, {_s_hi:.3f}] nm"
+            _smart_note = f" | Deltad code ∈ [{_s_lo:.3f}, {_s_hi:.3f}] nm"
 
         txt = (
             (
@@ -789,12 +789,12 @@ class _CorridorRmsePlotMixin:
 
         if rb_ok:
             txt += (
-                f" | robust Delta={delta_rb:.6f} -> interval ? [{float(d_lo_rb):.3f}, {float(d_hi_rb):.3f}] nm"
-                f" | slope@d*?{float(slope_b):+.2e} /nm"
+                f" | robust Delta={delta_rb:.6f} -> interval ∈ [{float(d_lo_rb):.3f}, {float(d_hi_rb):.3f}] nm"
+                f" | slope@d* ≈ {float(slope_b):+.2e} /nm"
             )
 
             if bool(parab_fit.get("ok", False)):
-                txt += f" | parabola center?{float(d_center):.3f} nm"
+                txt += f" | parabola center ≈ {float(d_center):.3f} nm"
 
         else:
             txt += " | robust interval unavailable (insufficient local convex fit)"
@@ -802,7 +802,7 @@ class _CorridorRmsePlotMixin:
         if np.isfinite(d_lo_man) and np.isfinite(d_hi_man):
             man_state = "active" if bool(getattr(self, "_corridor_rmse_manual_active", False)) else "preview"
 
-            txt += f" | manual {man_state} ? [{float(d_lo_man):.3f}, {float(d_hi_man):.3f}] nm"
+            txt += f" | manual {man_state} ∈ [{float(d_lo_man):.3f}, {float(d_hi_man):.3f}] nm"
 
             if bool(src.get("manual_corridor_active", False)):
                 txt += f" ({int(src.get('manual_corridor_selected_count', 0))} profiled points)"

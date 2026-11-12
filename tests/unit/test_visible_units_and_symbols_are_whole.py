@@ -9,6 +9,12 @@ was left is wrong or unreadable (audit of the interface, A1; road map U1):
 * `Gaussian jitter sigma on n (or ? if monotonicity active)`: the letter is xi. certus/spline/certus_corridor_config.py
   says so next to the setting itself: `Jitters are in parameter units (n or ξ; and ln k)`.
 
+* Eight question marks in the sentences of the RMSE(d) tab, where git has no trace of the character (they are there
+  from the first commit). Written back the way the rest of the interface writes: `≈` before a computed value (the
+  spectrum tab says `y ≈ ...`), `∈` before an interval `[lo, hi]`, and the dash of the cards of the tab in its title.
+  A choice, not a restoration. tests/unit/test_rmse_tab_summary.py holds the sentence; the three other strings are
+  held here.
+
 Read in the sources, without Qt: every string constant of the interface that is neither a docstring nor a log message.
 """
 
@@ -64,3 +70,14 @@ def test_the_jitter_of_the_corridor_starts_names_xi():
     [tip] = [text for _line, text in visible_strings(path) if text.startswith("Gaussian jitter sigma on n")]
     assert tip == "Gaussian jitter sigma on n (or ξ if monotonicity active) for additional starts."
     assert "n or ξ" in (ROOT / "certus" / "spline" / "certus_corridor_config.py").read_text(encoding="utf-8")
+
+
+def test_the_three_other_sentences_of_the_rmse_tab_have_their_symbols():
+    ui = ROOT / "certus" / "ui"
+    texts = {
+        name: [text for _line, text in visible_strings(ui / f"certus_index_spline_corridor_{name}.py")]
+        for name in ("rmse_plot", "rmse_view", "worker")
+    }
+    assert any("Corridor profile RMSE(d) — best d* = " in text for text in texts["rmse_plot"])
+    assert any(" | robust interval ∈ [" in text for text in texts["rmse_view"])
+    assert any("(center d* ≈ " in text for text in texts["worker"])

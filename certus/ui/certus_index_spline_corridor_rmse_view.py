@@ -249,7 +249,7 @@ class _CorridorRmseViewMixin:
 
         if hasattr(self, "lbl_corridor_rmse_summary"):
             tail = (
-                f" | robust interval ? [{d_lo_rb:.3f}, {d_hi_rb:.3f}] nm"
+                f" | robust interval ∈ [{d_lo_rb:.3f}, {d_hi_rb:.3f}] nm"
                 if rb_ok and np.isfinite(d_lo_rb) and np.isfinite(d_hi_rb)
                 else ""
             )

@@ -1,0 +1,10 @@
+{
+  "phase": "U1b - eight question marks of the sentences of the RMSE(d) tab are written back as the interface writes elsewhere: an approximately-equal sign before a computed value, an element-of sign before an interval, the dash of the cards in the title.",
+  "changed_code": [
+    "certus.ui.certus_index_spline_corridor_rmse_plot:_CorridorRmsePlotMixin._write_the_rmse_summary",
+    "certus.ui.certus_index_spline_corridor_rmse_plot:_CorridorRmsePlotMixin._plot_corridor_rmse_tab",
+    "certus.ui.certus_index_spline_corridor_rmse_view:_CorridorRmseViewMixin._on_corridor_rmse_plot_clicked",
+    "certus.ui.certus_index_spline_corridor_worker:_CorridorWorkerMixin._start_corridor_rmse_grid_recalc"
+  ],
+  "note": "changed_code: string constants only. A choice, not a restoration: git has no trace of the original characters (the question marks are there from the first commit). tests/unit/test_rmse_tab_summary.py pinned the mutilated sentence: its expected strings follow (5 failed on the code before); the three other strings are held by tests/unit/test_visible_units_and_symbols_are_whole.py."
+}

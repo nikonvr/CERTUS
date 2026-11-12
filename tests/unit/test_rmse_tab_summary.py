@@ -129,7 +129,7 @@ def one(**changes) -> str:
 
 BASE = (
     "Best computed thickness: d* = 100.000 nm | RMSE(d*) = 0.001235 | samples = 5"
-    " | robust Delta=0.000200 -> interval ? [99.000, 101.000] nm | slope@d*?+1.50e-05 /nm | parabola center?100.200 nm"
+    " | robust Delta=0.000200 -> interval ∈ [99.000, 101.000] nm | slope@d* ≈ +1.50e-05 /nm | parabola center ≈ 100.200 nm"
 )
 
 
@@ -153,7 +153,7 @@ def test_the_grid_note_is_added_right_after_the_samples_and_the_plot_note():
 
 def test_the_smart_interval_is_added_after_the_grid_note_when_the_window_has_one():
     text = one(_grid_note=" | G", attributes={"_corridor_rmse_smart_interval": (98.5, 101.25)})
-    assert " | G | Deltad code ? [98.500, 101.250] nm | robust Delta" in text
+    assert " | G | Deltad code ∈ [98.500, 101.250] nm | robust Delta" in text
 
 
 def test_without_a_smart_interval_there_is_no_deltad_note():
@@ -178,14 +178,14 @@ def test_the_parabola_centre_is_given_only_when_the_fit_is_ok():
 
 def test_the_robust_interval_and_the_slope_are_written_with_their_formats():
     text = one(delta_rb=0.00031234567, d_lo_rb=98.76543, d_hi_rb=101.23456, slope_b=-2.5e-4)
-    assert "robust Delta=0.000312 -> interval ? [98.765, 101.235] nm | slope@d*?-2.50e-04 /nm" in text
+    assert "robust Delta=0.000312 -> interval ∈ [98.765, 101.235] nm | slope@d* ≈ -2.50e-04 /nm" in text
 
 
 def test_a_manual_interval_is_a_preview_until_it_is_active():
     text = one(d_lo_man=99.5, d_hi_man=100.5)
-    assert text.endswith(" | manual preview ? [99.500, 100.500] nm")
+    assert text.endswith(" | manual preview ∈ [99.500, 100.500] nm")
     active = one(d_lo_man=99.5, d_hi_man=100.5, attributes={"_corridor_rmse_manual_active": True})
-    assert active.endswith(" | manual active ? [99.500, 100.500] nm")
+    assert active.endswith(" | manual active ∈ [99.500, 100.500] nm")
 
 
 def test_an_interval_with_one_bound_missing_is_not_a_manual_interval():
@@ -196,7 +196,7 @@ def test_an_interval_with_one_bound_missing_is_not_a_manual_interval():
 def test_a_manual_corridor_adds_how_many_profiled_points_it_selected_and_their_range():
     src = {"manual_corridor_active": True, "manual_corridor_selected_count": 12.0, "manual_corridor_selected_d_range_nm": (99.6, 100.4)}
     text = one(src=src, d_lo_man=99.5, d_hi_man=100.5)
-    assert text.endswith(" | manual preview ? [99.500, 100.500] nm (12 profiled points) | sampled in [99.600, 100.400] nm")
+    assert text.endswith(" | manual preview ∈ [99.500, 100.500] nm (12 profiled points) | sampled in [99.600, 100.400] nm")
 
 
 def test_the_manual_corridor_range_needs_two_finite_bounds():

@@ -943,7 +943,7 @@ class _CorridorWorkerMixin(_CorridorTabMixin):
 
         self.lbl_status.setText(
             f"RMSE(d) grid: {n_pts} points, Deltad={step:g} nm, break-lookback={int(max(2, break_lookback))} "
-            f"(center d*?{d_center:.3f} nm)..."
+            f"(center d* ≈ {d_center:.3f} nm)..."
         )
 
         if self.logger:

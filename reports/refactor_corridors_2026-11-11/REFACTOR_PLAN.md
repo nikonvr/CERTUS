@@ -1261,9 +1261,13 @@ dans STRAT. Trois sous-étapes, un commit chacune :
   « n or ξ »). `tests/unit/test_visible_units_and_symbols_are_whole.py` : `2 failed, 2 passed` avant, `4 passed` après.
   Garde `GUARD=OK` ; LOT avec `test_ux_skeleton` : `356 passed`. `sigma (cm^-1)` (dialogue des nœuds manuels) est de
   l'ASCII voulu : laissé.
-- [ ] **U1b — les glyphes à choisir.** Huit « ? » du résumé et du titre de l'onglet RMSE(d) : `≈` devant une valeur ou
-  un intervalle (l'interface écrit déjà `y ≈ …`), `—` pour le séparateur du titre (comme les cartes de l'onglet).
-  `tests/unit/test_rmse_tab_summary.py` épingle le texte mutilé : ses attendus suivent.
+- [x] **U1b — les glyphes à choisir.** Huit « ? » des phrases de l'onglet RMSE(d). **Un choix, pas une restauration** :
+  `≈` devant une valeur calculée (`slope@d* ≈ …`, `parabola center ≈ …`, `center d* ≈ …` ; l'interface écrit déjà
+  `y ≈ …`), `∈` devant un intervalle `[lo, hi]` (`Deltad code ∈ […]`, `interval ∈ […]`, `manual preview ∈ […]`),
+  `—` dans le titre du tracé (comme les cartes de l'onglet). `tests/unit/test_rmse_tab_summary.py` épinglait la phrase
+  mutilée : ses attendus suivent (`5 failed` avant) ; les trois autres chaînes sont tenues par
+  `test_visible_units_and_symbols_are_whole.py` (absentes à `HEAD`, vérifié). Garde `GUARD=OK` ; LOT `457 passed`.
+  À 👤 : si un autre signe était voulu, il se change en un endroit par chaîne.
 - [ ] **U1c — une seule langue.** Infobulles et libellés français : deux dans `corridor_tab`, un dans
   `strat_ui_layout`, trois dans `strat_stack_progress_widget`, un dans `eventsextras`. Puis le cliquet général.
 

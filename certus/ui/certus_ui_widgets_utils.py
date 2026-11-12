@@ -218,7 +218,9 @@ class AutoShrinkTitleLabel(QLabel):
         self._color = color
         self._weight = weight
         self._current_rendered_size = default_size
-        self.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Minimum)
+        # Expanding, not MinimumExpanding: the hint of a wrapping label follows the shape of its text (a shorter title can
+        # have a wider one), and it must not be the least this label accepts. It shrinks and wraps down to its longest word.
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.setWordWrap(True)
         self._update_style(default_size)
 

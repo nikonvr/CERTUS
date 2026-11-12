@@ -87,3 +87,23 @@ def test_only_the_hub_carries_the_motto_of_the_suite(titles) -> None:
 
 def test_no_two_windows_share_a_title(titles) -> None:
     assert len(set(titles.values())) == len(titles)
+
+def test_the_header_subtitle_can_be_squeezed_down_to_its_longest_word(qapp) -> None:
+    """U2 shortened the subtitle of RE, and its left panel asked for 21 px more (336 for 315). The label wraps, and Qt
+    sizes the hint of a wrapping label on the shape its text would take: 106 px for "Reverse Engineering", 85 px for
+    "CERTUS  Reverse Engineering". Its size policy made that hint its minimum. A label that shrinks its font and wraps
+    to stay whole has a smaller one: its longest word."""
+    from PyQt6.QtWidgets import QHBoxLayout, QWidget
+
+    from certus.ui.certus_ui_widgets_utils import AutoShrinkTitleLabel
+
+    header = QWidget()
+    layout = QHBoxLayout(header)
+    layout.setContentsMargins(0, 0, 0, 0)
+    label = AutoShrinkTitleLabel("Reverse Engineering of a multilayer stack", default_size=12, min_size=8, weight=500)
+    layout.addWidget(label)
+    try:
+        assert label.sizeHint().width() > label.minimumSizeHint().width()
+        assert layout.minimumSize().width() == label.minimumSizeHint().width()
+    finally:
+        header.deleteLater()

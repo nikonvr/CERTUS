@@ -527,7 +527,7 @@ class CertusREResultsDialog(QDialog):
         """The row of actions under the table."""
         btn_row = QHBoxLayout()
 
-        export_tgt_btn = QPushButton(" Export cibles vs calcul (Excel)")
+        export_tgt_btn = QPushButton(" Export targets vs computed (Excel)")
 
         export_tgt_btn.setToolTip(
             "One sheet per measurement point: target (RE file) vs computed R or T "

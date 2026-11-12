@@ -406,7 +406,7 @@ class SubstrateIndexGUI(QMainWindow):
         self.sell_ls_nfev_spin.setValue(3000)
         self.sell_ls_nfev_spin.setToolTip("Max evaluations for least_squares (polish after L-BFGS-B, Sellmeier).")
 
-        self.sell_log_l_chk = QCheckBox("Sellmeier L1,L2 en ln (optimization.)")
+        self.sell_log_l_chk = QCheckBox("Sellmeier L1,L2 in ln (optimization)")
         self.sell_log_l_chk.setChecked(bool(SELLMEIER_DEFAULT_LOG_L1L2))
         self.sell_log_l_chk.setToolTip(
             "If checked: optimization on ui=ln(Li) then Li=exp(ui) (log bounds). Otherwise: Li directly."

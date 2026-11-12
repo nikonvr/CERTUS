@@ -572,11 +572,12 @@ class LayoutManager:
 
         # Evaluate
 
+        # One primary action per window (U6): the global optimization. Evaluation runs on every edit of the stack, so
+        # its button, like the other actions of this panel, keeps the neutral style of the application sheet.
         primary_obj = OBJ.PRIMARY_BUTTON
 
         self.ui.eval_btn = QPushButton("Evaluate (Ctrl+E)")
 
-        self.ui.eval_btn.setObjectName(primary_obj)
         self.ui.eval_btn.setIcon(self.ui.style().standardIcon(QStyle.StandardPixmap.SP_ComputerIcon))
         self.ui.eval_btn.setMinimumHeight(32)
         self.ui.eval_btn.setToolTip("Compute the spectrum for the current stack (instant).")
@@ -594,7 +595,6 @@ class LayoutManager:
 
         self.ui.local_btn = QPushButton("Polish local (+/-2 nm)")
 
-        self.ui.local_btn.setObjectName(primary_obj)
         self.ui.local_btn.setIcon(self.ui.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay))
         self.ui.local_btn.setMinimumHeight(32)
         self.ui.local_btn.setToolTip(
@@ -626,7 +626,6 @@ class LayoutManager:
 
         self.ui.drop_thin_btn = QPushButton("▼ Drop thinnest layer")
 
-        self.ui.drop_thin_btn.setObjectName(primary_obj)
         self.ui.drop_thin_btn.setIcon(self.ui.style().standardIcon(QStyle.StandardPixmap.SP_ArrowDown))
         self.ui.drop_thin_btn.setMinimumHeight(32)
         self.ui.drop_thin_btn.setToolTip(
@@ -655,7 +654,6 @@ class LayoutManager:
         # Colorimetry
 
         self.ui.color_btn = QPushButton("Colorimetric analysis")
-        self.ui.color_btn.setObjectName(OBJ.PRIMARY_BUTTON)
         self.ui.color_btn.setIcon(self.ui.style().standardIcon(QStyle.StandardPixmap.SP_CommandLink))
         self.ui.color_btn.setMinimumHeight(32)
         self.ui.color_btn.setToolTip(
@@ -669,7 +667,6 @@ class LayoutManager:
 
         # Spectral Monte Carlo of the RMSE
         self.ui.spectral_mc_btn = QPushButton("Spectral Monte Carlo")
-        self.ui.spectral_mc_btn.setObjectName(OBJ.PRIMARY_BUTTON)
         self.ui.spectral_mc_btn.setIcon(self.ui.style().standardIcon(QStyle.StandardPixmap.SP_CommandLink))
         self.ui.spectral_mc_btn.setMinimumHeight(32)
         self.ui.spectral_mc_btn.setToolTip(
@@ -682,7 +679,6 @@ class LayoutManager:
 
         # Robust number of layers (second-order criterion on the Pareto records)
         self.ui.robust_n_btn = QPushButton("Robust N")
-        self.ui.robust_n_btn.setObjectName(OBJ.PRIMARY_BUTTON)
         self.ui.robust_n_btn.setIcon(self.ui.style().standardIcon(QStyle.StandardPixmap.SP_CommandLink))
         self.ui.robust_n_btn.setMinimumHeight(32)
         self.ui.robust_n_btn.setToolTip(
@@ -695,7 +691,6 @@ class LayoutManager:
         # Stack Info Button
 
         self.ui.substrate_info_btn = QPushButton("🔬 Stack info")
-        self.ui.substrate_info_btn.setObjectName(OBJ.PRIMARY_BUTTON)
 
         self.ui.substrate_info_btn.setToolTip(
             "substrate summary and stack structure in QWOT (best design if optimization is running)."
@@ -917,7 +912,7 @@ class LayoutManager:
         f_head.addStretch()
 
         self.ui.detach_btn = QPushButton("Detach")
-        self.ui.detach_btn.setObjectName(OBJ.PRIMARY_BUTTON)
+        self.ui.detach_btn.setObjectName(OBJ.GHOST_BUTTON)
 
         self.ui.detach_btn.setToolTip("Open the front layer table in a separate floating window.")
 
@@ -999,7 +994,6 @@ class LayoutManager:
         f_lay.addLayout(f_btns)
 
         self.ui.pareto_btn = QPushButton("🏆 Open Pareto Front")
-        self.ui.pareto_btn.setObjectName(OBJ.PRIMARY_BUTTON)
 
         self.ui.pareto_btn.setToolTip(
             "Open the Pareto Front window: trade-off between RMSE and number of layers N.\n"
@@ -1125,7 +1119,9 @@ class LayoutManager:
         self.ui.progress_widget = EnhancedProgressWidget()
 
         self.ui.log_btn = QPushButton("Logs")
-        self.ui.log_btn.setObjectName(OBJ.PRIMARY_BUTTON)
+        # A utility, not the next step (U6); the ghost style has a slim padding, the click target keeps 64 px.
+        self.ui.log_btn.setObjectName(OBJ.GHOST_BUTTON)
+        self.ui.log_btn.setMinimumWidth(64)
 
         self.ui.log_btn.setToolTip("Show or hide the log panel and optimization detail.")
 

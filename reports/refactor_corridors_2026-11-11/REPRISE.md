@@ -157,7 +157,12 @@ un rouge que personne n'avait encore vu.
 
 ## 5. En cours
 
-Rien : U6 est fait et commité. La prochaine tâche est la première du §6.
+**U7** (nuit du 2026-11-12). Fait et commité : correctif U1 (`055b6c76`) ; glyphe du bouton de thème dans les dix
+fenêtres (A10, `4cecfd78`) ; FIELD : utilitaires en fantôme et « Unpolarized » (`bcd97ced`), feuille de la suite installée
+et rôle vérifié sur le pixel peint (`6b345d40`, rouge avant sur FIELD seul : son Reset peignait `#f5f5f5` depuis U6) ;
+`1368 passed` (FIELD et `ux_`). En cours : B1, un seul composant de déroulé (Q31 : `CertusStepper` sur deux colonnes, non
+cliquable, à la place des lignes à flèches de DESIGN, RE, METAL et de la phrase de STRAT). Vu, à faire après : « nuit
+(10 h) » en français dans une infobulle de STRAT (`certus_strat_multigraine_ui.py:318`).
 
 ## 6. À faire, dans l'ordre
 

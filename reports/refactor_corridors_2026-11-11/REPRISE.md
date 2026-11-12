@@ -1,47 +1,88 @@
-# REPRISE — refactoring des corridors et audit UX
+# REPRISE — refactoring des corridors d'INDEX SPLINE et feuille de route UX
 
-Fichier de reprise : tout ce qui est fait, en cours et à faire. Il est mis à jour à chaque étape, avant de passer à la
-suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `REFACTOR_PLAN.md`, même dossier.
+Fichier de reprise, **autonome** : il suffit pour reprendre le chantier sur un autre ordinateur, sans la conversation ni
+la mémoire de l'assistant. Il est mis à jour à chaque étape, avant de passer à la suivante. Le détail de chaque phase et
+de chaque décision est dans `REFACTOR_PLAN.md`, même dossier ; ce fichier dit où on en est, comment repartir, et comment
+faire la suite.
 
-## Où est le travail
+**État au 2026-11-12, 8 h** : le refactoring des corridors est **fini** (Phases 0 à 10, toutes validées). La feuille de
+route UX est commencée : U1 et U2 faites. Rien en cours, arbre propre. Rien n'est poussé.
 
-- Branche `claude/certus-1111-reprise-60e136`, dans le worktree `.claude/worktrees/certus-1111-reprise-60e136`, depuis
-  la reprise du 2026-11-11 à 23 h : elle prolonge `claude/reprise-certus1111-926596` (avance rapide depuis `8088dc4c`,
-  fin de la Phase 9), qui prolongeait `claude/certus-refactor-audit-6cd1fc` (arrêtée à `bea41352`). Les deux worktrees
-  précédents restent arrêtés à ces commits.
-- Ce dossier, `reports/refactor_corridors_2026-11-11/` : le plan, ce fichier, l'instantané de référence
-  (`reference_snapshot.json`), les manifestes des phases (`manifests/`).
-- Rien n'est poussé. Pousser publie le dépôt : seulement sur ordre.
-- La copie `REFACTOR_PLAN.md` restée à la racine du checkout principal est périmée, et y fait échouer deux contrôles :
-  à supprimer là-bas.
+## 1. Le chantier en cinq lignes
 
-## Reprendre après une coupure
+La fenêtre INDEX SPLINE (`certus/ui/certus_index_spline_*.py`) était faite de 21 mixins dont les méthodes « corridor »
+étaient réparties par l'histoire des fichiers. Elles sont maintenant regroupées par fonctionnalité dans cinq **tranches**
+(`certus_index_spline_corridor_run`, `_rmse_view`, `_interval`, `_nk`, `_rmse_plot`), par **déplacement pur** : texte
+inchangé, bytecode prouvé identique par `scripts/refactor_guard.py`. S'y sont ajoutés les correctifs révélés par l'audit
+(Phase 10), deux arêtes entre familles (Phase 7), puis la feuille de route UX (plan, sections 5.5 et 5.6), en cours.
 
-1. `python scripts/preflight.py` doit finir par `PREFLIGHT=GO`.
-2. `git status -sb` puis `git log --oneline -n 8` : comparer à « Fait » et « En cours » ci-dessous.
-3. Si des fichiers sont indexés mais pas commités, ils appartiennent à la phase « En cours » : relancer ses tests (liste
-   dans la phase, au plan), puis la garde, puis la validation, avant de commiter.
-4. Garde : `python scripts/refactor_guard.py snapshot --out <fichier temporaire>`, puis
-   `python scripts/refactor_guard.py compare reports/refactor_corridors_2026-11-11/reference_snapshot.json <fichier temporaire> --manifest reports/refactor_corridors_2026-11-11/manifests/phase_1.json`
-   (ajouter un `--manifest` par phase faite : `phase_2a.json`, `phase_2b.json`, …). Attendu : `GUARD=OK`.
-5. Validation complète : `python scripts/validate_parallel.py`, environ 25 minutes, rien d'autre en même temps.
-   **État connu** : `coherence_md` sort en erreur sur 3 commandes mortes de documents de campagne (laissé tel quel sur
-   décision) ; un test qui chronomètre peut être rouge en parallèle et vert seul. Tout autre rouge est nouveau.
-   Un test « au bit » d'un noyau rouge même seul : le rejouer avec `NUMBA_CACHE_DIR` sur un dossier neuf avant de
-   conclure ([`cache_numba_arbre_neuf.md`](cache_numba_arbre_neuf.md)).
+## 2. Reprendre sur un autre ordinateur
 
-## Consignes reçues de 👤 (2026-11-11)
+### 2.1 Avoir la branche
 
-- Enchaîner les phases en boucle, sans s'arrêter entre elles : un travail soigné mais rapide.
-- Trancher soi-même les questions ouvertes, le plus intelligemment possible, et consigner la décision (plan, section 4).
-- Inscrire toute tâche faite ou à faire dans ce fichier de reprise.
-- Viser une UX « top 1 % mondial » : audit UX complet, à ajouter à l'audit (plan, section 5).
-- Nuit du 2026-11-11 : poursuivre en autonomie, « autorisation sur tout ». Lu comme : trancher et commiter sans
-  demander. Rien n'est poussé pour autant (dépôt public : pousser reste un ordre explicite).
-- 2026-11-11, 23 h : « tourne en mode 100 % autonome, je te donne toute autorisation ». Même lecture : tout enchaîner
-  et commiter, ne rien pousser.
+Le travail est sur la branche locale **`claude/reprise-certus1111-926596`**, 56 commits au-dessus de `origin/master`
+(`9632f15b`). **Aucun n'est sur GitHub.** Chaîne des branches, chacune prolongeant la précédente en avance rapide :
+`claude/certus-refactor-audit-6cd1fc` (jusqu'à `bea41352`) → `claude/reprise-certus1111-926596` (jusqu'à `8088dc4c`) →
+`claude/certus-1111-reprise-60e136` (jusqu'à `cddf791a`) → de nouveau `claude/reprise-certus1111-926596` (tête).
 
-## Fait
+| Voie | Quand | Commandes |
+|---|---|---|
+| Le dossier `certus1111` arrive entier, `.git` compris (synchronisation du disque) | cas attendu | `git branch --sort=-committerdate` montre la branche en tête. Si un worktree pointe sur un chemin absent : `git worktree repair`, ou `git worktree prune` |
+| Un fichier unique à copier | si `.git` ne suit pas | ancien PC : `git bundle create certus_corridors.bundle origin/master..claude/reprise-certus1111-926596` ; nouveau PC, dans un clone de `github.com/nikonvr/CERTUS` : `git fetch certus_corridors.bundle claude/reprise-certus1111-926596:claude/reprise-certus1111-926596` |
+| Pousser la branche | **seulement sur ordre de 👤** : le dépôt est public | `git push origin claude/reprise-certus1111-926596` |
+
+Une session neuve de l'assistant ouvre un worktree neuf sur `master`, qui n'a pas le travail. Y faire
+`git branch --sort=-committerdate`, puis `git merge --ff-only <la branche de tête>`, et noter ici la nouvelle branche.
+Avant, regarder `git worktree list` et `git -C <worktree> status -sb` de chaque worktree : une session coupée peut y
+avoir laissé du travail non commité (c'est arrivé pour U2).
+
+### 2.2 Avoir l'environnement
+
+- **Python 3.15.2, exactement.** La garde compare du bytecode : avec une autre version elle refuse (code de sortie 2).
+- `pip install --require-hashes -r requirements.lock`, puis `pip install pytest-xdist` (hors du verrou ; 3.8.0 ici).
+- Versions de ce PC : ruff 0.16.9, pytest 9.1.1, numba 0.68.0, numpy 2.5.3, PyQt6 6.11.0, pyqtgraph 0.14.0, pydantic
+  2.14.1 ; Windows 11, Git Bash.
+- Le dépôt est en *sparse-checkout* (`docs/ETAT.md`, section 0) : rien à y changer pour ce chantier.
+
+### 2.3 Vérifier qu'on est au bon endroit — quatre commandes, dans l'ordre, une à la fois
+
+```bat
+python scripts\preflight.py
+python scripts\orient.py
+python reports\refactor_corridors_2026-11-11\tools\guard.py
+python reports\refactor_corridors_2026-11-11\tools\lot.py
+```
+
+Attendu : `PREFLIGHT=GO` ; arbre propre et aucun autre processus python ; `problems=0` et `GUARD=OK` ; le lot sans
+échec (plusieurs centaines de tests, 2 à 4 minutes ; le premier passage sur un arbre neuf compile Numba et dure plus). Si la garde
+ou le lot ne rendent pas cela sur un arbre propre, **s'arrêter et le dire** : tant qu'on n'a rien modifié, c'est
+l'environnement, pas le code.
+
+### 2.4 Si la coupure a eu lieu au milieu d'une étape
+
+`git status -sb` et `git log --oneline -n 8`, à comparer aux sections 4 et 5. Des fichiers modifiés non commités
+appartiennent à l'étape « En cours ». Ne pas les commiter de confiance : rejouer le test de l'étape sur le code d'avant
+(il doit échouer), puis après, puis ruff, la garde et le lot. C'est ainsi que U2, reprise d'une session coupée, a montré
+un rouge que personne n'avait encore vu.
+
+## 3. Consignes de 👤 — elles ne sont écrites nulle part ailleurs sur un autre PC
+
+- **Enchaîner en boucle**, sans s'arrêter entre les étapes : un travail soigné mais rapide (2026-11-11). Ne pas finir
+  un tour pour annoncer une étape finie ni pour attendre un accord.
+- **Trancher soi-même** les questions de conception, le plus intelligemment possible, et consigner la décision et sa
+  raison (plan, section 4). Cela ne couvre ni un push, ni une suppression dans `reports/`, ni un arrêt que les règles
+  du dépôt imposent, ni une décision que le plan réserve à 👤 (§6).
+- **Tout inscrire ici** : tâche faite, en cours, à faire — une coupure de courant ne doit rien faire perdre. Et ce
+  fichier doit tout contenir pour une reprise sur un autre PC.
+- **Viser une UX « top 1 % mondial »** : audit fait (plan, section 5), feuille de route U1 à U13.
+- Nuit du 2026-11-11 : « tourne en mode 100 % autonome, je te donne toute autorisation ». Lu comme : tout enchaîner et
+  commiter sans demander. Rien n'est poussé pour autant.
+- Les règles du dépôt sont dans `CLAUDE.md` et `AGENTS.md`, à lire en premier. Celles qui comptent le plus ici : ne
+  jamais pousser sans ordre ; jamais `ruff check --fix` ; une seule mesure ou validation à la fois ; un commit par
+  chose ; un test ajouté pour un correctif doit échouer sur le code d'avant ; ne jamais affirmer un résultat non mesuré ;
+  pas de français dans les commentaires et docstrings de `certus/`.
+
+## 4. Fait
 
 | Quoi | Commit |
 |---|---|
@@ -77,7 +118,7 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | **Phase 6c** : le constructeur donne à tout l'état corridor sa valeur par défaut, depuis la table | `fce0ee90` |
 | **Phase 8, clôture** : registre de dette exact, garde finale `GUARD=OK` avec les 17 manifestes, relevé des 56 imports sans lecteur | `9c57ffd8` |
 | **Validation complète des phases 6 et 8** : rien de plus que l'état connu (plan, Phase 6) | sur `9c57ffd8` |
-| **Phase 9** : les deux tests de `test_mwir_gui_flow.py` remplacent `GenericWorker` là où la méthode le lit ; preuve faite que le vrai était construit | commit suivant `d9db99a7` |
+| **Phase 9** : les deux tests de `test_mwir_gui_flow.py` remplacent `GenericWorker` là où la méthode le lit ; preuve faite que le vrai était construit | `8088dc4c` |
 | **Phase 10a** : une courbe RMSE(d) vide écrit `-1`, plus `None`, dans `_corridor_rmse_best_idx` (Q17) ; test rouge avant (`8 failed`) | `43d48d3f` |
 | **Phase 10b** : la branche morte de `_plot_result` est retirée, `NEVER_ASSIGNED` est vide (Q13) ; test rouge avant (`1 failed`) | `82007a4a` |
 | **Phase 10c** : `_load_defaults` remet les huit attributs corridor écrits pour un échantillon (Q11) ; test rouge avant (`2 failed`) | `5b801bf5` |
@@ -89,20 +130,104 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | **Validation complète de la phase 7** : rien de plus que l'état connu, et le même test « au bit » rouge sur le cache de l'arbre, vert sur cache vierge (deuxième occurrence, mêmes valeurs : [note](cache_numba_arbre_neuf.md)) | sur `aa75be4f` |
 | **U1a** : les unités inverses (`nm⁻¹`, `nm⁻²`) et le `ξ` que le code prouve reviennent dans dix chaînes et une infobulle d'INDEX SPLINE ; test rouge avant (`2 failed`) | `0b3fc350` |
 | **U1b** : huit « ? » des phrases de l'onglet RMSE(d) deviennent `≈` (valeur), `∈` (intervalle) et `—` (titre) : un choix, l'historique n'a pas l'original ; attendus de `test_rmse_tab_summary.py` mis à jour (`5 failed` avant) | `561bff95` |
-| **U1c** : les trois chaînes françaises d'INDEX SPLINE sont en anglais ; cliquets : aucun « ? » à la place d'un symbole dans l'interface, pas de français dans les sources de la fenêtre INDEX SPLINE (`2 failed` avant) | commit « U1c » |
+| **U1c** : les trois chaînes françaises d'INDEX SPLINE sont en anglais ; cliquets : aucun « ? » à la place d'un symbole dans l'interface, pas de français dans les sources de la fenêtre INDEX SPLINE (`2 failed` avant) | `cddf791a` |
+| **U2** : un format de titre, `CERTUS-MODULE — ce que fait le module`, écrit en un endroit ; commencée par la session de nuit, coupée, reprise et vérifiée de bout en bout ; un rouge réel trouvé et corrigé (le fichier long de METAL grandissait de 2 lignes) ; test rouge avant (`3 failed`) | `bf5cda14` |
+| Ce fichier refait pour suffire sur un autre PC ; `docs/ETAT.md` à jour | commit suivant `bf5cda14` |
 
-## En cours
+**Ce qui n'a pas été fait** : la validation complète n'a pas été relancée depuis la Phase 7 (`aa75be4f`). U1a, U1b, U1c
+et U2 ont chacune passé leur test, ruff, la garde et le lot, pas la suite entière : elle est due avec U3 à U5.
+
+## 5. En cours
 
 Rien : tout ce qui est fait est commité. La prochaine tâche est la première de la liste ci-dessous.
 
-## À faire, dans l'ordre
+## 6. À faire, dans l'ordre
 
-1. Feuille de route UX, plan sections 5.5 et 5.6 : U2 (un format de titre : `certus_base_app.py` écrit
-   `f"{APP_NAME}  {app_title}"`, deux espaces là où était un séparateur ; `APP_TITLE` de RE et d'INDEX SPLINE répètent
-   « CERTUS  »), puis U3 à U5.
-2. À 👤 (Q26) : traduire ou non le français visible de STRAT, RE et du HUB (liste au plan, 5.6).
-3. À 👤 : dire si `test_without_the_flag_the_kernel_keeps_the_coarse_samples_bit_for_bit` doit exiger le bit entre deux
-   spécialisations Numba ; tant qu'il le fait, une validation en parallèle peut le rendre rouge selon le cache.
+1. **U3** — rien de tronqué à 1366×768 ni à 1440×900 (constat A4 du plan : 16 libellés et des en-têtes de table coupés).
+   Mesure par l'arbre de widgets, un processus par module ; cliquet : 0 libellé et 0 en-tête tronqué.
+2. **U4** — une barre d'état commune : un seul « Zoom 100% », des compteurs libellés (A5, B6).
+3. **U5** — toasts dédoublonnés (deux identiques au démarrage de DESIGN), raccourcis sans conflit (`Ctrl+S`) (A6, A7).
+4. **Validation complète** (§8) après U5, puis `docs/ETAT.md` (section 0) à jour.
+5. **U6 à U11** — système d'actions, FIELD dans le système, icônes vectorielles, échelle typographique, états vides
+   actionnables, messages (plan §5.5). **U12** (reprise d'un calcul après coupure) est à spécifier avant tout code : elle
+   touche au calcul. **U13** (écran réel, HiDPI, lecteur d'écran, essais avec des utilisateurs) n'est pas à la portée
+   d'une IA.
 
-Outils : pour une extraction, `tools/` (`plan_move`, `move`, `manifest`, `contracts`, `protocols`, `born_in`, puis `guard`
-et `lot`) ; `tools/static_to_function.py` pour une méthode statique ; `tools/unread_imports.py` pour le relevé de clôture.
+**Ce qui attend 👤, et que l'assistant ne fait pas seul**
+
+- **Q26** : traduire ou non le français visible de STRAT, RE et du HUB (une vingtaine de chaînes, liste au plan §5.6).
+- **Les signes choisis en U1b** (`≈`, `∈`, `—`) : l'historique n'avait pas l'original ; s'il en voulait d'autres, un
+  endroit par chaîne.
+- **Le test « au bit » du noyau STRAT** (`test_without_the_flag_the_kernel_keeps_the_coarse_samples_bit_for_bit`) :
+  doit-il exiger le bit entre deux spécialisations Numba ? Tant qu'il le fait, il peut être rouge selon le cache (§8).
+- **Fusionner** la branche dans `master`, et **pousser** : quand, et s'il le faut.
+- **Supprimer** la copie périmée `REFACTOR_PLAN.md` à la racine du checkout principal (elle y fait échouer deux
+  contrôles ; un crochet interdit à une session de worktree d'y écrire).
+- **Ménage des worktrees** : `certus-1111-reprise-60e136` garde une copie non commitée de U2 (six fichiers modifiés,
+  deux nouveaux), reprise et commitée ici en `bf5cda14` : **ne pas la commiter là-bas**, elle peut être abandonnée. Les
+  worktrees `certus-refactor-audit-6cd1fc` et `certus-1111-reprise-60e136` sont entièrement contenus dans la branche
+  de tête.
+
+## 7. Recettes
+
+**Une étape UX (U3 et suivantes)** — elle change un comportement visible, donc :
+
+1. Inscrire l'étape au §5.
+2. Écrire d'abord le test cliquet, et le voir échouer sur le code d'avant ; noter le compte (`N failed, M passed`).
+3. Modifier ; une chose par commit. Un fichier listé dans `tests/architecture_debt.json` ne doit pas grandir d'une
+   ligne (le cliquet de dette est dans le lot).
+4. Écrire `manifests/phase_<étape>.json` : `changed_code` pour chaque fonction dont le corps change, `added_attributes`
+   pour une méthode nouvelle héritée par les fenêtres, `rebound` pour une constante de classe changée ; une `note` dit
+   ce qui change hors de ce que l'instantané regarde.
+5. `python -m ruff check .` ; le test ; `python reports\refactor_corridors_2026-11-11\tools\guard.py` (attendu
+   `GUARD=OK`) ; `python reports\refactor_corridors_2026-11-11\tools\lot.py <tests de l'étape et tests voisins>`.
+6. Consigner : plan §5.6 (chiffres mesurés), §4 à §6 de ce fichier, commit en anglais.
+
+**Une extraction de tranche** (si le geste revient) : les six outils de `tools/` dans l'ordre `plan_move`, `move`,
+`manifest`, `contracts`, `protocols`, `born_in`, mode d'emploi en tête de chaque fichier, modèles dans `tools/specs/` ;
+`tools/static_to_function.py` pour une méthode statique ; `tools/unread_imports.py` pour le relevé de clôture. Leçon à
+ne pas réapprendre (plan, Q18) : sous Python 3.15, un nom lié par `import` et un nom affecté ne donnent pas le même
+bytecode pour `nom.methode(...)` ; un module nouveau lie `logger` comme le module d'origine.
+
+## 8. Validation complète, et son état connu
+
+`python scripts\validate_parallel.py` — environ 25 minutes, **rien d'autre en même temps** (ni test, ni garde, ni
+script python). La lancer en arrière-plan et attendre sa fin ; sa sortie n'apparaît qu'à la fin.
+
+**Rouges connus, qui ne sont pas des régressions** — la commande affiche donc `VALIDATION=NO-GO` :
+
+- `coherence_md` sort en erreur sur 3 commandes mortes de documents de campagne (`cissoid_metal_trade.py`,
+  `take_record.py`, `hidden_resonances.py`, dossier `envelope_v2`) : laissé tel quel sur décision de 👤. Sa section F
+  signale aussi des renvois `fichier.py:N` du plan qui ne pointent plus sur leur symbole : les numéros de ligne du plan
+  sont ceux du relevé de Phase 0, et chaque déplacement en a décalé.
+- Un test peut tomber en parallèle et passer seul (artefact de charge) : vu sur
+  `tests/property/test_physics_properties.py::test_bare_substrate_transmission_bounds` et sur des tests qui
+  chronomètrent. La commande le rejoue seule et le classe `ARTEFACT`.
+- **Le test « au bit » du noyau STRAT, rouge même seul sur un arbre dont le cache Numba vient d'être rempli par
+  plusieurs processus** (deux occurrences, mêmes valeurs ; écart de 10⁻¹⁰ nm, sans effet physique). Avant de conclure,
+  le rejouer avec `NUMBA_CACHE_DIR` sur un dossier neuf : [`cache_numba_arbre_neuf.md`](cache_numba_arbre_neuf.md). Un
+  arbre neuf, ou un autre PC, recompile tout à froid : s'y attendre.
+
+Tout autre rouge est nouveau : s'arrêter, le rejouer seul, le signaler.
+
+## 9. Où sont les choses
+
+| Quoi | Où |
+|---|---|
+| Plan, phases cochées avec leurs chiffres, arbitrages Q1 à Q26 (section 4), audit UX et avancement (section 5) | `REFACTOR_PLAN.md` |
+| Instantané de référence de la garde (Phase 0, `15d518aa`, Python 3.15.2) — il reste (Q20) | `reference_snapshot.json` |
+| Ce que chaque phase ou étape a le droit de changer | `manifests/phase_*.json` |
+| Outils : `guard.py`, `lot.py`, et ceux des extractions | `tools/`, `tools/specs/` |
+| Notes de mesure : cache Numba d'un arbre neuf ; imports laissés sans lecteur par les déplacements | `cache_numba_arbre_neuf.md`, `imports_sans_lecteur.md` |
+| La garde elle-même et ses tests | `scripts/refactor_guard.py`, `tests/unit/test_refactor_guard_compares_two_class_surfaces.py` |
+| L'audit UX | `python scripts/audit_ux_certus.py` ; sonde des libellés : `scripts/sonde_libelles_visibles.py` |
+| État général du projet | `docs/ETAT.md`, section 0 |
+
+## 10. Pièges rencontrés sur ce PC (Windows, Git Bash)
+
+- Les fichiers de l'arbre sont en CRLF (`core.autocrlf=true`) : un script qui réécrit un fichier doit rendre des CRLF.
+- Python sous Windows ne connaît pas `/tmp` : lui passer des chemins Windows ou relatifs.
+- Dans un *heredoc* Git Bash, `\\n` devient un vrai saut de ligne : écrire le code à générer dans un fichier.
+- Une sortie de commande se paie (`AGENTS.md`) : `| tail`, `--output-format concise` pour ruff.
+- Le dossier de travail d'une session est son worktree : ne pas écrire dans le checkout principal ni dans le worktree
+  d'une autre session ; y lire est permis.

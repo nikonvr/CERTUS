@@ -13,9 +13,9 @@
 > ([`ETAT_actions.md`](ETAT_actions.md)), acquis ([`ETAT_acquis.md`](ETAT_acquis.md)), registre des audits ([`AUDITS.md`](AUDITS.md),
 > `grep -n "ALG-02" docs/AUDITS.md`), preuves dans `reports/` (le `bilan.md` d'un dossier).
 
-**Refactoring des corridors d'INDEX SPLINE (2026-11-11, en cours)** : branche `claude/certus-1111-reprise-60e136`, non
-poussée ; phases 0 à 10 faites et validées (7 comprise), reste la feuille de route UX ; fait, en cours,
-reste à faire et mode de reprise dans
+**Refactoring des corridors d'INDEX SPLINE (2026-11-11) et feuille de route UX (en cours)** : branche
+`claude/reprise-certus1111-926596`, non poussée ; refactoring fini, phases 0 à 10 faites et validées ; feuille de route
+UX : U1 et U2 faites, reste U3 à U13 ; fait, à faire, décisions qui attendent 👤 et mode de reprise sur un autre PC dans
 [`REPRISE.md`](../reports/refactor_corridors_2026-11-11/REPRISE.md), détail dans le plan du même dossier.
 
 **RICL (2026-11-05)** : précontrôle GO ; protocole de charge au sommet et sélection des tours cohérents, témoin nominal,

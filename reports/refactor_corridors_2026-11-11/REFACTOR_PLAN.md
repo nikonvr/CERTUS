@@ -1377,5 +1377,18 @@ dans STRAT. Trois sous-étapes, un commit chacune :
   (dont « rien de tronqué » aux deux tailles avec les libellés plus longs), squelette, dette, langue : `100 passed`.
   `certus_metal_base_app.py` reste à 1 809 lignes.
 
+**U5, 2026-11-12 — une fenêtre s'ouvre sans bruit.**
+
+- [x] **U5.** Mesures ajoutées à l'audit (`toasts`, `shortcut_conflicts`, celle-ci lue à la création de
+  l'enregistrement de journal : une fenêtre remplace les gestionnaires de son journal en démarrant). Avant, à
+  1440×900, DESIGN seul : deux toasts « Evaluation OK. RMSE: 0.368035 » (elle évalue deux fois en démarrant), et
+  l'avertissement « shortcut 'Ctrl+S' requested for 'save' but already claimed » (elle liait `Ctrl+S` à la main,
+  puis le redemandait à l'installeur standard pour la même action). Après : la pile de toasts rend le toast déjà
+  affiché quand on lui redonne le même message, le même genre et le même titre (`certus_toast_stack.py`, pour toutes
+  les fenêtres) ; DESIGN laisse `Ctrl+S` à l'installeur standard, la touche reste liée à l'enregistrement.
+  `tests/ui/test_ux_a_window_starts_without_noise.py` : `2 failed, 13 passed` avant, `15 passed` après. Garde
+  `GUARD=OK` (les deux fichiers sont hors de l'instantané) ; tests des toasts et des raccourcis `68 passed`.
+  Non traité : A6 notait aussi que le toast recouvre « Add Target » et « Remove » ; sa place n'a pas changé.
+
 **A1 corrigé par le relevé** : `? QWOT` n'est pas un symbole perdu. La ligne s'écrit quand le QWOT n'est pas un nombre
 fini ; le « ? » tient la place de la valeur. Laissé.

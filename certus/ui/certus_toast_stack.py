@@ -292,6 +292,12 @@ def _build_stack_class():
             icon_name: str | None = None,
             title: str | None = None,
         ):
+            # A message that is already on screen is not said twice: the toast that shows it is the answer.
+            said = (text, variant, title)
+            for shown in self._toasts:
+                if getattr(shown, "_certus_said", None) == said:
+                    return shown
+
             # Evict oldest if overflow
             while len(self._toasts) >= MAX_STACK_SIZE:
                 old = self._toasts[0]
@@ -309,6 +315,7 @@ def _build_stack_class():
                 icon_name=icon_name,
                 title=title,
             )
+            toast._certus_said = said
             toast.dismissed.connect(self._on_dismissed)
             self._toasts.append(toast)
             toast.adjustSize()

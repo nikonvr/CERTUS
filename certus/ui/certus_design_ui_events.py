@@ -31,7 +31,6 @@ class EventsManager:
 
         QShortcut(QKeySequence("Ctrl+G"), self.ui, lambda: self.ui.run_optim("global"))
 
-        QShortcut(QKeySequence("Ctrl+S"), self.ui, self.ui.save_config)
 
         QShortcut(QKeySequence("Ctrl+Z"), self.ui, self.ui._undo)
 

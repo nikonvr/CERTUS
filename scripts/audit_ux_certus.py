@@ -544,6 +544,7 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
         QApplication,
         QCheckBox,
         QComboBox,
+        QLabel,
         QLineEdit,
         QPushButton,
         QRadioButton,
@@ -595,6 +596,20 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
             except (AttributeError, TypeError):
                 pass
 
+    # What the window says about itself while it is built: a shortcut asked for a key that is already taken. Read at
+    # the creation of the log record: a window may replace the handlers of its logger while it starts.
+    import logging
+
+    conflicts: list[str] = []
+    make_record = logging.getLogRecordFactory()
+
+    def _listening(*args, **kwargs) -> logging.LogRecord:
+        record = make_record(*args, **kwargs)
+        if record.levelno >= logging.WARNING and "already claimed" in record.getMessage():
+            conflicts.append(record.getMessage())
+        return record
+
+    logging.setLogRecordFactory(_listening)
     win = cls()
     app.setFont(QFont(_PINNED_FAMILY, 10))
     win.setFont(QFont(_PINNED_FAMILY, 10))
@@ -776,6 +791,13 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
     out.update(clipped_texts(win))
     out["zoom_indicators"] = zoom_indicators(win)
     out["unlabelled_counters"] = unlabelled_counters(win)
+    logging.setLogRecordFactory(make_record)
+    out["shortcut_conflicts"] = conflicts
+    out["toasts"] = sorted(
+        " ".join(label.text().split())
+        for label in win.findChildren(QLabel)
+        if label.objectName() == "toast-body" and label.isVisible()
+    )
 
     # --- the theme toggle reaches the widget sheets (LAST: it changes the palette) -----------------------
     from PyQt6.QtWidgets import QWidget

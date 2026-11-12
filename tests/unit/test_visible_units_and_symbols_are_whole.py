@@ -42,6 +42,16 @@ STRAY_MARK = re.compile(r"\?(?=[A-Za-zÀ-ÿ0-9{\[])|(?<=\s)\?\s+[\[\(a-z]|\(or \
 #: `Layer 3: SiO2  n@lambda₀=1.460  ? QWOT`: the mark stands for a QWOT that is not a finite number. Not a lost symbol.
 MARKS_THAT_ARE_VALUES = ("  ? QWOT\n",)
 SPLINE_WINDOW = sorted((ROOT / "certus" / "ui").glob("certus_index_spline*.py"))
+#: French written without accents, which FRENCH misses: words that English does not use, and two phrases.
+FRENCH_WORDS = re.compile(
+    r"\b(les|des|une|est|sont|avec|dans|chaque|cette|aux|donc|cela|leurs?|vaut|annule|echec|charger|voir|ecart|blocs|"
+    r"couches?|neufs|temoins|fente|lissage|courbure|criblage|attente|profond|cibles|calcul|"
+    r"illisible|actif|inactif)\b|\ben (ln|cours|attente)\b",
+    re.IGNORECASE,
+)
+#: Strings that are French on purpose, because they are data and not text: the states of a multi-seed run are tokens of
+#: a state machine, pinned by value in tests/unit/test_strat_multigraine_ui.py, and translated when they are shown.
+FRENCH_DATA = {("certus_strat_multigraine_ui.py", "en attente"), ("certus_strat_multigraine_ui.py", "en cours")}
 FRENCH = (
     re.compile(r"[àâçéèêëîïôùûÀÂÇÉÈÊÔÛ]"),
     re.compile(r"\b[dlnqsjcDLNQSJC]'[a-zéèêà]{2,}"),
@@ -132,5 +142,25 @@ def test_no_visible_string_of_the_spline_window_is_french():
         for path in SPLINE_WINDOW
         for line, text in visible_strings(path)
         if any(detector.search(text) for detector in FRENCH)
+    ]
+    assert french == []
+
+
+def test_the_detector_of_french_sees_it_without_accents_and_leaves_english_alone():
+    french = ["Charger la configuration", "Polish profond (minimum grille) : annule ou echec.", "TEMOINS 1", "en ln"]
+    english = ["Load the configuration", "Columns: λ, n, k", "Best RMSE: N/A", "font-family: 'Inter', sans-serif"]
+    assert all(FRENCH_WORDS.search(text) for text in french)
+    assert not any(FRENCH_WORDS.search(text) or any(d.search(text) for d in FRENCH) for text in english)
+
+
+def test_no_visible_string_of_the_interface_is_french():
+    """U1d (plan, Q26): the eleven windows speak English. The test of the spline window above did not see French that
+    has no accent; this one does, on every window."""
+    french = [
+        f"{path.name}:{line} {text[:60]!r}"
+        for path in INTERFACE
+        for line, text in visible_strings(path)
+        if (path.name, text) not in FRENCH_DATA
+        and (FRENCH_WORDS.search(text) or any(detector.search(text) for detector in FRENCH))
     ]
     assert french == []

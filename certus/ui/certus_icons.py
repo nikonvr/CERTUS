@@ -314,7 +314,7 @@ THEMED_ICON_PROPERTY: Final = "certus_themed_icon"
 
 
 def set_themed_icon(widget, name: str, token: str = "TEXT_MAIN", size: int = 20) -> None:
-    """Give `widget` (a button, or any widget with `setIcon`) the icon `name` in the palette colour `token`.
+    """Give `widget` (a button, a label, or any widget with `setIcon`) the icon `name` in the palette colour `token`.
 
     The icon follows the theme: the widget remembers `name|token|size`, and the theme switch redraws it in the colour
     the palette gives `token` (U8). `certus_icon` alone paints once, in the colour of the moment.
@@ -322,7 +322,17 @@ def set_themed_icon(widget, name: str, token: str = "TEXT_MAIN", size: int = 20)
     from certus.ui.certus_theme import CertusTheme
 
     widget.setProperty(THEMED_ICON_PROPERTY, f"{name}|{token}|{int(size)}")
-    widget.setIcon(certus_icon(name, color=str(getattr(CertusTheme, token)), size=size))
+    _paint(widget, certus_icon(name, color=str(getattr(CertusTheme, token)), size=size), int(size))
+
+
+def _paint(widget, icon, size: int) -> None:
+    # A label shows a pixmap; a button, an action or a tab shows an icon.
+    from PyQt6.QtWidgets import QLabel
+
+    if isinstance(widget, QLabel):
+        widget.setPixmap(icon.pixmap(size, size))
+    else:
+        widget.setIcon(icon)
 
 
 def redraw_themed_icon(widget) -> bool:
@@ -333,7 +343,7 @@ def redraw_themed_icon(widget) -> bool:
     if not spec:
         return False
     name, token, size = str(spec).split("|")
-    widget.setIcon(certus_icon(name, color=str(getattr(CertusTheme, token)), size=int(size)))
+    _paint(widget, certus_icon(name, color=str(getattr(CertusTheme, token)), size=int(size)), int(size))
     return True
 
 

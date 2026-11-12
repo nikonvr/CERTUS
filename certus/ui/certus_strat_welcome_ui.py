@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from certus.ui.certus_icons import is_svg_icon_rendering_disabled, set_themed_icon
 from certus.ui.certus_theme import CertusTheme
 from certus.utils.certus_strat_service import APP_CONTEXT
 from certus.utils.certus_ux import Typography
@@ -327,6 +328,13 @@ class WelcomeGuideWidget(QWidget):
         lbl_icon = QLabel(icon)
 
         lbl_icon.setFixedSize(28, 24)  # the emoji is 26 px wide: 24 cut it
+
+        # The SVG of the suite in place of the emoji (U8); the emoji stays when the SVG rendering is off.
+        svg = {"⚡": "zap", "📚": "book-open", "🚀": "activity"}.get(icon)
+        if svg and not is_svg_icon_rendering_disabled():
+            lbl_icon.setText("")
+            lbl_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            set_themed_icon(lbl_icon, svg, "SECONDARY", 16)
 
         lbl_icon.setStyleSheet(
             f"background-color: {CertusTheme.INFO_BG}; color: {CertusTheme.SECONDARY}; border-radius: 4px; font-weight: bold; font-size: {Typography.H2}pt;"

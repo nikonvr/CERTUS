@@ -88,7 +88,8 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | **Phase 7b** (Q25) : `spectral_rmse_weights` descend dans `certus/domain/spectral_weights.py` ; DESIGN, RE et le gradient analytique la prennent là ; oracle avant/après verts, `c1_diff HEAD` : C1 TENU (9 092 tableaux) ; test rouge avant (`7 failed`) | `aa75be4f` |
 | **Validation complète de la phase 7** : rien de plus que l'état connu, et le même test « au bit » rouge sur le cache de l'arbre, vert sur cache vierge (deuxième occurrence, mêmes valeurs : [note](cache_numba_arbre_neuf.md)) | sur `aa75be4f` |
 | **U1a** : les unités inverses (`nm⁻¹`, `nm⁻²`) et le `ξ` que le code prouve reviennent dans dix chaînes et une infobulle d'INDEX SPLINE ; test rouge avant (`2 failed`) | `0b3fc350` |
-| **U1b** : huit « ? » des phrases de l'onglet RMSE(d) deviennent `≈` (valeur), `∈` (intervalle) et `—` (titre) : un choix, l'historique n'a pas l'original ; attendus de `test_rmse_tab_summary.py` mis à jour (`5 failed` avant) | commit « U1b » |
+| **U1b** : huit « ? » des phrases de l'onglet RMSE(d) deviennent `≈` (valeur), `∈` (intervalle) et `—` (titre) : un choix, l'historique n'a pas l'original ; attendus de `test_rmse_tab_summary.py` mis à jour (`5 failed` avant) | `561bff95` |
+| **U1c** : les trois chaînes françaises d'INDEX SPLINE sont en anglais ; cliquets : aucun « ? » à la place d'un symbole dans l'interface, pas de français dans les sources de la fenêtre INDEX SPLINE (`2 failed` avant) | commit « U1c » |
 
 ## En cours
 
@@ -96,9 +97,11 @@ Rien : tout ce qui est fait est commité. La prochaine tâche est la première d
 
 ## À faire, dans l'ordre
 
-1. Feuille de route UX, plan sections 5.5 et 5.6 : U1c (français visible : `corridor_tab` ×2, `strat_ui_layout`,
-   `strat_stack_progress_widget` ×3, `eventsextras` ; puis cliquet général), puis U2 à U5.
-2. À 👤 : dire si `test_without_the_flag_the_kernel_keeps_the_coarse_samples_bit_for_bit` doit exiger le bit entre deux
+1. Feuille de route UX, plan sections 5.5 et 5.6 : U2 (un format de titre : `certus_base_app.py` écrit
+   `f"{APP_NAME}  {app_title}"`, deux espaces là où était un séparateur ; `APP_TITLE` de RE et d'INDEX SPLINE répètent
+   « CERTUS  »), puis U3 à U5.
+2. À 👤 (Q26) : traduire ou non le français visible de STRAT, RE et du HUB (liste au plan, 5.6).
+3. À 👤 : dire si `test_without_the_flag_the_kernel_keeps_the_coarse_samples_bit_for_bit` doit exiger le bit entre deux
    spécialisations Numba ; tant qu'il le fait, une validation en parallèle peut le rendre rouge selon le cache.
 
 Outils : pour une extraction, `tools/` (`plan_move`, `move`, `manifest`, `contracts`, `protocols`, `born_in`, puis `guard`

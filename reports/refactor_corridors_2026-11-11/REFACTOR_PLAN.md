@@ -1132,6 +1132,7 @@ repose sur une lecture du code ou une mesure.
 |---|---|---|---|
 | Q24 | `_load_defaults` oublie `_last_result` mais garde `_last_worker_result` et `_last_run_cfg` : voulu ? | **Non : oubli. Correctif en 10e**, un commit à part de 10c (C3). | Mesuré sur une vraie fenêtre, résultat à profil tracé puis `_load_defaults` : `_corridor_profile_source_result()` rend encore le résultat brut de l'échantillon précédent ; la barre d'état de l'onglet annonce « Step 2/3 … grid 11 points » ; bouger `sp_corridor_rmse_delta` retrace toute la courbe précédente (11 points, `d* = 100.000 nm`) ; `_corridor_rmse_manual_lo/hi`, que `_load_defaults` met à `nan`, ne le sont plus à sa sortie (un retracé part de l'intérieur de la fonction). `btn_corridor_rmse_grid_calc` n'est grisé que pendant un calcul : après un reset, « Recalculate RMSE(d) » relancerait la grille sur la configuration et le résultat de l'échantillon oublié. Un nouveau run remet déjà `_last_worker_result` à `None` (`certus_index_spline_execution.py`, début de run) : le reset est le seul endroit qui l'oublie. |
 | Q25 | 7b : où descendre `spectral_rmse_weights` ? | **`certus/domain/spectral_weights.py`**, signature annotée, les trois lecteurs de F12 seulement. | Les couches de `scripts/metrics.py` : `domain` 0, `physics` 1, `core` et `utils` 2. `physics` la lit : la destination doit être à son niveau ou dessous. La fonction est du numpy pur, sans rien de CERTUS : c'est la définition du domaine. Les poids sont des données passées aux noyaux, pas des constantes figées à la compilation : le module ne cite pas Numba, et `test_the_cache_key_covers_what_the_kernels_read.py` passe. |
+| Q26 | U1 : traduire le français visible de STRAT, RE et du HUB ? | **Non, pas d'autorité : à 👤.** INDEX SPLINE seulement, qui avait déjà sa règle. | La règle 11 de `CLAUDE.md` excepte les libellés vus par l'utilisateur ; les textes de STRAT sont rédigés (chiffres, conseils d'usage), pas des restes ; une traduction changerait la langue de travail de 👤 dans son outil principal. Réversible dans les deux sens, donc rien ne presse. |
 
 **Proposé à 👤, non appliqué** — Q19 : avancer la Phase 9 juste après la Phase 3. La méthode que la couture vise est
 à sa place définitive depuis 3a, et d'ici la Phase 9 deux tests de `test_mwir_gui_flow.py` lancent un vrai fil de
@@ -1268,8 +1269,21 @@ dans STRAT. Trois sous-étapes, un commit chacune :
   mutilée : ses attendus suivent (`5 failed` avant) ; les trois autres chaînes sont tenues par
   `test_visible_units_and_symbols_are_whole.py` (absentes à `HEAD`, vérifié). Garde `GUARD=OK` ; LOT `457 passed`.
   À 👤 : si un autre signe était voulu, il se change en un endroit par chaîne.
-- [ ] **U1c — une seule langue.** Infobulles et libellés français : deux dans `corridor_tab`, un dans
-  `strat_ui_layout`, trois dans `strat_stack_progress_widget`, un dans `eventsextras`. Puis le cliquet général.
+- [x] **U1c — une seule langue, dans INDEX SPLINE.** Trois chaînes : `Local half-window (points)` (était
+  `Demi-fen?tre locale`), `DeltaRMSE amplitude (robust profiling)` (était `Amplitude DeltaRMSE (Profilage Robuste)`),
+  `Wavenumber sigma = 1/λ (nm⁻¹)` (était `Nombre d'onde …`). Elles échappaient au test de la fenêtre, qui cherche des
+  lettres accentuées. Deux cliquets ajoutés à `test_visible_units_and_symbols_are_whole.py`, `2 failed, 6 passed`
+  avant, `8 passed` après : plus aucun « ? » à la place d'un symbole dans toute l'interface, plus de français dans
+  les sources de la fenêtre INDEX SPLINE (accents, élisions, une courte liste de mots). Garde `GUARD=OK` ; LOT avec
+  `test_ux_index_spline_speaks_one_language` et `test_ux_skeleton` : `364 passed`.
+- [ ] **Le français des autres fenêtres : à 👤 (Q26).** Le balayage en trouve une vingtaine de chaînes, que A8 ne
+  comptait pas : `certus_strat_stack_progress_widget.py` (le widget entier : « Prêt », « Épaisseur totale », « Couche »,
+  « Analyse d'admissibilité en cours… »), `certus_strat_ui_layout.py` (l'infobulle des modes d'exécution, 9 lignes ;
+  « recherche de fente », « corridor d'indice »), `certus_strat_table_ui.py` (une infobulle de deux phrases),
+  `certus_strat_multigraine_ui.py`, `certus_strat_witness.py`, `certus_re_ui.py` (« Export cibles vs calcul (Excel) »),
+  `CERTUS_HUB.py`. **Non traduites** : la règle 11 de `CLAUDE.md` admet le français dans ce que l'utilisateur lit, ces
+  textes sont écrits exprès, et STRAT est l'outil de 👤. S'il veut une seule langue partout, c'est une traduction
+  fidèle, fenêtre par fenêtre, avec le même cliquet étendu.
 
 **A1 corrigé par le relevé** : `? QWOT` n'est pas un symbole perdu. La ligne s'écrit quand le QWOT n'est pas un nombre
 fini ; le « ? » tient la place de la valeur. Laissé.

@@ -1,0 +1,8 @@
+{
+  "phase": "U1c - the three French strings left in the INDEX SPLINE window are written in English: the headings of two tooltips of the RMSE(d) tab and one item of the abscissa combo box.",
+  "changed_code": [
+    "certus.ui.certus_index_spline_corridor_tab:_CorridorTabMixin._build_corridor_tab_rmse_controls",
+    "certus.ui.certus_index_spline_eventsextras_mixin:CertusIndexSplineEventsExtrasMixin._build_tab_spectrum"
+  ],
+  "note": "changed_code: three string constants. Both functions were already listed by phases 10d and U1a. tests/unit/test_visible_units_and_symbols_are_whole.py gains the general ratchets (no stray question mark in the whole interface, no French in the sources of the INDEX SPLINE window) and fails on the code before (2 failed, 6 passed). The French shown by STRAT, RE and the HUB is listed in the plan (5.6) and left to the user."
+}

@@ -316,7 +316,7 @@ class _CorridorTabMixin:
         self.sp_corridor_rmse_delta.setValue(_DEFAULT_CORRIDOR_ROBUST_RMSE_DELTA)
 
         self.sp_corridor_rmse_delta.setToolTip(
-            "<b>Amplitude DeltaRMSE (Profilage Robuste)</b><br>"
+            "<b>DeltaRMSE amplitude (robust profiling)</b><br>"
             "Target RMSE increment above minimum (d*) to define robust interval (Purple).<br>"
             "A lower value narrows the interval; a higher value widens it."
         )
@@ -332,7 +332,7 @@ class _CorridorTabMixin:
         self.sp_corridor_rmse_win.setValue(4)
 
         self.sp_corridor_rmse_win.setToolTip(
-            "<b>Demi-fen?tre locale (points)</b><br>"
+            "<b>Local half-window (points)</b><br>"
             "Number of points on each side of d* used to fit the local parabola.<br>"
             "A wider window smooths numerical noise but can capture non-parabolic regions."
         )

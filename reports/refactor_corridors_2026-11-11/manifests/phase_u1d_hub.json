@@ -1,0 +1,7 @@
+{
+  "phase": "U1d (HUB) - the message of the error raised when a shortcut is declared without a script is in English.",
+  "changed_code": [
+    "CERTUS_HUB:CertusHub._setup_shortcuts"
+  ],
+  "note": "A programming error, raised while the hub builds its shortcuts; text only."
+}

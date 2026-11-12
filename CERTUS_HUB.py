@@ -978,7 +978,7 @@ class CertusHub(CertusDialogMixin, QMainWindow):
             if not script:
                 # Une entree sans script est une erreur de programmation, pas un cas
                 # a rattraper en silence : elle installerait un raccourci muet.
-                raise ValueError(f"raccourci {key!r} declare sans script a lancer")
+                raise ValueError(f"shortcut {key!r} declared without a script to launch")
 
             shortcut = QShortcut(QKeySequence(key), self)
             shortcut.activated.connect(functools.partial(self.launch_module, script))

@@ -142,12 +142,16 @@ class CertusThemeToggle(QPushButton):
         # The caption is a glyph: the reader says the tooltip, and it must say the CURRENT action after a toggle.
         self.setAccessibleName(self.toolTip())
 
+        # The size is written in the sheet too: the sheet of the suite gives every push button a padding and a minimum
+        # height that beat setFixedSize, stretched the toggle to 32x46 and left no room for its glyph (A10: nine windows
+        # out of ten, measured 2026-11-12). 30 px of content and a 1 px border make the 32 px of setFixedSize.
         self.setStyleSheet(f"""
             QPushButton {{
                 background: {CertusTheme.SURFACE};
                 border: 1px solid {CertusTheme.BORDER};
                 border-radius: 16px;
                 font-size: {Typography.H2}pt;
+                padding: 0px; min-width: 30px; max-width: 30px; min-height: 30px; max-height: 30px;
             }}
             QPushButton:hover {{
                 border-color: {CertusTheme.PRIMARY};

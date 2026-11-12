@@ -414,6 +414,72 @@ def skeleton(win) -> list[str]:
     return out
 
 
+def clipped_texts(win) -> dict[str, list[str]]:
+    """The texts of the visible interface that lack room, as `kind|text|needed>given`, in two lists.
+
+    `clipped`: the text itself is wider than what it is drawn in, so the user sees it cut (a label, a button, a check
+    box) or ended by an ellipsis (a table header). `tight`: the text is whole, but only because it eats the padding its
+    widget asks for (the size hint is wider than the widget). What the user does not see (another tab, a collapsed
+    panel) is not measured, and a label that wraps is not cut by its width.
+
+    Widths are those of the font the widget draws with. A label in rich text has no plain width: its size hint decides.
+    A header is counted clipped on the margin of the style (PM_HeaderMargin); a style sheet that pads its sections more
+    hides a few pixels from this count, and they show in `tight`.
+    """
+    import re
+
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtWidgets import QAbstractButton, QHeaderView, QLabel, QStyle
+
+    def shown(text: str) -> str:
+        return " ".join(re.sub(r"<[^>]+>", "", text).split())[:60]
+
+    def advance(widget, text: str) -> int:
+        plain = text.replace("&&", "\x00").replace("&", "").replace("\x00", "&") if isinstance(widget, QAbstractButton) else text
+        return max((widget.fontMetrics().horizontalAdvance(line) for line in plain.split("\n")), default=0)
+
+    clipped: set[str] = set()
+    tight: set[str] = set()
+    for widget in [*win.findChildren(QLabel), *win.findChildren(QAbstractButton)]:
+        text = widget.text()
+        if not shown(text) or not widget.isVisible() or _is_transient(widget):
+            continue
+        is_label = isinstance(widget, QLabel)
+        if is_label and (widget.wordWrap() or not widget.pixmap().isNull()):
+            continue
+        kind = "label" if is_label else "button"
+        hint, width = widget.sizeHint().width(), widget.width()
+        rich = is_label and "<" in text and ">" in text
+        if rich:
+            needed, given = hint, width
+        elif is_label:
+            needed, given = advance(widget, text), widget.contentsRect().width()
+        else:
+            icon = 0 if widget.icon().isNull() else widget.iconSize().width() + 4
+            needed, given = advance(widget, text) + icon, width
+        if needed > given + 1:
+            clipped.add(f"{kind}|{shown(text)}|{needed}>{given}")
+        elif hint > width + 1:
+            tight.add(f"{kind}|{shown(text)}|{hint}>{width}")
+    for header in win.findChildren(QHeaderView):
+        if header.orientation() != Qt.Orientation.Horizontal or not header.isVisible() or header.model() is None:
+            continue
+        margin = header.style().pixelMetric(QStyle.PixelMetric.PM_HeaderMargin, None, header)
+        for section in range(header.count()):
+            if header.isSectionHidden(section):
+                continue
+            text = str(header.model().headerData(section, Qt.Orientation.Horizontal) or "")
+            if not shown(text):
+                continue
+            given = header.sectionSize(section)
+            needed = header.fontMetrics().horizontalAdvance(text) + 2 * margin
+            if needed > given + 1:
+                clipped.add(f"header|{shown(text)}|{needed}>{given}")
+            elif header.sectionSizeHint(section) > given + 1:
+                tight.add(f"header|{shown(text)}|{header.sectionSizeHint(section)}>{given}")
+    return {"clipped": sorted(clipped), "tight": sorted(tight)}
+
+
 def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: int = 1080) -> dict:
     """Instantiate one app and collect every metric. Runs in a dedicated process."""
     # The offscreen plugin resolves NO font unless QT_QPA_FONTDIR points at a font
@@ -664,6 +730,7 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
     out["accepts_drops"] = bool(win.acceptDrops())
     out["persists_tables"] = hasattr(win, "_qs_save_table_headers")
     out["skeleton"] = skeleton(win)
+    out.update(clipped_texts(win))
 
     # --- the theme toggle reaches the widget sheets (LAST: it changes the palette) -----------------------
     from PyQt6.QtWidgets import QWidget

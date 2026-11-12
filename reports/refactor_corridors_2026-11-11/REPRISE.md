@@ -139,7 +139,14 @@ et U2 ont chacune passé leur test, ruff, la garde et le lot, pas la suite enti�
 
 ## 5. En cours
 
-Rien : tout ce qui est fait est commité. La prochaine tâche est la première de la liste ci-dessous.
+**U3 — rien de tronqué.** La mesure est faite et commitée : `scripts/audit_ux_certus.py::clipped_texts`, deux listes par
+module, `clipped` (le texte ne tient pas : l'utilisateur le voit coupé) et `tight` (il tient en mangeant sa marge).
+Commande : `python scriptsudit_ux_certus.py --width 1440 --height 900 --json` (4 minutes), puis lire `clipped`.
+**État de départ mesuré** : 19 textes coupés à 1440×900, 20 à 1366×768 — INDEX SPLINE 7 puis 8 (2 boutons, 5 puis 6
+libellés, dont « Nominal thickness (nm): » 138 px pour 84), STRAT 9 (emojis dans des cases de 24 px, 2 px de trop),
+DESIGN 2 (en-têtes « λ min (nm) », « λ max (nm) »), RE 1 (en-tête « n@lambda₀ ») ; 0 dans les sept autres.
+**Reste** : corriger module par module, un commit chacun (INDEX SPLINE, DESIGN, RE, STRAT), puis le cliquet « 0 texte
+coupé aux deux tailles ». Aucun fichier de `certus/` n'est encore touché par U3 tant que cette ligne est là.
 
 ## 6. À faire, dans l'ordre
 

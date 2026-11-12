@@ -20,7 +20,7 @@ from PyQt6.QtWidgets import (
 from certus.ui.certus_field_common import OpticsPanelWidget, OptimizationPanelWidget, StackPanelWidget
 from certus.ui.certus_field_plot import CertusFieldPlotWidget, CertusIndexProfilePlotWidget, CertusSpectralPlotWidget
 from certus.ui.certus_field_services import FieldExportService
-from certus.ui.certus_icons import certus_icon
+from certus.ui.certus_icons import certus_icon, set_themed_icon
 from certus.ui.certus_theme import CertusTheme
 from certus.ui.certus_ui_widgets_cards import CertusCard
 from certus.ui.certus_ui_widgets_factory import create_header_logo_widget, create_styled_button, create_top_actions_bar
@@ -56,7 +56,7 @@ class CertusFieldLayoutMixin:
         self.toggle_details_btn.setToolTip("Toggle the visibility of the application logs panel")
         self.toggle_details_btn.toggled.connect(self.on_toggle_details)
 
-        self.btn_screenshot = QPushButton("📸 Capture")
+        self.btn_screenshot = QPushButton("Capture")
         self.btn_screenshot.setObjectName(OBJ.GHOST_BUTTON)
         self.btn_screenshot.setToolTip("Save a screenshot of the electric field profile (PNG)")
         self.btn_screenshot.clicked.connect(self.export_png)
@@ -96,7 +96,7 @@ class CertusFieldLayoutMixin:
         scroll_layout.setSpacing(8)
 
         # -- Card: Optics
-        card_optics = CertusCard("🔭 Optical Parameters", "Materials & Wavelengths")
+        card_optics = CertusCard("Optical Parameters", "Materials & Wavelengths")
         self.optics_panel = OpticsPanelWidget(self.material_list)
 
         # Connect to main app
@@ -118,7 +118,7 @@ class CertusFieldLayoutMixin:
         scroll_layout.addWidget(CertusCollapsible("1  Materials Config", card_optics, expanded=True))
 
         # -- Card: Structure
-        self.card_stack = CertusCard("🥞 Stack Structure", "Layers & Thicknesses")
+        self.card_stack = CertusCard("Stack Structure", "Layers & Thicknesses")
         self.stack_panel = StackPanelWidget()
 
         self.stack_panel.table_item_changed.connect(self._on_table_item_changed)
@@ -139,7 +139,7 @@ class CertusFieldLayoutMixin:
         scroll_layout.addWidget(CertusCollapsible("2  Stack", self.card_stack, expanded=True))
 
         # -- Card: Optimisation
-        card_opt = CertusCard("⚡ Optimization", "Weights & Controls")
+        card_opt = CertusCard("Optimization", "Weights & Controls")
         self.opt_panel = OptimizationPanelWidget()
 
         self.opt_panel.calc_requested.connect(self.on_calc_clicked)
@@ -164,7 +164,7 @@ class CertusFieldLayoutMixin:
         scroll_layout.addWidget(CertusCollapsible("3  Action", card_opt, expanded=True))
 
         # -- Card: Metrics
-        self.card_metrics = CertusCard("📊 Analytical Metrics", "Latest calculation results")
+        self.card_metrics = CertusCard("Analytical Metrics", "Latest calculation results")
         metrics_layout_w = QWidget()
         metrics_layout = QVBoxLayout(metrics_layout_w)
         self.lbl_max_e2 = QLabel("Peak |E|² : N/A")
@@ -176,10 +176,11 @@ class CertusFieldLayoutMixin:
         scroll_layout.addWidget(self.card_metrics)
 
         # -- Card: Reports & Data
-        card_reports = CertusCard("📁 Reports & Data", "Export history")
+        card_reports = CertusCard("Reports & Data", "Export history")
         rep_layout_w = QWidget()
         rep_layout = QVBoxLayout(rep_layout_w)
-        self.btn_open_reports = create_styled_button("📂 Open Reports Folder", variant="secondary")
+        self.btn_open_reports = create_styled_button("Open Reports Folder", variant="secondary")
+        set_themed_icon(self.btn_open_reports, "folder-open", "SECONDARY_LABEL")
         self.btn_open_reports.setToolTip("Open the folder containing exported reports in File Explorer")
         self.btn_open_reports.clicked.connect(self.on_open_reports_clicked)
         rep_layout.addWidget(self.btn_open_reports)

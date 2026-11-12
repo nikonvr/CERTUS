@@ -6,6 +6,7 @@ from typing import Any
 import pyqtgraph as pg
 
 from certus.core.certus_core import CFG
+from certus.ui.certus_icons import set_themed_icon
 from certus.ui.certus_overview_tab import CertusKpiBanner, build_synthesis_tab
 from certus.ui.certus_qt_widgets import (
     QAbstractItemView,
@@ -687,7 +688,8 @@ class LayoutManager:
 
         # Stack Info Button
 
-        self.ui.substrate_info_btn = QPushButton("🔬 Stack info")
+        self.ui.substrate_info_btn = QPushButton("Stack info")
+        set_themed_icon(self.ui.substrate_info_btn, "info")
 
         self.ui.substrate_info_btn.setToolTip(
             "substrate summary and stack structure in QWOT (best design if optimization is running)."
@@ -762,7 +764,7 @@ class LayoutManager:
 
         plot_header_layout.setContentsMargins(6, 2, 6, 2)
 
-        detach_btn = QPushButton("🔗 Detach plot")
+        detach_btn = QPushButton("Detach plot")
 
         detach_btn.setToolTip("Open the current plot tab in a separate window.")
 
@@ -990,7 +992,8 @@ class LayoutManager:
 
         f_lay.addLayout(f_btns)
 
-        self.ui.pareto_btn = QPushButton("🏆 Open Pareto Front")
+        self.ui.pareto_btn = QPushButton("Open Pareto Front")
+        set_themed_icon(self.ui.pareto_btn, "line-chart")
 
         self.ui.pareto_btn.setToolTip(
             "Open the Pareto Front window: trade-off between RMSE and number of layers N.\n"

@@ -1,0 +1,7 @@
+{
+  "phase": "U8 (labels) - no emoji in the buttons and card titles of DESIGN, FIELD and STRAT, nor in the Reset button of eight windows: text, and a themed SVG icon where one fits (info, line-chart, folder-open).",
+  "changed_code": [
+    "certus.ui.certus_strat_ui_layout:CertusStratLayoutMixin._create_optimization_tab"
+  ],
+  "note": "The other functions changed are outside the snapshot. Reset stays text only: its factory lives in certus/utils, which must not import certus/ui. On Windows with Python >= 3.14 the SVG icons render empty (certus_icons._qsvg_stack_known_unstable): the buttons then show their text alone. Decision Q32 of the plan."
+}

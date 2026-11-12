@@ -74,7 +74,7 @@ class CoreManager:
 
         self.ui.substrate_info_window = QDialog(self.ui)
 
-        self.ui.substrate_info_window.setWindowTitle("🔬 Stack information")
+        self.ui.substrate_info_window.setWindowTitle("Stack information")
 
         self.ui.substrate_info_window.setMinimumSize(600, 400)
 

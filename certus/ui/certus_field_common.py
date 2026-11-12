@@ -22,7 +22,7 @@ from PyQt6.QtWidgets import (
 )
 
 from certus.core.certus_core import SUBSTRATE_CHOICES
-from certus.ui.certus_icons import certus_icon
+from certus.ui.certus_icons import certus_icon, set_themed_icon
 from certus.ui.certus_theme import CertusTheme
 from certus.ui.certus_ui_widgets_factory import create_styled_button
 
@@ -45,7 +45,7 @@ class DetachedStackWindow(QMainWindow):
 
     def __init__(self, stack_panel, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("🥞 Stack Structure - Floating Panel")
+        self.setWindowTitle("Stack Structure - Floating Panel")
         self.resize(400, 600)
         self.setMinimumSize(360, 400)
 
@@ -301,7 +301,8 @@ class StackPanelWidget(QWidget):
         self.btn_load_json.setToolTip("Load stack structure from a JSON design file")
         self.btn_load_json.clicked.connect(safe_import)
 
-        self.btn_pareto = create_styled_button("🏆 Open Pareto Front", variant="primary")
+        self.btn_pareto = create_styled_button("Open Pareto Front", variant="primary")
+        set_themed_icon(self.btn_pareto, "line-chart", "PRIMARY_TEXT")
         self.btn_pareto.setToolTip("Open the Pareto Front explorer window to analyze design trade-offs")
         self.btn_pareto.clicked.connect(safe_pareto)
 

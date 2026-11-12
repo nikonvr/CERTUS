@@ -422,7 +422,7 @@ def create_reset_button(app_instance, use_app_reset: bool = False) -> QPushButto
 
     # Create button. The label carries its own symbol: the standard icon that used to sit beside it said the same
     # thing a second time, and cost 24 px of a control panel that has 394 at 1366x768.
-    reset_btn = QPushButton("🔄  Reset")
+    reset_btn = QPushButton("Reset")  # no pictogram: an emoji depends on the system font (U8)
 
     # Set tooltip
     reset_btn.setToolTip(

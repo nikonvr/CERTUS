@@ -184,7 +184,7 @@ class TestCreateResetButton:
         app = _make_mock_app(as_widget=True)
         btn = create_reset_button(app)
         assert btn is not None
-        assert btn.text() == "🔄  Reset"
+        assert btn.text() == "Reset"
         assert "Reset" in btn.toolTip() or "reset" in btn.toolTip().lower()
 
     def test_create_reset_button_without_use_app_reset_uses_manager(self, qapp):

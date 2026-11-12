@@ -31,6 +31,7 @@ from PyQt6.QtWidgets import (
 from certus.core.certus_core import SUBSTRATE_MAPPING, get_resource_path
 from certus.core.certus_strat_core import SYM_DEFAULT_SCORING_MODE
 from certus.ui import certus_strat_witness as witness
+from certus.ui.certus_icons import set_themed_icon
 from certus.ui.certus_ui import (
     CERTUS_UI_STRINGS,
     CertusCard,
@@ -968,7 +969,8 @@ class CertusStratLayoutMixin:
 
         report_group.body.addLayout(report_layout)
 
-        self.btn_open_reports = QPushButton("📂 Open Reports Folder")
+        self.btn_open_reports = QPushButton("Open Reports Folder")
+        set_themed_icon(self.btn_open_reports, "folder-open")
 
         self.btn_open_reports.setToolTip("Open the folder containing HTML/Excel reports")
 

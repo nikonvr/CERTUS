@@ -412,8 +412,8 @@ class CertusAppPlotMixin:
                     "Angle (°)",
                     "Pol",
                     "Type",
-                    "λ min (nm)",
-                    "λ max (nm)",
+                    "λ min\n(nm)",
+                    "λ max\n(nm)",
                     "Val min",
                     "Val max",
                     "Weight",
@@ -423,7 +423,7 @@ class CertusAppPlotMixin:
         else:
             self.target_table.setColumnCount(6)
 
-            self.target_table.setHorizontalHeaderLabels(["Active", "λ min (nm)", "λ max (nm)", "Tmin", "Tmax", "Weight"])
+            self.target_table.setHorizontalHeaderLabels(["Active", "λ min\n(nm)", "λ max\n(nm)", "Tmin", "Tmax", "Weight"])
 
     def detach_current_plot(self) -> None:
         """Detaches current plot to separate window"""

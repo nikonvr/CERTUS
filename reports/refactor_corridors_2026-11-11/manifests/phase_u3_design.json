@@ -1,0 +1,7 @@
+{
+  "phase": "U3 (DESIGN) - the two wavelength headers of the targets table carry their unit on a second line: 'λ min (nm)' asked for 75 px in a column of 63.",
+  "changed_code": [
+    "certus.ui.certus_base_app_plot_mixin:CertusAppPlotMixin._update_target_table_headers"
+  ],
+  "note": "The method belongs to the base application: the header text changes for every window that shows the targets table. Measured with scripts/audit_ux_certus.py::clipped_texts on DESIGN: 2 texts cut at 1366x768 and at 1440x900 before, 0 after."
+}

@@ -78,6 +78,7 @@
   "tests/ui/test_ux_no_duplicate_help.py::test_there_are_buttons_to_inspect": 4.0,
   "tests/ui/test_ux_no_horizontal_scroll.py::test_control_panel_never_scrolls_sideways": 8.5,
   "tests/ui/test_ux_no_mute_controls.py::test_there_are_controls_to_inspect": 4.8,
+  "tests/ui/test_ux_no_text_is_cut_at_laptop_sizes.py::test_no_text_of_the_window_is_cut": 20.0,
   "tests/ui/test_ux_no_undo_state_is_written_that_nothing_reads.py::test_every_window_that_can_undo_has_ctrl_z": 27.7,
   "tests/ui/test_ux_no_undo_state_is_written_that_nothing_reads.py::test_no_module_writes_an_undo_state_that_nothing_reads": 1.6,
   "tests/ui/test_ux_no_undo_state_is_written_that_nothing_reads.py::test_the_five_windows_that_only_inherited_a_stack_do_not_claim_to_undo": 1.0,

@@ -178,16 +178,9 @@ En cours : **U9**, l'échelle typographique.
 
 **Tranché par 👤 le 2026-11-12 au soir** (plan, section 4) : Q30, l'action principale de DESIGN est PGLOBAL ; Q31, un
 guide de déroulé statique unifié ; Q32, U8 avec les icônes SVG du projet (`certus_icon`) ; Q33, U11 : les informations
-en toast, avertissements et erreurs restent modaux, réécrits (cause et geste).
+en toast, avertissements et erreurs restent modaux, réécrits (cause et geste). Le 2026-11-13 : Q34, le corps de texte est 10 pt partout ; Q35, le garde-fou SVG est levé à partir de PyQt6 6.11.
 
-**Question à 👤 (2026-11-12, nuit) — le garde-fou SVG.** `certus_icon` rend une icône **vide** sous Windows avec
-Python ≥ 3.14 (`certus/ui/certus_icons.py::_qsvg_stack_known_unstable`, ajouté le 2026-05-27, `c2b10301` : « QSvgRenderer
-peut tuer le processus en peignant »). Sur ce PC (3.15.2, PyQt6 6.11.0), **toutes les icônes SVG du projet sont donc
-invisibles**, celles d'avant U8 comprises. Mesuré cette nuit avec `CERTUS_SVG_ICONS=1` : 6 × 14 080 rendus (44 icônes,
-4 tailles, 4 couleurs, 20 tours), dorsale `offscreen` et dorsale `windows`, **aucun plantage**, icône bien dessinée.
-Un indice fort, pas une preuve : lever le garde-fou (ou le borner à une version de PyQt6) est à 👤. Tant que ce n'est
-pas tranché, les tuiles du HUB et les pictogrammes de l'accueil de STRAT gardent leurs emojis (une icône vide y
-laisserait un carré blanc) et le cliquet U8 n'est pas commité.
+**Garde-fou SVG** : tranché par 👤 le 2026-11-13 (Q35), voir le plan.
 
 **Ce qui reste à 👤 — des gestes, pas des arbitrages (Q29)**
 

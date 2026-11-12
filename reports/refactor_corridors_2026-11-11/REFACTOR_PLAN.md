@@ -1149,8 +1149,9 @@ questions »)** — les questions que les sessions précédentes lui réservaien
 | Q27 | Les signes choisis en U1b (`≈`, `∈`, `—`) : les garder ? | **Oui.** | Ce sont ceux que le reste de l'interface emploie déjà dans le même rôle ; l'historique n'a pas d'original à leur opposer. |
 | Q28 | Le test « au bit » du noyau STRAT (`test_without_the_flag_the_kernel_keeps_the_coarse_samples_bit_for_bit`) doit-il exiger le bit entre deux spécialisations Numba ? | **Oui : il reste tel quel.** Un rouge se rejoue sur un cache Numba vierge avant toute conclusion ([note](cache_numba_arbre_neuf.md)). | C'est la règle d'or du dépôt (C1 : le chemin inactif rend les mêmes bits) ; l'affaiblir pour un écart qui dépend de l'état du cache cacherait le jour où l'écart sera réel. Mesuré deux fois : vert sur cache vierge, mêmes valeurs. Le coût est un `NO-GO` à rejouer, pas un résultat faux. |
 | Q29 | Fusionner dans `master`, pousser, supprimer la copie périmée à la racine du checkout principal, ranger les worktrees ? | **Rien de cela n'est fait par l'assistant.** La branche reste locale et en tête ; ces quatre gestes restent à 👤. | Pousser publie un dépôt public (`CLAUDE.md` §1 : seulement sur ordre, et « autonomie totale » ne le nomme pas) ; `master` est extrait dans le checkout principal, où un crochet interdit à une session de worktree d'écrire ; un worktree peut porter le travail non commité d'une autre session. |
+| Q30 | U6 : quelle action est principale dans chaque fenêtre, quel rôle pour les autres, quels mots ? | **Une action principale, celle qui lance le calcul principal** : DESIGN PGLOBAL (l'évaluation se refait à chaque édition de la pile), RE « Run RE », STRAT « Run full workflow », INDEX SPLINE « Run Optimization », INDEX, METAL, FIELD, SMOOTHER, SUBSTRATE inchangés ; le HUB n'en a pas (son geste suivant est une tuile). Les autres actions de calcul : style neutre de la feuille d'application ; les utilitaires (Logs, Detach, Show Details) : `CertusGhostBtn`, sauf sur une bande de couleur inverse (barre du HUB), où l'encre d'un bouton transparent disparaît. Stop et Reset : `CertusDangerBtn`. Mots : « Stop », « Reset », casse de phrase, sigles et noms de modules exceptés ; « Stop && Proceed » de STRAT, montré pendant un calcul, est un autre geste et reste. | Le plan demande une seule action principale par écran (B4) ; le style destructif des jetons suit le thème, le brun `#5a3a00` non (B5) ; un geste, un mot (B2). Choix de l'assistant, sur consigne d'autonomie : à 👤 de le contredire, chaque bouton se change en une ligne. |
 
-Il ne reste aucune question ouverte ; ce qui reste à 👤 sont des gestes (Q29), pas des arbitrages.
+Il ne reste aucune question ouverte. Q29 est caduque depuis le 2026-11-12 : 👤 a ordonné la fusion, le push et le rangement, faits ce jour-là.
 
 ---
 
@@ -1420,3 +1421,22 @@ dans STRAT. Trois sous-étapes, un commit chacune :
 
 **A1 corrigé par le relevé** : `? QWOT` n'est pas un symbole perdu. La ligne s'écrit quand le QWOT n'est pas un nombre
 fini ; le « ? » tient la place de la valeur. Laissé.
+
+**U6, 2026-11-12 — un système d'actions (Q30).**
+
+- [x] **La mesure** (`4eef2a9b`) : `scripts/audit_ux_certus.py::action_buttons`, rôle et libellé de chaque bouton visible à
+  l'ouverture (nom d'objet, marqueur `/*B:…*/`, jeton du fond, ou couleur en dur). Départ à 1440×900 : actions
+  principales DESIGN 11, RE 6, STRAT 5, INDEX SPLINE 4, les autres 1 ; « Clear / Reset » en `#5a3a00` dans huit fenêtres ;
+  « STOP Calculation », « STOP », « Halt », « RUN FULL WORKFLOW », « START OPTIMIZATION », « EVALUATE ».
+- [x] **Le cliquet** : `tests/ui/test_ux_one_action_system.py`, `21 failed, 12 passed` sur le code d'avant `8fa05174`.
+- [x] **Reset** (`8fa05174`) : « Reset », `CertusDangerBtn`, la taille choisie par 👤 (D58) gardée ; un blanc littéral de
+  moins (`test_ux_ink_follows_the_fill`). **Vocabulaire** (`45beb886`). **DESIGN** (`82a4bedb`) : « Logs » en fantôme
+  faisait 57 px (`btn_narrow`), largeur minimale 64. **RE** (`4ac90c97`, plafond de dette 1750 → 1746). **STRAT**
+  (`2adaed9f`). **INDEX SPLINE** (`60ee8b75`). **HUB** (`12ae2912`) : en fantôme, l'étiquette de la documentation
+  tombait à 1:1 sur la barre de couleur inverse (`test_ux_button_label_is_painted`) : neutre.
+- Mesures en route : `422 passed` (DESIGN), `5157 passed` et 4 rouges rejoués (3 verts seuls ; le test « au bit » de STRAT
+  vert sur cache Numba vierge, `18 passed` : quatrième occurrence, [note](cache_numba_arbre_neuf.md)), `88 passed` (cliquet
+  U6, cliquet UX, squelette, rien de coupé), `579 passed` + 2 rouges du HUB, corrigés (`26 passed`), `95 passed` (HUB).
+  Garde `GUARD=OK` avec `phase_u6_vocabulary.json`, `phase_u6_re.json`, `phase_u6_index_spline.json`.
+- [x] **Le cliquet commité** (`ac03ad10`), déclaré lent ; `pytest tests/ui -k "ux_"` : `1166 passed`.
+- Limite : seuls les boutons visibles à l'ouverture sont mesurés, comme pour U3.

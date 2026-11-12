@@ -152,20 +152,17 @@ un rouge que personne n'avait encore vu.
 | **Validation complète après U1d** : l'état connu seul (plan §5.6) ; **poussé sur `master`** sur ordre de 👤 | sur `9bb4999b` |
 | Rangement sur ordre de 👤 : copie périmée du plan supprimée à la racine ; worktrees anciens retirés ; le travail non commité du checkout principal (recherche locale de STRAT, campagne RICL) mis de côté sur la branche locale `wip/strat-local-search-ricl-2026-11-11` (`f81bb45d`, non validé, non poussé) ; `master` local avancé | — |
 
+| **U6, système d'actions** (Q30) : mesure `action_buttons` ; Reset au rôle destructif, plus de brun ; « Stop » partout et casse de phrase ; une action principale dans DESIGN, RE, STRAT, INDEX SPLINE, aucune dans le HUB ; cliquet `test_ux_one_action_system.py` (`21 failed` avant) ; `ux_` : `1166 passed` | `4eef2a9b` à `ac03ad10` |
 **Dernière validation complète** : le 2026-11-12 vers 20 h 35, sur `9bb4999b` (plan §5.6).
 
 ## 5. En cours
 
-**U6, la mesure** : `scripts/audit_ux_certus.py::action_buttons` (rôle et libellé de chaque bouton visible à
-l'ouverture). Décision Q30 (à consigner au plan) : une action principale bleue par fenêtre, celle qui lance le calcul ;
-les actions secondaires en `CertusGhostBtn` ; Stop et Reset au style destructif des jetons (`CertusDangerBtn`), plus
-de brun `#5a3a00` ; vocabulaire Run, Stop, Reset en casse de phrase.
+Rien : U6 est fait et commité. La prochaine tâche est la première du §6.
 
 ## 6. À faire, dans l'ordre
 
-1. **U6** — un système d'actions : un vocabulaire (Run, Stop, Reset), une seule action principale par écran, le style
-   destructif des jetons (constats B2, B4, B5). Commencer par une mesure dans l'audit (comme U3 à U5), voir le test
-   rouge, puis corriger fenêtre par fenêtre.
+1. **Correctif de U1** : l'infobulle de Run d'INDEX SPLINE finit en français (« Raccourci : F5. ») ; le cliquet de
+   langue ne l'a pas vue : comprendre pourquoi, l'étendre, le voir rouge, traduire.
 2. **U7 à U11** — FIELD dans le système d'actions, icônes vectorielles, échelle typographique, états vides
    actionnables, messages (plan §5.5). **U12** (reprise d'un calcul après coupure) est à spécifier avant tout code : elle
    touche au calcul. **U13** (écran réel, HiDPI, lecteur d'écran, essais avec des utilisateurs) n'est pas à la portée

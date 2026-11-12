@@ -16,7 +16,7 @@ from scripts.audit_ux_certus import MODULES, _run_worker
 #: Their pictogram IS the content (the tiles of the HUB, the welcome page of STRAT): an SVG icon renders empty on Windows
 #: with Python >= 3.14 (`certus_icons._qsvg_stack_known_unstable`) and would leave a blank square. They wait for the
 #: owner's decision on that guard (REPRISE.md of reports/refactor_corridors_2026-11-11, 2026-11-12).
-WAITING_FOR_THE_SVG_DECISION = frozenset({"CERTUS_HUB", "CERTUS_STRAT"})
+WAITING_FOR_THE_SVG_DECISION = frozenset({"CERTUS_STRAT"})
 
 
 @pytest.mark.parametrize("app", sorted(MODULES))

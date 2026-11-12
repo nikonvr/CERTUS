@@ -1,0 +1,7 @@
+{
+  "phase": "U8 (HUB) - each module of the HUB has its SVG icon (key svg_icon of the catalogue), drawn on its tile in the ink that reads best on the module's colour; the emoji stays the fallback when the SVG rendering is off.",
+  "note": "HUB_APP_CATALOG gains one key per module, svg_icon; nothing else of the catalogue changes. METAL SINGLE and METAL BILAYER no longer share the same pictogram (B6). The icon 'zap' joins certus_icons for FIELD. Decision Q32/Q35 of the plan.",
+  "rebound": [
+    "CERTUS_HUB:HUB_APP_CATALOG"
+  ]
+}

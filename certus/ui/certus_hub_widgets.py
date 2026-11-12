@@ -108,6 +108,7 @@ class ApplicationCard(BaseApplicationCard):
         parent=None,
         *,
         task: str = "",
+        svg_icon: str = "",
     ) -> None:
         super().__init__(accent_color, parent)
         self.script_name = script_name
@@ -147,6 +148,14 @@ class ApplicationCard(BaseApplicationCard):
         self.icon_lbl.setGeometry(0, 0, 84, 84)
         self.icon_lbl.setStyleSheet("background: transparent; color: white; font-size: 39px;")
         self.icon_lbl.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        # The SVG of the module (U8): drawn by the suite, the same on every machine. The emoji stays the fallback when
+        # the SVG rendering is off (certus_icons.is_svg_icon_rendering_disabled) or the name is unknown.
+        if svg_icon:
+            from certus.ui.certus_icons import certus_icon
+
+            pixmap = certus_icon(svg_icon, color=str(CertusTheme.label_on(accent_color)), size=44).pixmap(44, 44)
+            if not pixmap.isNull():
+                self.icon_lbl.setPixmap(pixmap)
         
         # Layout inside icon_bg keeps emoji centered if icon_bg resizes
         bg_layout = QVBoxLayout(self.icon_bg)

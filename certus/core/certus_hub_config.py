@@ -83,6 +83,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "task": "Design a multilayer optical filter from spectral targets.",
         "script": "CERTUS_DESIGN.py",
         "icon": "🧩",
+        "svg_icon": "edit",  # the SVG of certus.ui.certus_icons drawn on the tile (U8)
         "color": HUB_BRAND_DESIGN,
         "badge": "Concept",
         "type": "single",
@@ -96,6 +97,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "task": "Reverse-engineer a deposited filter from its measured spectrum.",
         "script": "CERTUS_RE.py",
         "icon": "🕵️",
+        "svg_icon": "search",  # the SVG of certus.ui.certus_icons drawn on the tile (U8)
         "color": HUB_BRAND_RE,
         "badge": "Analysis",
         "type": "single",
@@ -109,6 +111,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "task": "Choose the monitoring wavelength of each layer and test the strategy.",
         "script": "CERTUS_STRAT.py",
         "icon": "🏭",
+        "svg_icon": "target",  # the SVG of certus.ui.certus_icons drawn on the tile (U8)
         "color": HUB_BRAND_STRAT,
         "badge": "Production",
         "type": "single",
@@ -122,6 +125,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "task": "Extract the refractive index of a film from a measured spectrum.",
         "script": "CERTUS_INDEX.py",
         "icon": "🧪",
+        "svg_icon": "line-chart",  # the SVG of certus.ui.certus_icons drawn on the tile (U8)
         "color": HUB_BRAND_INDEX,
         "badge": "Material",
         "type": "single",
@@ -135,6 +139,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "task": "Extract n and k of a film from a spectrum, without a dispersion model.",
         "script": "CERTUS_INDEX_SPLINE.py",
         "icon": "〰️",
+        "svg_icon": "activity",  # the SVG of certus.ui.certus_icons drawn on the tile (U8)
         "color": HUB_BRAND_INDEX,
         "badge": "Material",
         "type": "single",
@@ -148,6 +153,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "task": "Compute the electric field in a stack and optimize it for damage threshold.",
         "script": "CERTUS_FIELD.py",
         "icon": "⚡",
+        "svg_icon": "zap",  # the SVG of certus.ui.certus_icons drawn on the tile (U8)
         "color": HUB_BRAND_FIELD,
         "badge": "LIDT",
         "type": "single",
@@ -161,6 +167,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "task": "Smooth noisy spectral curves before using them.",
         "script": "certus_curve_smoother.py",
         "icon": "🫧",
+        "svg_icon": "sliders",  # the SVG of certus.ui.certus_icons drawn on the tile (U8)
         "color": HUB_BRAND_SMOOTHER,
         "badge": "Utility",
         "type": "single",
@@ -174,6 +181,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "task": "Find the refractive index of a substrate from bare-substrate spectra.",
         "script": "certus_substrate_index.py",
         "icon": "📏",
+        "svg_icon": "table",  # the SVG of certus.ui.certus_icons drawn on the tile (U8)
         "color": HUB_BRAND_SUBSTRATE,
         "badge": "Utility",
         "type": "single",
@@ -187,6 +195,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "task": "Characterize a metal film on an opaque substrate.",
         "script": "CERTUS_METAL_BILAYER.py",
         "icon": "🛡️",
+        "svg_icon": "layers",  # the SVG of certus.ui.certus_icons drawn on the tile (U8)
         "color": HUB_BRAND_METAL,
         "badge": "Std",
         "type": "single",
@@ -200,6 +209,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "task": "Characterize a metal film on a transparent substrate (R, T, Rb).",
         "script": "CERTUS_METAL_SINGLE.py",
         "icon": "🛡️",
+        "svg_icon": "square",  # the SVG of certus.ui.certus_icons drawn on the tile (U8)
         "color": HUB_BRAND_METAL,
         "badge": "New",
         "type": "single",

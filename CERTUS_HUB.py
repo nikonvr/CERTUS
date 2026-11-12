@@ -427,6 +427,7 @@ class CertusHub(CertusDialogMixin, QMainWindow):
                     app["color"],
                     app["badge"],
                     task=app.get("task", ""),
+                    svg_icon=app.get("svg_icon", ""),
                 )
 
                 # Mouse and keyboard share one path. Assigning `mousePressEvent`

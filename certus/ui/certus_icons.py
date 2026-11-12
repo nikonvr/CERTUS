@@ -197,6 +197,7 @@ ICON_SVG_SOURCES: Final[dict[str, str]] = {
     ),
     "target": _svg('<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>'),
     "activity": _svg('<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>'),
+    "zap": _svg('<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>'),
     "line-chart": _svg('<path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>'),
     "inbox": _svg(
         '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/>'

@@ -146,8 +146,8 @@ class OpticsPanelWidget(QWidget):
 
         self.combo_pol = QComboBox()
         self.combo_pol.setMaximumWidth(160)
-        self.combo_pol.setToolTip("Polarization state of the incident field")
-        self.combo_pol.addItems(["S (TE)", "P (TM)", "Average (Unpolarized)"])
+        self.combo_pol.setToolTip("Polarization state of the incident field; Unpolarized is the average of S and P.")
+        self.combo_pol.addItems(["S (TE)", "P (TM)", "Unpolarized"])
 
         # Single label/field column pair. The previous 4-column layout placed two
         # pairs side by side, which made this panel demand 824 px on its own and

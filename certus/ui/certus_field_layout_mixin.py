@@ -26,7 +26,7 @@ from certus.ui.certus_ui_widgets_cards import CertusCard
 from certus.ui.certus_ui_widgets_factory import create_header_logo_widget, create_styled_button, create_top_actions_bar
 from certus.ui.certus_ui_widgets_layout import CertusCollapsible
 from certus.ui.certus_ui_widgets_utils import CertusThemeToggle, ExcelTableWidget
-from certus.utils.certus_ux import Typography
+from certus.utils.certus_ux import OBJ, Typography
 from certus.workers.certus_field_workers_dto import FieldParamsDTO
 
 
@@ -49,16 +49,20 @@ class CertusFieldLayoutMixin:
 
         # 2. Action Bar with log toggle
         self.toggle_details_btn = QPushButton("Show Details")
+        # Three utilities, in the ghost role of the suite (U7, Q30): they were slate fills, the navy buttons of B3.
+        self.toggle_details_btn.setObjectName(OBJ.GHOST_BUTTON)
         self.toggle_details_btn.setCheckable(True)
         self.toggle_details_btn.setMinimumHeight(28)  # click-target floor
         self.toggle_details_btn.setToolTip("Toggle the visibility of the application logs panel")
         self.toggle_details_btn.toggled.connect(self.on_toggle_details)
 
-        self.btn_screenshot = create_styled_button("📸 Capture", variant="secondary")
+        self.btn_screenshot = QPushButton("📸 Capture")
+        self.btn_screenshot.setObjectName(OBJ.GHOST_BUTTON)
         self.btn_screenshot.setToolTip("Save a screenshot of the electric field profile (PNG)")
         self.btn_screenshot.clicked.connect(self.export_png)
 
-        self.btn_copy_log = create_styled_button("Copy Log", variant="secondary", icon=certus_icon("copy"))
+        self.btn_copy_log = QPushButton(certus_icon("copy"), "Copy Log")
+        self.btn_copy_log.setObjectName(OBJ.GHOST_BUTTON)
         self.btn_copy_log.setToolTip("Copy the application logs to the clipboard")
         self.btn_copy_log.clicked.connect(self.copy_logs_to_clipboard)
 
@@ -70,8 +74,8 @@ class CertusFieldLayoutMixin:
         # 846 px - wider than the splitter ever grants it (measured 2026-09-03).
         secondary_bar = QWidget()
         secondary_layout = QHBoxLayout(secondary_bar)
-        secondary_layout.setContentsMargins(6, 0, 6, 0)
-        secondary_layout.setSpacing(6)
+        secondary_layout.setContentsMargins(4, 0, 4, 0)  # ghosts, without a fill, need less room than the slate fills
+        secondary_layout.setSpacing(4)
         secondary_layout.addWidget(self.btn_screenshot)
         secondary_layout.addWidget(self.toggle_details_btn)
         secondary_layout.addWidget(self.btn_copy_log)

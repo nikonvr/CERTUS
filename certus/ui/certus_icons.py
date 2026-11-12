@@ -45,13 +45,27 @@ def _qsvg_stack_known_unstable() -> bool:
     while painting (repro: minimal ``QSvgRenderer`` + ``QPainter`` + ``QPixmap``).
     Callers can override with env ``CERTUS_SVG_ICONS=1|true|on`` to force SVG
     (use only when a fixed wheel is available).
+
+    The guard holds below PyQt6 6.11 only (decision Q35 of the corridor plan, 2026-11-13): measured with PyQt6 6.11.0 and
+    CPython 3.15.2 on Windows, 6 x 14 080 renders (44 icons, 4 sizes, 4 colours), offscreen and windows platforms, no
+    crash. ``CERTUS_SVG_ICONS=0`` still turns the icons off.
     """
     o = os.environ.get("CERTUS_SVG_ICONS", "").strip().lower()
     if o in ("1", "true", "yes", "on"):
         return False
     if o in ("0", "false", "no", "off"):
         return True
-    return sys.platform == "win32" and sys.version_info >= (3, 14)
+    return sys.platform == "win32" and sys.version_info >= (3, 14) and _pyqt_version() < SVG_SAFE_FROM_PYQT
+
+
+#: The first PyQt6 release measured free of the QSvgRenderer crash on Windows with CPython >= 3.14.
+SVG_SAFE_FROM_PYQT: Final = (6, 11)
+
+
+def _pyqt_version() -> tuple[int, int]:
+    from PyQt6.QtCore import PYQT_VERSION
+
+    return (PYQT_VERSION >> 16) & 0xFF, (PYQT_VERSION >> 8) & 0xFF
 
 
 def is_svg_icon_rendering_disabled() -> bool:

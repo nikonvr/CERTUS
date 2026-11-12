@@ -294,6 +294,34 @@ def certus_icon(name: str, color: str | None = None, size: int = 20):
     return _render_icon(name, color, int(size))
 
 
+#: The dynamic property that `set_themed_icon` writes: `name|TOKEN`, read back by `CertusTheme.refresh_widget_sheets`.
+THEMED_ICON_PROPERTY: Final = "certus_themed_icon"
+
+
+def set_themed_icon(widget, name: str, token: str = "TEXT_MAIN", size: int = 20) -> None:
+    """Give `widget` (a button, or any widget with `setIcon`) the icon `name` in the palette colour `token`.
+
+    The icon follows the theme: the widget remembers `name|token|size`, and the theme switch redraws it in the colour
+    the palette gives `token` (U8). `certus_icon` alone paints once, in the colour of the moment.
+    """
+    from certus.ui.certus_theme import CertusTheme
+
+    widget.setProperty(THEMED_ICON_PROPERTY, f"{name}|{token}|{int(size)}")
+    widget.setIcon(certus_icon(name, color=str(getattr(CertusTheme, token)), size=size))
+
+
+def redraw_themed_icon(widget) -> bool:
+    """Redraw the icon of a widget given one by `set_themed_icon`, in the active palette. False for any other widget."""
+    from certus.ui.certus_theme import CertusTheme
+
+    spec = widget.property(THEMED_ICON_PROPERTY)
+    if not spec:
+        return False
+    name, token, size = str(spec).split("|")
+    widget.setIcon(certus_icon(name, color=str(getattr(CertusTheme, token)), size=int(size)))
+    return True
+
+
 def clear_icon_cache() -> None:
     """Invalidate the LRU cache (call after a theme switch)."""
     _render_icon.cache_clear()
@@ -303,6 +331,9 @@ __all__ = [
     "ICON_SVG_SOURCES",
     "available_icon_names",
     "certus_icon",
+    "THEMED_ICON_PROPERTY",
     "clear_icon_cache",
     "is_svg_icon_rendering_disabled",
+    "redraw_themed_icon",
+    "set_themed_icon",
 ]

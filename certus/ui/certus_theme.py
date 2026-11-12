@@ -667,9 +667,12 @@ class CertusTheme:
         if app is None:
             return 0
 
+        from certus.ui.certus_icons import redraw_themed_icon
+
         rewritten = 0
         for widget in app.allWidgets():
             try:
+                rewritten += redraw_themed_icon(widget)
                 new_sheet = cls.current_sheet(widget.styleSheet())
                 if new_sheet != widget.styleSheet():
                     widget.setStyleSheet(new_sheet)

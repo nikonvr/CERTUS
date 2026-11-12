@@ -1246,3 +1246,26 @@ déplace à l'identique — et chacune inscrit ses fonctions dans `changed_code`
 | U11 | Messages : l'information en toast, la modale pour les décisions, des erreurs qui disent la cause et le geste | A9, C4 | aucun texte d'exception brut dans un dialogue |
 | U12 | Reprise d'une session et d'un calcul après coupure — à spécifier : elle touche au calcul | C7 | — |
 | U13 | Ce que cet audit ne pouvait pas faire : écran réel et HiDPI, thème sombre, lecteur d'écran, cinq utilisateurs sur trois tâches | A10 | — |
+
+### 5.6 Avancement de la feuille de route
+
+**U1, relevé du 2026-11-12.** `scripts/sonde_libelles_visibles.py` rend 0 pour les libellés littéraux : ce qui reste est
+dans son angle mort (chaînes construites, constantes de classe). L'historique git n'a pas les symboles d'origine : les
+« ? » y sont dès le premier commit. Chaque chaîne est donc rétablie d'après ce que le code prouve, ou, à défaut, d'après
+l'usage du reste de l'interface, et c'est dit. Un balayage des sources (toute constante de chaîne de `certus/ui` et des
+points d'entrée, hors docstrings et journaux) trouve plus que A1 : des unités inverses mutilées et du français visible
+dans STRAT. Trois sous-étapes, un commit chacune :
+
+- [x] **U1a — ce que le code prouve.** `nm⁻¹`, `nm⁻²` (dix chaînes : `nm?1`, `nm⁻1`, `nm-1` et leurs carrés ; la forme
+  intacte est dans `certus_index_spline_smart_init.py`) et `ξ` dans l'infobulle du jitter (`certus_corridor_config.py` :
+  « n or ξ »). `tests/unit/test_visible_units_and_symbols_are_whole.py` : `2 failed, 2 passed` avant, `4 passed` après.
+  Garde `GUARD=OK` ; LOT avec `test_ux_skeleton` : `356 passed`. `sigma (cm^-1)` (dialogue des nœuds manuels) est de
+  l'ASCII voulu : laissé.
+- [ ] **U1b — les glyphes à choisir.** Huit « ? » du résumé et du titre de l'onglet RMSE(d) : `≈` devant une valeur ou
+  un intervalle (l'interface écrit déjà `y ≈ …`), `—` pour le séparateur du titre (comme les cartes de l'onglet).
+  `tests/unit/test_rmse_tab_summary.py` épingle le texte mutilé : ses attendus suivent.
+- [ ] **U1c — une seule langue.** Infobulles et libellés français : deux dans `corridor_tab`, un dans
+  `strat_ui_layout`, trois dans `strat_stack_progress_widget`, un dans `eventsextras`. Puis le cliquet général.
+
+**A1 corrigé par le relevé** : `? QWOT` n'est pas un symbole perdu. La ligne s'écrit quand le QWOT n'est pas un nombre
+fini ; le « ? » tient la place de la valeur. Laissé.

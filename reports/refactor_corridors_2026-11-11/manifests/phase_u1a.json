@@ -1,0 +1,12 @@
+{
+  "phase": "U1a - the units and the symbol that the code itself proves come back in the visible strings of INDEX SPLINE: nm⁻¹ and nm⁻² for nm?1, nm⁻1, nm-1 and their squares, sigma² and lambda² for sigma2 and lambda2 in the same labels, xi for the question mark of the jitter tooltip.",
+  "changed_code": [
+    "certus.ui.certus_index_spline_eventsextras_mixin:CertusIndexSplineEventsExtrasMixin._build_tab_spectrum",
+    "certus.ui.certus_index_spline_managers_ui:Step4MeshOptimizerBuilder.build",
+    "certus.ui.certus_index_spline_mixins_ui:_SmartInitDialogMixin._build_smart_init_main_plot",
+    "certus.ui.certus_index_spline_monitor_ui:LiveIndexMonitor.__init__",
+    "certus.ui.certus_index_spline_monitor_ui:LiveIndexMonitor.update_indices",
+    "certus.ui.certus_index_spline_spectrumui_mixin:CertusIndexSplineSpectrumUIMixin._transform_spectrum_x"
+  ],
+  "note": "changed_code: string constants only, ten of them. No label is read back as data: the abscissa mode is the index or the user data of the combo box. Proof of each symbol: certus_index_spline_smart_init.py writes the intact form, 'Sigma (nm⁻¹)', 'Sigma² (nm⁻²)'; certus/spline/certus_corridor_config.py says 'Jitters are in parameter units (n or ξ; and ln k)'. tests/unit/test_visible_units_and_symbols_are_whole.py fails on the code before (2 failed, 2 passed)."
+}

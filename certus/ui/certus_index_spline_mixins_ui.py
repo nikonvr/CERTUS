@@ -498,7 +498,7 @@ class _SmartInitDialogMixin:
 
         pw.showGrid(x=True, y=True, alpha=0.35)
 
-        pw.setLabel("bottom", "sigma2 = 1/lambda2 (nm?2)")
+        pw.setLabel("bottom", "sigma² = 1/lambda² (nm⁻²)")
 
         pw.setLabel("left", y_lab)
 

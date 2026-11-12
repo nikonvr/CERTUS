@@ -397,12 +397,12 @@ class CertusIndexSplineSpectrumUIMixin:
         lam = np.asarray(lam_nm, dtype=np.float64).ravel()
 
         if mode == "sigma":
-            return 1.0 / np.maximum(lam, 1e-30), "sigma (nm?1)"
+            return 1.0 / np.maximum(lam, 1e-30), "sigma (nm⁻¹)"
 
         if mode == "sigma2":
             s = 1.0 / np.maximum(lam, 1e-30)
 
-            return s * s, "sigma2 (nm?2)"
+            return s * s, "sigma² (nm⁻²)"
 
         return lam, "lambda (nm)"
 

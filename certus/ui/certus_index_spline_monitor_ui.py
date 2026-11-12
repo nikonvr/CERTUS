@@ -29,7 +29,7 @@ class LiveIndexMonitor(QDialog):
         h.addWidget(QLabel("X Axis Unit:"))
 
         self.cb = QComboBox()
-        self.cb.addItems(["Lambda (nm)", "Sigma (nm⁻1)", "Sigma2 (nm⁻2)"])
+        self.cb.addItems(["Lambda (nm)", "Sigma (nm⁻¹)", "Sigma² (nm⁻²)"])
 
         def on_unit_change() -> None:
             if hasattr(self, "_last_data"):
@@ -104,9 +104,9 @@ class LiveIndexMonitor(QDialog):
         if mode == 0:
             x, lbl = lam_arr, "lambda (nm)"
         elif mode == 1:
-            x, lbl = 1.0 / lam_arr, "sigma (nm⁻1)"
+            x, lbl = 1.0 / lam_arr, "sigma (nm⁻¹)"
         else:
-            x, lbl = (1.0 / lam_arr) ** 2, "sigma2 (nm⁻2)"
+            x, lbl = (1.0 / lam_arr) ** 2, "sigma² (nm⁻²)"
 
         if d_nm is not None and np.isfinite(float(d_nm)):
             self.lbl_d.setText(f"d = {float(d_nm):.1f} nm")

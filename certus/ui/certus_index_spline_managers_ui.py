@@ -480,7 +480,7 @@ class Step4MeshOptimizerBuilder:
 
         app.sp_corr_jn.setValue(0.02)
 
-        app.sp_corr_jn.setToolTip("Gaussian jitter sigma on n (or ? if monotonicity active) for additional starts.")
+        app.sp_corr_jn.setToolTip("Gaussian jitter sigma on n (or ξ if monotonicity active) for additional starts.")
 
         row_cor.addSpacing(6)
 

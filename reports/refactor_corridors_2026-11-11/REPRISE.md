@@ -87,6 +87,7 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | **Phase 7a** : `_resolve_strat_indices_db_path` descend dans `certus/core/certus_indices_db.py` ; FIELD n'importe plus rien de STRAT ; test rouge avant (`4 failed`) | `37c9ca26` |
 | **Phase 7b** (Q25) : `spectral_rmse_weights` descend dans `certus/domain/spectral_weights.py` ; DESIGN, RE et le gradient analytique la prennent là ; oracle avant/après verts, `c1_diff HEAD` : C1 TENU (9 092 tableaux) ; test rouge avant (`7 failed`) | `aa75be4f` |
 | **Validation complète de la phase 7** : rien de plus que l'état connu, et le même test « au bit » rouge sur le cache de l'arbre, vert sur cache vierge (deuxième occurrence, mêmes valeurs : [note](cache_numba_arbre_neuf.md)) | sur `aa75be4f` |
+| **U1a** : les unités inverses (`nm⁻¹`, `nm⁻²`) et le `ξ` que le code prouve reviennent dans dix chaînes et une infobulle d'INDEX SPLINE ; test rouge avant (`2 failed`) | commit « U1a » |
 
 ## En cours
 
@@ -94,9 +95,8 @@ Rien : tout ce qui est fait est commité. La prochaine tâche est la première d
 
 ## À faire, dans l'ordre
 
-1. Feuille de route UX, plan section 5.5 : U1 à U5 d'abord (défauts visibles). U1 : l'historique git n'a pas les
-   symboles d'origine (les « ? » y sont dès le premier commit) ; écrire ce que le code fait, ne pas deviner un glyphe.
-   `scripts/sonde_libelles_visibles.py` mesure déjà les chaînes mutilées.
+1. Feuille de route UX, plan sections 5.5 et 5.6 : U1b (glyphes du résumé RMSE(d), avec les attendus de
+   `tests/unit/test_rmse_tab_summary.py`), U1c (français visible, puis cliquet général), puis U2 à U5.
 2. À 👤 : dire si `test_without_the_flag_the_kernel_keeps_the_coarse_samples_bit_for_bit` doit exiger le bit entre deux
    spécialisations Numba ; tant qu'il le fait, une validation en parallèle peut le rendre rouge selon le cache.
 

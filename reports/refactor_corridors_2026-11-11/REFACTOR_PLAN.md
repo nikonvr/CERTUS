@@ -1297,6 +1297,25 @@ dans STRAT. Trois sous-étapes, un commit chacune :
   textes sont écrits exprès, et STRAT est l'outil de 👤. S'il veut une seule langue partout, c'est une traduction
   fidèle, fenêtre par fenêtre, avec le même cliquet étendu.
 
+**U1d, 2026-11-12 — une seule langue dans les onze fenêtres (Q26).**
+
+- [x] **Le cliquet** : `tests/unit/test_visible_units_and_symbols_are_whole.py::test_no_visible_string_of_the_interface_is_french`,
+  sur toute l'interface, avec un détecteur du français sans accents (`FRENCH_WORDS`) ; sur le code d'avant : 49 chaînes,
+  dont 3 faux positifs retirés du détecteur (« optimisation » britannique, « progression » anglais). Données
+  exemptées, par nom : les états `en attente` et `en cours` d'un calcul multi-graines (jetons d'un automate, épinglés
+  par valeur, traduits à l'affichage).
+- [x] **INDEX SPLINE** (`2e5c5978`) : 4 chaînes sans accent que le test de la fenêtre ne voyait pas (colonnes de la
+  table théorique, deux statuts du polissage profond, progression et journal de la ré-optimisation manuelle) ;
+  `test_corridor_worker_done_steps.py` suit. **DESIGN** (`1a6a50e3`), **RE** (`10274ad6`), **SUBSTRATE**
+  (`4488c9dd`, avec les trois références UX qui enregistrent l'étiquette), **HUB** (`8b946a2f`, un message d'erreur).
+- [x] **STRAT** : bandeau d'état (`SLIT`, `ACTIVE`, `inactive`, `UNREADABLE`, les six sources, `TEST GLASSES`),
+  panneau de la Phase A, en-tête et ligne de la Phase B, infobulle des modes d'exécution, infobulle d'ablation de la
+  table, avertissement d'un calcul multi-graines. Quatre tests lisaient ces mots et les suivent. Garde avec
+  `manifests/phase_u1d_strat.json` (`_MACHINE_SOURCES` : mêmes clés, mêmes valeurs neutres, six étiquettes) :
+  `GUARD=OK`. Cliquet de langue et tests de STRAT qui lisent le bandeau : `107 passed` ; cliquets UX des fenêtres
+  traduites (rien de tronqué, cliquet UX, squelette, démarrage sans bruit) : `40 passed`.
+- [ ] Validation complète après U1d : non faite.
+
 **U2, 2026-11-12.**
 
 - [x] **U2 — un format de titre.** `CERTUS-MODULE — ce que fait le module`, écrit en un endroit :

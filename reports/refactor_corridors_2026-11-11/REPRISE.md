@@ -5,8 +5,9 @@ la mémoire de l'assistant. Il est mis à jour à chaque étape, avant de passer
 de chaque décision est dans `REFACTOR_PLAN.md`, même dossier ; ce fichier dit où on en est, comment repartir, et comment
 faire la suite.
 
-**État au 2026-11-12, 8 h** : le refactoring des corridors est **fini** (Phases 0 à 10, toutes validées). La feuille de
-route UX est commencée : U1 et U2 faites. Rien en cours, arbre propre. Rien n'est poussé.
+**État au 2026-11-12, 20 h** : le refactoring des corridors est **fini** (Phases 0 à 10, toutes validées). Feuille de
+route UX : **U1 (avec U1d, la traduction), U2, U3, U4, U5 faites** ; la prochaine étape est U6. Rien en cours, arbre
+propre. Rien n'est poussé. Une seule chose n'a pas été faite pour U1d : la validation complète (§6, point 1).
 
 ## 1. Le chantier en cinq lignes
 
@@ -20,7 +21,7 @@ inchangé, bytecode prouvé identique par `scripts/refactor_guard.py`. S'y sont 
 
 ### 2.1 Avoir la branche
 
-Le travail est sur la branche locale **`claude/reprise-certus1111-926596`**, 56 commits au-dessus de `origin/master`
+Le travail est sur la branche locale **`claude/reprise-certus1111-926596`**, 78 commits au-dessus de `origin/master`
 (`9632f15b`). **Aucun n'est sur GitHub.** Chaîne des branches, chacune prolongeant la précédente en avance rapide :
 `claude/certus-refactor-audit-6cd1fc` (jusqu'à `bea41352`) → `claude/reprise-certus1111-926596` (jusqu'à `8088dc4c`) →
 `claude/certus-1111-reprise-60e136` (jusqu'à `cddf791a`) → de nouveau `claude/reprise-certus1111-926596` (tête).
@@ -143,9 +144,13 @@ un rouge que personne n'avait encore vu.
 | **U4a** : un seul indicateur de zoom, dans la barre d'état (DESIGN, STRAT, RE en montraient deux, INDEX SPLINE un en haut à gauche) ; test rouge avant (`4 failed`) | `1c274e3a` |
 | **U4b** : chaque compteur de barre d'état porte son mot, sans pictogramme (DESIGN, STRAT, METAL, INDEX) ; la remise à zéro garde les mots et remet les nombres à 0 (elle écrivait trois pictogrammes partout, RE comprise) ; tests rouges avant (`5 failed`, `3 failed`) | `df4a70d5` |
 | **U5** : un message déjà à l'écran n'est pas affiché deux fois (pile de toasts) ; DESIGN ne redemande plus `Ctrl+S` ; test rouge avant (`2 failed`) | `8e3a2c0f` |
-| **Validation complète après U4 et U5** : rien de plus que l'état connu ; un test de l'étape, fragile sous la charge, rendu robuste | sur `8e3a2c0f`, correctif au commit suivant |
+| **Validation complète après U4 et U5** : rien de plus que l'état connu ; un test de l'étape, fragile sous la charge, rendu robuste | sur `8e3a2c0f`, correctif `93d8706d` |
+| **U1d, traduction** (Q26) : INDEX SPLINE (4 chaînes sans accent que l'ancien test ne voyait pas), DESIGN (2), RE (1), SUBSTRATE (1, et les trois références UX qui l'enregistrent), HUB (1 message d'erreur), STRAT (bandeau d'état, panneau de la Phase A, en-tête de la Phase B, infobulles, avertissement multi-graines ; quatre tests qui lisaient le bandeau suivent les mots). Les états d'un calcul multi-graines restent en français : ce sont des jetons, traduits à l'affichage | `2e5c5978`, `1a6a50e3`, `10274ad6`, `4488c9dd`, `8b946a2f`, `cac0a5e3` |
+| **U1d, le cliquet** : aucune chaîne visible en français dans les 11 fenêtres, accents ou non ; rouge avant (49 chaînes trouvées sur le code d'avant la traduction) | `32569315` |
+| Ce fichier et le plan à jour après U1d ; `docs/ETAT.md` à jour | commit suivant `32569315` |
 
-**Dernière validation complète** : le 2026-11-12 à 18 h 08, après U5 (plan §5.6). Tout ce qui est commité l'a passée.
+**Dernière validation complète** : le 2026-11-12 à 18 h 08, après U5 (plan §5.6). Les commits de U1d (`2e5c5978` à
+`32569315`) ne l'ont pas encore passée : c'est la première tâche du §6.
 
 ## 5. En cours
 
@@ -153,16 +158,20 @@ Rien : tout ce qui est fait est commité. La prochaine tâche est la première d
 
 ## 6. À faire, dans l'ordre
 
-1. **U1d** — traduire le français visible de STRAT, RE et du HUB (Q26), une fenêtre par commit, cliquet de langue étendu.
-2. **U6 à U11** — système d'actions, FIELD dans le système, icônes vectorielles, échelle typographique, états vides
+1. **Validation complète** (§8), due depuis U1d : la traduction a passé ruff, la garde, le cliquet de langue, les
+   tests de STRAT, de la langue, des cliquets UX des fenêtres traduites ; pas la suite entière. Puis cocher U1 au plan
+   et mettre `docs/ETAT.md` à jour (section 0).
+2. **U6** — un système d'actions : un vocabulaire (Run, Stop, Reset), une seule action principale par écran, le style
+   destructif des jetons (constats B2, B4, B5). Commencer par une mesure dans l'audit (comme U3 à U5), voir le test
+   rouge, puis corriger fenêtre par fenêtre.
+3. **U7 à U11** — FIELD dans le système d'actions, icônes vectorielles, échelle typographique, états vides
    actionnables, messages (plan §5.5). **U12** (reprise d'un calcul après coupure) est à spécifier avant tout code : elle
    touche au calcul. **U13** (écran réel, HiDPI, lecteur d'écran, essais avec des utilisateurs) n'est pas à la portée
    d'une IA.
 
 **Tranché le 2026-11-12, sur consigne (« autonomie totale, réponds-toi aux questions ») — plan, section 4**
 
-- Q26 : le français visible de STRAT, RE et du HUB **sera traduit** en anglais, fidèlement, étape U1d, une fenêtre par
-  commit, après U3 à U5.
+- Q26 : le français visible de STRAT, RE et du HUB **est traduit** en anglais (U1d, fait le 2026-11-12).
 - Q27 : les signes de U1b (`≈`, `∈`, `—`) restent.
 - Q28 : le test « au bit » du noyau STRAT reste tel quel ; un rouge se rejoue sur cache Numba vierge (§8).
 

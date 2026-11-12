@@ -37,6 +37,7 @@ class CertusCard(QFrame):
             hl.setSpacing(6)
             lbl = QLabel(title)
             lbl.setObjectName("CertusCardTitle")
+            lbl.setWordWrap(True)  # a title longer than its card takes a second line instead of running past the edge
             lbl.setStyleSheet(
                 f"font-weight: 700; font-size: {Typography.BODY_LG}pt; color: {CertusTheme.TEXT_MAIN}; letter-spacing: 0.3px;"
             )

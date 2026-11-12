@@ -195,8 +195,17 @@ class DualStageProgressWidget(QWidget):
 
     canceled = pyqtSignal()
 
-    def __init__(self, parent=None, main_label: str = "", run_id: str | None = None, run_context: Any | None = None) -> None:
+    def __init__(
+        self,
+        parent=None,
+        main_label: str = "",
+        run_id: str | None = None,
+        run_context: Any | None = None,
+        stacked: bool = False,
+    ) -> None:
         super().__init__(parent)
+        # A narrow panel asks for the stacked form: the bars above the texts. The default is the row, made for a wide slot.
+        self._stacked = bool(stacked)
         self._main_label = main_label
         self._run_context = run_context
         self._run_id = getattr(run_context, "run_id", run_id) if run_context else run_id
@@ -212,7 +221,7 @@ class DualStageProgressWidget(QWidget):
         self._setup_ui()
 
     def _setup_ui(self) -> None:
-        layout = QHBoxLayout(self)
+        layout = QVBoxLayout(self) if getattr(self, "_stacked", False) else QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(12)
 
@@ -292,6 +301,10 @@ class DualStageProgressWidget(QWidget):
             run_id=self._run_id,
             next_action="start run",
         ))
+
+        if getattr(self, "_stacked", False):
+            self.info_label.setWordWrap(True)
+            self.detail_label.setWordWrap(True)
 
         self.cancel_btn = QPushButton("Cancel")
         self.cancel_btn.setToolTip("Cancel the current operation.")

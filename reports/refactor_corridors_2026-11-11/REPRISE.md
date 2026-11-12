@@ -158,16 +158,14 @@ un rouge que personne n'avait encore vu.
 
 ## 5. En cours
 
-**U8, en cours** (Q32). Fait : la mesure `emoji_labels` (`5cd1b51f`, 36 libellés à l'ouverture dans 9 fenêtres) ;
-`set_themed_icon`, une icône redessinée au changement de thème (`f4faf22d`). Non commité, en test : Reset en texte seul
-(sa fabrique est dans `certus/utils`, qui n'importe pas `certus/ui`), les boutons et titres de DESIGN, FIELD et STRAT
-sans emoji (icônes `info`, `line-chart`, `folder-open`), les références UX ; cliquet `tests/ui/test_ux_no_emoji_in_a_label.py`
-écrit (`9 failed, 2 passed` avant ; après : HUB et STRAT seuls rouges). **Bloqué pour le HUB et l'accueil de STRAT** :
-voir la question SVG ci-dessous.
+**U8, fait sauf HUB et accueil de STRAT** (Q32) : mesure `emoji_labels` (`5cd1b51f`) ; `set_themed_icon` (`f4faf22d`) ;
+boutons et titres de DESIGN, FIELD, STRAT et Reset sans emoji (`626d84b8`) ; cliquet `test_ux_no_emoji_in_a_label.py`
+(`52faa38a`, `9 failed` avant), où HUB et STRAT sont en `xfail` explicite en attendant la question SVG ci-dessous.
+En cours : **U9**, l'échelle typographique.
 
 ## 6. À faire, dans l'ordre
 
-1. **U8** — icônes SVG du projet à la place des emojis (Q32).
+1. **U8, reste** : tuiles du HUB et accueil de STRAT, après la décision de 👤 sur le garde-fou SVG.
 2. **U9 à U11** — échelle typographique, états vides actionnables, messages (Q33) (plan §5.5). **U12** (reprise d'un calcul après coupure) est à spécifier avant tout code : elle
    touche au calcul. **U13** (écran réel, HiDPI, lecteur d'écran, essais avec des utilisateurs) n'est pas à la portée
    d'une IA.

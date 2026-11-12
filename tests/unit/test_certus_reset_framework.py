@@ -131,6 +131,32 @@ class TestCertusResetManager:
         app.btn_stop.setEnabled.assert_called()
         app.btn_run.setEnabled.assert_called()
 
+    @pytest.mark.parametrize(
+        ("shown", "after"),
+        [
+            ("12 minima  |  3.4k evals  |  2 best", "0 minima  |  0 evals  |  0 best"),
+            ("1.2M strategies  |  45 MC runs  |  9,300 points", "0 strategies  |  0 MC runs  |  0 points"),
+            ("Evals: 1,234", "Evals: 0"),
+        ],
+    )
+    def test_the_reset_keeps_the_words_of_the_counters_and_zeroes_their_numbers(self, shown, after):
+        """It used to write three pictograms and three zeros in every window, whatever the window counts."""
+
+        class Label:
+            def __init__(self, text):
+                self._text = text
+
+            def text(self):
+                return self._text
+
+            def setText(self, text):
+                self._text = text
+
+        app = _make_mock_app()
+        app.stats_label = Label(shown)
+        CertusResetManager(app)._clear_ui_elements()
+        assert app.stats_label.text() == after
+
     def test_clear_ui_elements_clears_stack_table_when_in_widgets(self):
         app = _make_mock_app(has_widgets=True, has_stack_table=True)
         m = CertusResetManager(app)

@@ -500,6 +500,29 @@ def zoom_indicators(win) -> list[str]:
     return sorted(found)
 
 
+def unlabelled_counters(win) -> list[str]:
+    """The numbers of the status bar that no word names, as the piece of text that holds each.
+
+    A status bar label is read piece by piece (pieces are separated by `|`). A piece that shows a number and no word
+    of two letters or more is a bare counter: `0`, or a number beside a pictogram. A percentage says what it is.
+    """
+    import re
+
+    from PyQt6.QtWidgets import QLabel, QStatusBar
+
+    found = []
+    for bar in win.findChildren(QStatusBar):
+        for label in bar.findChildren(QLabel):
+            if not label.isVisible() or _is_transient(label):
+                continue
+            found.extend(
+                " ".join(piece.split())
+                for piece in label.text().split("|")
+                if re.search(r"\d", piece) and not re.search(r"\d\s*%", piece) and not re.search(r"[^\W\d_]{2,}", piece)
+            )
+    return found
+
+
 def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: int = 1080) -> dict:
     """Instantiate one app and collect every metric. Runs in a dedicated process."""
     # The offscreen plugin resolves NO font unless QT_QPA_FONTDIR points at a font
@@ -752,6 +775,7 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
     out["skeleton"] = skeleton(win)
     out.update(clipped_texts(win))
     out["zoom_indicators"] = zoom_indicators(win)
+    out["unlabelled_counters"] = unlabelled_counters(win)
 
     # --- the theme toggle reaches the widget sheets (LAST: it changes the palette) -----------------------
     from PyQt6.QtWidgets import QWidget

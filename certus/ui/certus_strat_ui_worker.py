@@ -254,7 +254,7 @@ class CertusStratWorkerMixin:
         from certus.ui.certus_ui import format_count_kmg
 
         self.stats_label.setText(
-            f"♟️ {format_count_kmg(self.stat_counters['MS'])}  | 🎲 {format_count_kmg(self.stat_counters['MCS'])}  |  🌈️ {format_count_kmg(self.stat_counters['SP'])}"
+            f"{format_count_kmg(self.stat_counters['MS'])} strategies  |  {format_count_kmg(self.stat_counters['MCS'])} MC runs  |  {format_count_kmg(self.stat_counters['SP'])} points"
         )
 
     def has_running_computation(self) -> bool:

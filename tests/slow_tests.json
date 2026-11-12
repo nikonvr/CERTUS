@@ -93,6 +93,7 @@
   "tests/ui/test_ux_sorting_never_corrupts_data.py::test_cell_widget_table_is_never_sortable": 7.6,
   "tests/ui/test_ux_sorting_never_corrupts_data.py::test_stack_table_is_never_sortable": 8.8,
   "tests/ui/test_ux_standard_shortcuts.py::test_re_can_export_from_the_keyboard": 2.6,
+  "tests/ui/test_ux_status_bar_counters_say_what_they_count.py::test_no_counter_of_the_status_bar_is_a_bare_number": 15.0,
   "tests/ui/test_ux_stepper_badges_are_circles_with_a_digit.py::test_a_badge_keeps_the_24_px_circle_it_asks_for_inside_a_window_that_carries_the_application_sheet": 3.3,
   "tests/ui/test_ux_stepper_badges_are_circles_with_a_digit.py::test_the_digit_of_every_badge_is_drawn_inside_such_a_window": 3.1,
   "tests/ui/test_ux_stepper_badges_are_circles_with_a_digit.py::test_the_stepper_of_index_spline_shows_its_numbers": 6.7,

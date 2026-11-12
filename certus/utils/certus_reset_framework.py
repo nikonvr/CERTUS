@@ -6,6 +6,7 @@ Provides consistent "Clear / Reset" behavior across the entire suite
 
 import gc
 import logging
+import re
 from typing import Any
 
 from PyQt6.QtWidgets import QMessageBox, QPlainTextEdit, QPushButton, QTextEdit, QWidget
@@ -18,6 +19,10 @@ __all__ = [
     "create_reset_button",
     "reset_app_to_defaults",
 ]
+
+
+#: A count as a status bar writes it: `12`, `1,234`, `3.4k`, `2.1M`.
+_A_COUNT = re.compile(r"\d[\d,.]*[kMG]?")
 
 
 class CertusResetManager:
@@ -179,12 +184,15 @@ class CertusResetManager:
         label_defaults = {
             "best_rmse_label": "Best RMSE:  N/A",
             "status_label": "Ready",
-            "stats_label": "♟️ 0  | 🎲 0  |  🌈️ 0",
+            "stats_label": None,  # each window words its own counters: the words stay, the numbers go back to zero
             "lbl_status": "Ready",
         }
         for label_name, default_text in label_defaults.items():
             label = getattr(self.app, label_name, None)
             if label:
+                if default_text is None:
+                    shown = label.text()
+                    default_text = _A_COUNT.sub("0", shown) if isinstance(shown, str) else "0"
                 label.setText(default_text)
 
         # Reset buttons

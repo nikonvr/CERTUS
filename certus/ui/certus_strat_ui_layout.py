@@ -398,14 +398,14 @@ class CertusStratLayoutMixin:
 
         self.status_bar.addWidget(self.status_label, 1)
 
-        self.stats_label = QLabel("♟️ 0  | 🎲 0  |  🌈️ 0")
+        self.stats_label = QLabel("0 strategies  |  0 MC runs  |  0 points")
 
         self.stats_label.setStyleSheet(
             f"QLabel {{ color: {CertusTheme.TEXT_MAIN}; font-weight: 700; font-size: {Typography.H3}pt; padding: 2px 8px; background-color: transparent; }}"
         )
 
         self.stats_label.setToolTip(
-            "♟️ Mining Strategies evaluated  |  🎲 Monte Carlo Simulations run  |  🌈 Spectral points processed"
+            "Mining strategies evaluated  |  Monte Carlo simulations run  |  Spectral points processed"
         )
 
         self.status_bar.addPermanentWidget(self.stats_label)

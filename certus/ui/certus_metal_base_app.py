@@ -1074,10 +1074,10 @@ class MetalBaseApp(CertusBaseApp):
 
         self.stat_counters = {"MS": 0, "MCS": 0, "SP": 0}
 
-        self.stats_label = QLabel(" 0  |  0  |   0")
+        self.stats_label = QLabel("0 evals  |  0 iterations  |  0 points")
 
         self.stats_label.setToolTip(
-            " Objective function evaluations  |   Monte Carlo / iterations  |   Spectral points processed"
+            "Objective function evaluations  |  Monte Carlo / iterations  |  Spectral points processed"
         )
 
         self.status_bar.addPermanentWidget(self.stats_label)
@@ -1182,7 +1182,7 @@ class MetalBaseApp(CertusBaseApp):
     def update_stats_display(self) -> None:
 
         self.stats_label.setText(
-            f" {format_count_kmg(self.stat_counters['MS'])}  |  {format_count_kmg(self.stat_counters['MCS'])}  |   {format_count_kmg(self.stat_counters['SP'])}"
+            f"{format_count_kmg(self.stat_counters['MS'])} evals  |  {format_count_kmg(self.stat_counters['MCS'])} iterations  |  {format_count_kmg(self.stat_counters['SP'])} points"
         )
 
     def on_stats_update(self, ctype, inc) -> None:

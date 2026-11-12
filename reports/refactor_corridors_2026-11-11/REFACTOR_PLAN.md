@@ -1363,8 +1363,19 @@ dans STRAT. Trois sous-étapes, un commit chacune :
   Mesuré : après un zoom avant puis une remise à zéro, l'unique libellé lit 105 % puis 100 % dans les trois fenêtres.
   Garde avec `manifests/phase_u4a.json` : `GUARD=OK` ; tests du zoom `15 passed` ; cliquet UX, squelette, défilement
   horizontal et ce test : `64 passed`.
-- [ ] **U4b — des compteurs libellés** : « ♟️ 0 | 🎲 0 | 🌈️ 0 » (STRAT), « ♟️ 0 minima | 🎲 0 evals | 🌈️ 0 » (DESIGN),
-  « 0 | 0 | 0 » (METAL), « 0 » (INDEX). Le texte est écrit en plusieurs endroits (mise en page, worker, remise à zéro).
+- [x] **U4b — des compteurs libellés.** Mesure ajoutée à l'audit (`unlabelled_counters`). Avant, à 1440×900 : STRAT
+  « ♟️ 0 | 🎲 0 | 🌈️ 0 » (seule une infobulle disait ce que c'est) ; DESIGN perdait « minima » et « evals » à la
+  première mise à jour d'un calcul, et son troisième nombre n'avait jamais eu de mot ; METAL « 0 | 0 | 0 » et INDEX
+  « 0 » avaient déjà perdu leurs pictogrammes. **Décision : des mots, sans pictogramme** (un pictogramme n'est pas un
+  libellé, son rendu dépend du système, et U8 les retire). DESIGN « N minima | N evals | N best », STRAT « N strategies
+  | N MC runs | N points », METAL « N evals | N iterations | N points », INDEX « N evals ». **Défaut trouvé en route** :
+  la remise à zéro (`certus_reset_framework.py`) écrivait les trois pictogrammes dans le libellé de toutes les
+  fenêtres, RE comprise, dont le libellé dit « Evals: N » ; elle garde maintenant le texte et remet ses nombres à zéro.
+  Tests : `tests/ui/test_ux_status_bar_counters_say_what_they_count.py`, `5 failed, 7 passed` avant, `12 passed`
+  après ; `tests/unit/test_certus_reset_framework.py`, `3 failed` avant, `29 passed` après. Garde avec
+  `manifests/phase_u4b.json` : `GUARD=OK` ; tests des compteurs et de la remise à zéro `90 passed` ; cliquets UX
+  (dont « rien de tronqué » aux deux tailles avec les libellés plus longs), squelette, dette, langue : `100 passed`.
+  `certus_metal_base_app.py` reste à 1 809 lignes.
 
 **A1 corrigé par le relevé** : `? QWOT` n'est pas un symbole perdu. La ligne s'écrit quand le QWOT n'est pas un nombre
 fini ; le « ? » tient la place de la valeur. Laissé.

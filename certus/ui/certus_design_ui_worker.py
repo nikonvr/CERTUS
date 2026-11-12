@@ -665,7 +665,7 @@ class WorkerManager:
             parts = current.split("|")
 
             if len(parts) >= 1:
-                parts[0] = f"♟️ {value} "
+                parts[0] = f"{value} minima  "
 
             self.ui.stats_label.setText("|".join(parts))
 
@@ -675,7 +675,7 @@ class WorkerManager:
             parts = current.split("|")
 
             if len(parts) >= 2:
-                parts[1] = f" 🎲 {display_value} "
+                parts[1] = f"  {display_value} evals  "
 
             self.ui.stats_label.setText("|".join(parts))
 
@@ -683,7 +683,7 @@ class WorkerManager:
             parts = current.split("|")
 
             if len(parts) >= 3:
-                parts[2] = f" 🌈️ {value}"
+                parts[2] = f"  {value} best"
 
             self.ui.stats_label.setText("|".join(parts))
 

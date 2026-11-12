@@ -635,7 +635,7 @@ class CertusIndexWorkerMixin:
 
         self._current_n_evals = n_evals
 
-        self.lbl_dice.setText(f" {n_evals:,}")
+        self.lbl_dice.setText(f"{n_evals:,} evals")
 
     def _on_progress(self, step: int, phase: str, extra_info=None) -> None:
 

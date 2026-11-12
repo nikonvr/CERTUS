@@ -1000,7 +1000,7 @@ class CertusIndexLayoutMixin:
 
         self.lbl_status = QLabel("Initializing...")
 
-        self.lbl_dice = QLabel(" 0")
+        self.lbl_dice = QLabel("0 evals")
 
         self.lbl_dice.setStyleSheet(f"font-weight: bold; color: {CertusTheme.INFO_TEXT};")
 

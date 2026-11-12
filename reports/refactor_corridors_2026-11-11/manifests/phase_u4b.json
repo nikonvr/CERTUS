@@ -1,0 +1,12 @@
+{
+  "phase": "U4b - every counter of a status bar carries the word for what it counts, and no pictogram: DESIGN 'N minima | N evals | N best', STRAT 'N strategies | N MC runs | N points', METAL 'N evals | N iterations | N points', INDEX 'N evals'. The reset keeps the words of a counter label and puts its numbers back to zero.",
+  "changed_code": [
+    "certus.ui.certus_index_ui_layout:CertusIndexLayoutMixin._create_status_bar",
+    "certus.ui.certus_index_ui_worker:CertusIndexWorkerMixin._on_evals_update",
+    "certus.ui.certus_metal_base_app:MetalBaseApp._create_status_bar",
+    "certus.ui.certus_metal_base_app:MetalBaseApp.update_stats_display",
+    "certus.ui.certus_strat_ui_worker:CertusStratWorkerMixin.update_stats_display",
+    "certus.ui.certus_strat_ui_layout:CertusStratLayoutMixin._build_gui"
+  ],
+  "note": "Outside what the snapshot looks at: the status bar, the core and the worker of DESIGN (certus_design_ui_layout.py, certus_design_ui_core.py, certus_design_ui_worker.py) and certus/utils/certus_reset_framework.py (_clear_ui_elements). The reset used to write three pictograms and three zeros in the stats label of every window, RE included, whose label reads 'Evals: N'. Measured with scripts/audit_ux_certus.py::unlabelled_counters at 1440x900: bare counters in DESIGN, STRAT, INDEX and the two METAL windows before, none after."
+}

@@ -900,7 +900,7 @@ class CoreManager:
 
         best_count = self.ui.stat_counters.get("BEST", 0)
 
-        text = f"♟️ {minima_count} minima  | 🎲 {eval_count} evals  | 🌈️ {best_count}"
+        text = f"{minima_count} minima  |  {eval_count} evals  |  {best_count} best"
 
         self.ui.stats_label.setText(text)
 

@@ -1111,7 +1111,7 @@ class LayoutManager:
 
         self.ui.status_label = CertusStatusPill("Ready", "ready")
 
-        self.ui.stats_label = QLabel("♟️ 0 minima  | 🎲 0 evals  | 🌈️ 0")
+        self.ui.stats_label = QLabel("0 minima  |  0 evals  |  0 best")
 
         self.ui.stats_label.setStyleSheet(
             f"QLabel {{ color: {CertusTheme.TEXT_MAIN}; font-weight: bold; font-size: {Typography.H3}pt; padding: 2px 8px; background-color: transparent; }}"

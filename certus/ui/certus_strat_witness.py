@@ -84,7 +84,7 @@ def summary(value: Any, n_layers: int) -> str:
     """The test glasses the run will use, for the status banner: `?` when the entry cannot be applied as it stands."""
     layers, unreadable = parse(value)
     if unreadable or any(not 0 < layer < n_layers for layer in layers):
-        return "TEMOINS ?"
+        return "TEST GLASSES ?"
     if not layers:
-        return "TEMOINS 1"
-    return f"TEMOINS {len(layers) + 1} (neufs aux couches {', '.join(str(layer) for layer in layers)})"
+        return "TEST GLASSES 1"
+    return f"TEST GLASSES {len(layers) + 1} (new at layers {', '.join(str(layer) for layer in layers)})"

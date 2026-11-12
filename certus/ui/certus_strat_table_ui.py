@@ -658,16 +658,16 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
             abl_item = NumericTableWidgetItem(
                 f"{top_src['source']} {top_src['contribution']:+.0%}"
             )
-            _lines = ["Contribution de chaque source, mesuree en l'ETEIGNANT :"]
+            _lines = ["Contribution of each source, measured by TURNING IT OFF:"]
             _lines += [f"   {a['source']:<24} {a['contribution']:+7.1%}" for a in abl]
             _lines += [
                 "",
-                "Elles NE S'ADDITIONNENT PAS a 100 % : les sources interagissent, donc",
-                "en eteindre deux ne retire pas la somme de leurs deux parts. Ce sont",
-                "des derivees, pas un partage.",
+                "They DO NOT ADD UP to 100 %: the sources interact, so turning",
+                "two of them off does not remove the sum of their two shares. These",
+                "are derivatives, not a split.",
                 "",
-                "Un nombre NEGATIF veut dire qu'eteindre la source DEGRADE le score :",
-                "elle en masquait une autre. C'est rare, et cela merite un regard.",
+                "A NEGATIVE number means that turning the source off DEGRADES the score:",
+                "it was masking another one. This is rare, and worth a look.",
             ]
             abl_item.setToolTip("\n".join(_lines))
             if top_src["contribution"] > 0.5:

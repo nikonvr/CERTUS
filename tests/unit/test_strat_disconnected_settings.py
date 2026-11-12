@@ -151,7 +151,7 @@ class TestMachineSamplingDd:
         assert "machine_sampling_dd" not in [key for key, *_ in strat_window._MACHINE_SOURCES]
         strat_window._refresh_machine_status()
         banner = strat_window.machine_status.text()
-        assert "lissage de lecture" in banner, "premise: the banner reports the sources"
+        assert "reading smoothing" in banner, "premise: the banner reports the sources"
         assert "grille machine" not in banner
 
     @pytest.mark.parametrize("mode", MODES)

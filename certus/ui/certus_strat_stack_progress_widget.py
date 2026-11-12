@@ -57,7 +57,7 @@ class LayerCard(QFrame):
         layout.addWidget(self.lbl_thick)
 
         # 4. Analysis status
-        self.lbl_status = QLabel("En attente")
+        self.lbl_status = QLabel("Waiting")
         self.lbl_status.setFont(QFont("Segoe UI", 8))
         self.lbl_status.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         layout.addWidget(self.lbl_status, 1)
@@ -83,7 +83,7 @@ class LayerCard(QFrame):
                 f"border: 2px solid {CertusTheme.PRIMARY}; border-radius: 6px; }}"
             )
             self.lbl_num.setStyleSheet(f"color: {CertusTheme.PRIMARY};")
-            self.lbl_status.setText("⚡ Analyse d'admissibilité en cours...")
+            self.lbl_status.setText("⚡ Admissibility check running...")
             self.lbl_status.setStyleSheet(f"color: {CertusTheme.PRIMARY}; font-weight: bold;")
         elif state == "done":
             self.setStyleSheet(
@@ -99,7 +99,7 @@ class LayerCard(QFrame):
                 f"border: 1px solid {CertusTheme.BORDER}; border-radius: 6px; opacity: 0.6; }}"
             )
             self.lbl_num.setStyleSheet(f"color: {CertusTheme.TEXT_DISABLED};")
-            self.lbl_status.setText("En attente")
+            self.lbl_status.setText("Waiting")
             self.lbl_status.setStyleSheet(f"color: {CertusTheme.TEXT_DISABLED};")
 
 
@@ -122,14 +122,14 @@ class CertusStratStackProgressWidget(QWidget):
 
         # 1. Header / Title
         header_layout = QHBoxLayout()
-        self.lbl_title = QLabel("STACK ANALYSIS — Phase A : Admissibilité couche par couche")
+        self.lbl_title = QLabel("STACK ANALYSIS — Phase A: admissibility, layer by layer")
         self.lbl_title.setFont(QFont("Segoe UI", 12, QFont.Weight.Bold))
         self.lbl_title.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN};")
         header_layout.addWidget(self.lbl_title)
 
         header_layout.addStretch()
 
-        self.lbl_layer_pill = QLabel("Prêt")
+        self.lbl_layer_pill = QLabel("Ready")
         self.lbl_layer_pill.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
         self.lbl_layer_pill.setStyleSheet(
             f"background-color: {CertusTheme.PRIMARY}; color: {CertusTheme.PRIMARY_TEXT}; "
@@ -147,14 +147,14 @@ class CertusStratStackProgressWidget(QWidget):
         kpi_layout = QHBoxLayout(kpi_card)
         kpi_layout.setContentsMargins(12, 8, 12, 8)
 
-        self.lbl_kpi_progress = QLabel("Progression : 0 / 0 couches (0%)")
+        self.lbl_kpi_progress = QLabel("Progress: 0 / 0 layers (0%)")
         self.lbl_kpi_progress.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
         self.lbl_kpi_progress.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN};")
         kpi_layout.addWidget(self.lbl_kpi_progress)
 
         kpi_layout.addStretch()
 
-        self.lbl_kpi_thick = QLabel("Épaisseur totale : 0.0 nm")
+        self.lbl_kpi_thick = QLabel("Total thickness: 0.0 nm")
         self.lbl_kpi_thick.setFont(QFont("Segoe UI", 9))
         self.lbl_kpi_thick.setStyleSheet(f"color: {CertusTheme.TEXT_SUB};")
         kpi_layout.addWidget(self.lbl_kpi_thick)
@@ -216,8 +216,8 @@ class CertusStratStackProgressWidget(QWidget):
             self.layers_layout.addWidget(card)
 
         self.layers_layout.addStretch()
-        self.lbl_kpi_thick.setText(f"Épaisseur totale : {self._total_thickness:.1f} nm ({row_count} couches)")
-        self.lbl_kpi_progress.setText(f"Progression : 0 / {row_count} couches (0%)")
+        self.lbl_kpi_thick.setText(f"Total thickness: {self._total_thickness:.1f} nm ({row_count} layers)")
+        self.lbl_kpi_progress.setText(f"Progress: 0 / {row_count} layers (0%)")
         self.lbl_layer_pill.setText(f"0 / {row_count}")
 
     @pyqtSlot(int, int, int)
@@ -227,8 +227,8 @@ class CertusStratStackProgressWidget(QWidget):
             return
 
         self._current_layer = current_layer
-        self.lbl_layer_pill.setText(f"Couche {current_layer} / {total_layers}")
-        self.lbl_kpi_progress.setText(f"Progression : {current_layer} / {total_layers} couches ({pct}%)")
+        self.lbl_layer_pill.setText(f"Layer {current_layer} / {total_layers}")
+        self.lbl_kpi_progress.setText(f"Progress: {current_layer} / {total_layers} layers ({pct}%)")
 
         for idx, card in enumerate(self.layer_cards):
             layer_num = idx + 1

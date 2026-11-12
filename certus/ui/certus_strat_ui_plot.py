@@ -361,7 +361,7 @@ class CertusStratPlotMixin:
             bounds = np.array(growth_data["boundaries"])
             score = float(best_score)
 
-            info_msg = f"PHASE B : {strategy.get('n_blocks')} BLOCS | Score de robustesse (RMSE): {score:.5f}"
+            info_msg = f"PHASE B: {strategy.get('n_blocks')} BLOCKS | Robustness score (RMSE): {score:.5f}"
 
             # 1. Update of the central panel embedded in the application
             if hasattr(self, "phase_b_live_widget"):

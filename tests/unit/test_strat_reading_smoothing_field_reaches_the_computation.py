@@ -1,7 +1,7 @@
 """D102 -- the "Reading smoothing (k)" field of the STRAT window reaches the computation.
 
 `collect_params` read `reading_smoothing_window` from the loaded file only, while the window showed the field and the
-status banner read the field: typing 8 there made the banner list "lissage de lecture" as active and the run use the
+status banner read the field: typing 8 there made the banner list "reading smoothing" as active and the run use the
 file's value -- 1 when the file has none. The field now comes first, and the file when the window has no such field.
 """
 
@@ -36,13 +36,13 @@ def strat_window(qapp):
 
 
 def _active(window) -> str:
-    """The "ACTIF" part of the status banner: the error sources it says the run will use."""
-    return next((part for part in window.machine_status.text().split("|") if "ACTIF" in part), "")
+    """The "ACTIVE" part of the status banner: the error sources it says the run will use."""
+    return next((part for part in window.machine_status.text().split("|") if "ACTIVE" in part), "")
 
 
 def test_one_reading_by_default(strat_window):
     assert strat_window.collect_params()[KEY] == 1
-    assert "lissage de lecture" not in _active(strat_window)
+    assert "reading smoothing" not in _active(strat_window)
 
 
 def test_what_is_typed_reaches_the_computation(strat_window):
@@ -52,7 +52,7 @@ def test_what_is_typed_reaches_the_computation(strat_window):
 
 def test_the_banner_and_the_run_agree(strat_window):
     strat_window.widgets[KEY].setText("8")
-    assert "lissage de lecture" in _active(strat_window)
+    assert "reading smoothing" in _active(strat_window)
     assert strat_window.collect_params()[KEY] == 8
 
 

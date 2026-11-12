@@ -193,8 +193,8 @@ class EtatMultigraine:
         if e is None or e <= BRUIT_DIFFERENCE_SEEL_PCT:
             return ""
         return (
-            f"l'ecart provisoire -> definitif vaut {e:+.2f} %, au-dela du bruit de "
-            f"{BRUIT_DIFFERENCE_SEEL_PCT} % : le chiffre annonce en cours de route etait OPTIMISTE"
+            f"the provisional -> final gap is {e:+.2f} %, beyond the noise of "
+            f"{BRUIT_DIFFERENCE_SEEL_PCT} %: the figure announced along the way was OPTIMISTIC"
         )
 
 

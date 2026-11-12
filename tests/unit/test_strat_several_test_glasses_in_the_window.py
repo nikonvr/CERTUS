@@ -53,7 +53,7 @@ def _witness_problems(window) -> list[str]:
 def test_one_test_glass_by_default(strat_window):
     assert strat_window.widgets[KEY].text() == ""
     assert strat_window.collect_params()[KEY] == []
-    assert "TEMOINS 1" in strat_window.machine_status.text()
+    assert "TEST GLASSES 1" in strat_window.machine_status.text()
 
 
 @pytest.mark.parametrize("typed", ["12;22;32", "12, 22 32", "[12, 22, 32]", "32;12;22;12"])
@@ -61,7 +61,7 @@ def test_what_is_typed_reaches_the_computation(strat_window, typed):
     strat_window.widgets[KEY].setText(typed)
     assert strat_window.collect_params()[KEY] == [12, 22, 32]
     assert _witness_problems(strat_window) == []
-    assert "TEMOINS 4 (neufs aux couches 12, 22, 32)" in strat_window.machine_status.text()
+    assert "TEST GLASSES 4 (new at layers 12, 22, 32)" in strat_window.machine_status.text()
 
 
 @pytest.mark.parametrize("stored", [[12, 22, 32], "12;22;32"])
@@ -98,7 +98,7 @@ def test_the_plan_survives_a_save_and_a_load(strat_window, tmp_path, monkeypatch
 def test_a_plan_that_cannot_be_applied_stops_the_run(strat_window, typed):
     strat_window.widgets[KEY].setText(typed)
     assert _witness_problems(strat_window), typed
-    assert "TEMOINS ?" in strat_window.machine_status.text()
+    assert "TEST GLASSES ?" in strat_window.machine_status.text()
 
 
 def test_the_reader_keeps_what_it_cannot_read_apart():

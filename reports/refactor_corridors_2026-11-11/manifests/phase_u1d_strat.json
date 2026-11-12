@@ -1,0 +1,12 @@
+{
+  "phase": "U1d (STRAT) - the window speaks English: the status banner (SLIT, ACTIVE, inactive, UNREADABLE, the six error sources, TEST GLASSES), the Phase A stack panel, the Phase B header and info line, the execution-mode tooltip, the ablation tooltip of the table, the warning of a multi-seed run.",
+  "changed_code": [
+    "certus.ui.certus_strat_ui_layout:CertusStratLayoutMixin._create_advanced_tab",
+    "certus.ui.certus_strat_ui_layout:CertusStratLayoutMixin._refresh_machine_status",
+    "certus.ui.certus_strat_ui_plot:CertusStratPlotMixin.on_live_growth_update"
+  ],
+  "rebound": [
+    "certus.ui.certus_strat_ui:CertusStratApp._MACHINE_SOURCES"
+  ],
+  "note": "_MACHINE_SOURCES keeps its keys and its neutral values; only the six labels change. The states of a multi-seed run stay French: tokens of a state machine, pinned by value, translated at display (ETAT_AFFICHE). Four tests that read the banner or the warning follow the words: test_strat_multigraine_ui, test_strat_disconnected_settings, test_strat_reading_smoothing_field_reaches_the_computation, test_strat_several_test_glasses_in_the_window. Decision Q26 of the plan."
+}

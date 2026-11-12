@@ -1023,15 +1023,15 @@ class CertusStratLayoutMixin:
         self.widgets["execution_mode"].setCurrentText("premium")
 
         self.widgets["execution_mode"].setToolTip(
-            "Mode d'exécution du solveur :\n"
-            "• fast : criblage rapide (~3-5 s, N=50 MC, top_k=20)\n"
-            "• premium : nominal standard (~12-18 s, N=150 MC, top_k=40)\n"
-            "• deep : haute résolution (~45-60 s, N=300 MC, top_k=100)\n"
-            "• extreme : recherche élargie ×5, même profondeur que deep.\n"
-            "  À réserver aux empilements qu'aucun autre mode ne rend\n"
-            "  fabricable : sur le random75 ×2, la recherche standard ne\n"
-            "  trouve AUCUNE stratégie déposable et extreme en trouve 254.\n"
-            "  Coûte environ 5× deep — à lancer si vous avez le temps."
+            "Execution mode of the solver:\n"
+            "• fast: quick screening (~3-5 s, N=50 MC, top_k=20)\n"
+            "• premium: standard nominal (~12-18 s, N=150 MC, top_k=40)\n"
+            "• deep: high resolution (~45-60 s, N=300 MC, top_k=100)\n"
+            "• extreme: search widened ×5, same depth as deep.\n"
+            "  Keep it for the stacks that no other mode makes\n"
+            "  manufacturable: on random75 ×2, the standard search\n"
+            "  finds NO depositable strategy, and extreme finds 254.\n"
+            "  Costs about 5× deep — run it when you have the time."
         )
 
         mode_layout.addWidget(self.widgets["execution_mode"])
@@ -1344,12 +1344,12 @@ class CertusStratLayoutMixin:
     #: The error sources the status banner reports, in reading order: key, short label, and
     #: the value that means INACTIVE. The slit width is reported apart, as a value.
     _MACHINE_SOURCES = (
-        ("slit_bias_enabled", "biais de fente", 0.0),
-        ("search_resolution", "recherche de fente", 0.0),
-        ("index_corridor", "corridor d'indice", 0.0),
-        ("photometric_curvature_amp", "courbure photometrique", 0.0),
-        ("allow_rate", "mode Rate", 0.0),
-        ("reading_smoothing_window", "lissage de lecture", 1.0),
+        ("slit_bias_enabled", "slit bias", 0.0),
+        ("search_resolution", "slit search", 0.0),
+        ("index_corridor", "index corridor", 0.0),
+        ("photometric_curvature_amp", "photometric curvature", 0.0),
+        ("allow_rate", "Rate mode", 0.0),
+        ("reading_smoothing_window", "reading smoothing", 1.0),
     )
 
     def _refresh_machine_status(self, *_a) -> None:
@@ -1381,13 +1381,13 @@ class CertusStratLayoutMixin:
             (off if val == neutral else on).append(label)
         slit = self.widgets.get("monochromator_resolution_nm")
         slit_txt = (slit.text().strip() if slit is not None else "") or "?"
-        parts = [f"FENTE {slit_txt} nm"]
+        parts = [f"SLIT {slit_txt} nm"]
         if on:
-            parts.append("ACTIF : " + ", ".join(on))
+            parts.append("ACTIVE: " + ", ".join(on))
         if off:
-            parts.append("inactif : " + ", ".join(off))
+            parts.append("inactive: " + ", ".join(off))
         if bad:
-            parts.append("ILLISIBLE : " + ", ".join(bad))
+            parts.append("UNREADABLE: " + ", ".join(bad))
         table, glasses = self.widgets.get("stack_table"), self.widgets.get(witness.KEY)
         glasses_txt = witness.summary(glasses.text() if glasses is not None else "", table.rowCount() if table is not None else 0)
         parts.append(glasses_txt)

@@ -191,7 +191,7 @@ def test_un_ecart_AU_DESSUS_du_bruit_alerte() -> None:
     """+12,9 % mesure le 2026-08-15 : le chiffre annonce etait optimiste."""
     e = _etat({"evt": "resultat", "seel": 0.5599 * 1.129, "seel_provisoire": 0.5599})
     av = e.avertissement_ecart()
-    assert "OPTIMISTE" in av
+    assert "OPTIMISTIC" in av
     assert f"{BRUIT_DIFFERENCE_SEEL_PCT}" in av
 
 

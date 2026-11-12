@@ -20,7 +20,7 @@ class CertusStratGrowthWidget(QWidget):
         layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(8)
 
-        self.header_label = QLabel("PHASE B — Optimisation des blocs en cours...")
+        self.header_label = QLabel("PHASE B — Block optimization in progress...")
         self.header_label.setStyleSheet(
             f"background-color: {CertusTheme.PRIMARY}; color: {CertusTheme.PRIMARY_TEXT}; padding: 8px 12px; "
             "font-weight: bold; font-size: 13px; border-radius: 6px;"

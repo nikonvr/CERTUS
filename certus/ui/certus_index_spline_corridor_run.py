@@ -148,7 +148,7 @@ class _CorridorRunMixin:
         self.btn_run.setEnabled(True)
         self.btn_stop.setEnabled(False)
         if not isinstance(result, dict):
-            self.lbl_status.setText("Polish profond (minimum grille) : annule ou echec.")
+            self.lbl_status.setText("Deep polish (grid minimum): cancelled or failed.")
             if self.logger:
                 self.logger.warning(
                     "GUI curve-min deep refit | finished without dict (type=%s)",
@@ -205,7 +205,7 @@ class _CorridorRunMixin:
         self._last_result = display
 
         st = self._format_post_optimization_status(display, result)
-        status_text = "Apres minimum grille (polish profond) | " + st
+        status_text = "After the grid minimum (deep polish) | " + st
         self.lbl_status.setText(status_text)
 
         if self.logger:

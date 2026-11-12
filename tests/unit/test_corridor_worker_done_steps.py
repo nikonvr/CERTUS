@@ -337,9 +337,9 @@ def test_a_whole_manual_stage_frees_the_dialog_shows_the_mesh_and_ends_with_the_
         ("log", "Requested mesh K=2"),
         ("log", "Applied mesh K=2"),
         ("knots", [1.0, 3.0]),
-        ("progress", 100.0, "Re-optimisation terminee"),
+        ("progress", 100.0, "Re-optimization done"),
         ("metrics", 1700.5, 0.00091),
-        ("log", "Re-optimisation terminee | RMSE=0.000910"),
+        ("log", "Re-optimization done | RMSE=0.000910"),
         ("best", result, [1.0, 3.0]),
     ]
 
@@ -439,7 +439,7 @@ def test_without_a_substrate_offset_none_is_adopted():
 )
 def test_the_final_line_prints_a_finite_rmse_with_six_decimals_and_n_a_otherwise(rmse, text):
     timeline = hand({"sigma_knots": [1.0, 3.0]}, metrics=(1700.5, rmse))
-    assert ("log", f"Re-optimisation terminee | RMSE={text}") in timeline
+    assert ("log", f"Re-optimization done | RMSE={text}") in timeline
     metrics = next(entry for entry in timeline if entry[0] == "metrics")
     assert metrics[1] == 1700.5
     assert metrics[2] == rmse or (math.isnan(rmse) and math.isnan(metrics[2]))

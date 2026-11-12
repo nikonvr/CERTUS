@@ -729,9 +729,9 @@ class _CorridorWorkerMixin(_CorridorTabMixin):
                     opt_delta_ns = display.get("substrate_n_offset")
                 if opt_delta_ns is not None:
                     manual_dlg.adopt_delta_ns(float(opt_delta_ns))
-                manual_dlg.set_runtime_progress(100.0, "Re-optimisation terminee")
+                manual_dlg.set_runtime_progress(100.0, "Re-optimization done")
                 manual_dlg.set_runtime_metrics(d_fin, rmse_fin)
-                manual_dlg.append_runtime_log(f"Re-optimisation terminee | RMSE={rmse_txt}")
+                manual_dlg.append_runtime_log(f"Re-optimization done | RMSE={rmse_txt}")
                 if self.logger:
                     self.logger.info(
                         "[INDEX_SPLINE.GUI] manual pipeline applied mesh | role=%s | %s",

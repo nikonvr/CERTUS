@@ -1,0 +1,9 @@
+{
+  "phase": "U1d (INDEX SPLINE) - the four French strings the accent-based test did not see are in English: the columns of the theoretical table, the two statuses of the deep polish, the progress and the log of the manual re-optimization.",
+  "changed_code": [
+    "certus.ui.certus_index_spline_corridor_run:_CorridorRunMixin._finish_curve_minimum_deep_worker_done",
+    "certus.ui.certus_index_spline_corridor_worker:_CorridorWorkerMixin._hand_the_result_to_the_manual_dialog",
+    "certus.ui.certus_index_spline_rendering:_UIBuilderMixin._build_tab_data_th"
+  ],
+  "note": "Text only. tests/unit/test_corridor_worker_done_steps.py expected the French progress and log lines: its three expectations follow the text."
+}

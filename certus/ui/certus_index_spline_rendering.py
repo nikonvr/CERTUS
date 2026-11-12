@@ -739,7 +739,7 @@ class _UIBuilderMixin:
 
         hint = QLabel(
             "Theoretical table on a piecewise λ grid: 2 nm (<=400), 5 nm (400-1200), 10 nm (>1200). "
-            "Colonnes: λ, n, k, d, ns, Tth, Rth."
+            "Columns: λ, n, k, d, ns, Tth, Rth."
         )
         hint.setWordWrap(True)
         hint.setStyleSheet(CertusTheme.get_hint_text_style())

@@ -1,0 +1,8 @@
+{
+  "phase": "U7 (FIELD) - FIELD joins the system: its main window installs the sheet of the suite (apply_certus_theme), which it never did; its three utilities (Capture, Show Details, Copy Log) take the ghost role instead of slate fills; the polarization item 'Average (Unpolarized)' reads 'Unpolarized', its tooltip saying it is the average of S and P.",
+  "changed_code": [
+    "certus.ui.certus_field_layout_mixin:CertusFieldLayoutMixin._build_left_panel",
+    "certus.ui.certus_field_ui:CertusFieldApp.__init__"
+  ],
+  "note": "The sheet of the suite widened the control panel from 296 to 316 px (tests/ui/test_ux_ratchet.py); the ghost row, with 4 px of margin and spacing, and the shorter polarization item bring it to 292. The computation reads the index of the polarization combo, never its text (only an export label). Without the sheet, the danger role of Reset painted #f5f5f5: a regression of U6 that the new painted test catches. Decision Q30 of the plan."
+}

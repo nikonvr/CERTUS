@@ -578,6 +578,29 @@ def action_buttons(win) -> list[str]:
     return sorted(found)
 
 
+def painted_role_fills(win) -> list[str]:
+    """`role|text|painted|expected` for each enabled, visible primary or danger button.
+
+    A role is a promise that a sheet must keep: an object name paints nothing in a window that does not install the
+    application sheet (FIELD painted its `CertusDangerBtn` #f5f5f5, measured 2026-11-12). The pixel read is 6 px inside
+    the left edge, half-way down, clear of the label and of the rounded corner.
+    """
+    from PyQt6.QtWidgets import QPushButton
+
+    from certus.ui.certus_theme import CertusTheme
+
+    expected = {"primary": str(CertusTheme.PRIMARY), "danger": str(CertusTheme.DANGER)}
+    found = []
+    for button in win.findChildren(QPushButton):
+        role = button_role(button)
+        if role not in expected or not button.isVisible() or not button.isEnabled() or _is_transient(button):
+            continue
+        image = button.grab().toImage()
+        painted = image.pixelColor(6, image.height() // 2).name()
+        found.append(f"{role}|{' '.join(button.text().split())}|{painted}|{expected[role].lower()}")
+    return sorted(found)
+
+
 def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: int = 1080) -> dict:
     """Instantiate one app and collect every metric. Runs in a dedicated process."""
     # The offscreen plugin resolves NO font unless QT_QPA_FONTDIR points at a font
@@ -847,6 +870,7 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
     out["zoom_indicators"] = zoom_indicators(win)
     out["unlabelled_counters"] = unlabelled_counters(win)
     out["action_buttons"] = action_buttons(win)
+    out["painted_role_fills"] = painted_role_fills(win)
     logging.setLogRecordFactory(make_record)
     out["shortcut_conflicts"] = conflicts
     out["toasts"] = sorted(

@@ -11,7 +11,7 @@ from certus.ui.certus_field_layout_mixin import CertusFieldLayoutMixin
 from certus.ui.certus_field_plot_mixin import CertusFieldPlotMixin
 from certus.ui.certus_field_state_mixin import CertusFieldStateMixin
 from certus.ui.certus_field_workers_mixin import CertusFieldWorkersMixin
-from certus.ui.certus_ui_utils import confirm_stop_with_timeout, install_standard_shortcuts
+from certus.ui.certus_ui_utils import apply_certus_theme, confirm_stop_with_timeout, install_standard_shortcuts
 from certus.ui.certus_ui_widgets_progress import EnhancedProgressWidget
 
 
@@ -62,6 +62,9 @@ class CertusFieldApp(
             self.material_list = []
 
         self._build_ui()
+        # The sheet of the suite and its roles (U7): FIELD was the one window that installed neither, and painted its
+        # inputs and tabs natively and its danger button #f5f5f5.
+        apply_certus_theme(self)
         self.progress_widget = EnhancedProgressWidget()
         self.status_bar.addPermanentWidget(self.progress_widget)
         self.field_opt_status = QLabel("Ready")

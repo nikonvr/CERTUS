@@ -67,3 +67,21 @@ def test_one_vocabulary_in_sentence_case(app, buttons) -> None:
     assert not shouting, f"{app} writes labels in capitals: {shouting}"
     assert not stops, f"{app} interrupts a computation with another word than 'Stop': {stops}"
     assert not resets, f"{app} clears the window with another label than 'Reset': {resets}"
+
+
+@pytest.fixture(scope="module")
+def fills() -> dict[str, list[str]]:
+    return {app: _run_worker(app, 1440, 900)["painted_role_fills"] for app in sorted(MODULES)}
+
+
+@pytest.mark.parametrize("app", sorted(MODULES))
+def test_a_role_is_painted_with_its_palette_colour(app, fills) -> None:
+    """U6 gave Reset the danger role by its object name; FIELD, which installed no application sheet, painted it
+    #f5f5f5. The role is checked on the pixel, not on the name (U7)."""
+    # The featured style is a gradient that starts from the token: a shade of it, within 16 per channel, passes.
+    def far(painted: str, token: str) -> bool:
+        return any(abs(int(painted[i : i + 2], 16) - int(token[i : i + 2], 16)) > 16 for i in (1, 3, 5))
+
+    wrong = [item for item in fills[app] if far(*item.split("|")[2:4])]
+
+    assert not wrong, f"{app} paints a role in another colour than its token (role|text|painted|token): {wrong}"

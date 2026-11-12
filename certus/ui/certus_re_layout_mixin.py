@@ -824,7 +824,7 @@ class CertusRELayoutMixin:
 
         self.front_table.setRowCount(0)
 
-        self.front_table.setHorizontalHeaderLabels(["#", "Mat", "n@lambda₀", "QWOT", "Thick(nm)"])
+        self.front_table.setHorizontalHeaderLabels(["#", "Mat", "n@λ₀", "QWOT", "Thick(nm)"])
 
         header = self.front_table.horizontalHeader()
 

@@ -1,0 +1,7 @@
+{
+  "phase": "U3 (RE) - the index header of the stack table reads 'n@λ₀' instead of 'n@lambda₀', which asked for 83 px in a column of 54.",
+  "changed_code": [
+    "certus.ui.certus_re_layout_mixin:CertusRELayoutMixin._build_front_table_widget"
+  ],
+  "note": "Column widths untouched. Measured on RE: 1 text cut at both sizes before, 0 after."
+}

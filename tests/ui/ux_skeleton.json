@@ -124,7 +124,7 @@
     "QPushButton|Stop",
     "QPushButton|Colorimetric analysis",
     "QPushButton|🔬 Stack info",
-    "QPushButton|🔄  Clear / Reset",
+    "QPushButton|🔄  Reset",
     "QPushButton|Logs"
   ],
   "CERTUS_STRAT": [
@@ -158,7 +158,7 @@
     "QPushButton|Step 3 (Rob)",
     "QPushButton| RUN FULL WORKFLOW",
     "QPushButton|STOP Calculation",
-    "QPushButton|🔄  Clear / Reset",
+    "QPushButton|🔄  Reset",
     "QPushButton|Show Details"
   ],
   "CERTUS_RE": [
@@ -195,7 +195,7 @@
     "QPushButton|EVALUATE",
     "QPushButton|STOP",
     "QPushButton| Stack Info",
-    "QPushButton|🔄  Clear / Reset",
+    "QPushButton|🔄  Reset",
     "QPushButton|Show Details"
   ],
   "CERTUS_INDEX": [
@@ -242,7 +242,7 @@
     "QCheckBox|High Precision (Slower)",
     "QPushButton|START OPTIMIZATION",
     "QPushButton|STOP Calculation",
-    "QPushButton|🔄  Clear / Reset",
+    "QPushButton|🔄  Reset",
     "QPushButton|Show Details",
     "CertusThemeToggle|◐",
     "QPushButton|Skip",
@@ -311,7 +311,7 @@
     "QPushButton|■  Stop",
     "QPushButton|◆  Manual knots",
     "QPushButton|◈  Corridors / RMSE(d)",
-    "QPushButton|🔄  Clear / Reset",
+    "QPushButton|🔄  Reset",
     "QPushButton|Skip",
     "QPushButton|Back",
     "QPushButton|Next"
@@ -333,7 +333,7 @@
     "QPushButton|📸 Capture",
     "QPushButton|Show Details",
     "QPushButton|Copy Log",
-    "QPushButton|🔄  Clear / Reset",
+    "QPushButton|🔄  Reset",
     "QPushButton|▸  1  Materials Config",
     "QComboBox|",
     "QComboBox|",
@@ -445,7 +445,7 @@
     "QPushButton|■  Halt",
     "QPushButton|Beam Scan",
     "QPushButton|Logs",
-    "QPushButton|🔄  Clear / Reset",
+    "QPushButton|🔄  Reset",
     "CertusThemeToggle|◐",
     "QPushButton|Skip",
     "QPushButton|Back",
@@ -493,7 +493,7 @@
     "QPushButton|■  Halt",
     "QPushButton|Beam Scan",
     "QPushButton|Logs",
-    "QPushButton|🔄  Clear / Reset",
+    "QPushButton|🔄  Reset",
     "CertusThemeToggle|◐",
     "QPushButton|Skip",
     "QPushButton|Back",

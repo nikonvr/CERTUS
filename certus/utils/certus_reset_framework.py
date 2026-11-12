@@ -11,7 +11,7 @@ from typing import Any
 
 from PyQt6.QtWidgets import QMessageBox, QPlainTextEdit, QPushButton, QTextEdit, QWidget
 
-from certus.utils.certus_ux import Typography
+from certus.utils.certus_ux import OBJ, Typography
 from certus.utils.errors import NUMERICAL_FAULT_EXCEPTIONS
 
 __all__ = [
@@ -422,7 +422,7 @@ def create_reset_button(app_instance, use_app_reset: bool = False) -> QPushButto
 
     # Create button. The label carries its own symbol: the standard icon that used to sit beside it said the same
     # thing a second time, and cost 24 px of a control panel that has 394 at 1366x768.
-    reset_btn = QPushButton("🔄  Clear / Reset")
+    reset_btn = QPushButton("🔄  Reset")
 
     # Set tooltip
     reset_btn.setToolTip(
@@ -431,29 +431,11 @@ def create_reset_button(app_instance, use_app_reset: bool = False) -> QPushButto
         "and reloads the default configuration."
     )
 
-    # Professional styling. Horizontal padding 8 px: at 11 pt (D58), 16 px made this button set METAL's left panel
-    # to 403 px, more than the 394 it gets at 1366x768 (the owner's choice, 2026-10-06; tests/ui/test_ux_ratchet.py).
-    reset_btn.setStyleSheet("""
-        QPushButton {
-            background-color: #5a3a00;
-            color: white;
-            border: none;
-            padding: 8px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: BODY_LGpt;
-        }
-        QPushButton:hover {
-            background-color: #7a4a00;
-        }
-        QPushButton:pressed {
-            background-color: #4a2a00;
-        }
-        QPushButton:disabled {
-            background-color: #3a2a00;
-            color: #888;
-        }
-    """.replace("BODY_LG", str(Typography.BODY_LG)))  # D58: in a plain string, Qt dropped the size
+    # The destructive role of the palette (U6): the application sheet paints it and the theme follows it. The brown
+    # fill written here before (#5a3a00) was the same in both themes and in no palette.
+    reset_btn.setObjectName(OBJ.DANGER_BUTTON)
+    # The size the owner chose on 2026-10-06 (D58); the fill, the ink and the states stay those of the role.
+    reset_btn.setStyleSheet(f"QPushButton {{ font-size: {Typography.BODY_LG}pt; font-weight: bold; }}")
 
     if use_app_reset and hasattr(app_instance, "reset_to_defaults"):
         reset_btn.clicked.connect(app_instance.reset_to_defaults)

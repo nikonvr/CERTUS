@@ -373,7 +373,6 @@ WHITE_ICON = re.compile(r"certus_icon\([^)]*color\s*=\s*[\"']#(?:fff|ffffff)[\"'
 KEPT_WHITE_INKS = {
     "certus/ui/certus_hub_widgets.py": 1,  # the glyph on the square of a hub card, whose fill is the accent colour of its module
     "certus/ui/certus_manual_sigma_knot_dialog.py": 1,  # the overlay buttons of the knot dialog: a fixed dark rgba(30, 30, 30, 180)
-    "certus/utils/certus_reset_framework.py": 1,  # the reset button: a fixed dark amber, #5a3a00
 }
 
 

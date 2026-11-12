@@ -335,7 +335,7 @@ class _UIBuilderMixin:
         self.btn_run.setObjectName(OBJ.FEATURED_BUTTON)
         self.btn_run.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_run.setFixedHeight(38)
-        self.btn_run.setToolTip("Start global optimization (Smart Init). Raccourci : F5.")
+        self.btn_run.setToolTip("Start global optimization (Smart Init). Shortcut: F5.")
         self.btn_run.clicked.connect(self._on_run)
 
         self.btn_stop = QPushButton("■  Stop")

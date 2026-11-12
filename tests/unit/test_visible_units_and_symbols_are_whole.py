@@ -46,12 +46,20 @@ SPLINE_WINDOW = sorted((ROOT / "certus" / "ui").glob("certus_index_spline*.py"))
 FRENCH_WORDS = re.compile(
     r"\b(les|des|une|est|sont|avec|dans|chaque|cette|aux|donc|cela|leurs?|vaut|annule|echec|charger|voir|ecart|blocs|"
     r"couches?|neufs|temoins|fente|lissage|courbure|criblage|attente|profond|cibles|calcul|"
-    r"illisible|actif|inactif)\b|\ben (ln|cours|attente)\b",
+    r"illisible|actif|inactif|raccourcis?|fichiers?|ouvrir|enregistrer|fermer|erreurs?|valeurs?|lancer|arreter|termine|"
+    r"resultats?|donnees|parametres?|apercu|ajouter|supprimer|effacer|reinitialiser|annuler|quitter|suivant|etape|"
+    r"chargement|sauvegarder|afficher|masquer|cacher|depuis|aucun|aucune|toutes?|tous|selon|puis|ensuite)\b|"
+    r"\ben (ln|cours|attente)\b",
     re.IGNORECASE,
 )
 #: Strings that are French on purpose, because they are data and not text: the states of a multi-seed run are tokens of
 #: a state machine, pinned by value in tests/unit/test_strat_multigraine_ui.py, and translated when they are shown.
-FRENCH_DATA = {("certus_strat_multigraine_ui.py", "en attente"), ("certus_strat_multigraine_ui.py", "en cours")}
+#: The event `resultat` is a word of the protocol between the multi-seed script and its window (`{"evt": "resultat"}`).
+FRENCH_DATA = {
+    ("certus_strat_multigraine_ui.py", "en attente"),
+    ("certus_strat_multigraine_ui.py", "en cours"),
+    ("certus_strat_multigraine_ui.py", "resultat"),
+}
 FRENCH = (
     re.compile(r"[àâçéèêëîïôùûÀÂÇÉÈÊÔÛ]"),
     re.compile(r"\b[dlnqsjcDLNQSJC]'[a-zéèêà]{2,}"),

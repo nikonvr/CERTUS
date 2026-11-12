@@ -91,7 +91,7 @@ class CertusSubstratePresenter:
                 int(sell_de_maxiter), int(sell_ls_max_nfev), "ln(Li)" if sell_log_l1l2 else "linear(Li)"
             )
 
-            self.view.update_progress(1, 1, phase="Fit 3 laws (toutes colonnes)")
+            self.view.update_progress(1, 1, phase="Fit 3 laws (all columns)")
 
             n_results_raw, n_results_by_model, rmse_row, n_fit_meta = self._compute_n_results(
                 x, groups, wl_min_fit, wl_max_fit,

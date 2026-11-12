@@ -45,7 +45,7 @@ def test_strat_pinned_execution_buttons():
     assert strat.run_full_btn is not None
     assert strat.stop_step2_btn is not None
     assert strat.clear_btn is not None
-    assert strat.run_full_btn.text() == " RUN FULL WORKFLOW"
+    assert strat.run_full_btn.text() == " Run full workflow"
     assert strat.stop_step2_btn.isEnabled() is False  # Désactivé tant qu'aucun calcul ne tourne
     strat.close()
 

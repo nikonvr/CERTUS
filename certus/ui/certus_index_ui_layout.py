@@ -444,14 +444,14 @@ class CertusIndexLayoutMixin:
 
     def _add_main_control_buttons(self, left_layout: QVBoxLayout) -> None:
         """Create and add main control buttons to the left panel."""
-        self.btn_run = QPushButton("START OPTIMIZATION")
+        self.btn_run = QPushButton("Run optimization")
         self.btn_run.setObjectName(OBJ.PRIMARY_BUTTON)
         self.btn_run.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_run.setToolTip("Start the global optimization process.")
         self.btn_run.clicked.connect(self.run_optimization)
         left_layout.addWidget(self.btn_run)
 
-        self.btn_stop = QPushButton("STOP Calculation")
+        self.btn_stop = QPushButton("Stop")
         self.btn_stop.setObjectName(OBJ.DANGER_BUTTON)
         self.btn_stop.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_stop.setToolTip("Stop the current optimization safely.")

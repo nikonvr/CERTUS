@@ -1,0 +1,10 @@
+{
+  "phase": "U6 (vocabulary) - one word per gesture: the button that interrupts a computation reads 'Stop' (was 'STOP Calculation' in INDEX and STRAT, 'STOP' in RE, 'Halt' in METAL), and the labels are in sentence case ('Run optimization', 'Run full workflow', 'Evaluate').",
+  "changed_code": [
+    "certus.ui.certus_index_ui_layout:CertusIndexLayoutMixin._add_main_control_buttons",
+    "certus.ui.certus_metal_base_app:MetalBaseApp._create_action_buttons",
+    "certus.ui.certus_re_layout_mixin:CertusRELayoutMixin._build_action_buttons",
+    "certus.ui.certus_strat_ui_layout:CertusStratLayoutMixin._create_design_tab"
+  ],
+  "note": "Only the string constants change. The UX baselines (ux_baseline.json, ux_baseline_1366.json, ux_skeleton.json) and test_certus_ux_battery follow the words. STRAT's 'Stop && Proceed', shown during a run, is another gesture (stop phase 2 and go on) and stays. Decision Q30 of the plan."
+}

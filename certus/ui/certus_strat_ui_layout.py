@@ -616,7 +616,7 @@ class CertusStratLayoutMixin:
 
         tools_grid.addWidget(self.run_step3_btn, 5, 0)
 
-        self.stop_step2_btn = QPushButton("STOP Calculation")
+        self.stop_step2_btn = QPushButton("Stop")
         self.stop_step2_btn.setObjectName(OBJ.DANGER_BUTTON)
         self.stop_step2_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
@@ -632,7 +632,7 @@ class CertusStratLayoutMixin:
         self.stop_step2_btn.setEnabled(False)
         self.stop_step2_btn.clicked.connect(self.request_stop_optimization)
 
-        self.run_full_btn = QPushButton(" RUN FULL WORKFLOW")
+        self.run_full_btn = QPushButton(" Run full workflow")
         self.run_full_btn.setObjectName(OBJ.FEATURED_BUTTON)
         self.run_full_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.run_full_btn.setFixedHeight(42)

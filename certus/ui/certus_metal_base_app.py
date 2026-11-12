@@ -728,7 +728,7 @@ class MetalBaseApp(CertusBaseApp):
 
         r1.addWidget(self.btn_run)
 
-        self.btn_stop = QPushButton("■  Halt")
+        self.btn_stop = QPushButton("■  Stop")
         self.btn_stop.setObjectName(OBJ.DANGER_BUTTON)
         self.btn_stop.setCursor(Qt.CursorShape.PointingHandCursor)
 
@@ -736,7 +736,7 @@ class MetalBaseApp(CertusBaseApp):
 
         self.btn_stop.setEnabled(False)
 
-        self.btn_stop.setToolTip("Halt the running optimization and keep the best result found so far.")
+        self.btn_stop.setToolTip("Stop the running optimization and keep the best result found so far.")
 
         self.btn_stop.clicked.connect(self.stop_optimization)
 

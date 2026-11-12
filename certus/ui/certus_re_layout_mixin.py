@@ -560,7 +560,7 @@ class CertusRELayoutMixin:
 
         # Evaluate
 
-        self.eval_btn = QPushButton("EVALUATE")
+        self.eval_btn = QPushButton("Evaluate")
         self.eval_btn.setObjectName(OBJ.PRIMARY_BUTTON)
         self.eval_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
@@ -574,7 +574,7 @@ class CertusRELayoutMixin:
 
         # Stop (evaluation or RE in progress)
 
-        self.stop_btn = QPushButton("STOP")
+        self.stop_btn = QPushButton("Stop")
         self.stop_btn.setObjectName(OBJ.DANGER_BUTTON)
         self.stop_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 

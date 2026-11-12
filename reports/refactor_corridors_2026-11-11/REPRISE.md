@@ -153,23 +153,17 @@ un rouge que personne n'avait encore vu.
 | Rangement sur ordre de 👤 : copie périmée du plan supprimée à la racine ; worktrees anciens retirés ; le travail non commité du checkout principal (recherche locale de STRAT, campagne RICL) mis de côté sur la branche locale `wip/strat-local-search-ricl-2026-11-11` (`f81bb45d`, non validé, non poussé) ; `master` local avancé | — |
 
 | **U6, système d'actions** (Q30) : mesure `action_buttons` ; Reset au rôle destructif, plus de brun ; « Stop » partout et casse de phrase ; une action principale dans DESIGN, RE, STRAT, INDEX SPLINE, aucune dans le HUB ; cliquet `test_ux_one_action_system.py` (`21 failed` avant) ; `ux_` : `1166 passed` | `4eef2a9b` à `ac03ad10` |
+| **U7** : FIELD installe la feuille de la suite (régression de U6 corrigée, rôle vérifié sur le pixel peint) ; glyphe du bouton de thème partout (A10) ; un seul guide de déroulé (B1) ; correctif U1 | `055b6c76` à `7f6f529e` |
 **Dernière validation complète** : le 2026-11-12 vers 20 h 35, sur `9bb4999b` (plan §5.6).
 
 ## 5. En cours
 
-**U7** (nuit du 2026-11-12). Fait et commité : correctif U1 (`055b6c76`) ; glyphe du bouton de thème dans les dix
-fenêtres (A10, `4cecfd78`) ; FIELD : utilitaires en fantôme et « Unpolarized » (`bcd97ced`), feuille de la suite installée
-et rôle vérifié sur le pixel peint (`6b345d40`, rouge avant sur FIELD seul : son Reset peignait `#f5f5f5` depuis U6) ;
-`1368 passed` (FIELD et `ux_`). En cours : B1, un seul composant de déroulé (Q31 : `CertusStepper` sur deux colonnes, non
-cliquable, à la place des lignes à flèches de DESIGN, RE, METAL et de la phrase de STRAT). Vu, à faire après : « nuit
-(10 h) » en français dans une infobulle de STRAT (`certus_strat_multigraine_ui.py:318`).
+Rien : U7 est fait et commité. La prochaine tâche est la première du §6.
 
 ## 6. À faire, dans l'ordre
 
-1. **Correctif de U1** : l'infobulle de Run d'INDEX SPLINE finit en français (« Raccourci : F5. ») ; le cliquet de
-   langue ne l'a pas vue : comprendre pourquoi, l'étendre, le voir rouge, traduire.
-2. **U7 à U11** — FIELD dans le système d'actions, icônes vectorielles, échelle typographique, états vides
-   actionnables, messages (plan §5.5). **U12** (reprise d'un calcul après coupure) est à spécifier avant tout code : elle
+1. **U8** — icônes SVG du projet à la place des emojis (Q32).
+2. **U9 à U11** — échelle typographique, états vides actionnables, messages (Q33) (plan §5.5). **U12** (reprise d'un calcul après coupure) est à spécifier avant tout code : elle
    touche au calcul. **U13** (écran réel, HiDPI, lecteur d'écran, essais avec des utilisateurs) n'est pas à la portée
    d'une IA.
 
@@ -178,6 +172,10 @@ cliquable, à la place des lignes à flèches de DESIGN, RE, METAL et de la phra
 - Q26 : le français visible de STRAT, RE et du HUB **est traduit** en anglais (U1d, fait le 2026-11-12).
 - Q27 : les signes de U1b (`≈`, `∈`, `—`) restent.
 - Q28 : le test « au bit » du noyau STRAT reste tel quel ; un rouge se rejoue sur cache Numba vierge (§8).
+
+**Tranché par 👤 le 2026-11-12 au soir** (plan, section 4) : Q30, l'action principale de DESIGN est PGLOBAL ; Q31, un
+guide de déroulé statique unifié ; Q32, U8 avec les icônes SVG du projet (`certus_icon`) ; Q33, U11 : les informations
+en toast, avertissements et erreurs restent modaux, réécrits (cause et geste).
 
 **Ce qui reste à 👤 — des gestes, pas des arbitrages (Q29)**
 

@@ -523,6 +523,61 @@ def unlabelled_counters(win) -> list[str]:
     return found
 
 
+#: The object names the application sheet styles as a button role (`certus.utils.certus_ux.Objects`).
+BUTTON_ROLE_NAMES = {
+    "CertusPrimaryBtn": "primary",
+    "CertusFeaturedBtn": "primary",
+    "CertusDangerBtn": "danger",
+    "CertusSuccessBtn": "success",
+    "CertusGhostBtn": "ghost",
+    "CertusIconBtn": "icon",
+}
+
+
+def button_role(button) -> str:
+    """The role a push button is painted with: `primary`, `danger`, `secondary`, ..., `default`, or `raw:<colour>`.
+
+    Read, in this order, from the object name that the application sheet styles (`CertusPrimaryBtn`), from the variant
+    that `CertusTheme.get_button_style` writes at the head of a sheet (`/*B:primary*/`, `/*B:token:DANGER*/`), from the
+    palette token of the fill (`#0f62fe/*T:PRIMARY*/`), and last from a fill written as a bare colour, which no theme
+    follows (`raw:#5a3a00`). A button with none of these is drawn by the application sheet: `default`.
+    """
+    import re
+
+    role = BUTTON_ROLE_NAMES.get(button.objectName())
+    if role:
+        return role
+    sheet = button.styleSheet() or ""
+    marker = re.search(r"/\*B:(?:token:)?([A-Za-z_]+)\*/", sheet)
+    if marker:
+        return marker.group(1).lower()
+    fill = re.search(r"QPushButton\s*\{[^}]*?background(?:-color)?\s*:\s*([^;}]+)", sheet) or re.search(
+        r"^\s*background(?:-color)?\s*:\s*([^;}]+)", sheet, re.MULTILINE
+    )
+    if not fill:
+        return "default"
+    value = fill.group(1).strip()
+    token = re.search(r"/\*T:([A-Z_]+)\*/", value)
+    if token:
+        return token.group(1).lower()
+    if value.split("/*")[0].strip().lower() in {"transparent", "none"}:
+        return "ghost"
+    return f"raw:{value.split('/*')[0].strip()}"
+
+
+def action_buttons(win) -> list[str]:
+    """`role|text` for each push button visible at opening; the text keeps its letters, digits and punctuation only."""
+    from PyQt6.QtWidgets import QPushButton
+
+    found = []
+    for button in win.findChildren(QPushButton):
+        if not button.isVisible() or _is_transient(button):
+            continue
+        kept = "".join(ch for ch in button.text().replace("&", "") if ch.isascii() or ch.isalpha())
+        found.append(f"{button_role(button)}|{' '.join(kept.split())}")
+    return sorted(found)
+
+
 def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: int = 1080) -> dict:
     """Instantiate one app and collect every metric. Runs in a dedicated process."""
     # The offscreen plugin resolves NO font unless QT_QPA_FONTDIR points at a font
@@ -791,6 +846,7 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
     out.update(clipped_texts(win))
     out["zoom_indicators"] = zoom_indicators(win)
     out["unlabelled_counters"] = unlabelled_counters(win)
+    out["action_buttons"] = action_buttons(win)
     logging.setLogRecordFactory(make_record)
     out["shortcut_conflicts"] = conflicts
     out["toasts"] = sorted(

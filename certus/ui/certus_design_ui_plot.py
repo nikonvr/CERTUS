@@ -284,7 +284,7 @@ class PlotManager:
             N = int(self.ui.pareto_table.item(row, 0).text())
             
             menu = QMenu(self.ui.pareto_table)
-            action = menu.addAction("Voir le catalogue...")
+            action = menu.addAction("View the catalog...")
             res = menu.exec(self.ui.pareto_table.viewport().mapToGlobal(pos))
             if res == action:
                 self._show_catalog_dialog(N)
@@ -321,7 +321,7 @@ class PlotManager:
         btn_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         btn_box.rejected.connect(dialog.reject)
         
-        load_btn = QPushButton("Charger la configuration")
+        load_btn = QPushButton("Load this configuration")
         btn_box.addButton(load_btn, QDialogButtonBox.ButtonRole.ActionRole)
         
         def on_load():

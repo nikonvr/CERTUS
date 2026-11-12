@@ -75,7 +75,7 @@ class CertusIndexSplineApp(
     """CERTUS application to optimize spline parameters for a given substrate index model."""
 
     APP_NAME = "CERTUS_INDEX_SPLINE"
-    APP_TITLE = "CERTUS  Index Spline Optimization"
+    APP_TITLE = "Index Spline Optimization"
     DEFAULT_WIDTH = 1380
     DEFAULT_HEIGHT = 650
     MIN_WIDTH = 1100

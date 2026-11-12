@@ -175,7 +175,7 @@ class CertusREApp(
     """CERTUS application  reverse engineering (Excel measurements)."""
 
     APP_NAME = "CERTUS_RE"
-    APP_TITLE = "CERTUS  Reverse Engineering"
+    APP_TITLE = "Reverse Engineering"
     DEFAULT_WIDTH = 1440
     DEFAULT_HEIGHT = 640
     MIN_WIDTH = 1020

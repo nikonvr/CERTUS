@@ -1285,5 +1285,18 @@ dans STRAT. Trois sous-étapes, un commit chacune :
   textes sont écrits exprès, et STRAT est l'outil de 👤. S'il veut une seule langue partout, c'est une traduction
   fidèle, fenêtre par fenêtre, avec le même cliquet étendu.
 
+**U2, 2026-11-12.**
+
+- [x] **U2 — un format de titre.** `CERTUS-MODULE — ce que fait le module`, écrit en un endroit :
+  `CertusBaseApp._apply_window_title`. `APP_NAME` n'est pas touché (clé de réglages, nom de journal, nom de fichier) :
+  seul le titre l'affiche avec des tirets. Les `APP_TITLE` de RE et d'INDEX SPLINE perdent leur « CERTUS  » de tête ;
+  METAL, qui reçoit son nom après le constructeur de la base, rappelle la méthode ; le HUB et les tracés détachés
+  d'INDEX SPLINE écrivent le même tiret. `tests/ui/test_ux_window_titles_have_one_format.py` : `3 failed, 2 passed`
+  avant, `5 passed` après. Garde avec `manifests/phase_u2.json` : `GUARD=OK`. LOT et les tests qui lisent un titre :
+  `514 passed` et un rouge réel, corrigé : l'appel ajoutait 2 lignes à `certus_metal_base_app.py`, fichier long au
+  plafond (1 809) ; il est écrit sans allonger le fichier, et le cliquet de dette repasse (`28 passed` avec le test du
+  titre et `test_gui_apps_smoke.py`). Commencée par la session de nuit, coupée avant la garde ; reprise et vérifiée
+  de bout en bout le 2026-11-12 au matin. Validation complète : avec U3 à U5.
+
 **A1 corrigé par le relevé** : `? QWOT` n'est pas un symbole perdu. La ligne s'écrit quand le QWOT n'est pas un nombre
 fini ; le « ? » tient la place de la valeur. Laissé.

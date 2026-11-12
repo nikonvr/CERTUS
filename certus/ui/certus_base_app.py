@@ -316,6 +316,15 @@ class CertusBaseApp(QMainWindow, CertusZoomMixin, CertusCommandPaletteMixin, Cer
 
     LOG_TIMER_MS = 200
 
+    def _apply_window_title(self) -> None:
+        """Title the window `CERTUS-MODULE — what the module does`, the one format of the suite.
+
+        APP_NAME is also a settings key, a logger name and a file name, and two programs write it with underscores:
+        only the title shows it with hyphens. A window that receives its name after this constructor ran (METAL)
+        calls this again.
+        """
+        self.setWindowTitle(f"{str(self.APP_NAME).replace('_', '-')} — {self.APP_TITLE}")
+
     def __init__(
         self,
         parent=None,
@@ -344,11 +353,7 @@ class CertusBaseApp(QMainWindow, CertusZoomMixin, CertusCommandPaletteMixin, Cer
 
         set_certus_window_icon(self)
 
-        # Use APP_TITLE from subclass if defined, otherwise use base APP_TITLE
-
-        app_title = getattr(self.__class__, "APP_TITLE", self.APP_TITLE)
-
-        self.setWindowTitle(f"{self.APP_NAME}  {app_title}")
+        self._apply_window_title()
 
         # Center on screen
 

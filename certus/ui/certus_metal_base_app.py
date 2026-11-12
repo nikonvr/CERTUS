@@ -171,8 +171,8 @@ class MetalBaseApp(CertusBaseApp):
         super().__init__()
 
         self.APP_NAME = app_name
-
         self.APP_TITLE = app_title
+        self._apply_window_title()  # the base class titled the window before it had its name
 
         # Shared State
 

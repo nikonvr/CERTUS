@@ -535,7 +535,7 @@ class CertusIndexSplineEventsExtrasMixin:
 
         tab_name = self.tabs_main.tabText(self.tabs_main.currentIndex())
 
-        self.open_detached_certus_plot(plots[0], title=f"{self.APP_NAME}  {tab_name}")
+        self.open_detached_certus_plot(plots[0], title=f"{str(self.APP_NAME).replace('_', '-')} — {tab_name}")
 
     _lam_uniform_grid_nm = staticmethod(_lam_uniform_grid_nm)
 

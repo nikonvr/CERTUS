@@ -1,0 +1,22 @@
+{
+  "phase": "U2 - one title format for the windows of the suite, CERTUS-MODULE — what the module does. CertusBaseApp gains _apply_window_title; the METAL base calls it again once it has its name; the APP_TITLE of RE and of INDEX SPLINE lose their leading 'CERTUS  '; the HUB and the detached plots of INDEX SPLINE write the same dash.",
+  "added_attributes": [
+    "CERTUS_RE:CertusREApp._apply_window_title",
+    "certus.ui.certus_design_ui:CertusDesignApp._apply_window_title",
+    "certus.ui.certus_field_ui:CertusFieldApp._apply_window_title",
+    "certus.ui.certus_index_spline_ui:CertusIndexSplineApp._apply_window_title",
+    "certus.ui.certus_index_ui:CertusIndexApp._apply_window_title",
+    "certus.ui.certus_metal_bilayer_gui:CertusMetalBilayerApp._apply_window_title",
+    "certus.ui.certus_metal_single_gui:CertusMetalSingleApp._apply_window_title",
+    "certus.ui.certus_strat_ui:CertusStratApp._apply_window_title"
+  ],
+  "changed_code": [
+    "CERTUS_HUB:CertusHub.__init__",
+    "certus.ui.certus_index_spline_eventsextras_mixin:CertusIndexSplineEventsExtrasMixin._detach_current_plot"
+  ],
+  "rebound": [
+    "CERTUS_RE:CertusREApp.APP_TITLE",
+    "certus.ui.certus_index_spline_ui:CertusIndexSplineApp.APP_TITLE"
+  ],
+  "note": "Outside what the snapshot looks at, two more functions changed: CertusBaseApp.__init__ (two statements become one call) and MetalBaseApp.__init__ (one call added). APP_NAME is untouched: it is a settings key, a logger name and a file name. APP_TITLE is also the subtitle of the header of RE and of INDEX SPLINE, which now reads like the other modules'. tests/ui/test_ux_window_titles_have_one_format.py fails on the code before (3 failed, 2 passed)."
+}

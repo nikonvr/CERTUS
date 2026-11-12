@@ -291,7 +291,7 @@ class CertusHub(CertusDialogMixin, QMainWindow):
         # only window that does not inherit CertusBaseApp, so it needs its own call.
         configure_theme_from_preference()
 
-        self.setWindowTitle("CERTUS-HUB - Calculated Error Reduction Through Unbiased Simulation")
+        self.setWindowTitle("CERTUS-HUB — Calculated Error Reduction Through Unbiased Simulation")
 
         self.resize(800, 600)
 

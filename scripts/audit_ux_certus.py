@@ -578,6 +578,33 @@ def action_buttons(win) -> list[str]:
     return sorted(found)
 
 
+#: A pictogram drawn by the emoji font of the system: its look depends on the machine (U8). The typographic shapes the
+#: suite uses as glyphs (▶ ■ ◆ ◈ ⬡ ◐ → ✓) are text, drawn by the text font, and are not counted.
+EMOJI = re.compile("[\U0001f300-\U0001faff☀-⛿✀-➿⭐⭕⏩-⏺⌚⌛]️?")
+TEXT_GLYPHS = frozenset("✓✔✕✗✦★➔➜")
+
+
+def emoji_labels(win) -> list[str]:
+    """`kind|text` for each visible label, button, tab or group title that draws an emoji (U8)."""
+    from PyQt6.QtWidgets import QAbstractButton, QGroupBox, QLabel, QTabBar
+
+    def has_emoji(text: str) -> bool:
+        return any(m.group(0)[0] not in TEXT_GLYPHS for m in EMOJI.finditer(text or ""))
+
+    found = []
+    for widget in win.findChildren((QAbstractButton, QLabel, QGroupBox, QTabBar)):
+        if not widget.isVisible() or _is_transient(widget):
+            continue
+        if isinstance(widget, QTabBar):
+            texts = [widget.tabText(i) for i in range(widget.count())]
+        elif isinstance(widget, QGroupBox):
+            texts = [widget.title()]
+        else:
+            texts = [widget.text()]
+        found.extend(f"{type(widget).__name__}|{' '.join(t.split())[:60]}" for t in texts if has_emoji(t))
+    return sorted(found)
+
+
 def painted_role_fills(win) -> list[str]:
     """`role|text|painted|expected` for each enabled, visible primary or danger button.
 
@@ -871,6 +898,7 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
     out["unlabelled_counters"] = unlabelled_counters(win)
     out["action_buttons"] = action_buttons(win)
     out["painted_role_fills"] = painted_role_fills(win)
+    out["emoji_labels"] = emoji_labels(win)
     logging.setLogRecordFactory(make_record)
     out["shortcut_conflicts"] = conflicts
     out["toasts"] = sorted(

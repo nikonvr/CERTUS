@@ -13,9 +13,9 @@
 > ([`ETAT_actions.md`](ETAT_actions.md)), acquis ([`ETAT_acquis.md`](ETAT_acquis.md)), registre des audits ([`AUDITS.md`](AUDITS.md),
 > `grep -n "ALG-02" docs/AUDITS.md`), preuves dans `reports/` (le `bilan.md` d'un dossier).
 
-**Refactoring des corridors d'INDEX SPLINE (2026-11-11) et feuille de route UX (en cours)** : branche
-`claude/reprise-certus1111-926596`, non poussée ; refactoring fini, phases 0 à 10 faites et validées ; feuille de route
-UX : U1 à U5 faites le 2026-11-12 (validées jusqu'à U5 ; la traduction U1d attend sa validation complète), reste U6 à U13 ; fait, à faire, décisions qui attendent 👤 et mode de reprise sur un autre PC dans
+**Refactoring des corridors d'INDEX SPLINE (2026-11-11) et feuille de route UX (en cours)** : refactoring et U1 à U5
+validés, poussés sur `master` le 2026-11-12 (`9bb4999b`) ; suite sur la branche `claude/reprise-057fcd`, reste U6 à
+U13 ; fait, à faire, décisions qui attendent 👤 et mode de reprise sur un autre PC dans
 [`REPRISE.md`](../reports/refactor_corridors_2026-11-11/REPRISE.md), détail dans le plan du même dossier.
 
 **RICL (2026-11-05)** : précontrôle GO ; protocole de charge au sommet et sélection des tours cohérents, témoin nominal,
@@ -60,9 +60,10 @@ STRAT natif avec l'étape libre avant la conversion : 0,2655 nm, une graine, san
 (numba 0.68.0, llvmlite 0.50.0 ; les anciens pins n'avaient pas de roue 3.15). Même banc (`48c` premium, graine 42) sous 3.14.8 et 3.15.1 : mêmes 2 653
 stratégies, même meilleur plan, SEEL 0,15313 nm ; scores à 10⁻¹⁴ près (relatif médian), aucun identique au bit. Exécutable gelé construit et contrôlé sous 3.15.1.
 
-**Dernière validation complète** : 2026-10-31, avant `7e386166`, sous 3.15.2, en parallèle (`validate_parallel.py`, 15 workers ;
-`pytest-xdist` hors de `requirements.lock`, à installer à part) : `VALIDATION=GO`, oracle 1 165, unit 5 751 + 3 artefacts, ui 1 349,
-rest 320 + 1 artefact (`test_index_headless`), performance 29 ; `c1_diff HEAD` C1 TENU (9 092 tableaux). Artefact à creuser :
+**Dernière validation complète** : 2026-11-12, sur `9bb4999b`, sous 3.15.2, en parallèle (`validate_parallel.py`, 16 workers ;
+`pytest-xdist` hors de `requirements.lock`, à installer à part) : oracle 1 198, unit 5 998 + 2 artefacts, ui 1 449, rest 321 +
+1 artefact, performance 29 ; `VALIDATION=NO-GO` par le seul `coherence_md` connu (3 commandes mortes de campagne, numéros
+de ligne du plan des corridors). Dernier `c1_diff HEAD` C1 TENU (9 092 tableaux, phase 7b). Artefact à creuser :
 `test_neutral_parameters_are_bit_identical_to_the_legacy_call` a vu deux résultats différents au bit sous xdist (vert seul, 3 fois sur 3).
 Même famille, mesurée le 2026-11-11 et le 2026-11-12 (deux occurrences, mêmes valeurs) : un test « au bit » rouge à chaque relance sur le cache de l'arbre, vert sur cache Numba vierge
 ([note](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md)).

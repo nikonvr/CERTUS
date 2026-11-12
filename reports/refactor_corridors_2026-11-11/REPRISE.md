@@ -5,9 +5,10 @@ la mémoire de l'assistant. Il est mis à jour à chaque étape, avant de passer
 de chaque décision est dans `REFACTOR_PLAN.md`, même dossier ; ce fichier dit où on en est, comment repartir, et comment
 faire la suite.
 
-**État au 2026-11-12, 20 h** : le refactoring des corridors est **fini** (Phases 0 à 10, toutes validées). Feuille de
-route UX : **U1 (avec U1d, la traduction), U2, U3, U4, U5 faites** ; la prochaine étape est U6. Rien en cours, arbre
-propre. Rien n'est poussé. Une seule chose n'a pas été faite pour U1d : la validation complète (§6, point 1).
+**État au 2026-11-12, 21 h** : le refactoring des corridors est **fini** (Phases 0 à 10, toutes validées). Feuille de
+route UX : **U1 à U5 faites et validées**, **poussées sur `master`** (`9bb4999b`, sur ordre de 👤). La prochaine étape
+est U6, sur la branche `claude/reprise-057fcd`, en autonomie (nuit du 2026-11-12) ; ce qui suit `9bb4999b` n'est pas
+poussé.
 
 ## 1. Le chantier en cinq lignes
 
@@ -21,10 +22,10 @@ inchangé, bytecode prouvé identique par `scripts/refactor_guard.py`. S'y sont 
 
 ### 2.1 Avoir la branche
 
-Le travail est sur la branche locale **`claude/reprise-certus1111-926596`**, 78 commits au-dessus de `origin/master`
-(`9632f15b`). **Aucun n'est sur GitHub.** Chaîne des branches, chacune prolongeant la précédente en avance rapide :
-`claude/certus-refactor-audit-6cd1fc` (jusqu'à `bea41352`) → `claude/reprise-certus1111-926596` (jusqu'à `8088dc4c`) →
-`claude/certus-1111-reprise-60e136` (jusqu'à `cddf791a`) → de nouveau `claude/reprise-certus1111-926596` (tête).
+Tout jusqu'à `9bb4999b` (U1d) est sur **`master`, poussé** le 2026-11-12. La suite est sur la branche locale
+**`claude/reprise-057fcd`**, au-dessus de `origin/master`, non poussée. Branches plus anciennes, toutes contenues dans
+`master` : `claude/certus-refactor-audit-6cd1fc`, `claude/reprise-certus1111-926596`, `claude/certus-1111-reprise-60e136`
+(leurs worktrees sont supprimés).
 
 | Voie | Quand | Commandes |
 |---|---|---|
@@ -147,24 +148,25 @@ un rouge que personne n'avait encore vu.
 | **Validation complète après U4 et U5** : rien de plus que l'état connu ; un test de l'étape, fragile sous la charge, rendu robuste | sur `8e3a2c0f`, correctif `93d8706d` |
 | **U1d, traduction** (Q26) : INDEX SPLINE (4 chaînes sans accent que l'ancien test ne voyait pas), DESIGN (2), RE (1), SUBSTRATE (1, et les trois références UX qui l'enregistrent), HUB (1 message d'erreur), STRAT (bandeau d'état, panneau de la Phase A, en-tête de la Phase B, infobulles, avertissement multi-graines ; quatre tests qui lisaient le bandeau suivent les mots). Les états d'un calcul multi-graines restent en français : ce sont des jetons, traduits à l'affichage | `2e5c5978`, `1a6a50e3`, `10274ad6`, `4488c9dd`, `8b946a2f`, `cac0a5e3` |
 | **U1d, le cliquet** : aucune chaîne visible en français dans les 11 fenêtres, accents ou non ; rouge avant (49 chaînes trouvées sur le code d'avant la traduction) | `32569315` |
-| Ce fichier et le plan à jour après U1d ; `docs/ETAT.md` à jour | commit suivant `32569315` |
+| Ce fichier et le plan à jour après U1d ; `docs/ETAT.md` à jour | `9bb4999b` |
+| **Validation complète après U1d** : l'état connu seul (plan §5.6) ; **poussé sur `master`** sur ordre de 👤 | sur `9bb4999b` |
+| Rangement sur ordre de 👤 : copie périmée du plan supprimée à la racine ; worktrees anciens retirés ; le travail non commité du checkout principal (recherche locale de STRAT, campagne RICL) mis de côté sur la branche locale `wip/strat-local-search-ricl-2026-11-11` (`f81bb45d`, non validé, non poussé) ; `master` local avancé | — |
 
-**Dernière validation complète** : le 2026-11-12 à 18 h 08, après U5 (plan §5.6). Les commits de U1d (`2e5c5978` à
-`32569315`) ne l'ont pas encore passée : c'est la première tâche du §6.
+**Dernière validation complète** : le 2026-11-12 vers 20 h 35, sur `9bb4999b` (plan §5.6).
 
 ## 5. En cours
 
-Rien : tout ce qui est fait est commité. La prochaine tâche est la première de la liste ci-dessous.
+**U6, la mesure** : `scripts/audit_ux_certus.py::action_buttons` (rôle et libellé de chaque bouton visible à
+l'ouverture). Décision Q30 (à consigner au plan) : une action principale bleue par fenêtre, celle qui lance le calcul ;
+les actions secondaires en `CertusGhostBtn` ; Stop et Reset au style destructif des jetons (`CertusDangerBtn`), plus
+de brun `#5a3a00` ; vocabulaire Run, Stop, Reset en casse de phrase.
 
 ## 6. À faire, dans l'ordre
 
-1. **Validation complète** (§8), due depuis U1d : la traduction a passé ruff, la garde, le cliquet de langue, les
-   tests de STRAT, de la langue, des cliquets UX des fenêtres traduites ; pas la suite entière. Puis cocher U1 au plan
-   et mettre `docs/ETAT.md` à jour (section 0).
-2. **U6** — un système d'actions : un vocabulaire (Run, Stop, Reset), une seule action principale par écran, le style
+1. **U6** — un système d'actions : un vocabulaire (Run, Stop, Reset), une seule action principale par écran, le style
    destructif des jetons (constats B2, B4, B5). Commencer par une mesure dans l'audit (comme U3 à U5), voir le test
    rouge, puis corriger fenêtre par fenêtre.
-3. **U7 à U11** — FIELD dans le système d'actions, icônes vectorielles, échelle typographique, états vides
+2. **U7 à U11** — FIELD dans le système d'actions, icônes vectorielles, échelle typographique, états vides
    actionnables, messages (plan §5.5). **U12** (reprise d'un calcul après coupure) est à spécifier avant tout code : elle
    touche au calcul. **U13** (écran réel, HiDPI, lecteur d'écran, essais avec des utilisateurs) n'est pas à la portée
    d'une IA.
@@ -177,13 +179,9 @@ Rien : tout ce qui est fait est commité. La prochaine tâche est la première d
 
 **Ce qui reste à 👤 — des gestes, pas des arbitrages (Q29)**
 
-- **Fusionner** la branche dans `master`, et **pousser** : le dépôt est public, et l'assistant ne pousse pas.
-- **Supprimer** la copie périmée `REFACTOR_PLAN.md` à la racine du checkout principal (elle y fait échouer deux
-  contrôles ; un crochet interdit à une session de worktree d'y écrire).
-- **Ménage des worktrees** : `certus-1111-reprise-60e136` garde une copie non commitée de U2 (six fichiers modifiés,
-  deux nouveaux), reprise et commitée ici en `bf5cda14` : **ne pas la commiter là-bas**, elle peut être abandonnée. Les
-  worktrees `certus-refactor-audit-6cd1fc` et `certus-1111-reprise-60e136` sont entièrement contenus dans la branche
-  de tête.
+- **Pousser** ce qui suit `9bb4999b` (U6 et la suite) : seulement sur son ordre, le dépôt est public.
+- **Reprendre** sa branche `wip/strat-local-search-ricl-2026-11-11` (dans le checkout principal, pas dans un worktree
+  de session) ; un seul conflit attendu avec `master` : `reports/RICL_ultimate_2026-11-05/exhaustive_clean_bs.py`.
 
 ## 7. Recettes
 

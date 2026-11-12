@@ -1314,7 +1314,10 @@ dans STRAT. Trois sous-étapes, un commit chacune :
   `manifests/phase_u1d_strat.json` (`_MACHINE_SOURCES` : mêmes clés, mêmes valeurs neutres, six étiquettes) :
   `GUARD=OK`. Cliquet de langue et tests de STRAT qui lisent le bandeau : `107 passed` ; cliquets UX des fenêtres
   traduites (rien de tronqué, cliquet UX, squelette, démarrage sans bruit) : `40 passed`.
-- [ ] Validation complète après U1d : non faite.
+- [x] **Validation complète après U1d** (`validate_parallel.py`, `9bb4999b`, 2026-11-12) : ruff PASS ; oracle `1198 passed` ;
+  unit `5998 passed` + 2 artefacts verts seuls ; ui `1449 passed` ; rest `321 passed` + 1 artefact
+  (`test_bare_substrate_transmission_bounds`) ; performance `29 passed` ; seul `coherence_md` rouge, l'état connu.
+  Poussé sur `master` le même jour.
 
 **U2, 2026-11-12.**
 

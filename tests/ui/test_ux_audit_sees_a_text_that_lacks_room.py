@@ -105,6 +105,30 @@ def test_a_header_narrower_than_its_text_is_clipped_and_a_wide_one_is_not(qapp) 
     assert kinds(found["clipped"]) == ["header|Wavelength max (nm)"]
 
 
+def test_a_header_of_two_lines_is_measured_line_by_line(qapp) -> None:
+    from PyQt6.QtWidgets import QStyle, QTableWidget
+
+    from scripts.audit_ux_certus import clipped_texts
+
+    def build(host) -> None:
+        table = QTableWidget(1, 1, host)
+        table.setHorizontalHeaderLabels(["Wavelength max\n(nm)"])
+        table.setGeometry(0, 0, 400, 100)
+        header = table.horizontalHeader()
+        margin = header.style().pixelMetric(QStyle.PixelMetric.PM_HeaderMargin, None, header)
+        longest_line = header.fontMetrics().horizontalAdvance("Wavelength max")
+        table.setColumnWidth(0, longest_line + 2 * margin + 2)  # room for the longest line, not for the two end to end
+
+    host = _host(qapp, build)
+    try:
+        found = clipped_texts(host)
+    finally:
+        host.close()
+        host.deleteLater()
+
+    assert found["clipped"] == []
+
+
 def test_what_wraps_and_what_is_hidden_is_not_counted(qapp) -> None:
     from PyQt6.QtWidgets import QLabel
 

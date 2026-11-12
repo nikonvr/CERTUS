@@ -472,7 +472,8 @@ def clipped_texts(win) -> dict[str, list[str]]:
             if not shown(text):
                 continue
             given = header.sectionSize(section)
-            needed = header.fontMetrics().horizontalAdvance(text) + 2 * margin
+            # A header may hold several lines (the unit under the name): its width is that of its longest line.
+            needed = max(header.fontMetrics().horizontalAdvance(line) for line in text.split("\n")) + 2 * margin
             if needed > given + 1:
                 clipped.add(f"header|{shown(text)}|{needed}>{given}")
             elif header.sectionSizeHint(section) > given + 1:

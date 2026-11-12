@@ -387,7 +387,7 @@ class CertusStratLayoutMixin:
 
         self.toggle_details_btn.setToolTip("Show/hide the computation log panel below the plot area.")
 
-        self.toggle_details_btn.setObjectName(OBJ.PRIMARY_BUTTON)
+        self.toggle_details_btn.setObjectName(OBJ.GHOST_BUTTON)
 
         self.toggle_details_btn.toggled.connect(self.on_toggle_details)
 
@@ -573,7 +573,6 @@ class CertusStratLayoutMixin:
         tools_grid.addWidget(line, 3, 0, 1, 2)
 
         self.run_step0_btn = QPushButton("Step 1 (Nominal)")
-        self.run_step0_btn.setObjectName(OBJ.PRIMARY_BUTTON)
         self.run_step0_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         set_std_icon(self.run_step0_btn, QStyle.StandardPixmap.SP_ComputerIcon)
@@ -587,7 +586,6 @@ class CertusStratLayoutMixin:
         tools_grid.addWidget(self.run_step0_btn, 4, 0)
 
         self.run_step2_btn = QPushButton("Step 2 (Opti)")
-        self.run_step2_btn.setObjectName(OBJ.PRIMARY_BUTTON)
         self.run_step2_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         set_std_icon(self.run_step2_btn, QStyle.StandardPixmap.SP_BrowserReload)
@@ -601,7 +599,6 @@ class CertusStratLayoutMixin:
         tools_grid.addWidget(self.run_step2_btn, 4, 1)
 
         self.run_step3_btn = QPushButton("Step 3 (Rob)")
-        self.run_step3_btn.setObjectName(OBJ.PRIMARY_BUTTON)
         self.run_step3_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         set_std_icon(self.run_step3_btn, QStyle.StandardPixmap.SP_DialogApplyButton)

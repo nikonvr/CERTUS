@@ -45,7 +45,7 @@ from certus.ui.certus_ui import (
     open_documentation,
     open_file_explorer,
 )
-from certus.ui.certus_ui_widgets_factory import CertusBooleanField
+from certus.ui.certus_ui_widgets_factory import CertusBooleanField, create_workflow_hint
 from certus.utils.certus_ux import OBJ, Typography, build_premium_overrides
 
 #: Settings typed as a comma-separated LIST, not a single number: a number
@@ -258,13 +258,7 @@ class CertusStratLayoutMixin:
 
         workflow_card = CertusCard("Workflow")
 
-        workflow_hint = QLabel("1 Build stack · 2 Configure optimization · 3 Run workflow · 4 Inspect strategies")
-
-        workflow_hint.setWordWrap(True)
-
-        workflow_hint.setStyleSheet(
-            f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt; line-height: 1.4; padding: 2px 0 4px 0;"
-        )
+        workflow_hint = create_workflow_hint(['Build stack', 'Configure optimization', 'Run workflow', 'Inspect strategies'])
 
         workflow_card.body.addWidget(workflow_hint)
 

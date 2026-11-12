@@ -59,6 +59,7 @@ from certus.ui.certus_ui import (
     set_certus_window_icon,
     wrap_scientific_plot_with_toolbar,
 )
+from certus.ui.certus_ui_widgets_factory import create_workflow_hint
 from certus.utils.certus_re_helpers import (
     RE_GUI_DEFAULT_BEAM_APERTURE_DEG,
     RE_SPLINE_NODE2_DEFAULT_NM,
@@ -154,11 +155,7 @@ class CertusRELayoutMixin:
 
         workflow_card = CertusCard("Workflow")
 
-        workflow_hint = QLabel("1 Load workbook  →  2 Evaluate spectrum  →  3 Run RE  →  4 Inspect results")
-
-        workflow_hint.setWordWrap(True)
-
-        workflow_hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY}pt;")
+        workflow_hint = create_workflow_hint(['Load workbook', 'Evaluate spectrum', 'Run RE', 'Inspect results'])
 
         workflow_card.body.addWidget(workflow_hint)
 

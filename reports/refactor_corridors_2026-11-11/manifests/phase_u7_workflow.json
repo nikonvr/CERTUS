@@ -1,0 +1,8 @@
+{
+  "phase": "U7 (B1) - the static workflow guide is one component, create_workflow_hint: DESIGN, RE, METAL and STRAT stop writing it by hand (two separators, three styles).",
+  "changed_code": [
+    "certus.ui.certus_metal_base_app:MetalBaseApp.setup_ui",
+    "certus.ui.certus_re_layout_mixin:CertusRELayoutMixin._build_left_panel"
+  ],
+  "note": "The steps keep their words; STRAT's middle dots become the arrows of the others, RE and STRAT take the hint style. The functions of DESIGN and STRAT that build the guide are outside the snapshot. METAL's and RE's files lose lines and their ceilings in tests/architecture_debt.json follow (1809 -> 1808, 1746 -> 1743). Decision Q31 of the plan, confirmed by the owner."
+}

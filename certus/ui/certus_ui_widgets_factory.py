@@ -335,6 +335,18 @@ def create_styled_button(text: str, variant: str = "primary", icon: QIcon | None
 
     return btn
 
+def create_workflow_hint(steps: list[str]) -> QLabel:
+    """The static guide of a window's workflow: its steps, numbered and joined by arrows, in the hint style (U7, B1).
+
+    DESIGN, RE, METAL and STRAT wrote it by hand, with two separators (arrows, middle dots) and three styles. It guides,
+    it does not follow the progress: INDEX SPLINE's `CertusStepper` is a navigation control, another component.
+    """
+    label = QLabel("  →  ".join(f"{number} {step}" for number, step in enumerate(steps, 1)))
+    label.setWordWrap(True)
+    label.setStyleSheet(CertusTheme.get_hint_text_style())
+    return label
+
+
 def create_info_icon(tooltip: str, parent=None) -> QPushButton:
     """Creates a small '?' info icon with tooltip."""
 

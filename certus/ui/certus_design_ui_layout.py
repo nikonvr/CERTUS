@@ -43,6 +43,7 @@ from certus.ui.certus_ui import (
     create_header_logo_widget,
     create_top_actions_bar,
 )
+from certus.ui.certus_ui_widgets_factory import create_workflow_hint
 from certus.utils.certus_ux import OBJ, Typography
 
 
@@ -108,11 +109,7 @@ class LayoutManager:
 
         workflow_card = CertusCard("Workflow")
 
-        workflow_hint = QLabel("1 Configure materials  →  2 Define stack  →  3 Set optimizer  →  4 Evaluate / Run")
-
-        workflow_hint.setWordWrap(True)
-
-        workflow_hint.setStyleSheet(CertusTheme.get_hint_text_style())
+        workflow_hint = create_workflow_hint(['Configure materials', 'Define stack', 'Set optimizer', 'Evaluate / Run'])
 
         workflow_card.body.addWidget(workflow_hint)
 

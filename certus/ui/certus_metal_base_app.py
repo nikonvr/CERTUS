@@ -81,6 +81,7 @@ from certus.ui.certus_ui import (
     show_toast,
     stop_worker_and_thread,
 )
+from certus.ui.certus_ui_widgets_factory import create_workflow_hint
 from certus.utils.certus_data import (
     ReportSection,
     build_standard_report,
@@ -448,9 +449,7 @@ class MetalBaseApp(CertusBaseApp):
         left_layout.setSpacing(10)
 
         workflow_card = CertusCard("Workflow")
-        workflow_hint = QLabel("1 Load data  →  2 Configure model  →  3 Run analysis  →  4 Review & export")
-        workflow_hint.setWordWrap(True)
-        workflow_hint.setStyleSheet(CertusTheme.get_hint_text_style())
+        workflow_hint = create_workflow_hint(['Load data', 'Configure model', 'Run analysis', 'Review & export'])
         workflow_card.body.addWidget(workflow_hint)
         left_layout.addWidget(workflow_card)
 

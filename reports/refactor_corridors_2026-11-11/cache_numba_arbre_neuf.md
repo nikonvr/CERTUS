@@ -26,8 +26,25 @@ pendant un lot de contrôle (le préchauffage d'une fenêtre), puis 37 entre 23:
 validation. C'est l'effet décrit en référence §5 : un noyau `fastmath` n'a pas toujours les mêmes derniers bits selon
 le contexte où il est compilé. Les deux spécialisations que le test compare venaient de deux contextes.
 
-**Non mesuré** : lequel des deux temps a produit les spécialisations décalées, et si le second remplissage (vert) l'est
-par construction ou par chance. Une seule répétition de chaque cas.
+## Deuxième occurrence, 2026-11-12 : l'écart est déterministe
+
+La Phase 7b a changé la clé du cache (`23ad45b8a350`). La validation complète de `aa75be4f` a rendu le même test rouge,
+seul aussi, avec **les quatre mêmes valeurs au chiffre près** que la veille (150.0000000000001 et 149.99999999996368
+pour les deux appels écrits). Le cache avait reçu le noyau dans le même ordre : 4 spécialisations pendant un lot
+(03:59), 38 pendant la validation (04:04 à 04:12). Sur cache vierge, de nouveau `7 passed`.
+
+Deux hypothèses essayées, chacune sur un cache vierge, un seul processus, et **réfutées** :
+
+| D'abord | Artefacts du noyau après | Puis le test | Valeurs |
+|---|---|---|---|
+| `tests/integration/test_suite_ui_instantiation.py` (le préchauffage des fenêtres) | 4 | `7 passed` | égales deux à deux |
+| `tests/oracle/` | 0 | `7 passed` | égales deux à deux |
+
+Ni le préchauffage des fenêtres ni l'oracle ne produisent la spécialisation décalée. Elle vient donc de l'étape `unit`
+en parallèle, sur un cache qui contient déjà une partie du noyau.
+
+**Non trouvé** : quel test, dans quel processus, compile la spécialisation décalée. Le rejeu vert de la veille (cache
+vidé, puis `validate_parallel.py --only unit`) n'a été fait qu'une fois : il peut tenir à l'ordre des 16 processus.
 
 ## Ce que cela change
 
@@ -39,4 +56,5 @@ par construction ou par chance. Une seule répétition de chaque cas.
   rouge en parallèle et vert seul dans les deux validations de cette nuit.
 - Le test n'a pas été modifié. À 👤 de dire s'il doit exiger le bit entre deux spécialisations.
 
-Le cache fautif est gardé, hors dépôt : `%TEMP%\CERTUS_Numba_Cache_set_aside_2026-11-11_2350` (quatre dossiers).
+Les deux caches fautifs sont gardés, hors dépôt : `%TEMP%\CERTUS_Numba_Cache_set_aside_2026-11-11_2350` et
+`%TEMP%\CERTUS_Numba_Cache_set_aside_2026-11-12_0430` (quatre dossiers chacun). Le cache de l'arbre repart vide.

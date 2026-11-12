@@ -85,7 +85,8 @@ suivante. En cas de coupure, on repart d'ici. Le détail des phases est dans `RE
 | **Phase 10d** : le `2e-4` de l'intervalle robuste s'appelle `_DEFAULT_CORRIDOR_ROBUST_RMSE_DELTA`, lu aux six endroits (Q12) ; test rouge avant (`3 failed`) | `e9f68946` |
 | **Validation complète de la phase 10** : rien de plus que l'état connu ; un rouge dû au cache Numba de l'arbre neuf, vert sur cache vierge ([note](cache_numba_arbre_neuf.md)) | sur `e9f68946` |
 | **Phase 7a** : `_resolve_strat_indices_db_path` descend dans `certus/core/certus_indices_db.py` ; FIELD n'importe plus rien de STRAT ; test rouge avant (`4 failed`) | `37c9ca26` |
-| **Phase 7b** (Q25) : `spectral_rmse_weights` descend dans `certus/domain/spectral_weights.py` ; DESIGN, RE et le gradient analytique la prennent là ; oracle avant/après verts, `c1_diff HEAD` : C1 TENU (9 092 tableaux) ; test rouge avant (`7 failed`) | commit « phase 7b » |
+| **Phase 7b** (Q25) : `spectral_rmse_weights` descend dans `certus/domain/spectral_weights.py` ; DESIGN, RE et le gradient analytique la prennent là ; oracle avant/après verts, `c1_diff HEAD` : C1 TENU (9 092 tableaux) ; test rouge avant (`7 failed`) | `aa75be4f` |
+| **Validation complète de la phase 7** : rien de plus que l'état connu, et le même test « au bit » rouge sur le cache de l'arbre, vert sur cache vierge (deuxième occurrence, mêmes valeurs : [note](cache_numba_arbre_neuf.md)) | sur `aa75be4f` |
 
 ## En cours
 
@@ -93,9 +94,11 @@ Rien : tout ce qui est fait est commité. La prochaine tâche est la première d
 
 ## À faire, dans l'ordre
 
-1. Validation complète de la Phase 7 (`python scripts/validate_parallel.py`, rien d'autre en même temps ; la clé du
-   cache Numba a changé, le premier passage recompile tout à froid), puis `docs/ETAT.md` à jour.
-2. Feuille de route UX, plan section 5.5 : U1 à U5 d'abord (défauts visibles).
+1. Feuille de route UX, plan section 5.5 : U1 à U5 d'abord (défauts visibles). U1 : l'historique git n'a pas les
+   symboles d'origine (les « ? » y sont dès le premier commit) ; écrire ce que le code fait, ne pas deviner un glyphe.
+   `scripts/sonde_libelles_visibles.py` mesure déjà les chaînes mutilées.
+2. À 👤 : dire si `test_without_the_flag_the_kernel_keeps_the_coarse_samples_bit_for_bit` doit exiger le bit entre deux
+   spécialisations Numba ; tant qu'il le fait, une validation en parallèle peut le rendre rouge selon le cache.
 
 Outils : pour une extraction, `tools/` (`plan_move`, `move`, `manifest`, `contracts`, `protocols`, `born_in`, puis `guard`
 et `lot`) ; `tools/static_to_function.py` pour une méthode statique ; `tools/unread_imports.py` pour le relevé de clôture.

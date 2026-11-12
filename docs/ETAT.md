@@ -14,7 +14,7 @@
 > `grep -n "ALG-02" docs/AUDITS.md`), preuves dans `reports/` (le `bilan.md` d'un dossier).
 
 **Refactoring des corridors d'INDEX SPLINE (2026-11-11, en cours)** : branche `claude/certus-1111-reprise-60e136`, non
-poussée ; phases 0 à 6, 8 (clôture), 9 et 10 faites et validées, restent 7 et la feuille de route UX ; fait, en cours,
+poussée ; phases 0 à 10 faites et validées (7 comprise), reste la feuille de route UX ; fait, en cours,
 reste à faire et mode de reprise dans
 [`REPRISE.md`](../reports/refactor_corridors_2026-11-11/REPRISE.md), détail dans le plan du même dossier.
 
@@ -64,7 +64,7 @@ stratégies, même meilleur plan, SEEL 0,15313 nm ; scores à 10⁻¹⁴ près (
 `pytest-xdist` hors de `requirements.lock`, à installer à part) : `VALIDATION=GO`, oracle 1 165, unit 5 751 + 3 artefacts, ui 1 349,
 rest 320 + 1 artefact (`test_index_headless`), performance 29 ; `c1_diff HEAD` C1 TENU (9 092 tableaux). Artefact à creuser :
 `test_neutral_parameters_are_bit_identical_to_the_legacy_call` a vu deux résultats différents au bit sous xdist (vert seul, 3 fois sur 3).
-Même famille, mesurée le 2026-11-11 : un test « au bit » rouge à chaque relance dans un arbre neuf, vert sur cache Numba vierge
+Même famille, mesurée le 2026-11-11 et le 2026-11-12 (deux occurrences, mêmes valeurs) : un test « au bit » rouge à chaque relance sur le cache de l'arbre, vert sur cache Numba vierge
 ([note](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md)).
 Avant de committer du code, la validation de CLAUDE.md §2 en entier : un sous-ensemble a déjà laissé passer une régression
 (`tests/unit/test_the_architecture_debt_only_shrinks.py` ne tourne pas avec les tests voisins).

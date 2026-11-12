@@ -937,6 +937,14 @@ tests qui chronomètrent ou attendent un délai) ; ui `1366 passed` ; rest `322 
 
 ### [x] Phase 7 — Découplage entre familles (chantier séparé, Q10) — faite le 2026-11-12
 
+**Validation complète, sur `aa75be4f`** (`validate_parallel.py`, 16 workers, 2026-11-12 04:00 à 04:25) : ruff,
+`check_claude_md`, `check_docs` PASS ; `coherence_md` FAIL (état connu) ; oracle `1198 passed` ; ui `1374 passed` ; reste
+`321 passed` et l'artefact vert seul déjà vu (`test_bare_substrate_transmission_bounds`) ; performance `29 passed` ; unit
+`5985 passed`, un test qui chronomètre vert seul, et **le même test « au bit » du noyau de croissance rouge aussi
+seul**, pour la deuxième fois, avec les mêmes valeurs. Vert sur cache Numba vierge (`7 passed`, trois fois). Ce rouge
+dépend du contenu du cache, pas de la phase : [`cache_numba_arbre_neuf.md`](cache_numba_arbre_neuf.md). `VALIDATION=NO-GO`
+au sens de l'outil ; rien d'autre que l'état connu et ce test.
+
 Chaque arête se traite seule, par descente de l'utilitaire dans un module partagé et réexport à l'ancien emplacement.
 **Placée après la Phase 10 (Q21)** : c'est un autre chantier, et 7b touche au calcul.
 La liste des tests propres à chaque famille est à compléter par un Grep du nom déplacé dans `tests/` en début de sous-phase.

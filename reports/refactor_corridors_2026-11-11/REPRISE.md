@@ -178,7 +178,7 @@ En cours : **U9**, l'échelle typographique.
 
 **Tranché par 👤 le 2026-11-12 au soir** (plan, section 4) : Q30, l'action principale de DESIGN est PGLOBAL ; Q31, un
 guide de déroulé statique unifié ; Q32, U8 avec les icônes SVG du projet (`certus_icon`) ; Q33, U11 : les informations
-en toast, avertissements et erreurs restent modaux, réécrits (cause et geste). Le 2026-11-13 : Q34, le corps de texte est 10 pt partout ; Q35, le garde-fou SVG est levé à partir de PyQt6 6.11.
+en toast, avertissements et erreurs restent modaux, réécrits (cause et geste). Le 2026-11-13 : Q34, le corps de texte est 10 pt partout ; Q35, le garde-fou SVG est levé à partir de PyQt6 6.11. Puis Q36, Reset à 10 pt (remplace D58) ; Q37, accueils de STRAT et du HUB : fichiers récents et exemple ; **Q38, pousser sur `master` après la validation complète finale si seuls les rouges connus restent (ordre de 👤)** ; Q39, U12 : une spécification, pas de code.
 
 **Garde-fou SVG** : tranché par 👤 le 2026-11-13 (Q35), voir le plan.
 

@@ -1155,6 +1155,10 @@ questions »)** — les questions que les sessions précédentes lui réservaien
 | Q33 | U11 : que faire des 175 boîtes modales ? | **Les 75 informations deviennent des toasts** ; avertissements et erreurs restent des dialogues, réécrits pour dire la cause et le geste ; aucun texte brut d'exception (A9). **Choix de 👤, 2026-11-12.** | Un avertissement en toast peut passer inaperçu pendant un long calcul. |
 | Q34 | U9 : deux tailles de corps coexistent (11 pt dans DESIGN et RE, 10 pt ailleurs) : laquelle garder ? | **10 pt partout** : DESIGN et RE passent au corps des neuf autres fenêtres. **Choix de 👤, 2026-11-13.** | Le moins de changements (deux fenêtres) ; plus de place pour les tracés. |
 | Q35 | U8 : le garde-fou qui rend vides les icônes SVG sous Windows avec Python ≥ 3.14 ? | **Levé à partir de PyQt6 6.11**, gardé pour les versions antérieures ; `CERTUS_SVG_ICONS` force toujours. **Choix de 👤, 2026-11-13**, sur la mesure : 6 × 14 080 rendus, dorsales `offscreen` et `windows`, aucun plantage (PyQt6 6.11.0, Python 3.15.2). | Le plantage d'origine (2026-05-27) date d'une version plus ancienne ; une borne de version garde la protection là où elle n'a pas été réfutée. |
+| Q36 | La police du bouton Reset, fixée à 11 pt par 👤 le 2026-10-06 (D58), avec un corps à 10 pt (Q34) ? | **Alignée sur 10 pt** : D58 est remplacée par Q34. **Choix de 👤, 2026-11-13.** | Une seule taille pour les boutons. |
+| Q37 | U10 : quelles actions dans les accueils de STRAT et du HUB ? | **Fichiers récents et ouvrir l'exemple** (`example/example_strat/JSON-strat-example.json`, lu, jamais écrit). **Choix de 👤, 2026-11-13.** | La reprise de session touche à U12. |
+| Q38 | Pousser les commits de la nuit ? | **Oui, après la validation complète finale, si seuls les rouges connus restent** (§8 de REPRISE). **Ordre de 👤, 2026-11-13.** | — |
+| Q39 | U12 cette nuit ? | **Une spécification dans `reports/`, aucun code.** **Choix de 👤, 2026-11-13.** | U12 touche au calcul (C1, C2). |
 
 Il ne reste aucune question ouverte. Q29 est caduque depuis le 2026-11-12 : 👤 a ordonné la fusion, le push et le rangement, faits ce jour-là.
 

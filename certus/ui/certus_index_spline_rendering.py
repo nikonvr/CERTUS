@@ -356,7 +356,6 @@ class _UIBuilderMixin:
         post_row.setSpacing(6)
 
         self.btn_manual_knots_toggle = QPushButton("◆  Manual knots")
-        self.btn_manual_knots_toggle.setObjectName(OBJ.PRIMARY_BUTTON)
         self.btn_manual_knots_toggle.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_manual_knots_toggle.setFixedHeight(32)
         self.btn_manual_knots_toggle.setToolTip(
@@ -365,7 +364,6 @@ class _UIBuilderMixin:
         self.btn_manual_knots_toggle.clicked.connect(self._on_btn_manual_knots_clicked)
 
         self.btn_corridor_toggle = QPushButton("◈  Corridors / RMSE(d)")
-        self.btn_corridor_toggle.setObjectName(OBJ.PRIMARY_BUTTON)
         self.btn_corridor_toggle.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_corridor_toggle.setFixedHeight(32)
         self.btn_corridor_toggle.setToolTip(
@@ -659,7 +657,7 @@ class _UIBuilderMixin:
         self.btn_copy_nk.clicked.connect(self._copy_nk_to_clipboard)
         tb.addWidget(self.btn_copy_nk)
 
-        self.btn_export_nk = create_styled_button("Export CSV...", "primary")
+        self.btn_export_nk = create_styled_button("Export CSV...", "secondary")
         self.btn_export_nk.setEnabled(False)
         self.btn_export_nk.clicked.connect(self._export_nk_csv)
         tb.addWidget(self.btn_export_nk)

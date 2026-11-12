@@ -1,0 +1,7 @@
+{
+  "phase": "U6 (INDEX SPLINE) - one primary action, 'Run Optimization' (featured): 'Manual knots' and 'Corridors / RMSE(d)' keep the neutral style of the application sheet; the CSV export of n,k is secondary, no longer primary.",
+  "changed_code": [
+    "certus.ui.certus_index_spline_rendering:_UIBuilderMixin._build_tab_data"
+  ],
+  "note": "Two object names removed, one variant changed. Decision Q30 of the plan."
+}

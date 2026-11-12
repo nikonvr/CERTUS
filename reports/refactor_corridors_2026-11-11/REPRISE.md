@@ -158,14 +158,15 @@ un rouge que personne n'avait encore vu.
 
 ## 5. En cours
 
-**U8, fait sauf HUB et accueil de STRAT** (Q32) : mesure `emoji_labels` (`5cd1b51f`) ; `set_themed_icon` (`f4faf22d`) ;
-boutons et titres de DESIGN, FIELD, STRAT et Reset sans emoji (`626d84b8`) ; cliquet `test_ux_no_emoji_in_a_label.py`
-(`52faa38a`, `9 failed` avant), où HUB et STRAT sont en `xfail` explicite en attendant la question SVG ci-dessous.
-En cours : **U9**, l'échelle typographique.
+**U8, fait** (Q32, Q35) : mesure `emoji_labels` ; `set_themed_icon` (boutons et libellés) ; boutons et titres sans emoji
+(`626d84b8`) ; garde-fou SVG borné à PyQt6 < 6.11 (`13868e1c`, suite UI entière `1512 passed` icônes visibles) ; dix
+icônes sur les tuiles du HUB (`7a072ee3`) ; lignes d'état de l'accueil de STRAT (`08ac066c`). Les six slogans de
+l'accueil de STRAT gardent leurs emojis : U10 les remplace par des actions (Q37) ; le cliquet U8 garde STRAT en `xfail`
+jusque-là. **En cours : U9**, corps de texte à 10 pt dans DESIGN et RE (Q34), Reset à 10 pt (Q36). Fait de U9 : plancher
+de l'en-tête (`b695fe80`).
 
 ## 6. À faire, dans l'ordre
 
-1. **U8, reste** : tuiles du HUB et accueil de STRAT, après la décision de 👤 sur le garde-fou SVG.
 2. **U9 à U11** — échelle typographique, états vides actionnables, messages (Q33) (plan §5.5). **U12** (reprise d'un calcul après coupure) est à spécifier avant tout code : elle
    touche au calcul. **U13** (écran réel, HiDPI, lecteur d'écran, essais avec des utilisateurs) n'est pas à la portée
    d'une IA.

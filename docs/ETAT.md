@@ -15,7 +15,7 @@
 
 **Refactoring des corridors d'INDEX SPLINE (2026-11-11) et feuille de route UX (en cours)** : branche
 `claude/reprise-certus1111-926596`, non poussée ; refactoring fini, phases 0 à 10 faites et validées ; feuille de route
-UX : U1 à U3 faites et validées le 2026-11-12, reste U4 à U13 ; fait, à faire, décisions qui attendent 👤 et mode de reprise sur un autre PC dans
+UX : U1 à U5 faites et validées le 2026-11-12, reste la traduction (U1d) et U6 à U13 ; fait, à faire, décisions qui attendent 👤 et mode de reprise sur un autre PC dans
 [`REPRISE.md`](../reports/refactor_corridors_2026-11-11/REPRISE.md), détail dans le plan du même dossier.
 
 **RICL (2026-11-05)** : précontrôle GO ; protocole de charge au sommet et sélection des tours cohérents, témoin nominal,

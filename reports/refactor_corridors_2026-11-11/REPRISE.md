@@ -142,20 +142,19 @@ un rouge que personne n'avait encore vu.
 | **Validation complète de U1 à U3** : rien de plus que l'état connu ; un rouge de l'étape corrigé (liste des tests lents) | sur `82534c96` et les fichiers de U3 |
 | **U4a** : un seul indicateur de zoom, dans la barre d'état (DESIGN, STRAT, RE en montraient deux, INDEX SPLINE un en haut à gauche) ; test rouge avant (`4 failed`) | `1c274e3a` |
 | **U4b** : chaque compteur de barre d'état porte son mot, sans pictogramme (DESIGN, STRAT, METAL, INDEX) ; la remise à zéro garde les mots et remet les nombres à 0 (elle écrivait trois pictogrammes partout, RE comprise) ; tests rouges avant (`5 failed`, `3 failed`) | `df4a70d5` |
-| **U5** : un message déjà à l'écran n'est pas affiché deux fois (pile de toasts) ; DESIGN ne redemande plus `Ctrl+S` ; test rouge avant (`2 failed`) | commit suivant `df4a70d5` |
+| **U5** : un message déjà à l'écran n'est pas affiché deux fois (pile de toasts) ; DESIGN ne redemande plus `Ctrl+S` ; test rouge avant (`2 failed`) | `8e3a2c0f` |
+| **Validation complète après U4 et U5** : rien de plus que l'état connu ; un test de l'étape, fragile sous la charge, rendu robuste | sur `8e3a2c0f`, correctif au commit suivant |
 
-**Dernière validation complète** : le 2026-11-12 à 12 h 43, après U3 (plan §5.6). Tout ce qui est commité l'a passée.
+**Dernière validation complète** : le 2026-11-12 à 18 h 08, après U5 (plan §5.6). Tout ce qui est commité l'a passée.
 
 ## 5. En cours
 
-**Validation complète après U4 et U5** (`python scriptsalidate_parallel.py`) : à lancer, ou à relancer si elle a été
-coupée. Tout le code de U4 et de U5 est commité.
+Rien : tout ce qui est fait est commité. La prochaine tâche est la première de la liste ci-dessous.
 
 ## 6. À faire, dans l'ordre
 
-1. **Validation complète** (§8) après U5, puis `docs/ETAT.md` (section 0) à jour.
-2. **U1d** — traduire le français visible de STRAT, RE et du HUB (Q26), une fenêtre par commit, cliquet de langue étendu.
-3. **U6 à U11** — système d'actions, FIELD dans le système, icônes vectorielles, échelle typographique, états vides
+1. **U1d** — traduire le français visible de STRAT, RE et du HUB (Q26), une fenêtre par commit, cliquet de langue étendu.
+2. **U6 à U11** — système d'actions, FIELD dans le système, icônes vectorielles, échelle typographique, états vides
    actionnables, messages (plan §5.5). **U12** (reprise d'un calcul après coupure) est à spécifier avant tout code : elle
    touche au calcul. **U13** (écran réel, HiDPI, lecteur d'écran, essais avec des utilisateurs) n'est pas à la portée
    d'une IA.

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import os
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -84,7 +85,11 @@ def test_a_message_that_went_away_can_be_shown_again(window, qapp) -> None:
 
     first = show_toast_stack(window, "Saved", variant="success", duration_ms=0)
     first._dismiss()
-    QTest.qWait(400)  # the fade-out, then the toast leaves the stack
+    # The toast leaves the stack when its fade-out ends: wait for that, not for a duration (400 ms were not enough under
+    # the load of a full validation).
+    deadline = time.monotonic() + 10.0
+    while get_toast_stack(window)._toasts and time.monotonic() < deadline:
+        QTest.qWait(20)
     assert get_toast_stack(window)._toasts == []
 
     again = show_toast_stack(window, "Saved", variant="success", duration_ms=0)

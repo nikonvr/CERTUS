@@ -1389,6 +1389,12 @@ dans STRAT. Trois sous-étapes, un commit chacune :
   `tests/ui/test_ux_a_window_starts_without_noise.py` : `2 failed, 13 passed` avant, `15 passed` après. Garde
   `GUARD=OK` (les deux fichiers sont hors de l'instantané) ; tests des toasts et des raccourcis `68 passed`.
   Non traité : A6 notait aussi que le toast recouvre « Add Target » et « Remove » ; sa place n'a pas changé.
+- [x] **Validation complète après U4 et U5** (`validate_parallel.py`, `8e3a2c0f`, Python 3.15.2) : ruff PASS ; oracle
+  `1198 passed` ; unit `5998 passed` (le test « au bit » du noyau STRAT passe cette fois) ; ui `1448 passed` et un
+  artefact de l'étape, corrigé : `test_a_message_that_went_away_can_be_shown_again` attendait 400 ms la fin d'un
+  fondu, vert seul, rouge sous la charge ; il attend maintenant la condition. rest `321 passed` et l'artefact connu
+  `test_bare_substrate_transmission_bounds` ; performance `29 passed` ; `check_claude_md`, `check_docs` PASS ;
+  `coherence_md` : l'échec connu (3 commandes mortes).
 
 **A1 corrigé par le relevé** : `? QWOT` n'est pas un symbole perdu. La ligne s'écrit quand le QWOT n'est pas un nombre
 fini ; le « ? » tient la place de la valeur. Laissé.

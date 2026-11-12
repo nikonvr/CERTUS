@@ -32,7 +32,7 @@ def re_objective_wls_weight_log_trap(wls: np.ndarray) -> np.ndarray:
 
     # Canonical source for shared spectral weighting in CERTUS.
 
-    from certus.utils.certus_index_utils import spectral_rmse_weights
+    from certus.domain.spectral_weights import spectral_rmse_weights
 
     return spectral_rmse_weights(wls)
 

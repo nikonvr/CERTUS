@@ -50,7 +50,7 @@ from certus.core.certus_design_workers_dto import (
     OptimWorkerRequest,
     OptimWorkerResult,
 )
-from certus.utils.certus_index_utils import spectral_rmse_weights
+from certus.domain.spectral_weights import spectral_rmse_weights
 from certus.utils.certus_logging import get_structured_logger
 from certus.utils.certus_progress_tracker import StepState, build_progress_callback, build_progress_snapshot
 from certus.workers.certus_base_workers import WorkerSignals

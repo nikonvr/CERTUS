@@ -1112,7 +1112,7 @@ def prepare_targets_vectorized(wls: np.ndarray, targets: list[Target]) -> tuple[
 
     """
 
-    from certus.utils.certus_index_utils import spectral_rmse_weights
+    from certus.domain.spectral_weights import spectral_rmse_weights
 
     vals = np.zeros(len(wls), dtype=np.float64)
 

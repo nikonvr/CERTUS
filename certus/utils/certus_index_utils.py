@@ -9,6 +9,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+# Moved to the domain layer, under INDEX, DESIGN and RE; imported back because modules and tests read it here.
+from certus.domain.spectral_weights import spectral_rmse_weights
 from certus.utils.errors import NUMERICAL_FAULT_EXCEPTIONS
 from certus_physics import calculate_bare_substrate_RT, calculate_RT_vectorized_real
 
@@ -170,65 +172,6 @@ def _reflectance_ratio_theoretical_from_nk(lam, n_l, k_l, d_nm, n_sub):
     t_sub_nu = np.maximum(calculate_bare_substrate_RT(lam, n_sub), 1e-7)
 
     return r_film_tot / t_sub_nu
-
-
-def spectral_rmse_weights(lam, weight_space="log"):
-    """Trapezoidal quadrature weights on ln(lambda) for spectral RMSE.
-
-    Compensates non-uniform sampling density so that RMSE is not biased
-    toward densely sampled spectral regions.
-
-    Parameters
-    ----------
-    lam : array_like
-        Wavelengths in nm (any order).
-    weight_space : str, optional
-        Reserved for future use. Currently always ``"log"``.
-
-    Returns
-    -------
-    np.ndarray
-        Weight array (same size as *lam*), normalized so that ``sum(w) == len(lam)``.
-    """
-
-    lam = np.asarray(lam, dtype=np.float64).ravel()
-
-    n = lam.size
-
-    if n < 2:
-        return np.ones_like(lam)
-
-    # Compute log(lambda) inter-distances
-
-    log_lam = np.log(np.maximum(lam, 1e-9))
-
-    # Central gradient (trapezoidal scheme)
-
-    w = np.zeros_like(log_lam)
-
-    w[1:-1] = 0.5 * (log_lam[2:] - log_lam[:-2])
-
-    w[0] = log_lam[1] - log_lam[0]
-
-    w[-1] = log_lam[-1] - log_lam[-2]
-
-    # Work with absolute values to handle decreasing grids
-
-    w = np.abs(w)
-
-    # Normalization: the sum of weights is equal to the number of points
-
-    # to keep the RMSE consistent with the usual physical scale.
-
-    sw = np.sum(w)
-
-    if sw > 0:
-        w = w * (float(n) / sw)
-
-    else:
-        w = np.ones_like(lam)
-
-    return w
 
 
 def _lam_uniform_grid(lo_h: float, hi_h: float, step: float) -> np.ndarray:

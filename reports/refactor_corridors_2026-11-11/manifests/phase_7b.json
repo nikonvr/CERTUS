@@ -1,0 +1,13 @@
+{
+  "phase": "7b - spectral_rmse_weights moves from the utilities of INDEX to certus.domain.spectral_weights; the utilities import it back; the DESIGN workers, the RE helpers and the analytic gradient take it from the domain.",
+  "moved_objects": [
+    {
+      "from": "certus.utils.certus_index_utils:spectral_rmse_weights",
+      "to": "certus.domain.spectral_weights:spectral_rmse_weights"
+    }
+  ],
+  "note": "A move: the body is the same. changed_code is there for the signature only: it gains its annotations (a function of certus/domain comes annotated: tests/architecture_debt.json), with the same parameters and the same default. Run before this entry was added, the guard reported one problem, SIGNATURE, and no BYTECODE: the code object is the one of the old function. Kernel protocol (plan, Q21): oracle before and after, scripts/c1_diff.py HEAD cold against cold. tests/unit/test_the_spectral_weights_live_under_the_programs_that_share_them.py fails on the code before (7 failed).",
+  "changed_code": [
+    "certus.domain.spectral_weights:spectral_rmse_weights"
+  ]
+}

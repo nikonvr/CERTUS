@@ -935,7 +935,7 @@ tests qui chronomètrent ou attendent un délai) ; ui `1366 passed` ; rest `322 
   Modifier : `certus/ui/certus_index_spline_ui.py`, `certus/ui/certus_index_spline_corridor_state.py`.
   Test : `tests/integration/test_suite_ui_instantiation.py`, puis LOT.
 
-### [ ] Phase 7 — Découplage entre familles (chantier séparé, Q10)
+### [x] Phase 7 — Découplage entre familles (chantier séparé, Q10) — faite le 2026-11-12
 
 Chaque arête se traite seule, par descente de l'utilitaire dans un module partagé et réexport à l'ancien emplacement.
 **Placée après la Phase 10 (Q21)** : c'est un autre chantier, et 7b touche au calcul.
@@ -952,7 +952,7 @@ La liste des tests propres à chaque famille est à compléter par un Grep du no
   annotations`, que les workers STRAT n'ont pas non plus. `problems=0`, `GUARD=OK` ; LOT avec `test_gui_apps_smoke`,
   le gel, FIELD et les workers STRAT : `413 passed`. Clé du cache Numba inchangée (`832213ea6465`). Registre de dette :
   `certus_strat_workers.py` 1746 → 1736 lignes.
-- [ ] **7b** — `spectral_rmse_weights` : `certus/utils/certus_index_utils.py` → module partagé ; modifier
+- [x] **7b** — `spectral_rmse_weights` : `certus/utils/certus_index_utils.py` → module partagé ; modifier
   `certus/workers/certus_design_workers.py:53`, `certus/core/certus_re_worker_utils.py:35`,
   `certus/physics/gradient_analytic.py:1115`.
   Test : `tests/unit/test_gui_apps_smoke.py`, puis LOT.
@@ -961,6 +961,18 @@ La liste des tests propres à chaque famille est à compléter par un Grep du no
   Après : oracle, puis `python scripts/c1_diff.py HEAD`, froid contre froid, avant de commiter (CLAUDE.md §2 et §5).
   Le module partagé doit être au niveau de `physics` ou en dessous (`domain`) : `physics` l'importe, et un module de
   `utils` laisserait l'arête montante en place. Si `c1_diff` ne rend pas « C1 TENU » : annuler, ne pas corriger en avant.
+  Fait le 2026-11-12 (Q25) : la fonction est dans `certus/domain/spectral_weights.py`, qui n'importe rien de CERTUS ;
+  les utilitaires INDEX la réimportent ; les trois lecteurs listés la prennent au domaine. Plus aucun module de
+  `certus/physics/` n'importe `certus_index_utils`. `tests/unit/test_the_spectral_weights_live_under_the_programs_that_share_them.py`
+  rend `7 failed` avant, `7 passed` après. **Protocole de noyau** : oracle avant `1197 passed`, après (à froid, clé du
+  cache `832213ea6465` → `23ad45b8a350`) `1198 passed` (un test paramétré par module voit le nouveau fichier) ;
+  `python scripts/c1_diff.py HEAD` : `C1 TENU : 9092 tableaux, tous identiques au bit`. Garde `problems=0`,
+  `GUARD=OK` ; lancée avant d'acquitter la signature, elle ne signalait que `SIGNATURE` (les annotations qu'exige le
+  registre de dette pour `certus/domain`), pas `BYTECODE`. LOT avec les tests des utilitaires INDEX, de RE, de
+  l'objectif spline, de la clé du cache et du gel : `469 passed`.
+  **Restent, hors des trois arêtes de F12** : `core/_certus_physics_impl.py`, `core/certus_index_objectives.py` et
+  `spline/*` lisent encore la fonction dans `certus_index_utils` (même niveau ou niveau supérieur : aucune arête
+  montante, et le premier est le fichier `DO NOT SPLIT`) ; laissés tels quels.
 
 ### [x] Phase 8 — Clôture — faite le 2026-11-11
 
@@ -1111,6 +1123,7 @@ repose sur une lecture du code ou une mesure.
 | # | Question | Décision | Ce qui la fonde |
 |---|---|---|---|
 | Q24 | `_load_defaults` oublie `_last_result` mais garde `_last_worker_result` et `_last_run_cfg` : voulu ? | **Non : oubli. Correctif en 10e**, un commit à part de 10c (C3). | Mesuré sur une vraie fenêtre, résultat à profil tracé puis `_load_defaults` : `_corridor_profile_source_result()` rend encore le résultat brut de l'échantillon précédent ; la barre d'état de l'onglet annonce « Step 2/3 … grid 11 points » ; bouger `sp_corridor_rmse_delta` retrace toute la courbe précédente (11 points, `d* = 100.000 nm`) ; `_corridor_rmse_manual_lo/hi`, que `_load_defaults` met à `nan`, ne le sont plus à sa sortie (un retracé part de l'intérieur de la fonction). `btn_corridor_rmse_grid_calc` n'est grisé que pendant un calcul : après un reset, « Recalculate RMSE(d) » relancerait la grille sur la configuration et le résultat de l'échantillon oublié. Un nouveau run remet déjà `_last_worker_result` à `None` (`certus_index_spline_execution.py`, début de run) : le reset est le seul endroit qui l'oublie. |
+| Q25 | 7b : où descendre `spectral_rmse_weights` ? | **`certus/domain/spectral_weights.py`**, signature annotée, les trois lecteurs de F12 seulement. | Les couches de `scripts/metrics.py` : `domain` 0, `physics` 1, `core` et `utils` 2. `physics` la lit : la destination doit être à son niveau ou dessous. La fonction est du numpy pur, sans rien de CERTUS : c'est la définition du domaine. Les poids sont des données passées aux noyaux, pas des constantes figées à la compilation : le module ne cite pas Numba, et `test_the_cache_key_covers_what_the_kernels_read.py` passe. |
 
 **Proposé à 👤, non appliqué** — Q19 : avancer la Phase 9 juste après la Phase 3. La méthode que la couture vise est
 à sa place définitive depuis 3a, et d'ici la Phase 9 deux tests de `test_mwir_gui_flow.py` lancent un vrai fil de

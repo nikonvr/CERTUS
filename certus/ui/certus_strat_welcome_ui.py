@@ -157,7 +157,7 @@ class WelcomeGuideWidget(QWidget):
 
             lbl_ico.setStyleSheet("font-size: 20px; background: transparent;")
 
-            lbl_ico.setFixedWidth(25)
+            lbl_ico.setFixedWidth(28)  # an emoji at 20 px is 27 px wide: 25 cut it
 
             lbl_txt = QLabel(text)
 
@@ -326,7 +326,7 @@ class WelcomeGuideWidget(QWidget):
 
         lbl_icon = QLabel(icon)
 
-        lbl_icon.setFixedSize(24, 24)
+        lbl_icon.setFixedSize(28, 24)  # the emoji is 26 px wide: 24 cut it
 
         lbl_icon.setStyleSheet(
             f"background-color: {CertusTheme.INFO_BG}; color: {CertusTheme.SECONDARY}; border-radius: 4px; font-weight: bold; font-size: {Typography.H2}pt;"

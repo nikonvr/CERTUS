@@ -140,6 +140,7 @@ un rouge que personne n'avait encore vu.
 | **U3, DESIGN, RE, STRAT** : 2, 1 et 9 textes coupés avant, 0 après ; mesure corrigée pour les en-têtes sur deux lignes | `cca0fe0e`, `abf44f99`, `5f169971`, `de4eb0d3` |
 | **U3, le cliquet** : 0 texte coupé dans les 11 fenêtres à 1366×768 et à 1440×900 | `3b84ff56` |
 | **Validation complète de U1 à U3** : rien de plus que l'état connu ; un rouge de l'étape corrigé (liste des tests lents) | sur `82534c96` et les fichiers de U3 |
+| **U4a** : un seul indicateur de zoom, dans la barre d'état (DESIGN, STRAT, RE en montraient deux, INDEX SPLINE un en haut à gauche) ; test rouge avant (`4 failed`) | commit suivant `a8398030` |
 
 **Dernière validation complète** : le 2026-11-12 à 12 h 43, après U3 (plan §5.6). Tout ce qui est commité l'a passée.
 
@@ -149,9 +150,11 @@ Rien : tout ce qui est fait est commité. La prochaine tâche est la première d
 
 ## 6. À faire, dans l'ordre
 
-1. **U4** — une barre d'état commune : un seul « Zoom 100% », des compteurs libellés (A5, B6). Cause déjà lue :
-   `CertusBaseApp._build_status_bar` pose un libellé de zoom (`_zoom_status_label`), et DESIGN, RE et STRAT en ajoutent
-   chacun un second (`zoom_label`) ; `certus_re_layout_mixin.py` est à son plafond de lignes (1 750).
+1. **U4b** — des compteurs de barre d'état libellés (B6) : « ♟️ 0 | 🎲 0 | 🌈️ 0 » dans STRAT (l'infobulle dit : stratégies
+   évaluées, simulations Monte-Carlo, points spectraux), « ♟️ 0 minima | 🎲 0 evals | 🌈️ 0 » dans DESIGN, « 0 | 0 | 0 »
+   dans METAL, « 0 » dans INDEX. Le texte est écrit à la mise en page, par le worker et par la remise à zéro
+   (`certus_design_ui_core.py:903`, `certus_design_ui_worker.py:668, 686`, `certus_strat_ui_worker.py:257`,
+   `certus_utils/certus_reset_framework.py:182`) : chercher les tests qui épinglent ces chaînes avant de toucher.
 2. **U5** — toasts dédoublonnés (deux identiques au démarrage de DESIGN), raccourcis sans conflit (`Ctrl+S`) (A6, A7).
 3. **Validation complète** (§8) après U5, puis `docs/ETAT.md` (section 0) à jour.
 4. **U1d** — traduire le français visible de STRAT, RE et du HUB (Q26), une fenêtre par commit, cliquet de langue étendu.

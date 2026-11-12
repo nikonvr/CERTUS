@@ -1352,5 +1352,19 @@ dans STRAT. Trois sous-étapes, un commit chacune :
 - Reste de U3, non fait : les onglets non affichés à l'ouverture ne sont pas mesurés ; 20 à 25 textes « à l'étroit »
   (entiers, mais dans leur marge) subsistent, dont la bascule de thème et des en-têtes de table.
 
+**U4, 2026-11-12 — une barre d'état commune.**
+
+- [x] **U4a — un seul indicateur de zoom.** Mesure ajoutée à l'audit (`zoom_indicators`). Avant, à 1440×900 : « Zoom
+  100% » deux fois dans la barre d'état de DESIGN, STRAT et RE (la fenêtre posait le sien, puis la classe de base, qui
+  l'ignorait, en ajoutait un) ; INDEX SPLINE, sans barre d'état, avait celui de la base parenté à la fenêtre, en haut à
+  gauche. Après : la fenêtre donne son libellé à la base (affectation en chaîne, aucune ligne de plus dans
+  `certus_re_layout_mixin.py`, qui est à son plafond) ; sans barre d'état, la base ne crée pas de libellé, le zoom reste
+  annoncé par un toast. `tests/ui/test_ux_one_zoom_indicator.py` : `4 failed, 7 passed` avant, `11 passed` après.
+  Mesuré : après un zoom avant puis une remise à zéro, l'unique libellé lit 105 % puis 100 % dans les trois fenêtres.
+  Garde avec `manifests/phase_u4a.json` : `GUARD=OK` ; tests du zoom `15 passed` ; cliquet UX, squelette, défilement
+  horizontal et ce test : `64 passed`.
+- [ ] **U4b — des compteurs libellés** : « ♟️ 0 | 🎲 0 | 🌈️ 0 » (STRAT), « ♟️ 0 minima | 🎲 0 evals | 🌈️ 0 » (DESIGN),
+  « 0 | 0 | 0 » (METAL), « 0 » (INDEX). Le texte est écrit en plusieurs endroits (mise en page, worker, remise à zéro).
+
 **A1 corrigé par le relevé** : `? QWOT` n'est pas un symbole perdu. La ligne s'écrit quand le QWOT n'est pas un nombre
 fini ; le « ? » tient la place de la valeur. Laissé.

@@ -1,0 +1,9 @@
+{
+  "phase": "U4a - a window shows the interface scale once, in its status bar: DESIGN, RE and STRAT give their zoom label to the base class instead of letting it add a second one; without a status bar (INDEX SPLINE) the base class creates no label.",
+  "changed_code": [
+    "certus.ui.certus_re_layout_mixin:CertusRELayoutMixin._build_status_bar",
+    "certus.ui.mixins.certus_base_core_mixins:CertusZoomMixin._ensure_zoom_status_widget",
+    "certus.ui.certus_strat_ui_layout:CertusStratLayoutMixin._build_gui"
+  ],
+  "note": "Outside what the snapshot looks at: the status bar builder of DESIGN (certus_design_ui_layout.py). Measured with scripts/audit_ux_certus.py::zoom_indicators at 1440x900: two labels in DESIGN, STRAT and RE and one on the top-left corner of INDEX SPLINE before; one in the status bar, or none, after. After a zoom in and a reset the one label reads 105% then 100% in the three windows."
+}

@@ -376,7 +376,7 @@ class CertusStratLayoutMixin:
 
         self.status_bar.setSizeGripEnabled(False)
 
-        self.zoom_label = QLabel("Zoom 100%")
+        self.zoom_label = self._zoom_status_label = QLabel("Zoom 100%")  # the one scale label, the base class updates it too
         self.zoom_label.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-weight: 600; padding: 0 8px;")
 
         self.toggle_details_btn = QPushButton("Show Details")

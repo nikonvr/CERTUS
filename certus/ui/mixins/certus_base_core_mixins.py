@@ -47,6 +47,8 @@ class CertusZoomMixin:
         """Create a persistent zoom indicator in the status bar."""
         if getattr(self, "_zoom_status_label", None) is not None:
             return
+        if not hasattr(self, "status_bar"):
+            return  # nowhere to put it: parented to the window, the label was drawn on its top-left corner
         from PyQt6.QtWidgets import QLabel
 
         label = QLabel(self)

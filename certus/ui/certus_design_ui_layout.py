@@ -1117,7 +1117,7 @@ class LayoutManager:
             f"QLabel {{ color: {CertusTheme.TEXT_MAIN}; font-weight: bold; font-size: {Typography.H3}pt; padding: 2px 8px; background-color: transparent; }}"
         )
 
-        self.ui.zoom_label = QLabel("Zoom 100%")
+        self.ui.zoom_label = self.ui._zoom_status_label = QLabel("Zoom 100%")  # the one scale label, the base class updates it too
         self.ui.zoom_label.setStyleSheet(
             f"QLabel {{ color: {CertusTheme.TEXT_SUB}; font-weight: 600; padding: 0 8px; }}"
         )

@@ -83,6 +83,7 @@
   "tests/ui/test_ux_no_undo_state_is_written_that_nothing_reads.py::test_no_module_writes_an_undo_state_that_nothing_reads": 1.6,
   "tests/ui/test_ux_no_undo_state_is_written_that_nothing_reads.py::test_the_five_windows_that_only_inherited_a_stack_do_not_claim_to_undo": 1.0,
   "tests/ui/test_ux_numeric_field_validators.py::test_there_are_numeric_fields_to_check": 1.6,
+  "tests/ui/test_ux_one_zoom_indicator.py::test_the_scale_is_shown_once_at_most_and_in_the_status_bar": 15.0,
   "tests/ui/test_ux_plot_area_share.py::test_plots_keep_their_share_of_the_window": 8.9,
   "tests/ui/test_ux_ratchet.py::test_no_ux_metric_ever_gets_worse": 12.4,
   "tests/ui/test_ux_re_stop_when_idle.py::test_dialog_still_opens_for_each_worker": 3.4,

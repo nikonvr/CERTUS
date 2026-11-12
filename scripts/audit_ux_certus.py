@@ -481,6 +481,25 @@ def clipped_texts(win) -> dict[str, list[str]]:
     return {"clipped": sorted(clipped), "tight": sorted(tight)}
 
 
+def zoom_indicators(win) -> list[str]:
+    """`where|text` for each visible label that shows the interface scale ("Zoom 100%").
+
+    `where` is `status bar` when the label sits in a status bar of the window, else the class of its parent: a label
+    parented to the window itself is drawn on its top-left corner, under the menu bar.
+    """
+    import re
+
+    from PyQt6.QtWidgets import QLabel, QStatusBar
+
+    bars = win.findChildren(QStatusBar)
+    found = []
+    for label in win.findChildren(QLabel):
+        if label.isVisible() and not _is_transient(label) and re.fullmatch(r"Zoom \d+ ?%", label.text().strip()):
+            inside = any(bar.isAncestorOf(label) for bar in bars)
+            found.append(f"{'status bar' if inside else type(label.parentWidget()).__name__}|{label.text().strip()}")
+    return sorted(found)
+
+
 def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: int = 1080) -> dict:
     """Instantiate one app and collect every metric. Runs in a dedicated process."""
     # The offscreen plugin resolves NO font unless QT_QPA_FONTDIR points at a font
@@ -732,6 +751,7 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
     out["persists_tables"] = hasattr(win, "_qs_save_table_headers")
     out["skeleton"] = skeleton(win)
     out.update(clipped_texts(win))
+    out["zoom_indicators"] = zoom_indicators(win)
 
     # --- the theme toggle reaches the widget sheets (LAST: it changes the palette) -----------------------
     from PyQt6.QtWidgets import QWidget

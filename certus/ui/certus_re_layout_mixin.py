@@ -906,7 +906,7 @@ class CertusRELayoutMixin:
             f"color: {CertusTheme.PRIMARY}; font-weight: bold; padding-left: 15px; padding-right: 15px;"
         )
 
-        self.zoom_label = QLabel("Zoom 100%")
+        self.zoom_label = self._zoom_status_label = QLabel("Zoom 100%")  # the one scale label, the base class updates it too
         self.zoom_label.setStyleSheet(
             f"color: {CertusTheme.TEXT_SUB}; font-weight: 600; padding-left: 10px; padding-right: 10px;"
         )

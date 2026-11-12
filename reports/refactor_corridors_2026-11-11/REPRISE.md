@@ -136,30 +136,26 @@ un rouge que personne n'avait encore vu.
 | **U3, la mesure** : l'audit UX voit un texte coupé ou à l'étroit ; départ : 19 coupés à 1440×900, 20 à 1366×768 | `cb3d79ec` |
 | **U2, suite** : le cliquet UX de RE était rouge depuis U2 (panneau gauche 336 px pour 315) ; sous-titre d'en-tête corrigé, test rouge avant | `07b2867e` |
 | **U3, composants partagés** : le titre d'une carte passe à la ligne, la barre de progression a une forme empilée ; test rouge avant (`3 failed`) | `ee1a6c22` |
-| **U3, INDEX SPLINE** : 8 textes coupés avant, 0 après, aux deux tailles ; questions réservées à 👤 tranchées (Q26 à Q29) | commit suivant `ee1a6c22` |
+| **U3, INDEX SPLINE** : 8 textes coupés avant, 0 après, aux deux tailles ; questions réservées à 👤 tranchées (Q26 à Q29) | `82534c96` |
+| **U3, DESIGN, RE, STRAT** : 2, 1 et 9 textes coupés avant, 0 après ; mesure corrigée pour les en-têtes sur deux lignes | `cca0fe0e`, `abf44f99`, `5f169971`, `de4eb0d3` |
+| **U3, le cliquet** : 0 texte coupé dans les 11 fenêtres à 1366×768 et à 1440×900 | `3b84ff56` |
+| **Validation complète de U1 à U3** : rien de plus que l'état connu ; un rouge de l'étape corrigé (liste des tests lents) | sur `82534c96` et les fichiers de U3 |
 
-**Ce qui n'a pas été fait** : la validation complète n'a pas été relancée depuis la Phase 7 (`aa75be4f`). U1a, U1b, U1c
-et U2 ont chacune passé leur test, ruff, la garde et le lot, pas la suite entière : elle est due avec U3 à U5.
+**Dernière validation complète** : le 2026-11-12 à 12 h 43, après U3 (plan §5.6). Tout ce qui est commité l'a passée.
 
 ## 5. En cours
 
-**U3 — rien de tronqué**, en cours. Mesure : `python scriptsudit_ux_certus.py --width 1366 --height 768 --json`
-(4 minutes), lire `clipped` par module ; de même à 1440×900. Fait et commité : la mesure, les deux composants
-partagés, INDEX SPLINE (0 texte coupé aux deux tailles). **Reste, dans l'ordre** : DESIGN (en-têtes « λ min (nm) »,
-« λ max (nm) » : 75 et 78 px pour 71, puis 63 à 1366), RE (en-tête « n@lambda₀ » : 83 px pour 54), STRAT (9 emojis
-dans des cases de 24 px, 2 px de trop), un commit chacun ; puis le cliquet « 0 texte coupé aux deux tailles » sur les
-11 modules ; puis la validation complète. Avant chaque commit UX : `pytest tests/ui -k "ux_"` (28 minutes).
-Rien n'est en attente dans l'arbre tant que cette ligne ne dit pas le contraire.
+Rien : tout ce qui est fait est commité. La prochaine tâche est la première de la liste ci-dessous.
 
 ## 6. À faire, dans l'ordre
 
-1. **U3** — rien de tronqué à 1366×768 ni à 1440×900 (constat A4 du plan : 16 libellés et des en-têtes de table coupés).
-   Mesure par l'arbre de widgets, un processus par module ; cliquet : 0 libellé et 0 en-tête tronqué.
-2. **U4** — une barre d'état commune : un seul « Zoom 100% », des compteurs libellés (A5, B6).
-3. **U5** — toasts dédoublonnés (deux identiques au démarrage de DESIGN), raccourcis sans conflit (`Ctrl+S`) (A6, A7).
-4. **Validation complète** (§8) après U5, puis `docs/ETAT.md` (section 0) à jour.
-5. **U1d** — traduire le français visible de STRAT, RE et du HUB (Q26), une fenêtre par commit, cliquet de langue étendu.
-6. **U6 à U11** — système d'actions, FIELD dans le système, icônes vectorielles, échelle typographique, états vides
+1. **U4** — une barre d'état commune : un seul « Zoom 100% », des compteurs libellés (A5, B6). Cause déjà lue :
+   `CertusBaseApp._build_status_bar` pose un libellé de zoom (`_zoom_status_label`), et DESIGN, RE et STRAT en ajoutent
+   chacun un second (`zoom_label`) ; `certus_re_layout_mixin.py` est à son plafond de lignes (1 750).
+2. **U5** — toasts dédoublonnés (deux identiques au démarrage de DESIGN), raccourcis sans conflit (`Ctrl+S`) (A6, A7).
+3. **Validation complète** (§8) après U5, puis `docs/ETAT.md` (section 0) à jour.
+4. **U1d** — traduire le français visible de STRAT, RE et du HUB (Q26), une fenêtre par commit, cliquet de langue étendu.
+5. **U6 à U11** — système d'actions, FIELD dans le système, icônes vectorielles, échelle typographique, états vides
    actionnables, messages (plan §5.5). **U12** (reprise d'un calcul après coupure) est à spécifier avant tout code : elle
    touche au calcul. **U13** (écran réel, HiDPI, lecteur d'écran, essais avec des utilisateurs) n'est pas à la portée
    d'une IA.

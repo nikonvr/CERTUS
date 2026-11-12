@@ -54,7 +54,12 @@ vidé, puis `validate_parallel.py --only unit`) n'a été fait qu'une fois : il 
 - Même famille que l'artefact noté dans `docs/ETAT.md` (`test_neutral_parameters_are_bit_identical_to_the_legacy_call`,
   deux résultats au bit sous xdist) et que `test_strat_phase_a_state_coherence.py::test_the_slit_profile_is_inert_when_absent_or_zero`,
   rouge en parallèle et vert seul dans les deux validations de cette nuit.
-- Le test n'a pas été modifié. À 👤 de dire s'il doit exiger le bit entre deux spécialisations.
+- Le test n'a pas été modifié, et ne le sera pas : il garde le bit (plan, Q28, tranché le 2026-11-12).
 
 Les deux caches fautifs sont gardés, hors dépôt : `%TEMP%\CERTUS_Numba_Cache_set_aside_2026-11-11_2350` et
 `%TEMP%\CERTUS_Numba_Cache_set_aside_2026-11-12_0430` (quatre dossiers chacun). Le cache de l'arbre repart vide.
+
+**Troisième occurrence, 2026-11-12, 12 h 40**, worktree `reprise-certus1111-926596`, validation complète après U3
+(`82534c96` plus les fichiers de U3) : même test rouge en parallèle et seul sur le cache de l'arbre (rempli à froid par
+les 16 processus depuis que la Phase 7b a changé la clé), `7 passed` sur un cache vierge. Le cache de l'arbre n'a pas
+été mis de côté cette fois.

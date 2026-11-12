@@ -1334,7 +1334,23 @@ dans STRAT. Trois sous-étapes, un commit chacune :
   chacune leur ligne ; l'indice sous les boutons passe à la ligne ; barre de progression empilée. Audit du module OK
   aux deux tailles (tracés 72,4 % et 72,5 %). Garde avec `manifests/phase_u3_index_spline.json` : `GUARD=OK` ; lot
   `449 passed` ; `pytest tests/ui -k "ux_ or stepper or progress or card or index_spline"` : `1112 passed`.
-- [ ] DESIGN (2 en-têtes), RE (1 en-tête), STRAT (9 emojis), puis le cliquet sur les 11 modules aux deux tailles.
+- [x] **La mesure corrigée** (`cca0fe0e`) : un en-tête sur deux lignes se mesure ligne par ligne ; test rouge avant
+  (`84>68`).
+- [x] **DESIGN** (`abf44f99`) : l'unité des en-têtes « λ min », « λ max » passe sur une seconde ligne (75 et 78 px pour
+  63) ; 2 coupés avant, 0 après. **RE** (`5f169971`) : l'en-tête « n@lambda₀ » (83 px pour 54) s'écrit « n@λ₀ », largeurs
+  de colonnes inchangées ; 1 avant, 0 après. **STRAT** (`de4eb0d3`) : les cases d'emoji de la page d'accueil passent de
+  24 et 25 px à 28 ; 9 avant, 0 après. Garde `GUARD=OK` avec `manifests/phase_u3_design.json` et `phase_u3_re.json`
+  (les fonctions de la page d'accueil de STRAT sont hors de l'instantané).
+- [x] **Le cliquet** (`3b84ff56`) : `tests/ui/test_ux_no_text_is_cut_at_laptop_sizes.py`, 11 modules × 2 tailles, 22 cas,
+  0 texte coupé ; déclaré lent.
+- [x] **Validation complète de U1 à U3** (`validate_parallel.py`, `82534c96` plus les fichiers de U3, Python 3.15.2) :
+  ruff PASS ; oracle `1198 passed` ; unit `5993 passed` ; ui `1411 passed` ; rest `321 passed` ; performance
+  `29 passed` ; `check_claude_md`, `check_docs` PASS. Un rouge réel, de l'étape, corrigé : l'entrée du cliquet dans
+  `tests/slow_tests.json` n'était pas à sa place triée (`16 passed` ensuite). Le reste est l'état connu :
+  `coherence_md` ; l'artefact de charge `test_bare_substrate_transmission_bounds`, vert seul ; le test « au bit » du
+  noyau STRAT, rouge sur le cache de l'arbre et `7 passed` sur cache vierge (troisième occurrence, note).
+- Reste de U3, non fait : les onglets non affichés à l'ouverture ne sont pas mesurés ; 20 à 25 textes « à l'étroit »
+  (entiers, mais dans leur marge) subsistent, dont la bascule de thème et des en-têtes de table.
 
 **A1 corrigé par le relevé** : `? QWOT` n'est pas un symbole perdu. La ligne s'écrit quand le QWOT n'est pas un nombre
 fini ; le « ? » tient la place de la valeur. Laissé.

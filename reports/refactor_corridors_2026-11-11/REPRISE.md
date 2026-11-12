@@ -132,21 +132,24 @@ un rouge que personne n'avait encore vu.
 | **U1b** : huit « ? » des phrases de l'onglet RMSE(d) deviennent `≈` (valeur), `∈` (intervalle) et `—` (titre) : un choix, l'historique n'a pas l'original ; attendus de `test_rmse_tab_summary.py` mis à jour (`5 failed` avant) | `561bff95` |
 | **U1c** : les trois chaînes françaises d'INDEX SPLINE sont en anglais ; cliquets : aucun « ? » à la place d'un symbole dans l'interface, pas de français dans les sources de la fenêtre INDEX SPLINE (`2 failed` avant) | `cddf791a` |
 | **U2** : un format de titre, `CERTUS-MODULE — ce que fait le module`, écrit en un endroit ; commencée par la session de nuit, coupée, reprise et vérifiée de bout en bout ; un rouge réel trouvé et corrigé (le fichier long de METAL grandissait de 2 lignes) ; test rouge avant (`3 failed`) | `bf5cda14` |
-| Ce fichier refait pour suffire sur un autre PC ; `docs/ETAT.md` à jour | commit suivant `bf5cda14` |
+| Ce fichier refait pour suffire sur un autre PC ; `docs/ETAT.md` à jour | `b5c75869` |
+| **U3, la mesure** : l'audit UX voit un texte coupé ou à l'étroit ; départ : 19 coupés à 1440×900, 20 à 1366×768 | `cb3d79ec` |
+| **U2, suite** : le cliquet UX de RE était rouge depuis U2 (panneau gauche 336 px pour 315) ; sous-titre d'en-tête corrigé, test rouge avant | `07b2867e` |
+| **U3, composants partagés** : le titre d'une carte passe à la ligne, la barre de progression a une forme empilée ; test rouge avant (`3 failed`) | `ee1a6c22` |
+| **U3, INDEX SPLINE** : 8 textes coupés avant, 0 après, aux deux tailles ; questions réservées à 👤 tranchées (Q26 à Q29) | commit suivant `ee1a6c22` |
 
 **Ce qui n'a pas été fait** : la validation complète n'a pas été relancée depuis la Phase 7 (`aa75be4f`). U1a, U1b, U1c
 et U2 ont chacune passé leur test, ruff, la garde et le lot, pas la suite entière : elle est due avec U3 à U5.
 
 ## 5. En cours
 
-**U3 — rien de tronqué.** La mesure est faite et commitée : `scripts/audit_ux_certus.py::clipped_texts`, deux listes par
-module, `clipped` (le texte ne tient pas : l'utilisateur le voit coupé) et `tight` (il tient en mangeant sa marge).
-Commande : `python scriptsudit_ux_certus.py --width 1440 --height 900 --json` (4 minutes), puis lire `clipped`.
-**État de départ mesuré** : 19 textes coupés à 1440×900, 20 à 1366×768 — INDEX SPLINE 7 puis 8 (2 boutons, 5 puis 6
-libellés, dont « Nominal thickness (nm): » 138 px pour 84), STRAT 9 (emojis dans des cases de 24 px, 2 px de trop),
-DESIGN 2 (en-têtes « λ min (nm) », « λ max (nm) »), RE 1 (en-tête « n@lambda₀ ») ; 0 dans les sept autres.
-**Reste** : corriger module par module, un commit chacun (INDEX SPLINE, DESIGN, RE, STRAT), puis le cliquet « 0 texte
-coupé aux deux tailles ». Aucun fichier de `certus/` n'est encore touché par U3 tant que cette ligne est là.
+**U3 — rien de tronqué**, en cours. Mesure : `python scriptsudit_ux_certus.py --width 1366 --height 768 --json`
+(4 minutes), lire `clipped` par module ; de même à 1440×900. Fait et commité : la mesure, les deux composants
+partagés, INDEX SPLINE (0 texte coupé aux deux tailles). **Reste, dans l'ordre** : DESIGN (en-têtes « λ min (nm) »,
+« λ max (nm) » : 75 et 78 px pour 71, puis 63 à 1366), RE (en-tête « n@lambda₀ » : 83 px pour 54), STRAT (9 emojis
+dans des cases de 24 px, 2 px de trop), un commit chacun ; puis le cliquet « 0 texte coupé aux deux tailles » sur les
+11 modules ; puis la validation complète. Avant chaque commit UX : `pytest tests/ui -k "ux_"` (28 minutes).
+Rien n'est en attente dans l'arbre tant que cette ligne ne dit pas le contraire.
 
 ## 6. À faire, dans l'ordre
 
@@ -155,19 +158,22 @@ coupé aux deux tailles ». Aucun fichier de `certus/` n'est encore touché par 
 2. **U4** — une barre d'état commune : un seul « Zoom 100% », des compteurs libellés (A5, B6).
 3. **U5** — toasts dédoublonnés (deux identiques au démarrage de DESIGN), raccourcis sans conflit (`Ctrl+S`) (A6, A7).
 4. **Validation complète** (§8) après U5, puis `docs/ETAT.md` (section 0) à jour.
-5. **U6 à U11** — système d'actions, FIELD dans le système, icônes vectorielles, échelle typographique, états vides
+5. **U1d** — traduire le français visible de STRAT, RE et du HUB (Q26), une fenêtre par commit, cliquet de langue étendu.
+6. **U6 à U11** — système d'actions, FIELD dans le système, icônes vectorielles, échelle typographique, états vides
    actionnables, messages (plan §5.5). **U12** (reprise d'un calcul après coupure) est à spécifier avant tout code : elle
    touche au calcul. **U13** (écran réel, HiDPI, lecteur d'écran, essais avec des utilisateurs) n'est pas à la portée
    d'une IA.
 
-**Ce qui attend 👤, et que l'assistant ne fait pas seul**
+**Tranché le 2026-11-12, sur consigne (« autonomie totale, réponds-toi aux questions ») — plan, section 4**
 
-- **Q26** : traduire ou non le français visible de STRAT, RE et du HUB (une vingtaine de chaînes, liste au plan §5.6).
-- **Les signes choisis en U1b** (`≈`, `∈`, `—`) : l'historique n'avait pas l'original ; s'il en voulait d'autres, un
-  endroit par chaîne.
-- **Le test « au bit » du noyau STRAT** (`test_without_the_flag_the_kernel_keeps_the_coarse_samples_bit_for_bit`) :
-  doit-il exiger le bit entre deux spécialisations Numba ? Tant qu'il le fait, il peut être rouge selon le cache (§8).
-- **Fusionner** la branche dans `master`, et **pousser** : quand, et s'il le faut.
+- Q26 : le français visible de STRAT, RE et du HUB **sera traduit** en anglais, fidèlement, étape U1d, une fenêtre par
+  commit, après U3 à U5.
+- Q27 : les signes de U1b (`≈`, `∈`, `—`) restent.
+- Q28 : le test « au bit » du noyau STRAT reste tel quel ; un rouge se rejoue sur cache Numba vierge (§8).
+
+**Ce qui reste à 👤 — des gestes, pas des arbitrages (Q29)**
+
+- **Fusionner** la branche dans `master`, et **pousser** : le dépôt est public, et l'assistant ne pousse pas.
 - **Supprimer** la copie périmée `REFACTOR_PLAN.md` à la racine du checkout principal (elle y fait échouer deux
   contrôles ; un crochet interdit à une session de worktree d'y écrire).
 - **Ménage des worktrees** : `certus-1111-reprise-60e136` garde une copie non commitée de U2 (six fichiers modifiés,

@@ -1138,7 +1138,19 @@ repose sur une lecture du code ou une mesure.
 à sa place définitive depuis 3a, et d'ici la Phase 9 deux tests de `test_mwir_gui_flow.py` lancent un vrai fil de
 calcul qu'ils n'attendent pas, à chaque validation. Cela revient sur l'ordre que 👤 a fixé en Q5 : à lui de le dire.
 
-Il ne reste aucune autre question ouverte.
+Q19 est sans objet : la Phase 9 est faite (`8088dc4c`).
+
+**Tranchés par l'assistant le 2026-11-12, sur consigne de 👤 (« continue en autonomie totale et réponds-toi aux
+questions »)** — les questions que les sessions précédentes lui réservaient.
+
+| # | Question | Décision | Ce qui la fonde |
+|---|---|---|---|
+| Q26 (rouverte) | Traduire le français visible de STRAT, RE et du HUB ? | **Oui : traduction fidèle en anglais, étape U1d, une fenêtre par commit, après U3 à U5**, avec le cliquet de langue étendu aux fenêtres traduites. | Le critère de U1 que 👤 a accepté avec la feuille de route est « aucune infobulle en français, sur les 11 modules » ; dix fenêtres sur onze sont déjà en anglais, et une interface en deux langues est un défaut visible au niveau visé. La règle 11 de `CLAUDE.md` *permet* le français visible, elle ne l'impose pas. Réversible fenêtre par fenêtre (`git revert`). |
+| Q27 | Les signes choisis en U1b (`≈`, `∈`, `—`) : les garder ? | **Oui.** | Ce sont ceux que le reste de l'interface emploie déjà dans le même rôle ; l'historique n'a pas d'original à leur opposer. |
+| Q28 | Le test « au bit » du noyau STRAT (`test_without_the_flag_the_kernel_keeps_the_coarse_samples_bit_for_bit`) doit-il exiger le bit entre deux spécialisations Numba ? | **Oui : il reste tel quel.** Un rouge se rejoue sur un cache Numba vierge avant toute conclusion ([note](cache_numba_arbre_neuf.md)). | C'est la règle d'or du dépôt (C1 : le chemin inactif rend les mêmes bits) ; l'affaiblir pour un écart qui dépend de l'état du cache cacherait le jour où l'écart sera réel. Mesuré deux fois : vert sur cache vierge, mêmes valeurs. Le coût est un `NO-GO` à rejouer, pas un résultat faux. |
+| Q29 | Fusionner dans `master`, pousser, supprimer la copie périmée à la racine du checkout principal, ranger les worktrees ? | **Rien de cela n'est fait par l'assistant.** La branche reste locale et en tête ; ces quatre gestes restent à 👤. | Pousser publie un dépôt public (`CLAUDE.md` §1 : seulement sur ordre, et « autonomie totale » ne le nomme pas) ; `master` est extrait dans le checkout principal, où un crochet interdit à une session de worktree d'écrire ; un worktree peut porter le travail non commité d'une autre session. |
+
+Il ne reste aucune question ouverte ; ce qui reste à 👤 sont des gestes (Q29), pas des arbitrages.
 
 ---
 
@@ -1297,6 +1309,32 @@ dans STRAT. Trois sous-étapes, un commit chacune :
   plafond (1 809) ; il est écrit sans allonger le fichier, et le cliquet de dette repasse (`28 passed` avec le test du
   titre et `test_gui_apps_smoke.py`). Commencée par la session de nuit, coupée avant la garde ; reprise et vérifiée
   de bout en bout le 2026-11-12 au matin. Validation complète : avec U3 à U5.
+
+- [x] **U2, suite — un rouge que le commit de U2 avait laissé passer** (`07b2867e`). `tests/ui/test_ux_ratchet.py`,
+  RE à 1920×1080 : `left_min_px: 336 > 315`. Bissection par la mesure : 315 avec le code du titre d'avant U2, 336
+  après, et toujours 336 sans le titre de carte de U3. Cause : le sous-titre d'en-tête (`AutoShrinkTitleLabel`) passe
+  à la ligne ; Qt donne au `sizeHint` d'un tel libellé une largeur qui suit la forme du texte (106 px pour « Reverse
+  Engineering », 85 pour « CERTUS  Reverse Engineering »), et la politique `MinimumExpanding` en faisait un minimum.
+  Politique `Expanding` : RE revient à 293. Test rouge avant (`228 == 132`). **Leçon : une étape UX passe
+  `pytest tests/ui -k "ux_"` (28 minutes) avant son commit ; le lot ne contient pas le cliquet UX.**
+
+**U3, 2026-11-12 — rien de tronqué à 1366×768 ni à 1440×900.**
+
+- [x] **La mesure** (`cb3d79ec`). `scripts/audit_ux_certus.py::clipped_texts` : `clipped`, le texte est plus large que
+  ce dans quoi il est tracé ; `tight`, il est entier mais mange la marge de son widget. Test :
+  `tests/ui/test_ux_audit_sees_a_text_that_lacks_room.py` (`4 passed`). **Départ mesuré : 19 textes coupés à
+  1440×900, 20 à 1366×768** — INDEX SPLINE 7 et 8, STRAT 9, DESIGN 2, RE 1, 0 dans les sept autres. A4 en comptait
+  16 avec un script non conservé et un autre critère (le `sizeHint`) : les exemples qu'il cite sont retrouvés.
+  Limite : seul l'onglet affiché à l'ouverture est mesuré.
+- [x] **Deux composants partagés** (`ee1a6c22`). Le titre d'une `CertusCard` passe à la ligne ; la barre de
+  progression a une forme empilée (`stacked=True`, inactive par défaut). Test
+  `tests/ui/test_ux_shared_widgets_make_room_for_their_text.py` : `3 failed, 1 passed` avant, `4 passed` après.
+- [x] **INDEX SPLINE : 8 et 7 textes coupés avant, 0 et 0 après.** Stepper sur une colonne (deux colonnes laissent
+  119 px à « Substrate (n) & layer thickness », qui en demande 199) ; l'épaisseur nominale et sa demi-largeur ont
+  chacune leur ligne ; l'indice sous les boutons passe à la ligne ; barre de progression empilée. Audit du module OK
+  aux deux tailles (tracés 72,4 % et 72,5 %). Garde avec `manifests/phase_u3_index_spline.json` : `GUARD=OK` ; lot
+  `449 passed` ; `pytest tests/ui -k "ux_ or stepper or progress or card or index_spline"` : `1112 passed`.
+- [ ] DESIGN (2 en-têtes), RE (1 en-tête), STRAT (9 emojis), puis le cliquet sur les 11 modules aux deux tailles.
 
 **A1 corrigé par le relevé** : `? QWOT` n'est pas un symbole perdu. La ligne s'écrit quand le QWOT n'est pas un nombre
 fini ; le « ? » tient la place de la valeur. Laissé.

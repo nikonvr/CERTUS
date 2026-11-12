@@ -1,0 +1,8 @@
+{
+  "phase": "U3 (INDEX SPLINE) - no text of the window is cut at 1366x768 nor at 1440x900: the workflow stepper has one column, the nominal thickness and its half-width have a line each, the hint under the run buttons wraps, the progress widget is stacked.",
+  "changed_code": [
+    "certus.ui.certus_index_spline_rendering:_UIBuilderMixin._build_basic_step2_substrate_thickness",
+    "certus.ui.certus_index_spline_rendering:_UIBuilderMixin._build_ui"
+  ],
+  "note": "Outside what the snapshot looks at, two shared widgets changed: CertusCard.__init__ (the title wraps) and DualStageProgressWidget (__init__ gains `stacked`, False by default; _setup_ui stacks the bars above the texts when it is set). Measured with scripts/audit_ux_certus.py::clipped_texts: 8 texts cut at 1366x768 and 7 at 1440x900 before, 0 and 0 after."
+}

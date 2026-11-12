@@ -286,8 +286,7 @@ class _UIBuilderMixin:
                 "Manual nodes",
                 "Corridors & RMSE(d)",
             ],
-            columns=2,
-        )
+        )  # one column: two do not leave a step the width of its name in a 360 px panel
         self._stepper.step_activated.connect(self._on_stepper_activated)
         self._stepper.set_step(0)
         stepper_card.body.addWidget(self._stepper)
@@ -387,13 +386,14 @@ class _UIBuilderMixin:
 
         self.lbl_postprocess_hint = QLabel("Recommended flow: Run -> Manual knots -> Corridors / RMSE(d)")
         self.lbl_postprocess_hint.setStyleSheet(CertusTheme.get_hint_text_style())
+        self.lbl_postprocess_hint.setWordWrap(True)
         action_card.body.addWidget(self.lbl_postprocess_hint)
         action_card.body.addWidget(self.lbl_corridors_run_state)
 
         if hasattr(self, "chk_corridor_d"):
             self.chk_corridor_d.stateChanged.connect(self._on_corridor_chk_state_changed)
 
-        self.progress_widget = EnhancedProgressWidget(main_label="Optimization")
+        self.progress_widget = EnhancedProgressWidget(main_label="Optimization", stacked=True)
         action_card.body.addWidget(self.progress_widget)
         self.prog = self.progress_widget
 
@@ -778,32 +778,28 @@ class _UIBuilderMixin:
         box2.body.addLayout(g2)
         parent_layout.addWidget(box2)
 
+        # One line per quantity: side by side, the two labels and the two fields ask for more than the panel has.
         r = 0
-        row_d = QHBoxLayout()
-        row_d.setSpacing(6)
-
         lb_dnom = QLabel("Nominal thickness (nm):")
         lb_dnom.setToolTip("Nominal layer thickness around which search bounds are built.")
-        row_d.addWidget(lb_dnom)
+        g2.addWidget(lb_dnom, r, 0)
 
         self.d_lo = QDoubleSpinBox()
         self.d_lo.setRange(1.0, 50000.0)
         self.d_lo.setValue(0.5 * float(SIO2_DEFAULT_D_LO_NM + SIO2_DEFAULT_D_HI_NM))
         self.d_lo.setToolTip("Nominal thickness d0 (nm). Effective bounds are d0 +/- Delta.")
-        row_d.addWidget(self.d_lo)
+        g2.addWidget(self.d_lo, r, 1)
 
+        r += 1
         lb_dpm = QLabel("+/- (nm) :")
         lb_dpm.setToolTip("Half-width Delta (nm) around the nominal thickness used for optimization bounds.")
-        row_d.addWidget(lb_dpm)
+        g2.addWidget(lb_dpm, r, 0)
 
         self.d_hi = QDoubleSpinBox()
         self.d_hi.setRange(0.1, 25000.0)
         self.d_hi.setValue(0.5 * float(SIO2_DEFAULT_D_HI_NM - SIO2_DEFAULT_D_LO_NM))
         self.d_hi.setToolTip("Half-width Delta (nm): optimization bounds are [nominal - Delta, nominal + Delta].")
-        row_d.addWidget(self.d_hi)
-
-        row_d.addStretch(1)
-        g2.addLayout(row_d, r, 0, 1, 2)
+        g2.addWidget(self.d_hi, r, 1)
 
         r += 1
         lb_sub = QLabel("Substrate :")

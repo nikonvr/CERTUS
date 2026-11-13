@@ -36,7 +36,7 @@ def test_the_dark_logo_is_written_in_colours_an_svg_can_read() -> None:
     import re
 
     from certus.core.certus_core import get_resource_path
-    from certus.ui.certus_icons import LOGO_DARK_INK, themed_logo_svg
+    from certus.ui.certus_icons import themed_logo_svg
 
     was_dark = CertusTheme.DARK_MODE
     CertusTheme.configure("dark")
@@ -46,9 +46,8 @@ def test_the_dark_logo_is_written_in_colours_an_svg_can_read() -> None:
         assert inks
         for ink in inks:
             assert re.fullmatch(r"none|#[0-9a-fA-F]{6}", ink), f"not an SVG colour: {ink!r}"
-            assert ink not in LOGO_DARK_INK, f"{ink} kept its light-theme ink"
-        for token in set(LOGO_DARK_INK.values()):
-            assert contrast_ratio(str(getattr(CertusTheme, token)), str(CertusTheme.SURFACE)) >= 4.5, token
+            if ink != "none":
+                assert contrast_ratio(ink, str(CertusTheme.SURFACE)) >= 4.5, f"{ink} does not read on the dark header"
     finally:
         CertusTheme.configure("dark" if was_dark else "light")
 

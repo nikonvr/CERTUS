@@ -337,9 +337,8 @@ def _paint(widget, icon, size: int) -> None:
 
 THEMED_LOGO_PROPERTY: Final = "certus_themed_logo"
 
-#: The dark inks of `certus.svg` (its words and the arc of its symbol), and the palette token each takes in the dark theme. The light theme keeps
-#: the drawing as it is: navy and black on white are the brand. On the dark header they vanished (audit A10, U13).
-LOGO_DARK_INK: Final = {"#05103b": "TEXT_MAIN", "#000000": "TEXT_MAIN", "#333333": "TEXT_SUB"}
+#: An ink of the logo under this contrast against the dark header takes the text colour of the dark palette.
+LOGO_MIN_CONTRAST: Final = 4.5
 
 
 def set_themed_logo(svg_widget, path: str) -> None:
@@ -350,18 +349,26 @@ def set_themed_logo(svg_widget, path: str) -> None:
 
 def themed_logo_svg(path: str) -> str:
     """The text of the logo SVG at `path` in the ink of the active palette (unchanged in the light theme)."""
+    import re
+
+    from certus.ui.certus_a11y import contrast_ratio
     from certus.ui.certus_theme import CertusTheme
 
     with open(path, encoding="utf-8") as f:
         svg = f.read()
-    if CertusTheme.DARK_MODE:
-        for ink, token in LOGO_DARK_INK.items():
-            # `!s`: a colour of the palette annotates itself in an f-string (`#e2e8f0/*T:TEXT_MAIN*/`), which is no
-            # colour to an SVG: Qt then draws the ink black.
-            colour = f"{getattr(CertusTheme, token)!s}"
-            for attribute in ("fill", "stroke"):  # the arc of the symbol is a navy stroke, the words navy fills
-                svg = svg.replace(f'{attribute}="{ink}"', f'{attribute}="{colour}"')
-    return svg
+    if not CertusTheme.DARK_MODE:
+        return svg  # navy and black on white are the brand: the light theme keeps the drawing as it is
+    # `str()`: a colour of the palette annotates itself in an f-string (its value, then a `/*T:NAME*/` comment),
+    # which is no colour to an SVG: Qt then draws the ink black.
+    surface, text = str(CertusTheme.SURFACE), str(CertusTheme.TEXT_MAIN)
+
+    def ink(match: re.Match) -> str:
+        # The words are navy and black fills, the arc of the symbol a navy stroke: on the dark header they vanished
+        # (audit A10, U13). The accent of the symbol reads on both headers and keeps its colour.
+        readable = contrast_ratio(match.group(2), surface) >= LOGO_MIN_CONTRAST
+        return match.group(0) if readable else f'{match.group(1)}="{text}"'
+
+    return re.sub(r'(fill|stroke)="(#[0-9a-fA-F]{6})"', ink, svg)
 
 
 def _load_logo(svg_widget) -> None:

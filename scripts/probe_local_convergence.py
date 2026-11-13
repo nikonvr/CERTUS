@@ -18,7 +18,19 @@ Pour chaque probleme, elle prend le design record du dossier RICL (meilleur meri
 - `lbfgs_ot`      L-BFGS-B sur les epaisseurs optiques n d ;
 - `lbfgs_jacobi`  L-BFGS-B sur d x sqrt(diag(J^T J)) du depart (preconditionnement diagonal) ;
 - `lm`            Levenberg-Marquardt a amortissement de Marquardt, la regle du noyau de CERTUS (ALG-07) ;
-- `lm_geo`        le meme avec l'acceleration geodesique (pas v + a/2, refuse si 2|a|/|v| > 0,75).
+- `lm_geo`        le meme avec l'acceleration geodesique (pas v + a/2, refuse si 2|a|/|v| > 0,75) ;
+- `lm_nielsen`    Levenberg-Marquardt a amortissement de Nielsen (rapport gain reel / gain predit), la regle du
+                  moteur RICL (`engine.lm`) ; `lm_nielsen_geo` : le meme avec l'acceleration geodesique.
+
+- `lbfgs_then_lm` L-BFGS-B puis une finition de Nielsen (200 iterations au plus) ; `lm_then_lbfgs` : une amorce de
+                  Nielsen (60 iterations au plus) puis L-BFGS-B.
+
+- `lm_resonance`  (tri-bande) le polisseur a longueurs d'onde complexes de CERTUS, `refine_resonances`, 10 tours.
+
+Sur le tri-bande, chaque design final est aussi juge sur la grille a 0,1 nm (`rmse resolu`) : c'est l'erreur qui
+compte, la grille a 1 nm pouvant ignorer des pics etroits. La cible des departs ignore `lm_resonance`.
+
+`--methods` restreint la liste ; la cible d'un depart est alors le meilleur des methodes DEMANDEES.
 
 Residus et Jacobien exacts : le noyau de CERTUS, par `engine.Problem.res_jac`. L'unite de cout est UNE evaluation
 (residus + Jacobien) : le decompte est deterministe, il ne depend pas de la machine. La cible d'un depart est le
@@ -47,7 +59,15 @@ sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(RICL))
 
 LOWER_NM = 0.05
-RECORDS = {"bs5050": "B_conv*_best.csv", "threeline": "*tl*_best.csv"}
+#: `threeline_fine` : les memes bandes sur une grille resolue (0,1 nm) ; meme record de depart que `threeline`.
+RECORDS = {"bs5050": "B_conv*_best.csv", "threeline": "*tl*_best.csv", "threeline_fine": "*tl*_best.csv"}
+METHODES = ("lbfgs_nm", "lbfgs_ot", "lbfgs_jacobi", "lm", "lm_geo", "lm_nielsen", "lm_nielsen_geo",
+            "lbfgs_then_lm", "lm_then_lbfgs", "lm_resonance")
+#: Tours du polisseur a longueurs d'onde complexes (`refine_resonances`), chacun de 30 evaluations au plus.
+RESONANCE_ROUNDS = 10
+#: Budgets des enchainements : iterations de Levenberg-Marquardt en finition, puis en amorce.
+FINISH_LM_ITERS = 200
+HEAD_LM_ITERS = 60
 GEODESIC_FD_STEP = 0.1
 GEODESIC_MAX_RATIO = 0.75
 
@@ -133,6 +153,93 @@ def _lm(np, resjac, x0, lb, geodesic: bool, max_iter: int = 5000):
     return x, cost, n_eval, hist
 
 
+def _lm_nielsen(np, resjac, x0, lb, geodesic: bool, max_iter: int = 5000, ftol: float = 1e-13):
+    """Levenberg-Marquardt a amortissement de Nielsen (rapport gain reel / gain predit), la regle du moteur RICL."""
+    x = np.maximum(np.asarray(x0, dtype=np.float64), lb)
+    r, jac = resjac(x)
+    f, n_eval = float(r @ r), 1
+    hist = [(1, f)]
+    mu, nu, small = 1e-3, 2.0, 0
+    m = len(x)
+    for _ in range(max_iter):
+        g, a = jac.T @ r, jac.T @ jac
+        da = np.diag(a).copy()
+        free = ~((x <= lb + 1e-12) & (g > 0.0))
+        fi = np.flatnonzero(free)
+        if fi.size == 0:
+            break
+        b = a[np.ix_(fi, fi)].copy()
+        b[np.diag_indices_from(b)] += mu * (da[fi] + 1e-12 * float(da.max()))
+        try:
+            sf = np.linalg.solve(b, -g[fi])
+            if geodesic:
+                step_v = np.zeros(m)
+                step_v[fi] = sf
+                xh = x + GEODESIC_FD_STEP * step_v
+                v_norm = float(np.linalg.norm(sf))
+                if (xh >= lb).all() and v_norm > 0.0:
+                    rh, _jh = resjac(xh)
+                    n_eval += 1
+                    r_vv = 2.0 / GEODESIC_FD_STEP * ((rh - r) / GEODESIC_FD_STEP - jac @ step_v)
+                    acc = np.linalg.solve(b, -(jac.T @ r_vv)[fi])
+                    if 2.0 * float(np.linalg.norm(acc)) / v_norm > GEODESIC_MAX_RATIO:
+                        mu *= nu
+                        nu *= 2.0
+                        if mu > 1e16:
+                            break
+                        continue
+                    sf = sf + 0.5 * acc
+        except np.linalg.LinAlgError:
+            mu *= nu
+            nu *= 2.0
+            continue
+        step = np.zeros(m)
+        step[fi] = sf
+        xn = np.maximum(x + step, lb)
+        dx = xn - x
+        pred = -(2.0 * float(dx @ g) + float(dx @ a @ dx))
+        rn, jn = resjac(xn)
+        n_eval += 1
+        fn = float(rn @ rn)
+        if fn < f and pred > 0.0:
+            rho, gain = (f - fn) / pred, (f - fn) / f
+            x, r, jac, f = xn, rn, jn, fn
+            hist.append((n_eval, f))
+            mu *= max(1.0 / 3.0, 1.0 - (2.0 * rho - 1.0) ** 3)
+            nu = 2.0
+            small = small + 1 if gain < ftol else 0
+            if small >= 3:
+                break
+        else:
+            mu *= nu
+            nu *= 2.0
+            if mu > 1e16:
+                break
+    return x, f, n_eval, hist
+
+
+def _lm_resonance(np, engine, seq, x0, lb, rounds: int = RESONANCE_ROUNDS):
+    """`certus.physics.design_resonances.refine_resonances` : la grille du probleme, plus un residu par pic etroit suivi
+    a son maximum mobile (poles aux longueurs d'onde complexes, article OE_resonances). Tri-bande seulement."""
+    from certus.physics.design_resonances import (
+        ResonanceSettings,
+        TransmissionBand,
+        TransmissionProblem,
+        refine_resonances,
+    )
+
+    bands = tuple(TransmissionBand(float(a), float(b), float(t), 1.0) for a, b, t in engine.THREELINE_BANDS)
+    problem = TransmissionProblem(engine.nvec(seq).astype(np.complex128), engine.N_SUB, bands)
+    x0 = np.maximum(np.asarray(x0, dtype=np.float64), max(lb, 0.1))
+    try:
+        res = refine_resonances(problem, x0, settings=ResonanceSettings(rounds=rounds),
+                                lower_bounds=np.full(len(x0), max(lb, 0.1) * 0.999))
+    except (RuntimeError, ValueError) as exc:  # un audit de poles refuse : le depart est rendu tel quel
+        print(f"    lm_resonance refuse : {exc}")
+        return x0, float("inf"), 0, []
+    return res.thicknesses, float(res.final.nominal_mf) ** 2, rounds * 30, []
+
+
 def _lbfgs(np, resjac, x0, lb, scale):
     """L-BFGS-B sur u = scale * d, tolerances du polissage memetique de DESIGN."""
     from scipy.optimize import minimize
@@ -166,6 +273,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Cinq polisseurs locaux sur les deux problemes RICL.")
     ap.add_argument("--starts", type=int, default=10, help="departs par niveau de perturbation (defaut 10)")
     ap.add_argument("--out", type=Path, default=None)
+    ap.add_argument("--methods", nargs="+", default=list(METHODES), choices=METHODES)
+    ap.add_argument("--problems", nargs="+", default=["bs5050", "threeline"], choices=list(RECORDS))
     a = ap.parse_args()
 
     import engine  # reports/RICL_ultimate_2026-11-05 (fixe NUMBA_NUM_THREADS=1 a l'import)
@@ -173,8 +282,10 @@ def main() -> int:
     from _artefact import ecrire_json
 
     sortie: dict = {"starts": a.starts, "lower_nm": LOWER_NM, "problems": {}}
-    methodes = ("lbfgs_nm", "lbfgs_ot", "lbfgs_jacobi", "lm", "lm_geo")
-    for nom, motif in RECORDS.items():
+    methodes = tuple(a.methods)
+    sortie["methods"] = list(methodes)
+    for nom in a.problems:
+        motif = RECORDS[nom]
         prob = engine.make_problem(nom)
         seq, d_rec, _mf_rec, fichier = _record(motif)
         d_rec = np.asarray(d_rec, dtype=np.float64)
@@ -184,6 +295,8 @@ def main() -> int:
             return prob.res_jac(seq, d)
 
         resjac(d_rec)  # amorce (compilation)
+        # Le juge de l'erreur RESOLUE : le tri-bande sur la grille a 0,1 nm (les pics etroits y sont vus).
+        fine = engine.make_problem("threeline_fine") if nom == "threeline" else None
         rmse_rec = prob.rmse(seq, d_rec)
         print(f"\n== {nom} : {len(seq)} couches, {len(prob.wls)} longueurs d'onde, record {fichier} "
               f"(rmse {rmse_rec:.6g}, plus fine {d_rec.min():.2f} nm)")
@@ -191,7 +304,8 @@ def main() -> int:
                       "levels": {}}
         rng = np.random.default_rng(20261113)
         for sigma in (0.01, 0.05):
-            lignes = {m: {"evals": [], "evals_to_target": [], "final_rmse": [], "ms": []} for m in methodes}
+            lignes = {m: {"evals": [], "evals_to_target": [], "final_rmse": [], "ms": [], "resolved_rmse": []}
+                      for m in methodes}
             for _k in range(a.starts):
                 x0 = np.maximum(d_rec * (1.0 + sigma * rng.standard_normal(len(d_rec))), LOWER_NM)
                 _r0, j0 = resjac(x0)
@@ -206,23 +320,43 @@ def main() -> int:
                         res = _lbfgs(np, resjac, x0, LOWER_NM, n_idx)
                     elif m == "lbfgs_jacobi":
                         res = _lbfgs(np, resjac, x0, LOWER_NM, jacobi)
-                    else:
+                    elif m == "lbfgs_then_lm":  # le polissage actuel, puis une finition de Nielsen
+                        x1, c1, n1, h1 = _lbfgs(np, resjac, x0, LOWER_NM, np.ones(len(x0)))
+                        x2, c2, n2, h2 = _lm_nielsen(np, resjac, x1, LOWER_NM, geodesic=False, max_iter=FINISH_LM_ITERS)
+                        res = (x2, min(c1, c2), n1 + n2, h1 + [(n1 + n, c) for n, c in h2 if c < c1])
+                    elif m == "lm_then_lbfgs":  # une amorce de Nielsen bornee, puis L-BFGS-B
+                        x1, c1, n1, h1 = _lm_nielsen(np, resjac, x0, LOWER_NM, geodesic=False, max_iter=HEAD_LM_ITERS)
+                        x2, c2, n2, h2 = _lbfgs(np, resjac, x1, LOWER_NM, np.ones(len(x0)))
+                        res = (x2, min(c1, c2), n1 + n2, h1 + [(n1 + n, c) for n, c in h2 if c < c1])
+                    elif m == "lm_resonance":
+                        if not nom.startswith("threeline"):
+                            continue
+                        res = _lm_resonance(np, engine, seq, x0, LOWER_NM)
+                    elif m in ("lm", "lm_geo"):
                         res = _lm(np, resjac, x0, LOWER_NM, geodesic=(m == "lm_geo"))
+                    else:
+                        res = _lm_nielsen(np, resjac, x0, LOWER_NM, geodesic=(m == "lm_nielsen_geo"))
                     essais[m] = (*res, 1e3 * (time.perf_counter() - t0))
-                cible = min(e[1] for e in essais.values()) * 1.001 + 1e-30
-                for m, (_x, cost, n_eval, hist, ms) in essais.items():
+                cible = min(e[1] for m, e in essais.items() if m != "lm_resonance") * 1.001 + 1e-30
+                for m, (x_fin, cost, n_eval, hist, ms) in essais.items():
+                    lignes[m]["resolved_rmse"].append(fine.rmse(seq, x_fin) if fine is not None else None)
                     lignes[m]["evals"].append(n_eval)
                     lignes[m]["evals_to_target"].append(_evals_to(hist, cible))
                     lignes[m]["final_rmse"].append(float(np.sqrt(cost)))
                     lignes[m]["ms"].append(ms)
             print(f"  sigma {100 * sigma:g} % · {a.starts} departs")
-            print(f"  {'methode':<14}{'atteint':>9}{'eval->cible':>13}{'eval total':>12}{'rmse final':>13}{'ms':>9}")
+            print(f"  {'methode':<14}{'atteint':>9}{'eval->cible':>13}{'eval total':>12}{'rmse final':>13}{'ms':>9}"
+                  f"{'rmse resolu':>13}")
             for m in methodes:
                 li = lignes[m]
+                if not li["final_rmse"]:
+                    continue
+                resolu = [v for v in li["resolved_rmse"] if v is not None]
                 ok = [v for v in li["evals_to_target"] if v is not None]
                 med = float(np.median(ok)) if ok else float("nan")
                 print(f"  {m:<14}{len(ok):>6}/{a.starts:<2}{med:>13.0f}{np.median(li['evals']):>12.0f}"
-                      f"{np.median(li['final_rmse']):>13.6g}{np.median(li['ms']):>9.0f}")
+                      f"{np.median(li['final_rmse']):>13.6g}{np.median(li['ms']):>9.0f}"
+                      + (f"{np.median(resolu):>13.6g}" if resolu else ""))
             bloc["levels"][f"sigma_{sigma:g}"] = lignes
         sortie["problems"][nom] = bloc
     if a.out:

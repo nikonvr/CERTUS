@@ -113,9 +113,70 @@ R1 et R2 d'abord (interface seule, protégés par les tests `ui`), puis R9 et R5
 c'est le seul qui supprime une classe de défauts déjà rencontrée. R4, R6, R7 demandent chacun une décision de 👤.
 Les fonctions de 500 à 800 lignes (§2.1) relèvent du plan de refactoring existant, pas de la mutualisation.
 
-## 3. Vitesse : les boucles élémentaires
+## 3. Vitesse et convergence locale
 
-À compléter (profils en cours).
+### 3.1 Noyaux (`scripts/probe_kernel_threads.py`, exemple DESIGN, 108 longueurs d'onde, 26 couches)
+
+| Noyau | 1 fil | 8 fils | 16 fils |
+|---|---|---|---|
+| coût, arithmétique réelle | 41 µs | 13 µs | 14 µs |
+| gradient, arithmétique réelle | 69 µs | 34 µs | 56 µs |
+| gradient générique (complexe) | 211 µs | 96 µs | 101 µs |
+
+Le parallélisme ne ralentit pas un appel, mais rend peu (×2 sur le gradient à 8 fils, 16 plus lent que 8). Piste :
+plusieurs polissages simultanés à peu de fils chacun (`memetic_workers`, 1 par défaut) ; essai comparatif inachevé.
+
+### 3.2 Polisseurs locaux (`scripts/probe_local_convergence.py`, problèmes RICL, départs = record perturbé)
+
+Unité : une évaluation résidus + Jacobien. « Atteint » : l'optimum du départ (meilleur de toutes les méthodes) à
+0,1 % près. Fichiers `local_convergence*.json`.
+
+**Séparateur 50/50** (33 couches, 1 601 longueurs d'onde, 10 départs)
+
+| Méthode | départ à 1 % | départ à 5 % |
+|---|---|---|
+| L-BFGS-B en nm (polisseur actuel du mémétique) | 0/10, s'arrête à RMSE 1,39e-5 | 0/10, 1,82e-5 |
+| L-BFGS-B en épaisseur optique | 0/10, 1,35e-5 | 0/10, 1,84e-5 |
+| Levenberg-Marquardt, amortissement de Marquardt (noyau ALG-07) | 10/10, 13 évaluations | 8/10, 182 |
+| idem + accélération géodésique | 10/10, 31 | 8/10, 65 |
+| Levenberg-Marquardt, amortissement de Nielsen (moteur RICL) | **10/10, 22** | **10/10, 48** |
+| Nielsen + géodésique | 10/10, 52 | 10/10, 220 |
+
+Optimum 1,147e-5 : L-BFGS-B le manque toujours, de 20 % à 60 %.
+
+**Tri-bande** (101 couches) : le record RICL, RMSE 1,28e-4 sur sa grille à 1 nm (277 points), vaut **4,8e-3 sur la
+grille à 0,1 nm** (2 707 points) : 37 fois plus, des pics étroits que la grille à 1 nm ne voit pas.
+
+| Méthode, 5 départs | grille | RMSE résolu (0,1 nm), départ à 1 % | à 5 % | durée par départ |
+|---|---|---|---|---|
+| L-BFGS-B | 1 nm | 1,5e-3 | 6,3e-4 | 1,2 à 3,9 s |
+| Levenberg-Marquardt (Nielsen) | 1 nm | 2,3e-3 | 1,1e-3 | 5,4 s |
+| longueurs d'onde complexes (`refine_resonances`, 10 tours) | 1 nm + pics | **3,4e-4** | refusé 5/5 | 2,6 s |
+| L-BFGS-B | 0,1 nm | **1,03e-4** | **1,04e-4** | 68 à 88 s |
+| Levenberg-Marquardt (Nielsen) | 0,1 nm | 1,19e-4 (limite de 5 000 itérations) | 1,39e-4 | 47 s |
+
+### 3.3 Ce que ces mesures disent
+
+1. **Séparateur 50/50** : Levenberg-Marquardt à la Nielsen atteint l'optimum en 22 à 48 évaluations, que L-BFGS-B
+   n'atteint jamais en 800 à 2 700. Le polisseur de DESIGN laisse du mérite sur la table.
+2. **L'épaisseur optique** ne change rien de net à L-BFGS-B ; Levenberg-Marquardt y est invariant par construction.
+3. **L'accélération géodésique** aide l'amortissement de Marquardt sur les départs éloignés (182 → 65), pas celui de
+   Nielsen, qui fait mieux sans elle. À ne pas porter dans le noyau.
+4. **Tri-bande** : Levenberg-Marquardt échoue aussi sur la grille résolue : ce ne sont pas les pics non résolus qui
+   l'arrêtent, mais sa convergence lente à 101 couches (il bute sur la limite d'itérations). L-BFGS-B y est meilleur.
+5. **Le vrai défaut du tri-bande est la grille** : tout polisseur à 1 nm laisse une erreur résolue de 6e-4 à 2e-3.
+   La grille à 0,1 nm donne 1e-4, pour 20 fois le temps. Les longueurs d'onde complexes donnent 3,4e-4 au prix de la
+   grille à 1 nm, mais refusent les départs à 5 % (« aucun maximum d'erreur isolé près du pôle suivi »).
+
+🔴 Deux problèmes, des départs proches d'un record, 5 ou 10 départs : des tendances, pas des lois. Le 4,8e-3 du
+record n'est pas encore recoupé par l'oracle indépendant.
+
+### 3.4 Suites proposées
+
+- **P1** : un polisseur Levenberg-Marquardt de Nielsen dans DESIGN (option inactive par défaut), à essayer d'abord
+  dans le mémétique sur le séparateur 50/50 ; garder L-BFGS-B au-delà de ~60 couches.
+- **P2** : juger les designs du tri-bande (et de tout problème à bandes étroites) sur une grille résolue ; lancer le
+  polissage final sur grille fine, ou en longueurs d'onde complexes une fois le refus des départs éloignés compris.
 
 ## 4. Dérivées : ce qui est encore numérique et pourrait être analytique
 

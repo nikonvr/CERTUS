@@ -294,7 +294,7 @@ class CertusRELayoutMixin:
 
         hint.setWordWrap(True)
 
-        hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;")
+        hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY}pt;")
 
         lay.addWidget(hint)
 
@@ -372,7 +372,7 @@ class CertusRELayoutMixin:
 
         lbl_idx.setWordWrap(True)
 
-        lbl_idx.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;")
+        lbl_idx.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY}pt;")
 
         lay.addWidget(lbl_idx)
 
@@ -386,7 +386,7 @@ class CertusRELayoutMixin:
 
         sub = QLabel("<b>Design and measurement reference</b>")
 
-        sub.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: {Typography.BODY_LG}pt;")
+        sub.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: {Typography.BODY}pt;")
 
         lay.addWidget(sub)
 
@@ -664,7 +664,7 @@ class CertusRELayoutMixin:
         plot_header_layout.addWidget(detach_btn)
 
         plot_hint = QLabel(
-            f'<span style="color:{CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;">'
+            f'<span style="color:{CertusTheme.TEXT_SUB}; font-size: {Typography.BODY}pt;">'
             "RE load, run, and optimization options: left panel."
             "</span>"
         )
@@ -926,7 +926,7 @@ class CertusRELayoutMixin:
 
         self.log_btn.clicked.connect(self.toggle_logs)
 
-        self.log_btn.setStyleSheet(f"font-size: {Typography.BODY_LG}pt; padding: 2px 8px;")
+        self.log_btn.setStyleSheet(f"font-size: {Typography.BODY}pt; padding: 2px 8px;")
 
         self.status_bar.addWidget(self.log_btn)
 
@@ -1102,7 +1102,7 @@ class CertusRELayoutMixin:
 
         _cap_lbl.setWordWrap(True)
 
-        _cap_lbl.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt; padding-bottom: 6px;")
+        _cap_lbl.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY}pt; padding-bottom: 6px;")
 
         lay.addWidget(_cap_lbl)
 

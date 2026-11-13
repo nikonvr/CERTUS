@@ -1,0 +1,11 @@
+{
+  "phase": "U9 (body) - DESIGN and RE write their body at Typography.BODY (10 pt), the size of the nine other windows: the compact sheet of DESIGN and RE and six hint labels of RE leave BODY_LG; group titles keep it.",
+  "changed_code": [
+    "certus.ui.certus_base_app:CertusBaseApp._apply_certus_compact_theme",
+    "certus.ui.certus_re_layout_mixin:CertusRELayoutMixin._build_re_excel_data_group",
+    "certus.ui.certus_re_layout_mixin:CertusRELayoutMixin._build_re_options_group",
+    "certus.ui.certus_re_layout_mixin:CertusRELayoutMixin._build_right_panel",
+    "certus.ui.certus_re_layout_mixin:CertusRELayoutMixin._show_re_p4_beam_aperture_plot"
+  ],
+  "note": "Only font sizes of style sheets change. The ratchet tests/ui/test_ux_one_type_scale.py was red on DESIGN and RE before. Decision Q34 of the plan."
+}

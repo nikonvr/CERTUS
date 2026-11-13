@@ -580,6 +580,8 @@ class CertusBaseApp(QMainWindow, CertusZoomMixin, CertusCommandPaletteMixin, Cer
         Applies the standard compact-layout CSS overrides and triggers a
         progress-widget polish + deferred spectrum redraw if applicable.
         """
+        # Body text at Typography.BODY (10 pt), the size of the nine other windows; group titles stay at BODY_LG
+        # (decision Q34 of the corridor plan, 2026-11-13: DESIGN and RE wrote their body at 11 pt).
         apply_certus_theme(
             self,
             plots=plots,
@@ -588,7 +590,7 @@ class CertusBaseApp(QMainWindow, CertusZoomMixin, CertusCommandPaletteMixin, Cer
                     background-color: {CertusTheme.SURFACE};
                     border-right: 1px solid {CertusTheme.BORDER};
                 }}
-                QWidget {{ font-size: {Typography.BODY_LG}pt; }}
+                QWidget {{ font-size: {Typography.BODY}pt; }}
                 QGroupBox {{
                     font-weight: 700;
                     font-size: {Typography.BODY_LG}pt;
@@ -605,9 +607,9 @@ class CertusBaseApp(QMainWindow, CertusZoomMixin, CertusCommandPaletteMixin, Cer
                     color: {CertusTheme.PRIMARY};
                 }}
                 QLabel#HeaderLabel {{ font-size: {Typography.H2}pt; font-weight: 800; color: {CertusTheme.TEXT_MAIN}; }}
-                QPushButton {{ font-size: {Typography.BODY_LG}pt; padding: 5px 10px; border-radius: 10px; }}
-                QComboBox {{ font-size: {Typography.BODY_LG}pt; padding: 3px 8px; border-radius: 10px; }}
-                QDoubleSpinBox, QSpinBox {{ font-size: {Typography.BODY_LG}pt; padding: 3px 8px; border-radius: 10px; }}
+                QPushButton {{ font-size: {Typography.BODY}pt; padding: 5px 10px; border-radius: 10px; }}
+                QComboBox {{ font-size: {Typography.BODY}pt; padding: 3px 8px; border-radius: 10px; }}
+                QDoubleSpinBox, QSpinBox {{ font-size: {Typography.BODY}pt; padding: 3px 8px; border-radius: 10px; }}
             """,
         )
         if hasattr(self, "progress_widget"):

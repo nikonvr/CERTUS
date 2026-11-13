@@ -93,6 +93,8 @@ class LigneGraine:
     minutes: float | None = None
     deposables: int = 0
     provisoire: bool = True
+    #: Why the measure on disk was set aside and the seed is measured again (U12 B); empty otherwise.
+    motif: str = ""
 
 
 @dataclass
@@ -142,6 +144,11 @@ class EtatMultigraine:
                 li.etat = "deja mesuree"
             else:
                 li.etat = "trouve" if li.deposables else "rien"
+        elif t == "refusee":
+            g = int(evt["graine"])
+            li = self.lignes.setdefault(g, LigneGraine(g))
+            li.etat = "a remesurer"
+            li.motif = str(evt.get("raison", ""))
         elif t == "lancee":
             g = int(evt["graine"])
             self.lignes.setdefault(g, LigneGraine(g)).etat = "en cours"
@@ -152,7 +159,7 @@ class EtatMultigraine:
             self.plans_ecartes = int(evt.get("ecartes") or 0)
         elif t == "notation":
             for li in self.lignes.values():
-                if li.etat == "en attente":
+                if li.etat in ("en attente", "a remesurer"):
                     li.etat = "non essayee"
         elif t == "resultat":
             self.seel_final = evt.get("seel")
@@ -579,7 +586,10 @@ class CertusStratMultigraineMixin:
                 (f"{100 * li.crash:.2f} %" if li.crash is not None else "--", li.crash),
                 (f"{li.minutes:.0f} min" if li.minutes is not None else "--", li.minutes),
             )):
-                self._mg_table.setItem(r, c, SortKeyItem(txt, cle))
+                item = SortKeyItem(txt, cle)
+                if c == 1 and li.motif:
+                    item.setToolTip(f"The measure on disk was set aside: {li.motif}")
+                self._mg_table.setItem(r, c, item)
         self._mg_table.setSortingEnabled(True)
         self._mg_resume.setText(resumer(e))
 
@@ -593,6 +603,7 @@ ETAT_AFFICHE: dict[str, str] = {
     "trouve": "found",
     "rien": "nothing found",
     "deja mesuree": "already measured",
+    "a remesurer": "measured again",
     "non essayee": "not tried",
 }
 

@@ -178,6 +178,26 @@ bit » connu, vert sur cache vierge. STRAT et RE reprennent aussi leur session, 
 
 **U13, partie machine, faite le 2026-11-13, local, non poussé** : `audit_ux_certus.py --scale` (`da40bdf1`) ; à 150 % (1280×720 logiques) les flèches d'onglets de DESIGN et INDEX SPLINE ont une infobulle (`6d79a2b0`) ; 125 % et 200 % : 0/11 ; logo lisible en thème sombre (`6de96fc8`, A10). **Reste de U13, à 👤** : écran réel, Narrateur, cinq utilisateurs : `U13_protocole.md`.
 
+**DESIGN, nettoyage final (ordre de 👤, 2026-11-13), fait, local, non poussé** : à la fin de chaque optimisation, chaque
+couche sous le champ `Min. Layer` (5 nm par défaut) est essayée retirée et remontée au plancher, chaque variante
+repolie, la meilleure gardée, puis le design est repoli (`7d7a1d91` algorithme dans
+`certus/core/certus_design_final_cleanup.py`, `a3bd4cfd` champ, `21f39b98` branchement). **Exception à C1 décidée par
+👤** : le résultat par défaut de DESIGN change ; `final_cleanup: false` dans un fichier, ou l'incidence oblique, garde
+la règle des 5 nm. Ferme ALG-19 du registre. Logo sombre corrigé (`b3cfd0b7`, `eea26ff9`, UX-12).
+
+**Audits du 2026-11-13** (`reports/audits_2026-11-13/bilan.md`, `09c3f7a7`) : co-conception design × stratégie,
+refactoring, dérivées analytiques ; vitesse et convergence locale en cours. Sondes : `scripts/probe_codesign_sensitivity.py`,
+`probe_kernel_threads.py`, `probe_local_convergence.py` (problèmes RICL `bs5050` et `threeline`).
+
+**En cours** : convergence locale (L-BFGS-B en nm, en épaisseur optique, préconditionné ; Levenberg-Marquardt avec et
+sans accélération géodésique). Ce qui gagne sera porté dans CERTUS en option inactive par défaut. **Reste à mesurer** :
+`memetic_workers` (1 exécution sur 4 dans `design_memetic_workers.jsonl`), profil échantillonné d'une optimisation,
+puis la validation complète (non rejouée depuis le nettoyage final).
+
+**Second temps (décision de 👤, 2026-11-13), non commencé** : co-conception niveau A (noter par STRAT plusieurs designs
+équivalents) ; factorisations R1 (METAL simple et bicouche) et R2 (amorçage Numba) ; branchement des gradients
+existants D2 (INDEX infrarouge, après C13) et D3 (METAL, adaptateur PGLOBAL). Détail : `bilan.md` §1.4, §2.2, §4.
+
 ## 6. À faire, dans l'ordre
 
 2. **U9 à U11** — échelle typographique, états vides actionnables, messages (Q33) (plan §5.5). **U12** (reprise d'un calcul après coupure) est à spécifier avant tout code : elle

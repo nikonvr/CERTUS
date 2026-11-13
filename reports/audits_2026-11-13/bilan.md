@@ -192,12 +192,19 @@ points. Écart maximal avec la transmission de l'oracle inférieur à 1,8 × 10�
 Les graines étaient libres et la capture du banc ne contient pas le journal du polisseur. Les écarts observés
 ne suffisent pas à isoler l'effet de LM. [Six lignes du banc](memetic_polisher_default_bench.json).
 
-**RICL, 2026-11-13.** Arrêt par Ctrl+C après 13 des 21 lignes prévues. Le record 50/50 bouge de moins de
-5 × 10⁻¹⁰ nm par couche. Pour le trois-raies nominal, le MF résolu passe de 0,030823 % à 0,027852 % avec
-LM sur grille fine à épaisseur optique totale fixée, et à 0,019756 % avec L-BFGS-B sur grille fine à épaisseur
-totale libre. Pour `tl_treated`, le résultat `lm_new_fine` donne 0,013182 % résolu mais excède la limite
-d'épaisseur optique totale (14 172,75 nm pour un maximum de 14 171,1 nm).
-[Résultats partiels](ricl_lm_check_partial.json).
+**RICL, 2026-11-13.** Les 8 mesures restantes ont été calculées après la coupure. Le juge de l'article
+évalue le MF résolu sur une grille au pas de 0,0002 nm. [Les 21 résultats et leur admissibilité](ricl_lm_check.json).
+
+| Départ | Meilleur repolissage admissible | MF résolu avant → après | MF nominal avant → après |
+|---|---|---:|---:|
+| Trois-raies, meilleur nominal CERTUS | L-BFGS-B sur grille à 0,1 nm, TOT libre | 0,030823 → 0,019756 % | 0,013422 → 0,017009 % |
+| Trois-raies, CERTUS déjà traité | LM sur grille à 0,1 nm, TOT fixée | 0,016072 → 0,013366 % | 0,019777 → 0,022178 % |
+| Trois-raies, reconstruction deep search 2020 | L-BFGS-B sur grille à 0,1 nm, TOT libre | 0,348336 → 0,221062 % | 0,012803 → 0,016402 % |
+
+Le 50/50 bouge de moins de 5 × 10⁻¹⁰ nm par couche. Sur le trois-raies déjà traité, LM avec TOT libre atteint
+0,013182 % résolu, mais dépasse le plafond (14 172,75 nm pour 14 171,1 nm). La version à TOT fixée (14 114,07 nm)
+garde 100 couches, avec un minimum de 13,98 nm, et le polissage dure 43,7 s. Les mesures de cette reprise ont
+utilisé un seul fil OpenBLAS.
 
 ### 3.6 Comparaison avec graines du mémétique appariées
 

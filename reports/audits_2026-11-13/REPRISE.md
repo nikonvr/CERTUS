@@ -42,9 +42,9 @@ identique à celui d'avant correction. La bascule est prête pour l'intégration
 
 **File de reprise, une action à la fois**
 
-1. **RICL.** Reprendre au premier cas manquant, `tl_treated / lm_tot_fine`. Le script de `scratch` réinitialise
-   ses sorties au lancement. Pour reprendre, sélectionner les couples (design, polisseur) manquants et
-   écrire dans une nouvelle sortie. Vérifier les contraintes d'admissibilité avant de comparer les scores.
+1. **RICL terminé.** Les huit couples manquants ont été ajoutés à la série. Voir le
+   [bilan des 21 mesures](bilan.md#35-mesures-récupérées-après-la-coupure). Le lanceur local
+   `ricl_lm_resume.py` reprend les couples manquants et écrit dans une sortie séparée.
 2. **U13.** Faire les essais sur écran réel, avec le Narrateur et avec les utilisateurs selon le
    [protocole U13](../refactor_corridors_2026-11-11/U13_protocole.md).
 3. **STRAT local-search.** Examiner l'unique commit propre à `wip/strat-local-search-ricl-2026-11-11`

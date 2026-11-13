@@ -13,7 +13,7 @@
 > ([`ETAT_actions.md`](ETAT_actions.md)), acquis ([`ETAT_acquis.md`](ETAT_acquis.md)), registre des audits ([`AUDITS.md`](AUDITS.md),
 > `grep -n "ALG-02" docs/AUDITS.md`), preuves dans `reports/` (le `bilan.md` d'un dossier).
 
-**Reprise active du 2026-11-13** : polisseur hybride DESIGN mesuré, validation effectuée. Reprise RICL.
+**Reprise active du 2026-11-13** : polisseur hybride DESIGN mesuré, validation effectuée. Campagne RICL reprise et terminée.
 [Point de reprise et ordre des actions](../reports/audits_2026-11-13/REPRISE.md).
 [Avancement des corridors d'INDEX SPLINE et de l'UX, dont U12 et U13](../reports/refactor_corridors_2026-11-11/REPRISE.md).
 

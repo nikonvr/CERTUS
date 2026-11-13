@@ -26,6 +26,7 @@ from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.ui.certus_ui_utils import notify
 from certus.utils.certus_atomic_io import atomic_open
 from certus.utils.certus_ux import ClickTarget
+from certus.utils.errors import describe_error
 
 # Late imports from certus.utils.certus_export in methods to avoid circular dependency
 
@@ -799,7 +800,7 @@ class CertusScientificPlot(pg.PlotWidget):
                 QMessageBox.warning(
                     self.window() or None,
                     CERTUS_UI_STRINGS["export_failed"],
-                    f"PNG : {e}",
+                    f"PNG : {describe_error(e)}",
                 )
 
     def _export_svg(self):
@@ -827,7 +828,7 @@ class CertusScientificPlot(pg.PlotWidget):
                 QMessageBox.warning(
                     self.window() or None,
                     CERTUS_UI_STRINGS["export_failed"],
-                    f"SVG : {e}",
+                    f"SVG : {describe_error(e)}",
                 )
 
     def _export_csv(self):
@@ -872,7 +873,7 @@ class CertusScientificPlot(pg.PlotWidget):
             QMessageBox.warning(
                 self.window() or None,
                 CERTUS_UI_STRINGS["export_failed"],
-                f"CSV : {e}",
+                f"CSV : {describe_error(e)}",
             )
 
     def _export_tsv(self):
@@ -917,7 +918,7 @@ class CertusScientificPlot(pg.PlotWidget):
             QMessageBox.warning(
                 self.window() or None,
                 CERTUS_UI_STRINGS["export_failed"],
-                f"TSV : {e}",
+                f"TSV : {describe_error(e)}",
             )
 
     def _export_tsv_publication(self):
@@ -965,7 +966,7 @@ class CertusScientificPlot(pg.PlotWidget):
             QMessageBox.warning(
                 self.window() or None,
                 CERTUS_UI_STRINGS["export_failed"],
-                f"TSV publication: {e}",
+                f"TSV publication: {describe_error(e)}",
             )
 
 

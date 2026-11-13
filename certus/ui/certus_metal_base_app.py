@@ -1175,7 +1175,7 @@ class MetalBaseApp(CertusBaseApp):
             return True
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
-            QMessageBox.warning(self, "Load Error", str(e))
+            QMessageBox.warning(self, "Load Error", self.describe_error(e))
             return False
 
     def update_stats_display(self) -> None:
@@ -1442,7 +1442,7 @@ class MetalBaseApp(CertusBaseApp):
             params["bounds"] = bounds
 
         except (ValueError, KeyError) as e:
-            QMessageBox.critical(self, "Parameter Error", f"Invalid value: {e}")
+            QMessageBox.critical(self, "Parameter Error", f"Invalid value: {self.describe_error(e)}")
             return
 
         self.mse_data = {"iterations": [], "errors": []}

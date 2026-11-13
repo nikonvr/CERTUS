@@ -43,6 +43,7 @@ from certus.ui.certus_ui import (
 from certus.ui.certus_ui_utils import notify
 from certus.utils.certus_qsettings import certus_settings
 from certus.utils.certus_spectral_preproc import smooth_dataframe_auto, smooth_spectrum_auto
+from certus.utils.errors import describe_error
 
 logger = setup_module_logging("CERTUS_CURVE_SMOOTHER")
 
@@ -309,7 +310,7 @@ class CurveSmootherGUI(QMainWindow):
         # writer below); without it here, that case escaped as a raw traceback.
         except (*NUMERICAL_FAULT_EXCEPTIONS, OSError) as e:
             logger.error("Failed to load measurement sheet: %s", e)
-            QMessageBox.critical(self, "Error", f"Failed to load measurement sheet:\n{e}")
+            QMessageBox.critical(self, "Error", f"Failed to load measurement sheet:\n{describe_error(e)}")
 
     def show_help(self) -> None:
         help_text = (
@@ -455,7 +456,7 @@ class CurveSmootherGUI(QMainWindow):
             )
         except (*NUMERICAL_FAULT_EXCEPTIONS, OSError) as e:
             logger.error("Failed to save %s: %s", self.file_path, e)
-            QMessageBox.critical(self, "Error", f"Failed to save:\n{e}")
+            QMessageBox.critical(self, "Error", f"Failed to save:\n{describe_error(e)}")
 
 
 def main() -> None:

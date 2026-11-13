@@ -23,6 +23,7 @@ from certus.utils.certus_strat_service import (
     rebuild_visualization_context,
     simulate_detailed_growth_for_ui,
 )
+from certus.utils.errors import describe_error
 from certus.workers.certus_strat_workers import PlotRenderWorker
 
 
@@ -377,7 +378,7 @@ class CertusStratPlotMixin:
 
         except Exception as e:
             self.logger.error(f"[GUI] Error in on_live_growth_update: {e}", exc_info=True)
-            QMessageBox.critical(self, "CERTUS-STRAT Live Strategy Error", f"A live strategy popup/update failed.\n\n{e}")
+            QMessageBox.critical(self, "CERTUS-STRAT Live Strategy Error", f"A live strategy popup/update failed.\n\n{describe_error(e)}")
 
     def on_strategy_visualization_requested(self, row_idx: int, strategy_result: dict[str, Any]) -> None:
         # SAFETY — worker.isRunning() guard

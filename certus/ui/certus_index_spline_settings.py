@@ -66,6 +66,7 @@ from certus.utils.certus_data import read_data_file_robust
 from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
 from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
 from certus.utils.certus_qsettings import certus_settings
+from certus.utils.errors import describe_error
 
 logger = logging.getLogger("CERTUS_INDEX_SPLINE")
 
@@ -413,7 +414,7 @@ class _SettingsMixin:
             return True
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
-            QMessageBox.critical(self, "Loading", str(e))
+            QMessageBox.critical(self, "Loading", describe_error(e))
 
             logger.exception("load")
 

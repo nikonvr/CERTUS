@@ -31,6 +31,7 @@ from certus.ui.certus_index_spline_common import (
 )
 from certus.ui.certus_index_spline_state_ui import SmartInitPayload, _SmartInitState
 from certus.utils.certus_qsettings import certus_settings
+from certus.utils.errors import describe_error
 
 
 class CertusIndexSplineSmartInitMixin:
@@ -395,14 +396,14 @@ class CertusIndexSplineSmartInitMixin:
             from certus.utils.certus_result_schema import validate_project_dict
             validate_project_dict(data)
         except (OSError, json.JSONDecodeError, ValueError) as exc:
-            QMessageBox.warning(dlg, "Load index config", f"Load failed: {exc}")
+            QMessageBox.warning(dlg, "Load index config", f"Load failed: {describe_error(exc)}")
             return
         except Exception as exc:
             from certus.utils.errors import CorruptedProjectError
             if isinstance(exc, CorruptedProjectError):
                 QMessageBox.warning(dlg, "Load failed - Invalid Config", exc.full_message)
             else:
-                QMessageBox.warning(dlg, "Load index config", f"Validation error: {exc}")
+                QMessageBox.warning(dlg, "Load index config", f"Validation error: {describe_error(exc)}")
             return
 
         loaded_sk = np.asarray(data.get("sigma_knots"), dtype=np.float64).ravel()

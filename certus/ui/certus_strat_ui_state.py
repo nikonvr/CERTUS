@@ -866,7 +866,7 @@ class CertusStratStateMixin:
             return True
         except Exception as e:
             self.logger.error(f"Error loading: {e}\n{traceback.format_exc()}")
-            QMessageBox.critical(self, "Error Loading Configuration", f"Could not load configuration file:\n{e}")
+            QMessageBox.critical(self, "Error Loading Configuration", f"Could not load configuration file:\n{self.describe_error(e)}")
             return False
 
     def load_external_strategies(self) -> None:

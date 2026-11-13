@@ -39,6 +39,7 @@ from certus.ui.certus_ui import (
 from certus.ui.certus_ui_utils import notify
 from certus.utils.certus_data import to_csv_robust
 from certus.utils.certus_export import show_copy_excel_feedback
+from certus.utils.errors import describe_error
 
 
 class CertusScientificPlot(pg.PlotWidget):
@@ -351,7 +352,7 @@ class CertusScientificPlot(pg.PlotWidget):
                 QMessageBox.warning(
                     self.window() or None,
                     CERTUS_UI_STRINGS["export_failed"],
-                    f"PNG : {e}",
+                    f"PNG : {describe_error(e)}",
                 )
 
     def _export_svg(self) -> None:
@@ -380,7 +381,7 @@ class CertusScientificPlot(pg.PlotWidget):
                 QMessageBox.warning(
                     self.window() or None,
                     CERTUS_UI_STRINGS["export_failed"],
-                    f"SVG : {e}",
+                    f"SVG : {describe_error(e)}",
                 )
 
     def _export_csv(self) -> None:
@@ -420,7 +421,7 @@ class CertusScientificPlot(pg.PlotWidget):
             QMessageBox.warning(
                 self.window() or None,
                 CERTUS_UI_STRINGS["export_failed"],
-                f"CSV : {e}",
+                f"CSV : {describe_error(e)}",
             )
 
 class UniversalPlotWindow(CertusWindowSpyMixin, QMainWindow):

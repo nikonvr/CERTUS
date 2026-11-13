@@ -675,6 +675,43 @@ def format_validation_error(error: CertusValidationError) -> str:
 # =============================================================================
 
 
+def describe_error(exc: BaseException) -> str:
+    """What an operator reads in place of the raw text of `exc`: the cause and what to do (U11, constat A9).
+
+    A dialog showed "[Errno 13] Permission denied: 'C:/.../run.xlsx'" or "'blocks'": the words of Python, not of the
+    task. The system exceptions say what happened and what to do; an exception the suite wrote for the operator (a
+    ValueError of a validation, a CertusError) keeps its own text, which was written for that. The raw text belongs to
+    the log, which the caller writes.
+    """
+    import json
+    import zipfile
+
+    if isinstance(exc, PermissionError):
+        return (
+            "The file is open in another program (Excel?) or write-protected. Close it, then try again."
+        )
+    if isinstance(exc, FileNotFoundError):
+        name = getattr(exc, "filename", None) or "the file"
+        return f"{name} cannot be found: it was moved or deleted. Choose it again."
+    if isinstance(exc, IsADirectoryError):
+        return "The path is a folder, not a file. Choose a file."
+    if isinstance(exc, json.JSONDecodeError):
+        return f"The file is not valid JSON (line {exc.lineno}, column {exc.colno}). Fix it in a text editor."
+    if isinstance(exc, UnicodeDecodeError):
+        return "The file is not UTF-8 text. Save it again as UTF-8."
+    if isinstance(exc, zipfile.BadZipFile):
+        return "The file is not a valid Excel workbook (.xlsx). Save it again from Excel."
+    if isinstance(exc, KeyError):
+        return f"An expected entry is missing: {exc.args[0] if exc.args else '?'}. The file may come from another module or version."
+    if isinstance(exc, MemoryError):
+        return "There is not enough memory for this operation. Close other programs or reduce the size of the problem."
+    if isinstance(exc, OSError):
+        reason = exc.strerror or "the system refused the operation"
+        return f"The system refused the operation ({reason}). Check the path, the rights and the free space."
+    text = str(exc).strip()
+    return text or f"Unexpected error ({type(exc).__name__}). The log has the details."
+
+
 def show_error(parent, error_code: str, **kwargs) -> None:
     """
 

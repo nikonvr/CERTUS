@@ -73,6 +73,7 @@ from certus.ui.certus_ui import (
 from certus.utils.certus_atomic_io import atomic_open
 from certus.utils.certus_qsettings import certus_settings
 from certus.utils.certus_ux import Typography
+from certus.utils.errors import describe_error
 
 
 class SubstrateIndexGUI(QMainWindow):
@@ -180,7 +181,7 @@ class SubstrateIndexGUI(QMainWindow):
             self.log(f"Datasheet exported to {Path(path).name}", "SUCCESS")
         except (OSError, TypeError, ValueError) as e:
             self.log(f"Export failed: {e}", "ERROR")
-            QMessageBox.critical(self, "Export Error", str(e))
+            QMessageBox.critical(self, "Export Error", describe_error(e))
 
     class _UILogHandler(logging.Handler):
         def __init__(self, append_fn):
@@ -685,7 +686,7 @@ class SubstrateIndexGUI(QMainWindow):
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             logger.error("Failed to load measurement sheet: %s", e)
 
-            QMessageBox.critical(self, "Error", f"Failed to load measurement sheet:\n{e}")
+            QMessageBox.critical(self, "Error", f"Failed to load measurement sheet:\n{describe_error(e)}")
 
             self.log(f"Load error: {e}", "ERROR")
 

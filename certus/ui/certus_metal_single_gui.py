@@ -302,7 +302,7 @@ class CertusMetalSingleApp(MetalBaseApp):
         except (ValueError, NUMERICAL_FAULT_EXCEPTIONS) as e:
             self.logger.error(f"Error parsing data: {e}")
 
-            QMessageBox.warning(self, "Data Error", f"Could not parse data columns: {e}")
+            QMessageBox.warning(self, "Data Error", f"Could not parse data columns: {self.describe_error(e)}")
 
     def _create_physical_params_group(self) -> CertusCard:
         """Creates compact physical params group with Info Icons"""
@@ -438,7 +438,7 @@ class CertusMetalSingleApp(MetalBaseApp):
             self.target_data = None
         except ValueError as e:
             title, details, suggestion = get_error_message("file_format", path=filepath)
-            QMessageBox.critical(self, title, f"{details}\n\nErreur: {e!s}\n\n💡 {suggestion}")
+            QMessageBox.critical(self, title, f"{details}\n\nCause: {self.describe_error(e)}\n\nWhat to do: {suggestion}")
             self.target_data = None
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             show_error(self, "generic_error", details=str(e))
@@ -1203,7 +1203,7 @@ class CertusMetalSingleApp(MetalBaseApp):
             optimal_mse = float(self.final_results["result"].fun)
 
         except (ValueError, KeyError) as e:
-            QMessageBox.critical(self, "Parameter Error", f"Invalid value: {e}")
+            QMessageBox.critical(self, "Parameter Error", f"Invalid value: {self.describe_error(e)}")
 
             return
 

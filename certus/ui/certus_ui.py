@@ -299,6 +299,7 @@ from certus.ui.certus_ui_widgets_utils import (
 )
 from certus.ui.certus_ui_widgets_welcome import WelcomeGuideWidget
 from certus.utils.certus_data import read_data_file_robust
+from certus.utils.errors import describe_error
 from certus.workers.certus_base_workers import GenericWorker, WorkerSignals
 
 _LAZY_REEXPORTS: dict[str, tuple[str, str]] = {
@@ -367,7 +368,7 @@ def secure_get_open_file_name(*args, **kwargs):
         try:
             PathValidator.validate_path(path, allowed_extensions=allowed)
         except ValueError as e:
-            QMessageBox.warning(parent, "Security Alert", f"Invalid File Selected:\n{e}")
+            QMessageBox.warning(parent, "Security Alert", f"Invalid File Selected:\n{describe_error(e)}")
             return "", ""
     return path, sel_filter
 
@@ -383,7 +384,7 @@ def secure_get_save_file_name(*args, **kwargs):
         try:
             PathValidator.validate_path(path, allowed_extensions=allowed)
         except ValueError as e:
-            QMessageBox.warning(parent, "Security Alert", f"Invalid File Selected:\n{e}")
+            QMessageBox.warning(parent, "Security Alert", f"Invalid File Selected:\n{describe_error(e)}")
             return "", ""
     return path, sel_filter
 
@@ -402,7 +403,7 @@ def secure_get_open_file_names(*args, **kwargs):
                 PathValidator.validate_path(path, allowed_extensions=allowed)
                 validated_paths.append(path)
             except ValueError as e:
-                QMessageBox.warning(parent, "Security Alert", f"Invalid File Selected:\n{e}")
+                QMessageBox.warning(parent, "Security Alert", f"Invalid File Selected:\n{describe_error(e)}")
                 return [], ""
         return validated_paths, sel_filter
     return paths, sel_filter

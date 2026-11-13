@@ -137,6 +137,7 @@ from certus.ui.certus_ui_utils import (
 from certus.ui.certus_ui_widgets_factory import attach_splitter_capper, create_log_widget
 from certus.ui.certus_ui_widgets_utils import CertusLogPanel
 from certus.utils.certus_ux import Typography
+from certus.utils.errors import describe_error
 
 
 class StatsCounter:
@@ -573,6 +574,9 @@ class CertusBaseApp(QMainWindow, CertusZoomMixin, CertusCommandPaletteMixin, Cer
     # U5 — Recent files
     # =========================================================================
 
+
+    # The cause and what to do in place of the raw text of an exception (U11, A9), for the files at their ceiling.
+    describe_error = staticmethod(describe_error)
 
     def notify_info(self, title: str, text: str) -> str:
         """`certus_ui_utils.notify` on this window: a toast when short, a dialog for a document (U11, Q33).

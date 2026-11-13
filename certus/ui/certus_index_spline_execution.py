@@ -45,6 +45,7 @@ logger = logging.getLogger("CERTUS_INDEX_SPLINE")
 from certus.spline.spline_pipeline_utils import _interp_series_at_sigma_knots
 from certus.ui.certus_ui_utils import notify
 from certus.utils.certus_atomic_io import atomic_open
+from certus.utils.errors import describe_error
 
 
 def _plot_spectrum_raw_scatter(
@@ -369,7 +370,7 @@ class _CorridorExportMixin:
             QMessageBox.warning(
                 self,
                 "Export enveloppe n/k",
-                f"Unable to write Excel file.\n{type(exc).__name__}: {exc}",
+                f"Unable to write Excel file.\n{describe_error(exc)}",
             )
             return
 
@@ -448,7 +449,7 @@ class _CorridorExportMixin:
             set_certus_last_dir(path)
             self.lbl_status.setText(f"CSV saved: {path}")
         except OSError as e:
-            QMessageBox.critical(self, "Export", str(e))
+            QMessageBox.critical(self, "Export", describe_error(e))
 
 
 class _RunMixin:

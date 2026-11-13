@@ -12,7 +12,7 @@ from typing import Any
 from PyQt6.QtWidgets import QMessageBox, QPlainTextEdit, QPushButton, QTextEdit, QWidget
 
 from certus.utils.certus_ux import OBJ, Typography
-from certus.utils.errors import NUMERICAL_FAULT_EXCEPTIONS
+from certus.utils.errors import NUMERICAL_FAULT_EXCEPTIONS, describe_error
 
 __all__ = [
     "CertusResetManager",
@@ -89,7 +89,7 @@ class CertusResetManager:
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Reset failed: {e}", exc_info=True)
-            QMessageBox.critical(self.app, "Reset Error", f"An error occurred during reset:\n{e}")
+            QMessageBox.critical(self.app, "Reset Error", f"An error occurred during reset:\n{describe_error(e)}")
             return False
 
     def _confirm_reset(self) -> bool:

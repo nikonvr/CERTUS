@@ -78,6 +78,7 @@ from certus.ui.certus_ui import (
 )
 from certus.ui.certus_ui_utils import notify
 from certus.utils.certus_data import OPENPYXL_AVAILABLE
+from certus.utils.errors import describe_error
 from certus_physics import (
     calculate_reflectance_bilayer_vectorized,
     compute_metal_bilayer_gradient_analytic,
@@ -560,7 +561,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
             self.reflectance_plot.autoRange()
 
         except (ValueError, NUMERICAL_FAULT_EXCEPTIONS) as e:
-            QMessageBox.critical(self, "Data Error", f"Error processing file data: {e}")
+            QMessageBox.critical(self, "Data Error", f"Error processing file data: {describe_error(e)}")
 
             self.target_data = None
 
@@ -1049,7 +1050,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
             )
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
-            QMessageBox.critical(self, "Export Error", f"Cannot write Excel file:\n{e}")
+            QMessageBox.critical(self, "Export Error", f"Cannot write Excel file:\n{describe_error(e)}")
 
     def start_beam_analysis(self):
         """Starts beam analysis: metal thickness scan"""
@@ -1115,7 +1116,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
             optimal_mse = float(self.final_results["result"].fun)
 
         except (ValueError, KeyError) as e:
-            QMessageBox.critical(self, "Parameter Error", f"Invalid value: {e}")
+            QMessageBox.critical(self, "Parameter Error", f"Invalid value: {describe_error(e)}")
 
             return
 

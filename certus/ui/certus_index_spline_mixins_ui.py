@@ -34,6 +34,7 @@ from certus.ui.certus_ui import (
     wrap_scientific_plot_with_toolbar,
 )
 from certus.utils.certus_index_utils import _get_substrate_n_array_spline
+from certus.utils.errors import describe_error
 
 # The logger of the whole window: the same object as `logger` of certus_index_spline_common (one name, one logger).
 logger = logging.getLogger("CERTUS_INDEX_SPLINE")
@@ -71,7 +72,7 @@ class _MeshOptimizationMixin:
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             if notify:
-                QMessageBox.critical(self, "Substrate", str(e))
+                QMessageBox.critical(self, "Substrate", describe_error(e))
 
             return None
 

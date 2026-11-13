@@ -67,6 +67,7 @@ from certus.ui.certus_ui_utils import notify
 from certus.utils.certus_atomic_io import atomic_open
 from certus.utils.certus_qsettings import certus_settings
 from certus.utils.certus_ux import Typography
+from certus.utils.errors import describe_error
 
 logger = logging.getLogger("CERTUS_INDEX_SPLINE.smart_init")
 
@@ -782,7 +783,7 @@ class SmartInitPreviewManager:
             self.refresh_knot_lines_and_ui()
             logger.info("Smart Init Preset Applied: %s", preset_name)
         except NUMERICAL_FAULT_EXCEPTIONS as exc:
-            QMessageBox.warning(self.dlg, "Apply Preset", f"Preset failed: {exc}")
+            QMessageBox.warning(self.dlg, "Apply Preset", f"Preset failed: {describe_error(exc)}")
 
     @safe_ui_action
     def auto_find_best_preset(self) -> None:
@@ -802,7 +803,7 @@ class SmartInitPreviewManager:
             winner, _rm_w, _d_w = picked
             self.apply_preset(winner)
         except NUMERICAL_FAULT_EXCEPTIONS as exc:
-            QMessageBox.warning(self.dlg, "Auto Select Preset", f"Preset failed: {exc}")
+            QMessageBox.warning(self.dlg, "Auto Select Preset", f"Preset failed: {describe_error(exc)}")
 
     @safe_ui_action
     def save_config(self) -> None:
@@ -823,7 +824,7 @@ class SmartInitPreviewManager:
                 json.dump(out_d, f, indent=2)
             show_toast(self.dlg, "Config saved successfully", level="success")
         except (OSError, ValueError, TypeError) as exc:
-            QMessageBox.warning(self.dlg, "Save Config", f"Save failed: {exc}")
+            QMessageBox.warning(self.dlg, "Save Config", f"Save failed: {describe_error(exc)}")
 
     @safe_ui_action
     def run_auto_opt(self, is_ln_k: bool = False) -> None:
@@ -844,7 +845,7 @@ class SmartInitPreviewManager:
 
             self.refresh_knot_lines_and_ui()
         except NUMERICAL_FAULT_EXCEPTIONS as exc:
-            QMessageBox.warning(self.dlg, "Optimize knot", f"Optimization failed: {exc}")
+            QMessageBox.warning(self.dlg, "Optimize knot", f"Optimization failed: {describe_error(exc)}")
 
     @safe_ui_action
     def run_nkd_local_opt(self, idx: int) -> None:
@@ -906,7 +907,7 @@ class SmartInitPreviewManager:
             
         except Exception as exc:
             logger.exception("nkd local optimization failed")
-            QMessageBox.warning(self.dlg, "nkd local optimization", f"Optimization failed: {exc}")
+            QMessageBox.warning(self.dlg, "nkd local optimization", f"Optimization failed: {describe_error(exc)}")
 
     @safe_ui_action
     def run_nkd_sweep_all(self) -> None:
@@ -927,7 +928,7 @@ class SmartInitPreviewManager:
         except Exception as exc:
             progress.close()
             logger.exception("NKD sweep failed")
-            QMessageBox.warning(self.dlg, "NKD Sweep", f"Sweep aborted: {exc}")
+            QMessageBox.warning(self.dlg, "NKD Sweep", f"Sweep aborted: {describe_error(exc)}")
 
     @safe_ui_action
     def run_fast_local_search(self) -> None:
@@ -984,7 +985,7 @@ class SmartInitPreviewManager:
         except Exception as exc:
             progress.close()
             logger.exception("Autofind failed")
-            QMessageBox.warning(self.dlg, "Local Search", f"Search aborted: {exc}")
+            QMessageBox.warning(self.dlg, "Local Search", f"Search aborted: {describe_error(exc)}")
 
     @safe_ui_action
     def recall_best(self) -> None:
@@ -995,7 +996,7 @@ class SmartInitPreviewManager:
                 return
             self.refresh_knot_lines_and_ui()
         except NUMERICAL_FAULT_EXCEPTIONS as exc:
-            QMessageBox.warning(self.dlg, "Recall Best", f"Recall failed: {exc}")
+            QMessageBox.warning(self.dlg, "Recall Best", f"Recall failed: {describe_error(exc)}")
 
     @safe_ui_action
     def open_curve_editor(self) -> None:
@@ -1052,7 +1053,7 @@ class SmartInitPreviewManager:
             self.refresh_knot_lines_and_ui()
         except Exception as exc:
             logger.exception("NK curve editor failed")
-            QMessageBox.warning(self.dlg, "NK Curve Editor", f"Failed to edit curves: {exc}")
+            QMessageBox.warning(self.dlg, "NK Curve Editor", f"Failed to edit curves: {describe_error(exc)}")
 
     def on_keep(self) -> None:
         if self._on_keep_called[0]:

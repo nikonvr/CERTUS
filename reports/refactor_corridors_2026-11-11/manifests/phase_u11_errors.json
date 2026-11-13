@@ -1,0 +1,36 @@
+{
+  "phase": "U11 (A9) - an error dialog says the cause and what to do: 43 QMessageBox.critical / warning calls inside an except clause put the exception itself in their message; they go through certus.utils.errors.describe_error.",
+  "changed_code": [
+    "certus.ui.certus_index_spline_execution:_CorridorExportMixin._export_nk_csv",
+    "certus.ui.certus_index_spline_mixins_ui:_MeshOptimizationMixin._build_opt_config",
+    "certus.ui.certus_index_spline_settings:_SettingsMixin._on_load",
+    "certus.ui.certus_index_spline_smart_init:SmartInitPreviewManager.apply_preset",
+    "certus.ui.certus_index_spline_smart_init:SmartInitPreviewManager.open_curve_editor",
+    "certus.ui.certus_index_spline_smart_init:SmartInitPreviewManager.recall_best",
+    "certus.ui.certus_index_spline_smart_init:SmartInitPreviewManager.run_auto_opt",
+    "certus.ui.certus_index_spline_smart_init:SmartInitPreviewManager.run_fast_local_search",
+    "certus.ui.certus_index_spline_smart_init:SmartInitPreviewManager.run_nkd_local_opt",
+    "certus.ui.certus_index_spline_smart_init:SmartInitPreviewManager.run_nkd_sweep_all",
+    "certus.ui.certus_index_spline_smart_init:SmartInitPreviewManager.save_config",
+    "certus.ui.certus_index_spline_smartinit_mixin:CertusIndexSplineSmartInitMixin._load_smart_init_index_config",
+    "certus.ui.certus_metal_base_app:MetalBaseApp._metal_start_optimization",
+    "certus.ui.certus_metal_base_app:MetalBaseApp.load_target_file",
+    "certus.ui.certus_metal_bilayer_gui:CertusMetalBilayerApp.on_file_loaded",
+    "certus.ui.certus_metal_bilayer_gui:CertusMetalBilayerApp.start_beam_analysis",
+    "certus.ui.certus_metal_single_gui:CertusMetalSingleApp.load_target_file",
+    "certus.ui.certus_metal_single_gui:CertusMetalSingleApp.on_file_loaded",
+    "certus.ui.certus_metal_single_gui:CertusMetalSingleApp.start_beam_analysis",
+    "certus.ui.certus_strat_ui_worker:CertusStratWorkerMixin.on_workflow_finished"
+  ],
+  "added_attributes": [
+    "CERTUS_RE:CertusREApp.describe_error",
+    "certus.ui.certus_design_ui:CertusDesignApp.describe_error",
+    "certus.ui.certus_field_ui:CertusFieldApp.describe_error",
+    "certus.ui.certus_index_spline_ui:CertusIndexSplineApp.describe_error",
+    "certus.ui.certus_index_ui:CertusIndexApp.describe_error",
+    "certus.ui.certus_metal_bilayer_gui:CertusMetalBilayerApp.describe_error",
+    "certus.ui.certus_metal_single_gui:CertusMetalSingleApp.describe_error",
+    "certus.ui.certus_strat_ui:CertusStratApp.describe_error"
+  ],
+  "note": "Only the message expression changes: {e} -> {describe_error(e)}, str(e) -> describe_error(e), on the same lines; the files at their ceiling call the window's describe_error (a static method of CertusBaseApp). One METAL SINGLE dialog loses a French word ('Erreur:' -> 'Cause:') and an emoji. `str` is no longer loaded where str(e) became describe_error(e)."
+}

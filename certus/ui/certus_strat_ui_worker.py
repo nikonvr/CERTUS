@@ -18,6 +18,7 @@ from certus.core.certus_strat_config import _SPECTRUM_COUNTER
 from certus.ui.certus_overview_tab import PLACEHOLDER
 from certus.ui.certus_ui import confirm_stop_with_timeout, show_toast
 from certus.utils.certus_strat_service import APP_CONTEXT, select_best_strat_result
+from certus.utils.errors import describe_error
 from certus.workers.certus_strat_workers import StratTask, WorkerThread
 from certus_physics import (
     NON_MONOTONIC_MODE_ATTENUATE,
@@ -556,7 +557,7 @@ class CertusStratWorkerMixin:
                 QMessageBox.critical(
                     self,
                     "CERTUS-STRAT Final Ranking Error",
-                    f"The final ranking table could not be displayed.\n\nError code: {exc}",
+                    f"The final ranking table could not be displayed.\n\nError code: {describe_error(exc)}",
                 )
                 raise
 

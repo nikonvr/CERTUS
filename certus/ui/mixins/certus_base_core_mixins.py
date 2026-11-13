@@ -747,6 +747,14 @@ class CertusEmptyStateMixin:
         except RuntimeError, AttributeError, TypeError, ValueError:
             pass
 
+        # The arrows of a tab bar whose tabs do not fit (a 150 % screen) say what they do (U13).
+        try:
+            from certus.ui.certus_ui_widgets_utils import name_tab_scroll_buttons
+
+            name_tab_scroll_buttons(self)
+        except RuntimeError, AttributeError:
+            pass
+
         # An empty plot says what to do (U10, constat C1): a window opts in with `_EMPTY_PLOT_HINT`, (icon, title,
         # description); without it, its plots are left as they were.
         hint = getattr(self, "_EMPTY_PLOT_HINT", None)

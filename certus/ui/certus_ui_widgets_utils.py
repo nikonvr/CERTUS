@@ -17,6 +17,8 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QTableWidget,
     QTableWidgetItem,
+    QTabWidget,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -209,6 +211,24 @@ class CertusThemeToggle(QPushButton):
 
         if hasattr(w, "_apply_theme"):
             w._apply_theme()
+
+#: What the two arrows of a tab bar say when the mouse rests on them.
+TAB_SCROLL_NAMES = {"ScrollLeftButton": "Previous tabs", "ScrollRightButton": "Next tabs"}
+
+
+def name_tab_scroll_buttons(root: QWidget) -> None:
+    """Give a tooltip to the scroll arrows Qt adds to a tab bar whose tabs do not fit (U13).
+
+    At 1280x720 logical (1920x1080 at 150 %) the tabs of DESIGN and INDEX SPLINE no longer fit, and Qt shows two
+    arrows of its own, without a tooltip (their accessible names, « Scroll Left/Right », are Qt's and are kept).
+    """
+    every = [root] if isinstance(root, QTabWidget) else []
+    for tabs in every + root.findChildren(QTabWidget):
+        for arrow in tabs.tabBar().findChildren(QToolButton):
+            name = TAB_SCROLL_NAMES.get(arrow.objectName())
+            if name:
+                arrow.setToolTip(name)
+
 
 class AutoShrinkTitleLabel(QLabel):
     """A label that shrinks its font size to prevent being cut off."""

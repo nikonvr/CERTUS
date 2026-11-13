@@ -335,10 +335,45 @@ def _paint(widget, icon, size: int) -> None:
         widget.setIcon(icon)
 
 
-def redraw_themed_icon(widget) -> bool:
-    """Redraw the icon of a widget given one by `set_themed_icon`, in the active palette. False for any other widget."""
+THEMED_LOGO_PROPERTY: Final = "certus_themed_logo"
+
+#: The dark inks of `certus.svg` (its words and the arc of its symbol), and the palette token each takes in the dark theme. The light theme keeps
+#: the drawing as it is: navy and black on white are the brand. On the dark header they vanished (audit A10, U13).
+LOGO_DARK_INK: Final = {"#05103b": "TEXT_MAIN", "#000000": "TEXT_MAIN", "#333333": "TEXT_SUB"}
+
+
+def set_themed_logo(svg_widget, path: str) -> None:
+    """Load the logo SVG at `path` into `svg_widget` in the ink of the active palette, and again at each theme change."""
+    svg_widget.setProperty(THEMED_LOGO_PROPERTY, str(path))
+    _load_logo(svg_widget)
+
+
+def _load_logo(svg_widget) -> None:
+    from PyQt6.QtCore import QByteArray, Qt
+
     from certus.ui.certus_theme import CertusTheme
 
+    with open(str(svg_widget.property(THEMED_LOGO_PROPERTY)), encoding="utf-8") as f:
+        svg = f.read()
+    if CertusTheme.DARK_MODE:
+        for ink, token in LOGO_DARK_INK.items():
+            for attribute in ("fill", "stroke"):  # the arc of the symbol is a navy stroke, the words navy fills
+                svg = svg.replace(f'{attribute}="{ink}"', f'{attribute}="{getattr(CertusTheme, token)}"')
+    svg_widget.load(QByteArray(svg.encode("utf-8")))
+    # A new document resets the renderer: Qt would stretch the logo to its widget again.
+    svg_widget.renderer().setAspectRatioMode(Qt.AspectRatioMode.KeepAspectRatio)
+
+
+def redraw_themed_icon(widget) -> bool:
+    """Redraw the icon of a widget given one by `set_themed_icon`, in the active palette. False for any other widget.
+
+    A logo given by `set_themed_logo` is reloaded in the ink of the active palette.
+    """
+    from certus.ui.certus_theme import CertusTheme
+
+    if widget.property(THEMED_LOGO_PROPERTY):
+        _load_logo(widget)
+        return True
     spec = widget.property(THEMED_ICON_PROPERTY)
     if not spec:
         return False

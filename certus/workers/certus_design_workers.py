@@ -274,12 +274,26 @@ class OptimWorker(QObject):
             pool = ThreadPoolExecutor(max_workers=workers, initializer=PGlobalOptimizer._init_pool_thread,
                                       initargs=(PGlobalOptimizer._inner_numba_threads(workers),))
             logging.getLogger('CERTUS').info(f'[OPTIM] Memetic global stage: {workers} designs polished at once')
+        polisher = None
+        choice = self._optional_step('memetic_polisher')
+        if choice in ('lm', 'lbfgs_then_lm'):
+            from certus.core.certus_design_lm import build_memetic_lm_polisher
+
+            probe = np.asarray(x0_start, dtype=np.float64) if x0_start is not None and len(x0_start) == len(var_idx) \
+                else wide.mean(axis=1)
+            polisher, why = build_memetic_lm_polisher(
+                cost_and_grad, fast_ctx=getattr(self, '_normal_fast_ctx', None), ep_full=self._ep_buffer, var_idx=var_idx,
+                tgt_vals=self._tgt_vals, tgt_weights=self._tgt_weights, bounds=wide, min_d=min_d, probe=probe,
+                qwot_max=qwot_max, q_per_nm=q_per_nm, qwot_penalty=QWOT_EXCESS_PENALTY,
+                after_lbfgs=(choice == 'lbfgs_then_lm'))
+            logging.getLogger('CERTUS').info(f'[OPTIM] Memetic polisher: {choice}' if polisher is not None
+                                             else f'[OPTIM] Memetic polisher: L-BFGS-B kept, Levenberg-Marquardt not usable: {why}')
         try:
             result = run_memetic(cost_and_grad, wide, x0=x0_start, population=population, children=children,
                                  seed=self.cfg.get('memetic_seed'), screen_maxiter=int(self.cfg.get('memetic_screen_maxiter', 0)),
                                  stop_event=self._stop_event, on_improve=callback, init_bounds=bounds,
                                  merge_shift_every=int(self._optional_step('memetic_merge_shift_every')),
-                                 pool=pool, batch=workers)
+                                 pool=pool, batch=workers, polisher=polisher)
         finally:
             if pool is not None:
                 pool.shutdown(wait=True)

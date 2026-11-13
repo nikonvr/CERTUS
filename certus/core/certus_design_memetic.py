@@ -53,6 +53,7 @@ def run_memetic(
     merge_shift_every: int = 0,
     pool: Executor | None = None,
     batch: int = 1,
+    polisher: Callable[[np.ndarray, int], tuple[np.ndarray, float]] | None = None,
 ) -> MemeticResult:
     """Run the memetic search inside ``bounds`` (one (low, high) row per variable layer).
 
@@ -67,6 +68,9 @@ def run_memetic(
     ``batch`` at a time from the same population and judged in the order they were drawn. The
     starts are the sequential ones; the children differ from the sequential search, which
     ``pool=None`` (default) keeps unchanged.
+
+    ``polisher(x, maxiter) -> (x, cost)`` replaces L-BFGS-B for every polish (`build_memetic_lm_polisher`);
+    ``None`` (default) keeps L-BFGS-B. Its own evaluations are not counted in ``evaluations``.
     """
     lo_b = np.asarray(bounds, dtype=np.float64)[:, 0]
     hi_b = np.asarray(bounds, dtype=np.float64)[:, 1]
@@ -85,6 +89,9 @@ def run_memetic(
         return float(c), np.asarray(g, dtype=np.float64)
 
     def polish(x: np.ndarray, maxiter: int) -> tuple[np.ndarray, float]:
+        if polisher is not None:  # `memetic_polisher` (2026-11-13): None keeps L-BFGS-B, unchanged
+            xp, yp = polisher(np.clip(x, lo_b, hi_b), maxiter)
+            return np.asarray(xp, dtype=np.float64), float(yp)
         res = minimize(f, np.clip(x, lo_b, hi_b), jac=True, method="L-BFGS-B", bounds=list(zip(lo_b, hi_b, strict=True)),
                        options={"maxiter": maxiter, "ftol": 1e-15, "gtol": 1e-12})
         return np.asarray(res.x, dtype=np.float64), float(res.fun)

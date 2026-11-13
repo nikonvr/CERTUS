@@ -47,6 +47,9 @@ DESIGN_OPTIONAL_STEPS: dict[str, Any] = {
     "polish_after_5nm_rule": False,  # re-polish above the floor after the 5 nm rule removed layers
     # 2026-11-13 (owner): the final cleanup, on unless the file says false (then the 5 nm rule, as before)
     "final_cleanup": True,
+    # 2026-11-13: "lm" polishes the memetic designs by Levenberg-Marquardt (certus_design_lm), "lbfgs_then_lm" by
+    # L-BFGS-B then Levenberg-Marquardt; "lbfgs" keeps L-BFGS-B alone
+    "memetic_polisher": "lbfgs",
     # 2026-10-30: threads polishing memetic designs at once (1: one after another; 0: cores - 2, as PGLOBAL's pool)
     "memetic_workers": 1,
 }

@@ -164,7 +164,11 @@ icônes sur les tuiles du HUB (`7a072ee3`) ; lignes d'état de l'accueil de STRA
 l'accueil de STRAT gardent leurs emojis : U10 les remplace par des actions (Q37) ; le cliquet U8 garde STRAT en `xfail`
 jusque-là. **U9, fait** : plancher de l'en-tête (`b695fe80`) ; corps à 10 pt dans DESIGN et RE (`242ec1c4`) ; Reset à
 10 pt (`2a8c2922`) ; cliquet `test_ux_one_type_scale.py` (`bd033b7c`, `2 failed` avant) ; `ux_`, DESIGN, RE : `1905 passed`.
-**En cours : U10.**
+**U10, fait** : aucune fenêtre n'ouvre un tracé vide, chacun dit quoi faire (`cd1eb7ed`, cliquet
+`test_ux_no_plot_opens_blank.py`, `5 failed` avant) ; carte des états vides sur l'échelle (`d4af8218`) ; accueil de
+STRAT : l'exemple et les configurations récentes à la place des slogans, STRAT enregistre ce qu'il charge
+(`6365d7fb`) ; U8 complet du même coup (STRAT n'est plus en `xfail`). `ux_` et états vides : `1434 passed` ; deux tests
+« au bit » de STRAT rouges, `43 passed` sur cache Numba vierge. **En cours : U11** (Q33).
 
 ## 6. À faire, dans l'ordre
 

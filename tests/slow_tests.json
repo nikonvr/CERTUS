@@ -81,6 +81,7 @@
   "tests/ui/test_ux_no_emoji_in_a_label.py::test_no_label_of_the_window_draws_an_emoji": 15.0,
   "tests/ui/test_ux_no_horizontal_scroll.py::test_control_panel_never_scrolls_sideways": 8.5,
   "tests/ui/test_ux_no_mute_controls.py::test_there_are_controls_to_inspect": 4.8,
+  "tests/ui/test_ux_no_plot_opens_blank.py::test_an_empty_plot_says_what_to_do": 15.0,
   "tests/ui/test_ux_no_text_is_cut_at_laptop_sizes.py::test_no_text_of_the_window_is_cut": 20.0,
   "tests/ui/test_ux_no_undo_state_is_written_that_nothing_reads.py::test_every_window_that_can_undo_has_ctrl_z": 27.7,
   "tests/ui/test_ux_no_undo_state_is_written_that_nothing_reads.py::test_no_module_writes_an_undo_state_that_nothing_reads": 1.6,

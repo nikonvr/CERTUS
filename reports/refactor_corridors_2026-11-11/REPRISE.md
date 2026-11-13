@@ -162,8 +162,9 @@ un rouge que personne n'avait encore vu.
 (`626d84b8`) ; garde-fou SVG borné à PyQt6 < 6.11 (`13868e1c`, suite UI entière `1512 passed` icônes visibles) ; dix
 icônes sur les tuiles du HUB (`7a072ee3`) ; lignes d'état de l'accueil de STRAT (`08ac066c`). Les six slogans de
 l'accueil de STRAT gardent leurs emojis : U10 les remplace par des actions (Q37) ; le cliquet U8 garde STRAT en `xfail`
-jusque-là. **En cours : U9**, corps de texte à 10 pt dans DESIGN et RE (Q34), Reset à 10 pt (Q36). Fait de U9 : plancher
-de l'en-tête (`b695fe80`).
+jusque-là. **U9, fait** : plancher de l'en-tête (`b695fe80`) ; corps à 10 pt dans DESIGN et RE (`242ec1c4`) ; Reset à
+10 pt (`2a8c2922`) ; cliquet `test_ux_one_type_scale.py` (`bd033b7c`, `2 failed` avant) ; `ux_`, DESIGN, RE : `1905 passed`.
+**En cours : U10.**
 
 ## 6. À faire, dans l'ordre
 

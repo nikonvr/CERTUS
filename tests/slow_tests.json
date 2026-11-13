@@ -90,6 +90,7 @@
   "tests/ui/test_ux_one_action_system.py::test_a_window_has_one_primary_action_at_most": 120.0,
   "tests/ui/test_ux_one_action_system.py::test_no_button_is_painted_outside_the_palette": 120.0,
   "tests/ui/test_ux_one_action_system.py::test_one_vocabulary_in_sentence_case": 120.0,
+  "tests/ui/test_ux_one_type_scale.py::test_the_window_keeps_to_the_scale": 15.0,
   "tests/ui/test_ux_one_zoom_indicator.py::test_the_scale_is_shown_once_at_most_and_in_the_status_bar": 15.0,
   "tests/ui/test_ux_plot_area_share.py::test_plots_keep_their_share_of_the_window": 8.9,
   "tests/ui/test_ux_ratchet.py::test_no_ux_metric_ever_gets_worse": 12.4,

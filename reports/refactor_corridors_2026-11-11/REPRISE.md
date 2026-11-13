@@ -189,7 +189,9 @@ la règle des 5 nm. Ferme ALG-19 du registre. Logo sombre corrigé (`b3cfd0b7`, 
 refactoring, dérivées analytiques ; vitesse et convergence locale en cours. Sondes : `scripts/probe_codesign_sensitivity.py`,
 `probe_kernel_threads.py`, `probe_local_convergence.py` (problèmes RICL `bs5050` et `threeline`).
 
-**En cours** : convergence locale (L-BFGS-B en nm, en épaisseur optique, préconditionné ; Levenberg-Marquardt avec et
+**Passation du 2026-11-13 : lire `reports/audits_2026-11-13/REPRISE.md`** (état exact, décision de 👤 à exécuter en premier : défaut `lbfgs_then_lm` du mémétique).
+
+**En cours (périmé, voir la passation)** : convergence locale (L-BFGS-B en nm, en épaisseur optique, préconditionné ; Levenberg-Marquardt avec et
 sans accélération géodésique). Ce qui gagne sera porté dans CERTUS en option inactive par défaut. **Reste à mesurer** :
 `memetic_workers` (1 exécution sur 4 dans `design_memetic_workers.jsonl`), profil échantillonné d'une optimisation,
 puis la validation complète (non rejouée depuis le nettoyage final).

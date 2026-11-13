@@ -352,6 +352,102 @@ def attach_empty_state_to(
     return overlay
 
 
+#: The object name of the card laid over an empty plot; scripts/audit_ux_certus.py::empty_plots looks for it.
+PLOT_EMPTY_STATE_NAME: Final[str] = "plot-empty-state"
+
+
+def plot_has_data(plot_widget) -> bool:
+    """True when a data item of the pyqtgraph plot holds at least one point."""
+    try:
+        items = plot_widget.getPlotItem().listDataItems()
+    except (AttributeError, RuntimeError):
+        return False
+    for item in items:
+        try:
+            x = item.getData()[0] if hasattr(item, "getData") else None
+        except (AttributeError, RuntimeError, TypeError, ValueError):
+            x = None
+        if x is not None and len(x) > 0:
+            return True
+    return False
+
+
+def attach_plot_empty_state(
+    plot_widget,
+    *,
+    icon_name: str = "line-chart",
+    title: str = DEFAULT_TITLE,
+    description: str = DEFAULT_DESCRIPTION,
+):
+    """Lay a card that says what to do over an empty pyqtgraph plot, and lift it as soon as a curve holds data (U10).
+
+    An empty plot showed its axes from 0 to 1 and nothing else (constat C1 of the corridor plan). The card follows
+    the DATA, like the overlay of a table follows its model: items added or removed, and every `setData` of a curve.
+    It lets the mouse through. Returns the card, or None.
+    """
+    if plot_widget is None or not hasattr(plot_widget, "getPlotItem"):
+        return None
+    try:
+        from PyQt6.QtCore import QEvent, QObject, Qt
+    except ImportError:
+        return None
+
+    overlay = build_empty_state(plot_widget, icon_name=icon_name, title=title, description=description)
+    if overlay is None:
+        return None
+    overlay.setObjectName(PLOT_EMPTY_STATE_NAME)
+    overlay.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+    plot_item = plot_widget.getPlotItem()
+
+    class _PlotWatcher(QObject):
+        def __init__(self):
+            super().__init__(plot_widget)
+            plot_widget.installEventFilter(self)
+            for item in plot_item.listDataItems():
+                self._follow(item)
+            for name in ("addItem", "removeItem", "clear", "clearPlots"):
+                original = getattr(plot_item, name, None)
+                if callable(original):
+                    setattr(plot_item, name, self._wrap(original))
+            self._sync()
+
+        def _wrap(self, original):
+            def wrapped(*args, **kwargs):
+                result = original(*args, **kwargs)
+                for arg in args:
+                    self._follow(arg)
+                self._sync()
+                return result
+
+            return wrapped
+
+        def _follow(self, item):
+            signal = getattr(item, "sigPlotChanged", None)
+            if signal is not None:
+                try:
+                    signal.connect(self._sync)
+                except (RuntimeError, TypeError):
+                    pass
+
+        def eventFilter(self, obj, event):
+            if obj is plot_widget and event.type() == QEvent.Type.Resize:
+                self._sync()
+            return False
+
+        def _sync(self, *_args):
+            try:
+                overlay.setGeometry(0, 0, plot_widget.width(), plot_widget.height())
+                empty = not plot_has_data(plot_widget)
+                overlay.setVisible(empty)
+                if empty:
+                    overlay.raise_()
+            except RuntimeError:  # the plot or the card was destroyed first
+                return
+
+    overlay._certus_watcher = _PlotWatcher()
+    return overlay
+
+
 def detach_empty_state_from(view) -> bool:
     """Remove a previously installed overlay. Returns True on success."""
     if view is None:

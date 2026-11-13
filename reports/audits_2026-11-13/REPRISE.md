@@ -55,6 +55,9 @@ d'absence) ; le journal dit pourquoi.
   (pics étroits non vus ; **non recoupé par l'oracle**). LM converge trop lentement à 101 couches, même sur grille fine.
   Grille à 0,1 nm + L-BFGS-B : 1,0e-4 résolu (×20 en temps). Longueurs d'onde complexes (`refine_resonances`) : 3,4e-4
   résolu au prix de la grille à 1 nm, mais refus de tous les départs à 5 % (« no isolated interior error maximum »).
+- Tri-bande sur grille à 0,1 nm, 10 départs à 5 % (`local_convergence_threeline_fine_20261113_132038.json`, run arrivé
+  après la passation) : L-BFGS-B 8/10 (1,03e-4), **L-BFGS-B puis LM 8/10 (1,03e-4)**, LM seul 0/10, LM puis L-BFGS-B 2/10 :
+  l'hybride retenu ne perd rien face à L-BFGS-B, là où LM seul échoue.
 - Noyaux : 8 fils accélèrent le gradient de ×2 seulement ; `memetic_workers` (polissages simultanés) non mesuré.
 - Co-conception : à plan figé, ±1 % sur une couche déplace l'erreur de dépôt de −3,7 % à +24,6 % ; une évaluation
   coûte 0,27 s contre 1 036 s pour trouver le plan.

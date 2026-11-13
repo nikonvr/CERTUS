@@ -1,3 +1,6 @@
+import functools
+from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 from PyQt6.QtCore import Qt
@@ -8,19 +11,27 @@ from PyQt6.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
     QLabel,
+    QPushButton,
     QScrollArea,
     QVBoxLayout,
     QWidget,
 )
 
+from certus.core.certus_config import get_resource_path
 from certus.ui.certus_icons import is_svg_icon_rendering_disabled, set_themed_icon
 from certus.ui.certus_theme import CertusTheme
 from certus.utils.certus_strat_service import APP_CONTEXT
-from certus.utils.certus_ux import Typography
+from certus.utils.certus_ux import OBJ, Typography
+
+#: The bundled example offered by the welcome page; it is read, never written (CLAUDE.md, rule 4).
+STRAT_EXAMPLE = "example/example_strat/JSON-strat-example.json"
+RECENTS_SHOWN = 5
 
 
 class WelcomeGuideWidget(QWidget):
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent=None, *, on_open: Callable[[str], object] | None = None) -> None:
+        # `on_open(path)` loads a configuration. Given, the page offers actions (the example, the recent files) where
+        # it showed slogans (U10, decision Q37); without it, the page is the one it always was.
 
         super().__init__(parent)
 
@@ -176,6 +187,12 @@ class WelcomeGuideWidget(QWidget):
 
         content_layout.addWidget(mission_frame)
 
+        self._on_open = on_open
+        self._recents_layout = None
+        if on_open is not None:
+            mission_frame.hide()
+            content_layout.addWidget(self._build_get_started())
+
         dash_frame = QFrame()
 
         dash_frame.setProperty("class", "dash-frame")
@@ -318,6 +335,63 @@ class WelcomeGuideWidget(QWidget):
         vbox.addWidget(lbl_desc)
 
         return card
+
+    def _build_get_started(self) -> QFrame:
+        """Open the example, or one of the last configurations loaded in STRAT (U10)."""
+        frame = QFrame()
+        frame.setProperty("class", "mission-frame")
+        layout = QVBoxLayout(frame)
+        layout.setContentsMargins(14, 14, 14, 14)
+        layout.setSpacing(8)
+
+        head = QLabel("GET STARTED")
+        head.setProperty("class", "dash-header")
+        layout.addWidget(head)
+
+        example = Path(get_resource_path(STRAT_EXAMPLE))
+        btn_example = QPushButton("Open the example")
+        btn_example.setToolTip(f"Load the bundled example configuration (read only): {example}")
+        btn_example.setEnabled(example.is_file())
+        btn_example.clicked.connect(functools.partial(self._open, str(example)))
+        layout.addWidget(btn_example, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        recent_head = QLabel("Recent configurations")
+        recent_head.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-weight: 600;")
+        layout.addWidget(recent_head)
+        self._recents_layout = QVBoxLayout()
+        self._recents_layout.setSpacing(2)
+        layout.addLayout(self._recents_layout)
+        self._fill_recents()
+        return frame
+
+    def _fill_recents(self) -> None:
+        if self._recents_layout is None:
+            return
+        while self._recents_layout.count():
+            widget = self._recents_layout.takeAt(0).widget()
+            if widget is not None:
+                widget.deleteLater()
+        from certus.ui.certus_recent import RecentCategories, list_recent, short_label
+
+        paths = list_recent(RecentCategories.STRAT_CONFIG, limit=RECENTS_SHOWN)
+        if not paths:
+            self._recents_layout.addWidget(QLabel("None yet: the configurations you load appear here."))
+            return
+        for path in paths:
+            btn = QPushButton(short_label(path))
+            btn.setObjectName(OBJ.GHOST_BUTTON)
+            btn.setToolTip(path)
+            btn.clicked.connect(functools.partial(self._open, path))
+            self._recents_layout.addWidget(btn, alignment=Qt.AlignmentFlag.AlignLeft)
+
+    def _open(self, path: str, *_args) -> None:
+        if self._on_open is not None:
+            self._on_open(path)
+
+    def showEvent(self, event) -> None:
+        # A file loaded since the page was built is offered the next time it shows.
+        super().showEvent(event)
+        self._fill_recents()
 
     def _create_status_row(self, icon, label, value) -> Any:
 

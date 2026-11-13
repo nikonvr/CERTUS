@@ -307,7 +307,7 @@ class CertusStratLayoutMixin:
 
         self.plot_stack = QStackedWidget()
 
-        self.welcome_widget = WelcomeGuideWidget()
+        self.welcome_widget = WelcomeGuideWidget(on_open=self.load_configuration)
 
         self.plot_stack.addWidget(self.welcome_widget)
 

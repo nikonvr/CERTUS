@@ -54,6 +54,7 @@ class RecentCategories:
     SUBSTRATE: Final[str] = "file.substrate"
     PROFILE: Final[str] = "file.profile"
     PROJECT: Final[str] = "file.project"
+    STRAT_CONFIG: Final[str] = "file.strat_config"  # STRAT only: its welcome page offers them (U10)
 
 
 # =============================================================================

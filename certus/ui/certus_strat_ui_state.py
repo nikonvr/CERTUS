@@ -861,7 +861,7 @@ class CertusStratStateMixin:
                 summary = build_summary_plain_text("CERTUS STRAT - Config Summary", summary_lines)
 
                 show_load_summary_dialog(self, "STRAT Load Summary", summary)
-
+            self._record_recent_config(filename, "STRAT_CONFIG")  # offered again by the welcome page (U10)
             self.mark_config_saved()
             return True
         except Exception as e:

@@ -434,8 +434,8 @@ def create_reset_button(app_instance, use_app_reset: bool = False) -> QPushButto
     # The destructive role of the palette (U6): the application sheet paints it and the theme follows it. The brown
     # fill written here before (#5a3a00) was the same in both themes and in no palette.
     reset_btn.setObjectName(OBJ.DANGER_BUTTON)
-    # The size the owner chose on 2026-10-06 (D58); the fill, the ink and the states stay those of the role.
-    reset_btn.setStyleSheet(f"QPushButton {{ font-size: {Typography.BODY_LG}pt; font-weight: bold; }}")
+    # The body size of the buttons (Q36, 2026-11-13, replaces D58); the fill, the ink and the states are the role's.
+    reset_btn.setStyleSheet(f"QPushButton {{ font-size: {Typography.BODY}pt; font-weight: bold; }}")
 
     if use_app_reset and hasattr(app_instance, "reset_to_defaults"):
         reset_btn.clicked.connect(app_instance.reset_to_defaults)

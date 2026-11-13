@@ -80,7 +80,7 @@ def test_design_clear_button_actually_clears(qapp, monkeypatch) -> None:
 
 def test_the_reset_button_has_the_font_size_its_author_asked_for(qapp) -> None:
     """D58: `font-size: {Typography.BODY_LG}pt` sat in a plain string, Qt dropped the declaration and the button kept the
-    default size (9 pt measured on 2026-10-06). Decided by the owner on 2026-10-06: BODY_LG. The painted font is read,
+    default size (9 pt measured on 2026-10-06). Decided by the owner on 2026-10-06: BODY_LG; on 2026-11-13, BODY (Q36). The painted font is read,
     not the declared sheet."""
     from PyQt6.QtWidgets import QWidget
 
@@ -91,4 +91,4 @@ def test_the_reset_button_has_the_font_size_its_author_asked_for(qapp) -> None:
     button = create_reset_button(parent)
     button.ensurePolished()
 
-    assert button.font().pointSizeF() == Typography.BODY_LG
+    assert button.font().pointSizeF() == Typography.BODY

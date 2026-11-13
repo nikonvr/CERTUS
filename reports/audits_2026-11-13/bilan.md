@@ -1,0 +1,147 @@
+# Audits du 2026-11-13 — co-conception, refactoring, vitesse
+
+Demandés par 👤 le 2026-11-13. Mesuré sur `21f39b98` et suivants, Python 3.15.2, une machine. Chaque chiffre porte
+sa commande ; ce qui n'est pas mesuré est dit « non mesuré ».
+
+## 1. Co-conception design × stratégie de contrôle
+
+**Question** : peut-on synthétiser un design en jugeant ce que le dépôt en fera sous sa stratégie de contrôle, et
+non son seul spectre nominal ?
+
+### 1.1 Ce qui existe déjà (lu dans le code)
+
+| Brique | Où | État |
+|---|---|---|
+| Noter un dépôt contre les **cibles** de DESIGN, mêmes poids spectraux | `certus_strat_robustness_task.py` (`params["targets"]`) | présent ; actif seulement si le fichier STRAT porte des cibles |
+| Évaluer « design + plan → RMSE par tirage, arrêts » | `certus_strat_local_search.py::native_evaluator` | présent ; les épaisseurs nominales sont un argument |
+| Comparaison appariée (mêmes tirages pour deux candidats) | `paired_delta`, contrainte C2 | présent |
+| Recherche locale sur le **plan** (longueur d'onde, mode) à design figé | `joint_local_search` | présent, actif par défaut |
+| Tolérance du design à des erreurs **indépendantes** (sans contrôle) | `certus_design_tolerance.py` | présent dans DESIGN |
+| Recherche sur le **design** jugée par le dépôt | — | absent |
+
+Limites de structure : STRAT suppose deux matériaux H/L ; `full_dynamics_grid` ne sert qu'à un journal
+(`[DYN-ALERT]`), pas au score : l'évaluateur reste cohérent quand le design change.
+
+### 1.2 Mesure (`scripts/probe_codesign_sensitivity.py`, exemple `JSON-strat-example-fast.json`, 48 couches)
+
+Détail : `codesign_sensitivity_example_fast.json` (et son rejeu horodaté, mêmes chiffres : la mesure est
+déterministe).
+
+| Grandeur | Valeur |
+|---|---|
+| Pipeline STRAT complet (trouver le plan) | 1 036 s, puis 788 s au rejeu |
+| Une évaluation à plan figé, 300 tirages | 0,27 s (fabrique de l'évaluateur : 0,8 ms) |
+| Contrôle : même design, même graine | écart 0 exactement |
+| Erreur de dépôt nominale (RMSE contre le spectre du design) | 0,00264 ; 0 arrêt |
+| Une couche à ±1 %, 96 retouches | rmse² de **−3,7 % à +24,6 %** ; 55 à \|z\| ≥ 3 |
+| Sens des retouches significatives | 50 dégradent, 5 améliorent ; médiane +2,2 % |
+| Par couche | 31 couches sur 48 : les deux signes dégradent (le design est à un optimum local du dépôt) ; 17 : signes opposés |
+| Lien avec l'épaisseur de la couche | aucun (corrélation −0,01) : ce ne sont pas les couches fines qui pèsent |
+| Meilleure retouche (couche 9, +1 %) | −3,7 %, pour un spectre nominal déplacé de 0,0016 RMS |
+| Retouche globale σ = 0,5 %, 8 tirages | rmse² de +14 % à +110 % ; jusqu'à 113 arrêts sur 900 tirages |
+
+### 1.3 Ce que la mesure dit
+
+1. **Le signal existe et il est fort** : 1 % sur une couche déplace l'erreur de dépôt de plusieurs dizaines de pour
+   cent, et 0,5 % partout fait apparaître des arrêts. La fabricabilité est une propriété du couple (design, plan).
+2. **L'évaluateur est bon marché** : 0,27 s contre 1 036 s, soit environ 3 800 évaluations de design pour le prix
+   d'une recherche de plan.
+3. **Bouger le design seul, à plan figé, ne gagne presque rien** (−3,7 % au mieux) : le plan sort de la recherche
+   locale accordé à son design, presque toute retouche le désaccorde. Et le gain coûte un déplacement du spectre
+   nominal du même ordre que l'erreur de dépôt.
+4. Donc une co-conception utile doit **bouger design et plan ensemble**, et **juger contre les cibles** (somme de
+   l'écart nominal et de l'erreur de dépôt), pas contre le spectre nominal de chaque design.
+
+🔴 Une graine, un composant, RMSE contre le spectre nominal de chaque design (le fichier n'a pas de cibles), plan non
+ré-optimisé : aucune généralité.
+
+### 1.4 Trois niveaux possibles, du moins cher au plus ambitieux
+
+| Niveau | Principe | Coût | Risque | Avis |
+|---|---|---|---|---|
+| A. Tri de designs par le dépôt | DESIGN livre K designs (Pareto, relances) ; STRAT les note ; on garde le meilleur contre les cibles | K recherches de plan (17 min chacune en mode rapide ici) ; aucun algorithme nouveau | malédiction du vainqueur : noter sur une graine disjointe | **à faire d'abord** : dit si la dispersion entre designs équivalents justifie d'aller plus loin |
+| B. Recherche locale jointe (épaisseur, longueur d'onde, mode) | étendre `joint_local_search` : un candidat « épaisseur ±δ » par couche, suivi d'un réaccord local du plan de cette couche et de ses voisines ; accepté si le RMSE **contre les cibles** baisse sans arrêt ajouté | ~0,3 s par candidat ; quelques milliers de candidats par passe | sur-ajustement à la graine de recherche (déjà traité par le contrôle durci) | **le cœur du sujet** ; demande des cibles dans le fichier STRAT |
+| C. Critère de contrôlabilité dans DESIGN | pénalité analytique dans le mérite de PGLOBAL : marge aux points tournants, dynamique du signal en fin de couche (`turning_point_margins`, `compute_dT_dd_kernel`) | négligeable par évaluation | le critère de substitution peut ne pas suivre le SEEL : à corréler d'abord sur des designs déjà notés | à n'ouvrir qu'après A, qui fournit les données de corrélation |
+
+Niveau D (deux boucles imbriquées, plan ré-optimisé à chaque design) : hors de portée au coût mesuré.
+
+### 1.5 Préalables
+
+- Faire porter les cibles de DESIGN au fichier STRAT (le champ existe, `targets`) : sans elles, on optimise l'erreur
+  de production d'un design qui peut s'être éloigné du cahier des charges.
+- Rapporter les deux grandeurs : RMSE contre les cibles (le critère) et SEEL (ce qu'on publie).
+- Toute comparaison de designs sur une graine de notation disjointe de la graine de recherche.
+
+## 2. Refactoring : ce qui mérite d'être factorisé ou mutualisé
+
+**Mesure** : analyse statique des 369 fichiers suivis de `certus/` et des lanceurs (183 451 lignes) : corps de
+fonctions identiques (AST), fonctions homonymes, similarité de fichiers frères (`difflib`), sites d'appel.
+
+### 2.1 Constat d'ensemble
+
+- **La duplication exacte est quasi nulle** : 12 groupes de corps identiques, 142 lignes redondantes sur 183 451.
+  Le cliquet de duplication fait son travail.
+- **Les couches sont propres** : 0 import montant, 1 cycle (les dix modules `certus_strat_*` de `core`).
+- La dette qui reste est de **taille** : 16 fichiers longs, 32 fonctions longues, 12 fonctions complexes
+  (`tests/architecture_debt.json`), dont `_test_strategy_robustness_task` (794 lignes) et
+  `certus_index_spline_managers_ui.py::build` (804 lignes).
+
+Ce qui mérite d'être mutualisé n'est donc pas du copier-coller, mais **des rôles réécrits dans chaque module**.
+
+### 2.2 Candidats, par rendement décroissant
+
+| # | Quoi | Mesure | Gain attendu | Risque |
+|---|---|---|---|---|
+| R1 | **METAL simple / bicouche** : deux fenêtres et deux applications jumelles | `certus_metal_bilayer_gui.py` ~ `single_gui.py` : 316 lignes communes sur ~1 090 ; `bilayer_app` ~ `single_app` : 218 sur ~450 ; `_on_optim_progress` 0,73, `_create_physical_params_group` 0,71, `_create_material_params_group` 0,65 | ~500 lignes ; un correctif fait une fois au lieu de deux | faible : `certus_metal_base_app.py` existe déjà, il suffit d'y descendre les méthodes |
+| R2 | **Amorçage Numba** réécrit dans 5 fenêtres | `_warmup_numba_thread_runner` : 5 définitions, 252 lignes, similarité 0,56 à 0,63 | un service du socle ; même comportement au démarrage partout | faible |
+| R3 | **Préparer un calcul DESIGN hors du worker** (indices, cibles, face arrière) | réécrit dans `_final_cleanup`, `_polish_remaining_layers_above_floor`, `_true_rmse`, `design_cost_function` ; `prepare_targets_vectorized` : 12 sites, `get_nk` : 44 sites dans 21 fichiers | un « contexte de coût » unique dans `core` ; supprime le risque qu'un des quatre juge un design avec d'autres hypothèses (c'est arrivé : ALG-18) | moyen : touche au calcul, oracle avant et après |
+| R4 | **Graphes** : `certus_plot.py` et `certus_strat_plots_ui.py` | 191 lignes communes ; `_trigger_auto_range` et `has_data` identiques | une seule classe de graphe ; le correctif UX-14/15 (détachement) fait une fois | moyen |
+| R5 | **Détacher un graphe** | `detach_current_plot` : 4 définitions, 287 lignes ; socle ~ METAL 0,51 | supprime les variantes ; lié à R4 | faible |
+| R6 | **Polissage local** (L-BFGS-B borné + « jamais pire ») | `scipy.optimize.minimize` : 27 sites dans 11 fichiers | un polisseur partagé (celui de `certus_design_final_cleanup.py` en est un) | moyen : chaque site a ses tolérances |
+| R7 | **SMOOTHER et SUBSTRATE hors du socle** | 121 lignes communes, `log` identique ; ni thème ni session (UX-59) | les deux fenêtres gagnent thème, session, raccourcis sans code propre | moyen : les migrer sur `CertusBaseApp` |
+| R8 | **Export Excel / HTML** | `export_excel` : 3 fenêtres, 524 lignes, similarité ≤ 0,24 ; 73 sites `openpyxl` dans 15 fichiers | faible : les contenus diffèrent vraiment ; seul un petit utilitaire d'écriture (styles, en-têtes) se partage | — |
+| R9 | `_update_qwot_from_ep` socle ~ RE | 0,64 ; seule la colonne change | 10 lignes ; une constante de colonne | nul |
+
+Faux amis, à **ne pas** factoriser : `_load_defaults`, `export_results`, `_apply_theme`, `_setup_shortcuts`,
+`_export_results_html` portent le même nom dans plusieurs fenêtres mais une similarité ≤ 0,4 : le code est vraiment
+propre à chaque module. `gradient_analytic.py` et `gradient_oblique.py` : 41 lignes communes sur ~1 700, ce sont
+deux noyaux distincts.
+
+### 2.3 Ordre conseillé
+
+R1 et R2 d'abord (interface seule, protégés par les tests `ui`), puis R9 et R5. R3 ensuite, seul, avec l'oracle :
+c'est le seul qui supprime une classe de défauts déjà rencontrée. R4, R6, R7 demandent chacun une décision de 👤.
+Les fonctions de 500 à 800 lignes (§2.1) relèvent du plan de refactoring existant, pas de la mutualisation.
+
+## 3. Vitesse : les boucles élémentaires
+
+À compléter (profils en cours).
+
+## 4. Dérivées : ce qui est encore numérique et pourrait être analytique
+
+**Mesure** : analyse statique (AST) des appels d'optimiseurs de `certus/` : `minimize`, `least_squares`,
+`minimize_scalar`, `brentq`, `differential_evolution`. 58 appels ; **32 reçoivent une dérivée analytique, 26 non**.
+Sans dérivée, L-BFGS-B et `least_squares` la calculent par différences finies : N + 1 évaluations par gradient.
+
+Déjà analytiques : DESIGN (gradient et Jacobien, incidence normale et oblique), RE (cinq Jacobiens), INDEX phases 2
+et 3, SPLINE corridors et finalisation, METAL (polissage principal).
+
+| # | Où | Aujourd'hui | Analytique possible ? | Gain attendu (non mesuré) |
+|---|---|---|---|---|
+| D1 | **FIELD**, synthèse et nettoyage : `certus_field_workers.py:753`, `:949` | L-BFGS-B sans gradient sur les épaisseurs | oui : dérivée du champ par matrices de transfert, même mécanique que le gradient de DESIGN | le plus gros : un gradient coûte N + 1 évaluations au lieu d'environ 2 à 3 |
+| D2 | **INDEX infrarouge**, étapes 0 et 2 : `certus_index_workers_ir_strat.py:156`, `:224` | L-BFGS-B sans gradient, alors que `IRGlobalObjective.gradient` existe | déjà écrit, non branché ; à vérifier d'abord : C13 du registre (`dk5` non affecté quand `arg == 0`) | fort pour ces deux étapes, effort faible |
+| D3 | **METAL**, polissages de `pglobal_adapter.py:331`, `:375` | L-BFGS-B sans gradient | le gradient METAL existe (`jac=True` dans `certus_metal_bilayer_app.py`) : le passer à l'adaptateur | moyen, effort faible |
+| D4 | **SPLINE**, étape des nœuds libres : `spline_workers.py:545` ; Smart Init : `spline_smart_init.py:959`, `certus_index_spline_smart_init.py:893` | L-BFGS-B sans gradient | oui pour les valeurs aux nœuds ; plus délicat pour la **position** des nœuds (dérivée de la base spline) | moyen à fort, effort moyen |
+| D5 | SPLINE, repli de `certus_corridor_utils.py:1046` | sans gradient quand `spline_pwl_analytic_grad_supported` dit non | étendre les cas couverts | faible : c'est un repli |
+| D6 | **SUBSTRATE** Sellmeier : `certus_substrate_sellmeier.py:242`, `:665`, `:843` ; `certus_substrate_index.py:1498` ; `certus_index_utils.py:576`, `:611` | différences finies | oui, trivial : n²(λ) est une somme de fractions rationnelles ; un site a déjà son Jacobien (`_jac_polish_q`) | faible : ces ajustements sont déjà rapides |
+| D7 | INDEX optique, `certus_index_workers_opt_strat.py:84`, `:223` | Nelder-Mead, à côté de deux appels qui ont leur gradient | à instruire : sans doute un choix de robustesse | — |
+
+Restent numériques par nature : les recherches à une variable (`minimize_scalar`, `brentq`, 6 sites) et les deux
+`differential_evolution` (recherche globale).
+
+Hors optimiseurs, déjà au registre : l'aiguille analytique (ALG-09 à 11, une seule passe pour toutes les positions
+d'insertion au lieu d'une évaluation par position) et le gradient faux sur couches absorbantes (C20), à corriger avant
+d'étendre quoi que ce soit.
+
+Ordre conseillé : D2 et D3 (déjà écrits, à brancher et à mesurer), puis D1 (le seul qui demande un vrai noyau
+nouveau, à valider contre l'oracle et par différences finies), puis D4.

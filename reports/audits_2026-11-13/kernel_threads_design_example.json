@@ -1,0 +1,89 @@
+{
+  "config": "JSON-design-example.json",
+  "layers": 26,
+  "calls": 3000,
+  "threads_max": 16,
+  "threading_layer": "omp",
+  "grids": {
+    "optimisation": {
+      "wavelengths": 108,
+      "us_per_call": {
+        "cost_lossless_front_fast": {
+          "1": 41.2,
+          "2": 22.97,
+          "4": 17.08,
+          "8": 12.88,
+          "16": 13.55
+        },
+        "grad_lossless_front_fast": {
+          "1": 69.23,
+          "2": 43.13,
+          "4": 35.87,
+          "8": 33.71,
+          "16": 56.07
+        },
+        "cost_numba_fast": {
+          "1": 79.2,
+          "2": 49.88,
+          "4": 43.21,
+          "8": 29.95,
+          "16": 49.75
+        },
+        "grad_all_layers_analytic": {
+          "1": 211.41,
+          "2": 153.49,
+          "4": 112.19,
+          "8": 95.63,
+          "16": 101.29
+        }
+      }
+    },
+    "dense_x10": {
+      "wavelengths": 1080,
+      "us_per_call": {
+        "cost_lossless_front_fast": {
+          "1": 304.91,
+          "2": 173.46,
+          "4": 146.38,
+          "8": 84.93,
+          "16": 64.92
+        },
+        "grad_lossless_front_fast": {
+          "1": 565.64,
+          "2": 417.86,
+          "4": 291.27,
+          "8": 233.46,
+          "16": 326.65
+        },
+        "cost_numba_fast": {
+          "1": 1033.29,
+          "2": 562.35,
+          "4": 313.04,
+          "8": 212.75,
+          "16": 244.47
+        },
+        "grad_all_layers_analytic": {
+          "1": 2275.29,
+          "2": 1786.72,
+          "4": 1176.24,
+          "8": 942.75,
+          "16": 1053.62
+        }
+      }
+    }
+  },
+  "provenance": {
+    "certus_version": "26_05",
+    "git_commit": "21f39b9884a674985d81b8e850f0fc0858b99a6d",
+    "git_dirty": false,
+    "python": "3.15.2",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "numba": "0.68.0",
+    "numba_cache_key": "78d5bb283b1f",
+    "numba_cache_keyed": true,
+    "platform": "Windows-11-10.0.26200-SP0",
+    "machine": "AMD64",
+    "generated_at_utc": "2026-11-13T10:26:10+00:00"
+  }
+}

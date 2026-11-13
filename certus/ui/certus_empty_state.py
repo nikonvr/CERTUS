@@ -122,12 +122,13 @@ def _build_widget_class():
 
             # Title
             from certus.ui.certus_theme import CertusTheme
+            from certus.utils.certus_ux import Typography
 
             title_lbl = QLabel(title, content)
             title_lbl.setObjectName("empty-title")
             title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
             title_lbl.setWordWrap(True)
-            title_lbl.setStyleSheet(f"#empty-title {{ color: {CertusTheme.TEXT_MAIN}; font-size: 13pt; font-weight: 650; }}")
+            title_lbl.setStyleSheet(f"#empty-title {{ color: {CertusTheme.TEXT_MAIN}; font-size: {Typography.H3}pt; font-weight: 650; }}")  # on the scale (U9): was 13 pt
             content_layout.addWidget(title_lbl)
 
             # Description
@@ -136,7 +137,7 @@ def _build_widget_class():
             desc_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
             desc_lbl.setWordWrap(True)
             desc_lbl.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-            desc_lbl.setStyleSheet(f"#empty-desc {{ color: {CertusTheme.TEXT_SUB}; font-size: 10pt; }}")
+            desc_lbl.setStyleSheet(f"#empty-desc {{ color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY}pt; }}")
             content_layout.addWidget(desc_lbl)
 
             # Action button
@@ -396,6 +397,9 @@ def attach_plot_empty_state(
     if overlay is None:
         return None
     overlay.setObjectName(PLOT_EMPTY_STATE_NAME)
+    # Centred at its natural width, the wrapping description was given the height of two lines for three, and lost
+    # the last one ("... Calculate Field (F5)." read "... Calculate", FIELD, 2026-11-13). Wider, it takes two, measured right.
+    overlay._desc_lbl.setMinimumWidth(320)
     overlay.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
     plot_item = plot_widget.getPlotItem()
 

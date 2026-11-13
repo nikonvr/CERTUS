@@ -154,7 +154,7 @@ un rouge que personne n'avait encore vu.
 
 | **U6, système d'actions** (Q30) : mesure `action_buttons` ; Reset au rôle destructif, plus de brun ; « Stop » partout et casse de phrase ; une action principale dans DESIGN, RE, STRAT, INDEX SPLINE, aucune dans le HUB ; cliquet `test_ux_one_action_system.py` (`21 failed` avant) ; `ux_` : `1166 passed` | `4eef2a9b` à `ac03ad10` |
 | **U7** : FIELD installe la feuille de la suite (régression de U6 corrigée, rôle vérifié sur le pixel peint) ; glyphe du bouton de thème partout (A10) ; un seul guide de déroulé (B1) ; correctif U1 | `055b6c76` à `7f6f529e` |
-**Dernière validation complète** : le 2026-11-12 vers 20 h 35, sur `9bb4999b` (plan §5.6).
+**Dernière validation complète** : le 2026-11-13 vers 03 h 40, sur `5d5407b3` : ruff, oracle `1198`, ui `1544`, performance `29` PASS ; unit `6006 passed` et le test « au bit » `test_strat_arming_on_request.py`, rouge seul sur le cache de l'arbre, `11 passed` sur cache vierge ; rest : l'artefact `test_bare_substrate_transmission_bounds` ; `coherence_md` : les 3 commandes mortes connues.
 
 ## 5. En cours
 
@@ -169,7 +169,7 @@ jusque-là. **U9, fait** : plancher de l'en-tête (`b695fe80`) ; corps à 10 pt 
 STRAT : l'exemple et les configurations récentes à la place des slogans, STRAT enregistre ce qu'il charge
 (`6365d7fb`) ; U8 complet du même coup (STRAT n'est plus en `xfail`). `ux_` et états vides : `1434 passed` ; deux tests
 « au bit » de STRAT rouges, `43 passed` sur cache Numba vierge. **U11, fait** : informations en toast (`47fb9076`, `97db8290`), erreurs qui disent la cause et le geste (`f571cd88`).
-**U12** : spécification écrite et tranchée (Q40). **En cours : validation complète finale, puis push (Q38).**
+**U12** : spécification écrite et tranchée (Q40). Validation complète finale le 2026-11-13 sur `5d5407b3` : l'état connu seul ; **poussé sur `master`** (Q38). **Suivant : U12 A**, la reprise de session, locale.
 
 ## 6. À faire, dans l'ordre
 

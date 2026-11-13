@@ -174,7 +174,7 @@ quand elle a changé (`certus/ui/certus_session.py`, sous `CERTUS_CONFIG_DIR` ou
 par une fermeture menée à son terme, proposée à l'ouverture suivante (jamais offscreen). DESIGN, FIELD, INDEX,
 INDEX SPLINE, METAL ×2 rendent la même configuration (testé) ; suites `ui` et `unit` : `7567 passed` et le test « au
 bit » connu, vert sur cache vierge. STRAT et RE reprennent aussi leur session, par leur propre chargeur de fichier (`_SESSION_FILE_LOADER`), commité
-**non poussé**. **Reste de U12** : U12 B (calculs, STRAT multi-graines d'abord), à faire avec 👤.
+**poussé sur `master`** le 2026-11-13 sur ordre de 👤 (`6a63b125`, `f30726ad`). **Reste de U12** : U12 B (calculs, STRAT multi-graines d'abord), à faire avec 👤.
 
 ## 6. À faire, dans l'ordre
 

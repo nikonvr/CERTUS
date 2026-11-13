@@ -160,6 +160,9 @@ def main() -> int:
     import bench_examples as be  # pose la plateforme offscreen ; apres CERTUS_DESIGN_JSON
     from _artefact import ecrire_json
 
+    from certus.core.certus_core import ensure_numba_cache_dir
+
+    ensure_numba_cache_dir()
     import certus.workers.certus_strat_workers_local_search as ls
 
     mesure: dict = {}

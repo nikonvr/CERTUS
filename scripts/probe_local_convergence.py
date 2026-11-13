@@ -277,6 +277,9 @@ def main() -> int:
     ap.add_argument("--problems", nargs="+", default=["bs5050", "threeline"], choices=list(RECORDS))
     a = ap.parse_args()
 
+    from certus.core.certus_core import ensure_numba_cache_dir
+
+    ensure_numba_cache_dir()
     import engine  # reports/RICL_ultimate_2026-11-05 (fixe NUMBA_NUM_THREADS=1 a l'import)
     import numpy as np
     from _artefact import ecrire_json

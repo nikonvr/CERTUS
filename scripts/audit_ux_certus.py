@@ -605,6 +605,27 @@ def emoji_labels(win) -> list[str]:
     return sorted(found)
 
 
+def empty_plots(win) -> list[str]:
+    """The title of each visible pyqtgraph plot that holds no data and carries no card saying what to do (U10, C1)."""
+    try:
+        import pyqtgraph as pg
+    except ImportError:
+        return []
+    from PyQt6.QtWidgets import QWidget
+
+    from certus.ui.certus_empty_state import PLOT_EMPTY_STATE_NAME, plot_has_data
+
+    found = []
+    for plot in win.findChildren(pg.PlotWidget):
+        if not plot.isVisible() or plot_has_data(plot):
+            continue
+        cards = [c for c in plot.findChildren(QWidget, PLOT_EMPTY_STATE_NAME) if c.isVisible()]
+        if not cards:
+            label = plot.getPlotItem().titleLabel
+            found.append(str(label.text if label is not None else "") or "(untitled)")
+    return sorted(found)
+
+
 def font_sizes(win) -> dict:
     """The point sizes painted on the visible texts of the window, with how many texts each (U9).
 
@@ -931,6 +952,7 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
     out["painted_role_fills"] = painted_role_fills(win)
     out["emoji_labels"] = emoji_labels(win)
     out["font_sizes"] = font_sizes(win)
+    out["empty_plots"] = empty_plots(win)
     logging.setLogRecordFactory(make_record)
     out["shortcut_conflicts"] = conflicts
     out["toasts"] = sorted(

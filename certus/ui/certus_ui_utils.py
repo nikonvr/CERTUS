@@ -634,6 +634,28 @@ def show_toast(parent: QWidget, text: str, level: str = "info", duration_ms: int
     from certus.ui.certus_ui_widgets_utils import CertusToast
     return CertusToast(parent, text, level=level, duration_ms=duration_ms)
 
+#: Past these, an information is a document to read, not a notification: it keeps its dialog (U11, decision Q33).
+NOTIFY_MAX_CHARS = 160
+NOTIFY_MAX_LINES = 3
+
+
+def notify(parent: QWidget | None, title: str, text: str) -> str:
+    """Tell the operator something that asks no decision (U11, decision Q33): a toast, not a modal dialog.
+
+    The suite opened 77 modal information dialogs: each stopped the work for a message that asked nothing. A short
+    message becomes a toast, shown long enough to be read (about 25 characters a second, 3 to 10 s). A long one (more
+    than NOTIFY_MAX_CHARS characters or NOTIFY_MAX_LINES lines: a report, a table of values) keeps its dialog, since
+    a toast would vanish before it is read. Returns "toast" or "dialog".
+    """
+    body = str(text or "")
+    if parent is not None and len(body) <= NOTIFY_MAX_CHARS and len(body.splitlines()) <= NOTIFY_MAX_LINES:
+        message = f"{title}: {body}" if title else body
+        show_toast(parent, message, "info", duration_ms=min(10000, max(3000, 40 * len(message))))
+        return "toast"
+    QMessageBox.information(parent, title, body)
+    return "dialog"
+
+
 def show_status_feedback(parent: QWidget, text: str, level: str = "info", duration_ms: int = 2800) -> Any:
     """Show premium feedback and mirror it to known status widgets."""
     result = show_toast(parent, text, level=level, duration_ms=duration_ms)

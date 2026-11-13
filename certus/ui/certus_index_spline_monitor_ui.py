@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QHBoxLayout, QLabe
 
 from certus.spline.spline_visual_utils import live_monitor_nk_clipboard_tsv_2nm as _live_monitor_nk_clipboard_tsv_2nm
 from certus.ui.certus_ui import CertusScientificPlot, CertusTheme, apply_certus_theme, create_styled_button
+from certus.ui.certus_ui_utils import notify
 from certus.utils.certus_ux import Typography
 
 
@@ -64,7 +65,7 @@ class LiveIndexMonitor(QDialog):
 
     def _copy_nk_clipboard_2nm(self) -> None:
         if not hasattr(self, "_last_data") or self._last_data is None:
-            QMessageBox.information(
+            notify(
                 self,
                 "Clipboard",
                 "No n, k data (wait for live update).",
@@ -74,7 +75,7 @@ class LiveIndexMonitor(QDialog):
         lam_arr, n_arr, k_arr, _ = self._last_data
         txt = _live_monitor_nk_clipboard_tsv_2nm(lam_arr, n_arr, k_arr)
         if not txt:
-            QMessageBox.information(
+            notify(
                 self,
                 "Clipboard",
                 "No valid points for export.",

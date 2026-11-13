@@ -76,6 +76,7 @@ from certus.ui.certus_ui import (
     setup_common_metal_plots,
     show_toast,
 )
+from certus.ui.certus_ui_utils import notify
 from certus.utils.certus_data import OPENPYXL_AVAILABLE
 from certus_physics import (
     calculate_reflectance_bilayer_vectorized,
@@ -1041,7 +1042,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
                 df_solutions.to_excel(writer, sheet_name="All_Solutions", index=False)
 
-            QMessageBox.information(
+            notify(
                 self,
                 "Export Successful",
                 f"Beam analysis results saved to\n{excel_filename}",
@@ -1290,7 +1291,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
         self.status_label.setText(
             f"Beam: {count} solutions (RMSE < {rmse_threshold:.2e}) | eM: {stats['eM_min']:.1f}-{stats['eM_max']:.1f} nm"
         )
-        QMessageBox.information(
+        notify(
             self,
             "Beam Analysis Results",
             f"Beam Analysis by Thickness Scan\n"

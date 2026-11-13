@@ -15,7 +15,7 @@ from certus.spline.certus_index_spline_core import _log_index_spline_best_config
 
 # Mixins moved out of this class (S5.3): the methods live there, the names stay importable from here.
 from certus.ui.certus_index_spline_corridor_tab import _CorridorTabMixin
-from certus.ui.certus_index_spline_corridor_ui import GenericWorker, ManualSigmaKnotDialog
+from certus.ui.certus_index_spline_corridor_ui import GenericWorker, ManualSigmaKnotDialog, notify
 from certus.utils.certus_index_utils import (
     _filter_rmse_peaks_iteratively,
     _safe_int_from_mapping,
@@ -763,7 +763,7 @@ class _CorridorWorkerMixin(_CorridorTabMixin):
             if self.logger:
                 self.logger.info("GUI RMSE(d) regular grid | request ignored: worker already running")
 
-            QMessageBox.information(self, "Calculate", "A worker is already running (wait or Stop).")
+            notify(self, "Calculate", "A worker is already running (wait or Stop).")
 
             return
 

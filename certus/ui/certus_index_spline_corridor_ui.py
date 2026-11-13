@@ -12,5 +12,6 @@ from certus.ui.certus_ui import (
     ExcelTableWidget,
     GenericWorker,
     create_styled_button,
+    notify,
     wrap_scientific_plot_with_toolbar,
 )

@@ -25,6 +25,7 @@ from certus.ui.certus_index_spline_statics import (
 )
 from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
 from certus.ui.certus_ui import GenericWorker
+from certus.ui.certus_ui_utils import notify
 from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
 from certus.utils.certus_skeleton import install_skeleton
 
@@ -205,7 +206,7 @@ class CertusIndexSplineManualMeshMixin:
                     self._manual_knots_dialog.append_runtime_log(
                         "Launch refused: an optimization is already in progress."
                     )
-                QMessageBox.information(
+                notify(
                     self,
                     "Manual knots",
                     "An optimization is already in progress. Wait for it to finish before restarting.",
@@ -215,7 +216,7 @@ class CertusIndexSplineManualMeshMixin:
             if not isinstance(seed_current, dict):
                 if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
                     self._manual_knots_dialog.append_runtime_log("Launch refused: no usable current result.")
-                QMessageBox.information(
+                notify(
                     self,
                     "Manual knots",
                     "No usable current result to restart optimization.",
@@ -260,7 +261,7 @@ class CertusIndexSplineManualMeshMixin:
                     self._manual_knots_dialog.append_runtime_log(
                         "Launch refused: an optimization is already in progress."
                     )
-                QMessageBox.information(
+                notify(
                     self,
                     "Manual knots",
                     "An optimization is already in progress. Wait for it to finish before restarting.",
@@ -268,7 +269,7 @@ class CertusIndexSplineManualMeshMixin:
                 return
             seed_current = self._manual_postprocess_seed_result()
             if not isinstance(seed_current, dict):
-                QMessageBox.information(
+                notify(
                     self,
                     "Autoshift",
                     "No usable current result to start autoshift.",
@@ -291,7 +292,7 @@ class CertusIndexSplineManualMeshMixin:
                     self._manual_knots_dialog.append_runtime_log(
                         "Launch refused: an optimization is already in progress."
                     )
-                QMessageBox.information(
+                notify(
                     self,
                     "Manual knots",
                     "An optimization is already in progress. Wait for it to finish before restarting.",
@@ -299,7 +300,7 @@ class CertusIndexSplineManualMeshMixin:
                 return
             seed_current = self._manual_postprocess_seed_result()
             if not isinstance(seed_current, dict):
-                QMessageBox.information(
+                notify(
                     self,
                     "Manual knots",
                     "No usable current result to restart optimization.",
@@ -307,7 +308,7 @@ class CertusIndexSplineManualMeshMixin:
                 return
             selected_lambda_knots_nm = dlg.selected_lambda_knots()
             if len(selected_lambda_knots_nm) < 2:
-                QMessageBox.information(
+                notify(
                     self,
                     "Manual knots",
                     "At least two active knots are required for automatic repartition.",
@@ -374,7 +375,7 @@ class CertusIndexSplineManualMeshMixin:
                     self._manual_knots_dialog.append_runtime_log(
                         "Launch refused: an optimization is already in progress."
                     )
-                QMessageBox.information(
+                notify(
                     self,
                     "Manual knots",
                     "An optimization is already in progress. Wait for it to finish before restarting.",
@@ -384,7 +385,7 @@ class CertusIndexSplineManualMeshMixin:
             if not isinstance(seed_current, dict):
                 if self.logger:
                     self.logger.warning("INDEX_SPLINE GUI: auto_clean refused because no usable seed result")
-                QMessageBox.information(
+                notify(
                     self,
                     "Advanced clean",
                     "No usable current result to start cleaning.",
@@ -427,7 +428,7 @@ class CertusIndexSplineManualMeshMixin:
                     self._manual_knots_dialog.append_runtime_log(
                         "Launch refused: an optimization is already in progress."
                     )
-                QMessageBox.information(
+                notify(
                     self,
                     "Manual knots",
                     "An optimization is already in progress. Wait for it to finish before restarting.",
@@ -437,7 +438,7 @@ class CertusIndexSplineManualMeshMixin:
             if not isinstance(seed_current, dict):
                 if self.logger:
                     self.logger.warning("INDEX_SPLINE GUI: auto_add_one refused because no usable seed result")
-                QMessageBox.information(
+                notify(
                     self,
                     "Auto add one",
                     "No usable current result to start auto insertion.",
@@ -992,14 +993,14 @@ class CertusIndexSplineManualMeshMixin:
         if not isinstance(seed, dict):
             if self.logger:
                 self.logger.info("Manual nodes: action requested but no base result is available.")
-            QMessageBox.information(
+            notify(
                 self,
                 "Manual knots",
                 "Run an optimization first to have a base result.",
             )
             return
         if not self._can_offer_manual_extra_knots(seed):
-            QMessageBox.information(
+            notify(
                 self,
                 "Manual knots",
                 "The current result does not allow adding more manual knots.",

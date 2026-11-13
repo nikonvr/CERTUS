@@ -574,6 +574,15 @@ class CertusBaseApp(QMainWindow, CertusZoomMixin, CertusCommandPaletteMixin, Cer
     # =========================================================================
 
 
+    def notify_info(self, title: str, text: str) -> str:
+        """`certus_ui_utils.notify` on this window: a toast when short, a dialog for a document (U11, Q33).
+
+        For the files at their line ceiling, which cannot take one more import.
+        """
+        from certus.ui.certus_ui_utils import notify
+
+        return notify(self, title, text)
+
     def _apply_certus_compact_theme(self, plots: list) -> None:
         """Shared theme application for compact-UI modules (DESIGN, RE).
 

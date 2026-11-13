@@ -14,7 +14,7 @@ from certus.ui.certus_index_spline_corridor_common import (
     _DEFAULT_CORRIDOR_RMSE_DELTA,
     _DEFAULT_CORRIDOR_ROBUST_RMSE_DELTA,
 )
-from certus.ui.certus_index_spline_corridor_ui import CertusTheme, create_styled_button
+from certus.ui.certus_index_spline_corridor_ui import CertusTheme, create_styled_button, notify
 
 
 class _CorridorIntervalMixin:
@@ -155,7 +155,7 @@ class _CorridorIntervalMixin:
             if self.logger:
                 self.logger.warning("GUI generate corridor(grid) | aborted: no RMSE(d) grid in memory")
 
-            QMessageBox.information(self, "Generate corridor (grid)", "No RMSE(d) grid is available yet.")
+            notify(self, "Generate corridor (grid)", "No RMSE(d) grid is available yet.")
 
             return
 
@@ -165,7 +165,7 @@ class _CorridorIntervalMixin:
             if self.logger:
                 self.logger.warning("GUI generate corridor(grid) | aborted: RMSE(d) grid empty")
 
-            QMessageBox.information(self, "Generate corridor (grid)", "No valid RMSE(d) points are available.")
+            notify(self, "Generate corridor (grid)", "No valid RMSE(d) points are available.")
 
             return
 
@@ -189,7 +189,7 @@ class _CorridorIntervalMixin:
                     tuple(int(v) for v in n_curves.shape) if n_curves.ndim >= 1 else (),
                     tuple(int(v) for v in k_curves.shape) if k_curves.ndim >= 1 else (),
                 )
-            QMessageBox.information(
+            notify(
                 self,
                 "Generate corridor (grid)",
                 "RMSE(d) grid is still updating. Please retry in a moment.",

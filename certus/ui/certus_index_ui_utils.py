@@ -88,7 +88,7 @@ def _notify_user(
     elif level == "warning":
         QMessageBox.warning(parent, title or "Warning", message)
     else:
-        QMessageBox.information(parent, title or "Info", message)
+        QMessageBox.information(parent, title or "Info", message)  # the caller asked to block
 
 def _update_loaded_file_label(lbl_file, filepath: str) -> str:
     """Update file label widget and return basename.

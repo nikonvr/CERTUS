@@ -23,6 +23,10 @@ def dialogs(monkeypatch):
 
     opened: list[str] = []
     monkeypatch.setattr(common.QMessageBox, "information", lambda *a, **k: opened.append("information"))
+    # Since U11 the confirmation goes through the window's toast (`notify_info`), a dialog only for a long message.
+    from certus.ui.certus_base_app import CertusBaseApp
+
+    monkeypatch.setattr(CertusBaseApp, "notify_info", lambda *a, **k: opened.append("information"))
     monkeypatch.setattr(common, "show_load_summary_dialog", lambda *a, **k: opened.append("summary"))
     return opened
 

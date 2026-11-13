@@ -40,6 +40,7 @@ from certus.ui.certus_ui import (
     set_certus_window_icon,
     wrap_scientific_plot_with_toolbar,
 )
+from certus.ui.certus_ui_utils import notify
 from certus.utils.certus_qsettings import certus_settings
 from certus.utils.certus_spectral_preproc import smooth_dataframe_auto, smooth_spectrum_auto
 
@@ -316,7 +317,7 @@ class CurveSmootherGUI(QMainWindow):
             "<p>Load spectra, choose a smoothing level, visualize and save smoothed curves to "
             "<b>clean_measurements</b>.</p>"
         )
-        QMessageBox.information(self, "Help", help_text)
+        QMessageBox.information(self, "Help", help_text)  # asked for (F1): a document, not an interruption
 
     def auto_tune(self) -> None:
         if self.df is None:
@@ -447,7 +448,7 @@ class CurveSmootherGUI(QMainWindow):
                 with pd.ExcelWriter(save_path, engine="openpyxl") as writer:
                     df_clean.to_excel(writer, sheet_name="clean_measurements", index=False)
 
-            QMessageBox.information(
+            notify(
                 self,
                 "Success",
                 f"Saved to clean_measurements sheet in:\n{Path(save_path).name}",

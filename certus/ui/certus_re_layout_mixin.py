@@ -59,6 +59,7 @@ from certus.ui.certus_ui import (
     set_certus_window_icon,
     wrap_scientific_plot_with_toolbar,
 )
+from certus.ui.certus_ui_utils import notify
 from certus.ui.certus_ui_widgets_factory import create_workflow_hint
 from certus.utils.certus_re_helpers import (
     RE_GUI_DEFAULT_BEAM_APERTURE_DEG,
@@ -1032,8 +1033,7 @@ class CertusRELayoutMixin:
             )
 
         if not runs:
-            QMessageBox.information(
-                parent or self,
+            notify(parent or self,  # at its line ceiling, the file keeps the parent on the line of the call (U11)
                 "Beam width ap(lambda)",
                 "No result row contains phase 4 data "
                 "(re_p4_beam_ap_knots_deg / re_p4_beam_ap_knots_nm).\n\n"

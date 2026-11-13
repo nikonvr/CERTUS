@@ -17,7 +17,7 @@ from certus.spline.certus_index_spline_core import (
 )
 from certus.spline.spline_objective import spectral_mse_rmse_masked_from_nk
 from certus.spline.spline_pipeline import _sync_theoretical_tr_from_nk_dict
-from certus.ui.certus_index_spline_corridor_ui import CertusScientificPlot, ManualSigmaKnotDialog
+from certus.ui.certus_index_spline_corridor_ui import CertusScientificPlot, ManualSigmaKnotDialog, notify
 from certus.utils.certus_index_utils import _get_substrate_n_array_spline
 
 
@@ -329,7 +329,7 @@ class _DataMixin:
     def _copy_nk_to_clipboard(self) -> None:
 
         if self._last_result is None:
-            QMessageBox.information(self, "Clipboard", "Run an optimization first.")
+            notify(self, "Clipboard", "Run an optimization first.")
 
             return
 
@@ -338,7 +338,7 @@ class _DataMixin:
         ser = self._prepare_nk_data_tab_series(r)
 
         if ser is None:
-            QMessageBox.information(self, "Clipboard", "Empty grid.")
+            notify(self, "Clipboard", "Empty grid.")
 
             return
 
@@ -397,7 +397,7 @@ class _DataMixin:
 
         t = self.table_data_th
         if t.rowCount() <= 0 or t.columnCount() <= 0:
-            QMessageBox.information(self, "Clipboard", "Theory data table is empty.")
+            notify(self, "Clipboard", "Theory data table is empty.")
             return
 
         headers = [

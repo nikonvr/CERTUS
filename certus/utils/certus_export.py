@@ -233,14 +233,22 @@ def copy_plot_to_clipboard_excel(plot_widget: Any) -> bool:
     return True
 
 
+def _inform(parent: Any, title: str, text: str) -> None:
+    """A message that asks no decision: the window's toast when it has one (U11, decision Q33), else the dialog.
+
+    certus.utils does not import certus.ui: the window of the suite carries `notify_info` (CertusBaseApp).
+    """
+    notify_info = getattr(parent, "notify_info", None)
+    if callable(notify_info):
+        notify_info(title, text)
+    else:
+        QMessageBox.information(parent, title, text)
+
+
 def show_copy_excel_feedback(parent: Any, ok: bool) -> None:
     """Display standardized user feedback after clipboard export."""
     if ok:
-        QMessageBox.information(
-            parent,
-            CERTUS_UI_STRINGS["export"],
-            CERTUS_UI_STRINGS["copy_excel_ok"],
-        )
+        _inform(parent, CERTUS_UI_STRINGS["export"], CERTUS_UI_STRINGS["copy_excel_ok"])
     else:
         QMessageBox.warning(
             parent,
@@ -269,11 +277,7 @@ def attach_excel_clipboard_context_menu(plot_widget: pg.PlotWidget) -> None:
         ok = copy_plot_to_clipboard_excel(plot_widget)
         parent = plot_widget.window()
         if ok:
-            QMessageBox.information(
-                parent,
-                CERTUS_UI_STRINGS["export"],
-                CERTUS_UI_STRINGS["copy_excel_ok"],
-            )
+            _inform(parent, CERTUS_UI_STRINGS["export"], CERTUS_UI_STRINGS["copy_excel_ok"])
         else:
             QMessageBox.warning(
                 parent,

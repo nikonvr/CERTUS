@@ -17,7 +17,7 @@ from certus.spline.certus_index_spline_core import (
 )
 from certus.spline.spline_pipeline import worker_run_corridor_profile_after_nl_choice
 from certus.ui.certus_index_spline_corridor_jobs import _worker_curve_minimum_deep_refit
-from certus.ui.certus_index_spline_corridor_ui import CertusTheme, GenericWorker
+from certus.ui.certus_index_spline_corridor_ui import CertusTheme, GenericWorker, notify
 from certus.ui.certus_index_spline_lazy_app import CertusIndexSplineApp
 from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
 
@@ -491,7 +491,7 @@ class _CorridorRunMixin:
 
         seed = self._manual_postprocess_seed_result()
         if not isinstance(seed, dict):
-            QMessageBox.information(
+            notify(
                 self,
                 "Corridors",
                 "Run an optimization first to have a base result.",
@@ -733,7 +733,7 @@ class _CorridorRunMixin:
     def _start_curve_minimum_deep_refit(self, seed: dict) -> bool:
         """Launches ``quick_pwlnk_refit_result_dict`` (L-BFGS-B on d + nodes) from the grid minimum seed."""
         if self._worker is not None and self._worker.isRunning():
-            QMessageBox.information(self, "Optimization", "A calculation is already in progress.")
+            notify(self, "Optimization", "A calculation is already in progress.")
             return False
         cfg = self._last_run_cfg
         if cfg is None:

@@ -1309,7 +1309,7 @@ class MetalBaseApp(CertusBaseApp):
 
     def _post_save_config(self, filename: str) -> None:
 
-        QMessageBox.information(self, "Save Successful", f"Configuration saved to\n{filename}")
+        self.notify_info("Save Successful", f"Configuration saved to\n{filename}")
 
     def _post_load_config(self, filename: str, config: dict) -> None:
 
@@ -1351,7 +1351,7 @@ class MetalBaseApp(CertusBaseApp):
 
             show_load_summary_dialog(self, "METAL Config Summary", summary)
 
-        QMessageBox.information(self, "Load Successful", f"Configuration loaded from\n{filename}")
+        self.notify_info("Load Successful", f"Configuration loaded from\n{filename}")
 
     # Abstract methods
 

@@ -14,7 +14,7 @@ from certus.spline.certus_corridor_utils import (
     _expand_corridor_envelope_with_reported_nk,
     enforce_min_k_corridor_half_width,
 )
-from certus.ui.certus_index_spline_corridor_ui import CertusTheme
+from certus.ui.certus_index_spline_corridor_ui import CertusTheme, notify
 
 
 class _CorridorGenMixin:
@@ -191,7 +191,7 @@ class _CorridorGenMixin:
         if not isinstance(source, dict) or not isinstance(display, dict):
             if self.logger:
                 self.logger.warning("GUI generate corridor(partial-grid) | aborted: no RMSE(d) grid in memory")
-            QMessageBox.information(
+            notify(
                 self,
                 "Generate corridor (partial grid)",
                 "No RMSE(d) grid is available yet.",
@@ -218,7 +218,7 @@ class _CorridorGenMixin:
                     tuple(int(v) for v in n_curves.shape) if n_curves.ndim >= 1 else (),
                     tuple(int(v) for v in k_curves.shape) if k_curves.ndim >= 1 else (),
                 )
-            QMessageBox.information(
+            notify(
                 self,
                 "Generate corridor (partial grid)",
                 "RMSE(d) grid is still updating. Please retry in a moment.",
@@ -233,7 +233,7 @@ class _CorridorGenMixin:
         if d_s.size == 0 or r_s.size != d_s.size:
             if self.logger:
                 self.logger.warning("GUI generate corridor(partial-grid) | aborted: empty finite RMSE(d) grid")
-            QMessageBox.information(
+            notify(
                 self,
                 "Generate corridor (partial grid)",
                 "No valid finite RMSE(d) points are available.",
@@ -308,7 +308,7 @@ class _CorridorGenMixin:
         if not isinstance(source, dict) or not isinstance(display, dict):
             if self.logger:
                 self.logger.warning("GUI generate corridor(auto-smart) | aborted: no RMSE(d) grid in memory")
-            QMessageBox.information(
+            notify(
                 self,
                 "Generate corridor (auto smart)",
                 "No RMSE(d) grid is available yet.",
@@ -335,7 +335,7 @@ class _CorridorGenMixin:
                     tuple(int(v) for v in n_curves.shape) if n_curves.ndim >= 1 else (),
                     tuple(int(v) for v in k_curves.shape) if k_curves.ndim >= 1 else (),
                 )
-            QMessageBox.information(
+            notify(
                 self,
                 "Generate corridor (auto smart)",
                 "RMSE(d) grid is still updating. Please retry in a moment.",
@@ -375,7 +375,7 @@ class _CorridorGenMixin:
         m = np.isfinite(d_s) & np.isfinite(r_s)
         d_s = d_s[m]
         if d_s.size == 0:
-            QMessageBox.information(
+            notify(
                 self,
                 "Generate corridor (auto smart)",
                 "No valid finite RMSE(d) points are available.",
@@ -451,7 +451,7 @@ class _CorridorGenMixin:
             if self.logger:
                 self.logger.warning("GUI generate corridor(manual) | aborted: no corridor profile source/display")
 
-            QMessageBox.information(self, "Generate corridor", "No corridor profile is available yet.")
+            notify(self, "Generate corridor", "No corridor profile is available yet.")
 
             return
 
@@ -463,7 +463,7 @@ class _CorridorGenMixin:
             if self.logger:
                 self.logger.warning("GUI generate corridor(manual) | aborted: invalid RMSE(d) profile or best index")
 
-            QMessageBox.information(self, "Generate corridor", "No valid RMSE(d) profile is available.")
+            notify(self, "Generate corridor", "No valid RMSE(d) profile is available.")
 
             return
 

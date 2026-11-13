@@ -1349,8 +1349,7 @@ class CertusMetalSingleApp(MetalBaseApp):
 
         self.status_label.setText(f"Beam: {count} solutions | eM: {stats['eM_min']:.1f}-{stats['eM_max']:.1f} nm")
 
-        QMessageBox.information(
-            self,
+        self.notify_info(
             "Beam Analysis Results",
             f"Beam Analysis by Thickness Scan\n"
             f"{count} solutions kept\n"

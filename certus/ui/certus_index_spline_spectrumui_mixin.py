@@ -21,6 +21,7 @@ from certus.ui.certus_index_spline_common import (
     logger,
 )
 from certus.ui.certus_ui import CertusTheme, get_certus_last_dir, set_certus_last_dir
+from certus.ui.certus_ui_utils import notify
 from certus.utils.certus_qsettings import certus_settings
 
 
@@ -275,7 +276,7 @@ class CertusIndexSplineSpectrumUIMixin:
         lam = self._spectrum_view_abscissa_to_lambda_nm(view_x)
 
         if lam is None:
-            QMessageBox.information(
+            notify(
                 self,
                 "Spectrum",
                 "Invalid click abscissa (λ ≤ 0 or coordinate not convertible to wavelength).",
@@ -293,7 +294,7 @@ class CertusIndexSplineSpectrumUIMixin:
 
                 d_line = f"\nd displayed = {float(d_o):.4f} nm" if d_o is not None and np.isfinite(float(d_o)) else ""
 
-                QMessageBox.information(
+                notify(
                     self,
                     "Spectrum",
                     (
@@ -306,7 +307,7 @@ class CertusIndexSplineSpectrumUIMixin:
                 )
 
             else:
-                QMessageBox.information(
+                notify(
                     self,
                     "Spectrum",
                     "No n,k,T model grid available for this plot. Load a fit result or plot the model spectrum.",
@@ -339,14 +340,14 @@ class CertusIndexSplineSpectrumUIMixin:
 
         lines.append(f"Abscissa mode : {xm} | x_view = {view_x:.8g} | y_view ≈ {view_y:.8g}")
 
-        QMessageBox.information(self, "Model at point (spectrum)", "\n".join(lines))
+        notify(self, "Model at point (spectrum)", "\n".join(lines))
 
     def _spectrum_copy_theory_probe_tsv(self, view_x: float, view_y: float) -> None:
 
         lam = self._spectrum_view_abscissa_to_lambda_nm(view_x)
 
         if lam is None:
-            QMessageBox.information(
+            notify(
                 self,
                 "Spectrum",
                 "Invalid click abscissa; nothing to copy.",
@@ -360,14 +361,14 @@ class CertusIndexSplineSpectrumUIMixin:
             rsn = str(res.get("reason", ""))
 
             if rsn == "outside":
-                QMessageBox.information(
+                notify(
                     self,
                     "Spectrum",
                     'λ outside model grid: copy cancelled (see "Display n, k...").',
                 )
 
             else:
-                QMessageBox.information(self, "Spectrum", "No model data to copy.")
+                notify(self, "Spectrum", "No model data to copy.")
 
             return
 
@@ -386,7 +387,7 @@ class CertusIndexSplineSpectrumUIMixin:
 
         QApplication.clipboard().setText(hdr + "\n" + row + "\n")
 
-        QMessageBox.information(self, "Spectrum", "A TSV line (header + values) was copied.")
+        notify(self, "Spectrum", "A TSV line (header + values) was copied.")
 
     def _transform_spectrum_x(self, lam_nm: np.ndarray) -> tuple[np.ndarray, str]:
 

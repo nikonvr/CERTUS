@@ -48,6 +48,7 @@ from certus.ui.certus_ui import (
     create_styled_label,
     wrap_scientific_plot_with_toolbar,
 )
+from certus.ui.certus_ui_utils import notify
 from certus.utils.certus_ux import Typography
 
 
@@ -536,7 +537,7 @@ class IndexTableDialog(QDialog):
         if hasattr(self, "fit_wl_lo") and self.fit_wl_lo is not None and self.fit_wl_hi is not None:
             lines.append(f"Fit window: [{float(self.fit_wl_lo):.1f}, {float(self.fit_wl_hi):.1f}] nm")
         QApplication.clipboard().setText("\n".join([x for x in lines if x]).strip() + "\n")
-        QMessageBox.information(self, "Copied", "Summary copied to clipboard.")
+        notify(self, "Copied", "Summary copied to clipboard.")
 
     def copy_to_clipboard(self, col_names):
 
@@ -625,7 +626,7 @@ class IndexTableDialog(QDialog):
 
         QApplication.clipboard().setText(text)
 
-        QMessageBox.information(self, "Copied", "Table + RMSE + laws/coefficients copied to clipboard.")
+        notify(self, "Copied", "Table + RMSE + laws/coefficients copied to clipboard.")
 
     def show_model_params_dialog(self):
 

@@ -23,6 +23,7 @@ from PyQt6.QtWidgets import (
 )
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
+from certus.ui.certus_ui_utils import notify
 from certus.utils.certus_atomic_io import atomic_open
 from certus.utils.certus_ux import ClickTarget
 
@@ -321,7 +322,7 @@ class CertusScientificPlot(pg.PlotWidget):
             return
         parent = self.window() or None
         if ok:
-            QMessageBox.information(
+            notify(
                 parent,
                 CERTUS_UI_STRINGS["export"],
                 CERTUS_UI_STRINGS["copy_excel_ok"],
@@ -376,7 +377,7 @@ class CertusScientificPlot(pg.PlotWidget):
             return
         parent = self.window() or None
         if ok:
-            QMessageBox.information(
+            notify(
                 parent,
                 CERTUS_UI_STRINGS["export"],
                 CERTUS_UI_STRINGS["copy_pub_ok"],
@@ -788,7 +789,7 @@ class CertusScientificPlot(pg.PlotWidget):
                 if opts.get("height"):
                     exporter.parameters()["height"] = opts["height"]
                 exporter.export(filename)
-                QMessageBox.information(
+                notify(
                     self.window() or None,
                     CERTUS_UI_STRINGS["export"],
                     f"{CERTUS_UI_STRINGS['export_ok']} : {Path(filename).name}",
@@ -816,7 +817,7 @@ class CertusScientificPlot(pg.PlotWidget):
             try:
                 exporter = pg.exporters.SVGExporter(self.plotItem)
                 exporter.export(filename)
-                QMessageBox.information(
+                notify(
                     self.window() or None,
                     CERTUS_UI_STRINGS["export"],
                     f"{CERTUS_UI_STRINGS['export_ok']} : {Path(filename).name}",
@@ -859,7 +860,7 @@ class CertusScientificPlot(pg.PlotWidget):
             with atomic_open(filename, "w", encoding="utf-8") as f:
                 f.write(meta)
                 df.to_csv(f, index=False)
-            QMessageBox.information(
+            notify(
                 self.window() or None,
                 CERTUS_UI_STRINGS["export"],
                 f"{CERTUS_UI_STRINGS['export_ok']} : {Path(filename).name}",
@@ -904,7 +905,7 @@ class CertusScientificPlot(pg.PlotWidget):
             with atomic_open(filename, "w", encoding="utf-8") as f:
                 f.write(meta)
                 df.to_csv(f, index=False, sep="\t", lineterminator="\n")
-            QMessageBox.information(
+            notify(
                 self.window() or None,
                 CERTUS_UI_STRINGS["export"],
                 f"{CERTUS_UI_STRINGS['export_ok']} : {Path(filename).name}",
@@ -952,7 +953,7 @@ class CertusScientificPlot(pg.PlotWidget):
             with atomic_open(filename, "w", encoding="utf-8") as f:
                 f.write(meta)
                 f.write(self._to_publication_tsv(df))
-            QMessageBox.information(
+            notify(
                 self.window() or None,
                 CERTUS_UI_STRINGS["export"],
                 f"{CERTUS_UI_STRINGS['export_ok']} : {Path(filename).name}",

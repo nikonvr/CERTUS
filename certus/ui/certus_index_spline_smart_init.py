@@ -63,6 +63,7 @@ from certus.ui.certus_ui import (
     show_toast,
     wrap_scientific_plot_with_toolbar,
 )
+from certus.ui.certus_ui_utils import notify
 from certus.utils.certus_atomic_io import atomic_open
 from certus.utils.certus_qsettings import certus_settings
 from certus.utils.certus_ux import Typography
@@ -791,7 +792,7 @@ class SmartInitPreviewManager:
                 self.cfg, target_sk, self.state.preview_d_nm, self._relax_si_mono
             )
             if picked is None:
-                QMessageBox.information(
+                notify(
                     self.dlg,
                     "Auto preset selection",
                     "No material preset produced a lower RMSE score than the current profile.",

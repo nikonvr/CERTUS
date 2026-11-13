@@ -36,6 +36,7 @@ from certus.ui.certus_ui import (
     set_certus_last_dir,
     set_certus_window_icon,
 )
+from certus.ui.certus_ui_utils import notify
 from certus.utils.certus_data import to_csv_robust
 from certus.utils.certus_export import show_copy_excel_feedback
 
@@ -338,7 +339,7 @@ class CertusScientificPlot(pg.PlotWidget):
 
                 exporter.export(filename)
 
-                QMessageBox.information(
+                notify(
                     self.window() or None,
                     CERTUS_UI_STRINGS["export"],
                     f"{CERTUS_UI_STRINGS['export_ok']} : {Path(filename).name}",
@@ -367,7 +368,7 @@ class CertusScientificPlot(pg.PlotWidget):
 
                 exporter.export(filename)
 
-                QMessageBox.information(
+                notify(
                     self.window() or None,
                     CERTUS_UI_STRINGS["export"],
                     f"{CERTUS_UI_STRINGS['export_ok']} : {Path(filename).name}",
@@ -407,7 +408,7 @@ class CertusScientificPlot(pg.PlotWidget):
 
             to_csv_robust(df, filename, index=False)
 
-            QMessageBox.information(
+            notify(
                 self.window() or None,
                 CERTUS_UI_STRINGS["export"],
                 f"{CERTUS_UI_STRINGS['export_ok']} : {Path(filename).name}",

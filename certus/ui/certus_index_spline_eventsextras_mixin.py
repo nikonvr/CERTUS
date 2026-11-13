@@ -51,6 +51,7 @@ from certus.ui.certus_ui import (
     show_toast,
     wrap_scientific_plot_with_toolbar,
 )
+from certus.ui.certus_ui_utils import notify
 from certus.utils.certus_index_utils import _lam_uniform_grid
 from certus.utils.certus_qsettings import certus_settings
 from certus.utils.certus_skeleton import uninstall_skeleton
@@ -529,7 +530,7 @@ class CertusIndexSplineEventsExtrasMixin:
         plots = w.findChildren(CertusScientificPlot)
 
         if not plots:
-            QMessageBox.information(self, "Detach", "No scientific plot in this tab.")
+            notify(self, "Detach", "No scientific plot in this tab.")
 
             return
 

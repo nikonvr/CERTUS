@@ -43,6 +43,7 @@ from certus.utils.certus_skeleton import install_skeleton
 logger = logging.getLogger("CERTUS_INDEX_SPLINE")
 
 from certus.spline.spline_pipeline_utils import _interp_series_at_sigma_knots
+from certus.ui.certus_ui_utils import notify
 from certus.utils.certus_atomic_io import atomic_open
 
 
@@ -99,7 +100,7 @@ class _CorridorExportMixin:
         r_s = np.asarray(getattr(self, "_corridor_rmse_vals", []), dtype=np.float64).ravel()
 
         if d_s.size == 0 or r_s.size != d_s.size:
-            QMessageBox.information(self, "Export data", "No RMSE(d) curve in memory.")
+            notify(self, "Export data", "No RMSE(d) curve in memory.")
             return
 
         lines: list[str] = []
@@ -194,7 +195,7 @@ class _CorridorExportMixin:
         display = self._last_result if isinstance(self._last_result, dict) else {}
 
         if not isinstance(source, dict):
-            QMessageBox.information(self, "Export enveloppe n/k", "No RMSE(d) source data available.")
+            notify(self, "Export enveloppe n/k", "No RMSE(d) source data available.")
             return
 
         d_vals = np.asarray(source.get("profile_d_values_nm", []), dtype=np.float64).ravel()
@@ -203,7 +204,7 @@ class _CorridorExportMixin:
         k_curves = np.asarray(source.get("profile_d_k_curves", []), dtype=np.float64)
 
         if d_vals.size == 0 or r_vals.size != d_vals.size or n_curves.ndim != 2 or k_curves.ndim != 2:
-            QMessageBox.information(
+            notify(
                 self,
                 "Export enveloppe n/k",
                 "No valid RMSE(d)/n/k grid in memory.",
@@ -211,7 +212,7 @@ class _CorridorExportMixin:
             return
 
         if n_curves.shape[0] != d_vals.size or k_curves.shape != n_curves.shape or n_curves.shape[1] == 0:
-            QMessageBox.information(
+            notify(
                 self,
                 "Export enveloppe n/k",
                 "n/k curves are not aligned with RMSE(d) points.",
@@ -224,7 +225,7 @@ class _CorridorExportMixin:
             lam_ref = alt_lam if alt_lam.size == n_curves.shape[1] else lam_ref
 
         if lam_ref.size != n_curves.shape[1]:
-            QMessageBox.information(
+            notify(
                 self,
                 "Export enveloppe n/k",
                 "Wavelength axis is unavailable or mismatched.",
@@ -233,7 +234,7 @@ class _CorridorExportMixin:
 
         m = np.isfinite(d_vals) & np.isfinite(r_vals)
         if not np.any(m):
-            QMessageBox.information(self, "Export enveloppe n/k", "No finite RMSE(d) points available.")
+            notify(self, "Export enveloppe n/k", "No finite RMSE(d) points available.")
             return
 
         d_work = d_vals[m]
@@ -256,7 +257,7 @@ class _CorridorExportMixin:
 
         env_mask = _rmse_d_lower_envelope_mask(d_work, r_work, tol_nm)
         if not np.any(env_mask):
-            QMessageBox.information(self, "Export enveloppe n/k", "No envelope points selected.")
+            notify(self, "Export enveloppe n/k", "No envelope points selected.")
             return
 
         d_env = d_work[env_mask]
@@ -266,7 +267,7 @@ class _CorridorExportMixin:
 
         ok_lam = np.isfinite(lam_ref)
         if int(np.sum(ok_lam)) < 2:
-            QMessageBox.information(self, "Export enveloppe n/k", "Not enough finite wavelength points.")
+            notify(self, "Export enveloppe n/k", "Not enough finite wavelength points.")
             return
 
         lam_use = np.asarray(lam_ref[ok_lam], dtype=np.float64)
@@ -282,7 +283,7 @@ class _CorridorExportMixin:
         lam_max = float(np.nanmax(lam_use))
 
         if not np.isfinite(lam_min) or not np.isfinite(lam_max) or lam_max <= lam_min:
-            QMessageBox.information(self, "Export enveloppe n/k", "Invalid wavelength interval.")
+            notify(self, "Export enveloppe n/k", "Invalid wavelength interval.")
             return
 
         ts = time.strftime("%Y%m%d_%H%M%S")
@@ -317,7 +318,7 @@ class _CorridorExportMixin:
         lam_master = np.asarray(np.sort(lam_master), dtype=np.float64)
 
         if lam_master.size == 0:
-            QMessageBox.information(self, "Export enveloppe n/k", "No lambda grid available for export.")
+            notify(self, "Export enveloppe n/k", "No lambda grid available for export.")
             return
 
         idx_map = {round(float(v), 9): int(i) for i, v in enumerate(lam_master.tolist())}
@@ -351,7 +352,7 @@ class _CorridorExportMixin:
         df_k = pd.DataFrame(cols_k)
 
         if df_n.empty or df_k.empty:
-            QMessageBox.information(self, "Export enveloppe n/k", "No data to export.")
+            notify(self, "Export enveloppe n/k", "No data to export.")
             return
 
         try:

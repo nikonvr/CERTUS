@@ -17,6 +17,7 @@ from certus.core.certus_index_core import (
     OptimizationConfig,
     substrateMode,
 )
+from certus.ui.certus_ui_utils import notify
 from certus.utils.certus_index_utils import DataType, normalize_index_config
 from certus.utils.certus_qsettings import certus_settings
 
@@ -246,7 +247,7 @@ class CertusIndexStateMixin:
         if hasattr(self, "status_label"):
             self.status_label.setText(f" Saved: {Path(filename).name}")
 
-        QMessageBox.information(self, "Saved", f"Configuration saved to {Path(filename).name}")
+        notify(self, "Saved", f"Configuration saved to {Path(filename).name}")
 
     def _post_load_config(self, filename: str, config: dict) -> None:
 

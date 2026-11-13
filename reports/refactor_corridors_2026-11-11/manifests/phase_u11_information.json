@@ -1,0 +1,37 @@
+{
+  "phase": "U11 (information) - an information that asks no decision is a toast (certus_ui_utils.notify, decision Q33): 77 QMessageBox.information calls go through notify, which keeps the dialog for a document (more than 160 characters or 3 lines). Kept as dialogs, each for its reason: content the operator asked for (SMOOTHER's help), a caller that asks to block (_notify_user), a parent outside the suite (certus_export._inform).",
+  "changed_code": [
+    "certus.ui.certus_index_spline_corridor_data:_DataMixin._copy_data_th_to_clipboard",
+    "certus.ui.certus_index_spline_corridor_data:_DataMixin._copy_nk_to_clipboard",
+    "certus.ui.certus_index_spline_corridor_gen:_CorridorGenMixin._apply_manual_corridor_selection",
+    "certus.ui.certus_index_spline_corridor_gen:_CorridorGenMixin._generate_corridor_auto_smart_from_current_grid",
+    "certus.ui.certus_index_spline_corridor_gen:_CorridorGenMixin._generate_corridor_from_partial_grid",
+    "certus.ui.certus_index_spline_corridor_interval:_CorridorIntervalMixin._generate_corridor_from_current_grid",
+    "certus.ui.certus_index_spline_corridor_run:_CorridorRunMixin._on_btn_corridor_clicked",
+    "certus.ui.certus_index_spline_corridor_run:_CorridorRunMixin._start_curve_minimum_deep_refit",
+    "certus.ui.certus_index_spline_execution:_CorridorExportMixin._export_corridor_rmse_envelope_nk_excel",
+    "certus.ui.certus_index_spline_execution:_CorridorExportMixin._export_corridor_rmse_profile_clipboard",
+    "certus.ui.certus_index_spline_manualmesh_mixin:CertusIndexSplineManualMeshMixin._on_btn_manual_knots_clicked",
+    "certus.ui.certus_index_spline_monitor_ui:LiveIndexMonitor._copy_nk_clipboard_2nm",
+    "certus.ui.certus_index_spline_smart_init:SmartInitPreviewManager.auto_find_best_preset",
+    "certus.ui.certus_index_spline_spectrumui_mixin:CertusIndexSplineSpectrumUIMixin._spectrum_copy_theory_probe_tsv",
+    "certus.ui.certus_index_spline_spectrumui_mixin:CertusIndexSplineSpectrumUIMixin._spectrum_show_theory_probe_dialog",
+    "certus.ui.certus_index_ui_state:CertusIndexStateMixin._post_save_config",
+    "certus.ui.certus_metal_base_app:MetalBaseApp._post_load_config",
+    "certus.ui.certus_metal_base_app:MetalBaseApp._post_save_config",
+    "certus.ui.certus_metal_bilayer_gui:CertusMetalBilayerApp._export_beam_results",
+    "certus.ui.certus_metal_bilayer_gui:CertusMetalBilayerApp._show_beam_summary_dialog",
+    "certus.ui.certus_metal_single_gui:CertusMetalSingleApp.on_beam_finished"
+  ],
+  "added_attributes": [
+    "CERTUS_RE:CertusREApp.notify_info",
+    "certus.ui.certus_design_ui:CertusDesignApp.notify_info",
+    "certus.ui.certus_field_ui:CertusFieldApp.notify_info",
+    "certus.ui.certus_index_spline_ui:CertusIndexSplineApp.notify_info",
+    "certus.ui.certus_index_ui:CertusIndexApp.notify_info",
+    "certus.ui.certus_metal_bilayer_gui:CertusMetalBilayerApp.notify_info",
+    "certus.ui.certus_metal_single_gui:CertusMetalSingleApp.notify_info",
+    "certus.ui.certus_strat_ui:CertusStratApp.notify_info"
+  ],
+  "note": "Only the call changes, QMessageBox.information(parent, title, text) -> notify(parent, title, text), on the same lines; the files at their ceiling call the window's notify_info instead of importing notify. The corridor slices take notify from their gateway (certus_index_spline_corridor_ui, through certus_ui): no new upward edge."
+}

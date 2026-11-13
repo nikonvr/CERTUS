@@ -955,6 +955,8 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
     out["empty_plots"] = empty_plots(win)
     logging.setLogRecordFactory(make_record)
     out["shortcut_conflicts"] = conflicts
+    # The scale the window was really drawn at: a `--scale` that does not reach Qt would audit 1x and say HiDPI (U13).
+    out["device_pixel_ratio"] = round(win.devicePixelRatioF(), 3)
     out["toasts"] = sorted(
         " ".join(label.text().split())
         for label in win.findChildren(QLabel)
@@ -1035,12 +1037,14 @@ def _verdicts(row: dict) -> list[str]:
 #: Les lignes deja mesurees, par (module, largeur, hauteur). Une fenetre coute 10 a 15 s a mesurer (un processus, la construction, l'attente que les
 #: minuteries se vident), et quatre fichiers de `tests/ui/` (squelette, hauteur des boutons, ordre des onglets, cliquet) demandaient les MEMES onze
 #: lignes a 1920 x 1080 : l'arbre ne change pas pendant une session, la mesure non plus. Les lecteurs recoivent une COPIE : aucun ne peut abimer celle des autres.
-_ROWS: dict[tuple[str, int, int], dict] = {}
+_ROWS: dict[tuple[str, int, int, float], dict] = {}
 
 
-def _run_worker(tag: str, width: int = 1920, height: int = 1080, fresh: bool = False) -> dict:
+def _run_worker(tag: str, width: int = 1920, height: int = 1080, fresh: bool = False, scale: float = 1.0) -> dict:
     """La mesure d'un module a une taille. `fresh=True` la refait meme si elle est en memoire (jamais une ligne en ERROR n'est gardee)."""
-    key = (tag, width, height)
+    # `scale` : le facteur d'echelle de l'ecran (1,5 = Windows a 150 %) ; `width` et `height` sont alors LOGIQUES,
+    # ce que voit la fenetre : 1920x1080 a 150 % donne 1280x720 (U13).
+    key = (tag, width, height, scale)
     if not fresh and key in _ROWS:
         return copy.deepcopy(_ROWS[key])
     env = dict(
@@ -1049,6 +1053,8 @@ def _run_worker(tag: str, width: int = 1920, height: int = 1080, fresh: bool = F
         QT_QPA_PLATFORM="offscreen",
         QT_QPA_FONTDIR=r"C:\Windows\Fonts",
     )
+    if scale != 1.0:
+        env["QT_SCALE_FACTOR"] = f"{scale:g}"
     # Three retries: instantiating a full Qt app occasionally fails on a cold
     # offscreen platform, and a spurious ERROR row would look like a regression.
     # If all 3 fail, exit with explicit error code and message.
@@ -1086,9 +1092,10 @@ def _run_worker_once(tag: str, env: dict, width: int = 1920, height: int = 1080)
     return {"app": tag, "ERROR": (proc.stderr or "no output")[-400:]}
 
 
-def _audit_pass(names: list[str], width: int, height: int) -> tuple[list[dict], int]:
-    rows = [_run_worker(n, width, height) for n in names]
-    print(f"\n--- RESOLUTION: {width}x{height} ---")
+def _audit_pass(names: list[str], width: int, height: int, scale: float = 1.0) -> tuple[list[dict], int]:
+    rows = [_run_worker(n, width, height, scale=scale) for n in names]
+    shown = f" logical, scale {scale:g}" if scale != 1.0 else ""
+    print(f"\n--- RESOLUTION: {width}x{height}{shown} ---")
     print(f"{'MODULE':<21}{'plot%':>7}{'panel':>7}{'min':>6}{'keys':>6}{'tables':>8}  ISSUES")
     print("-" * 100)
     failures = 0
@@ -1121,6 +1128,8 @@ def main() -> int:
     parser.add_argument("--both", action="store_true", help="run audit at 1920x1080 and 1366x768")
     parser.add_argument("--only", metavar="APP", help="audit a single module")
     parser.add_argument("--json", action="store_true", help="raw JSON output")
+    parser.add_argument("--scale", type=float, default=1.0,
+                        help="screen scale factor (1.5 = Windows at 150 %%); width and height are then logical")
     args = parser.parse_args()
 
     if args.worker:
@@ -1144,12 +1153,12 @@ def main() -> int:
         return 1 if (f1 or f2) else 0
 
     if args.json:
-        rows = [_run_worker(n, args.width, args.height) for n in names]
+        rows = [_run_worker(n, args.width, args.height, scale=args.scale) for n in names]
         print(json.dumps(rows, indent=2, ensure_ascii=False))
         failures = sum(1 for r in rows if "ERROR" in r or _verdicts(r))
         return 1 if failures else 0
 
-    _, failures = _audit_pass(names, args.width, args.height)
+    _, failures = _audit_pass(names, args.width, args.height, args.scale)
     return 1 if failures else 0
 
 

@@ -1,7 +1,7 @@
 """The memetic stage of DESIGN may polish by Levenberg-Marquardt (`memetic_polisher`, 2026-11-13), on the real kernel.
 
 The residuals must reproduce the memetic cost, or the two would optimize different merits: the builder checks it and
-refuses otherwise. Default `lbfgs`: the memetic stage is unchanged (the polisher is None).
+refuses otherwise. Default `lbfgs_then_lm` (owner, 2026-11-13); `lbfgs` keeps the memetic stage as before (no polisher).
 """
 
 from __future__ import annotations
@@ -89,7 +89,7 @@ def test_without_the_fast_context_it_is_refused() -> None:
     assert polisher is None
 
 
-def test_the_default_keeps_lbfgs() -> None:
+def test_the_default_is_lbfgs_then_lm() -> None:
     from certus.core.certus_design_workers_dto import DESIGN_OPTIONAL_STEPS
 
-    assert DESIGN_OPTIONAL_STEPS["memetic_polisher"] == "lbfgs"
+    assert DESIGN_OPTIONAL_STEPS["memetic_polisher"] == "lbfgs_then_lm"

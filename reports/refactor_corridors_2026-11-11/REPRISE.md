@@ -168,7 +168,8 @@ jusque-là. **U9, fait** : plancher de l'en-tête (`b695fe80`) ; corps à 10 pt 
 `test_ux_no_plot_opens_blank.py`, `5 failed` avant) ; carte des états vides sur l'échelle (`d4af8218`) ; accueil de
 STRAT : l'exemple et les configurations récentes à la place des slogans, STRAT enregistre ce qu'il charge
 (`6365d7fb`) ; U8 complet du même coup (STRAT n'est plus en `xfail`). `ux_` et états vides : `1434 passed` ; deux tests
-« au bit » de STRAT rouges, `43 passed` sur cache Numba vierge. **En cours : U11** (Q33).
+« au bit » de STRAT rouges, `43 passed` sur cache Numba vierge. **U11, fait** : informations en toast (`47fb9076`, `97db8290`), erreurs qui disent la cause et le geste (`f571cd88`).
+**U12** : spécification écrite et tranchée (Q40). **En cours : validation complète finale, puis push (Q38).**
 
 ## 6. À faire, dans l'ordre
 

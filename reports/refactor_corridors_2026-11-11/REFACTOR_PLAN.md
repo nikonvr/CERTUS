@@ -1159,6 +1159,7 @@ questions »)** — les questions que les sessions précédentes lui réservaien
 | Q37 | U10 : quelles actions dans les accueils de STRAT et du HUB ? | **Fichiers récents et ouvrir l'exemple** (`example/example_strat/JSON-strat-example.json`, lu, jamais écrit). **Choix de 👤, 2026-11-13.** | La reprise de session touche à U12. |
 | Q38 | Pousser les commits de la nuit ? | **Oui, après la validation complète finale, si seuls les rouges connus restent** (§8 de REPRISE). **Ordre de 👤, 2026-11-13.** | — |
 | Q39 | U12 cette nuit ? | **Une spécification dans `reports/`, aucun code.** **Choix de 👤, 2026-11-13.** | U12 touche au calcul (C1, C2). |
+| Q40 | U12 : par quoi commencer, où ranger, proposer ou reprendre seul ? | **La reprise de session d'abord** (aucun calcul touché) ; pour les calculs, plus tard, STRAT multi-graines en premier ; rangement dans le dossier de configuration de CERTUS ; reprise **proposée** par l'accueil. **Choix de 👤, 2026-11-13** ; détail dans [`U12_specification.md`](U12_specification.md). | Le niveau sans risque pour le calcul d'abord ; une reprise automatique surprend qui veut repartir de zéro. |
 
 Il ne reste aucune question ouverte. Q29 est caduque depuis le 2026-11-12 : 👤 a ordonné la fusion, le push et le rangement, faits ce jour-là.
 
@@ -1466,3 +1467,13 @@ fini ; le « ? » tient la place de la valeur. Laissé.
   (cinquième occurrence de la famille, [note](cache_numba_arbre_neuf.md)).
 - Correctif U1 (`055b6c76`) : « Raccourci : F5. » (INDEX SPLINE) et « toutes colonnes » (SUBSTRATE), que le détecteur
   ne voyait pas ; « nuit » dans l'infobulle de durée de STRAT est un mot-clé du script, à taper tel quel : laissé.
+
+**U8 à U11, 2026-11-13.**
+
+- [x] **U8** : icônes SVG à la place des emojis ; garde-fou SVG borné à PyQt6 < 6.11 (Q35) ; dix icônes du HUB.
+- [x] **U9** : corps à 10 pt partout (Q34), Reset à 10 pt (Q36), plancher de l'en-tête ; cliquet de l'échelle.
+- [x] **U10** : aucun tracé vide sans carte qui dit quoi faire ; accueil de STRAT : exemple et configurations récentes.
+- [x] **U11** : 77 informations par `notify` (toast, dialogue pour un document) ; 43 dialogues d'erreur par
+  `describe_error` (cause et geste, A9). Suites `ui` et `unit` : `7553 passed`, le couple de tests « au bit » de STRAT
+  rouge sur le cache de l'arbre et `47 passed` sur cache vierge.
+- [x] **U12** : spécification écrite ([`U12_specification.md`](U12_specification.md)), questions tranchées (Q40).

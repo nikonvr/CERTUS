@@ -348,17 +348,26 @@ def set_themed_logo(svg_widget, path: str) -> None:
     _load_logo(svg_widget)
 
 
-def _load_logo(svg_widget) -> None:
-    from PyQt6.QtCore import QByteArray, Qt
-
+def themed_logo_svg(path: str) -> str:
+    """The text of the logo SVG at `path` in the ink of the active palette (unchanged in the light theme)."""
     from certus.ui.certus_theme import CertusTheme
 
-    with open(str(svg_widget.property(THEMED_LOGO_PROPERTY)), encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         svg = f.read()
     if CertusTheme.DARK_MODE:
         for ink, token in LOGO_DARK_INK.items():
+            # `!s`: a colour of the palette annotates itself in an f-string (`#e2e8f0/*T:TEXT_MAIN*/`), which is no
+            # colour to an SVG: Qt then draws the ink black.
+            colour = f"{getattr(CertusTheme, token)!s}"
             for attribute in ("fill", "stroke"):  # the arc of the symbol is a navy stroke, the words navy fills
-                svg = svg.replace(f'{attribute}="{ink}"', f'{attribute}="{getattr(CertusTheme, token)}"')
+                svg = svg.replace(f'{attribute}="{ink}"', f'{attribute}="{colour}"')
+    return svg
+
+
+def _load_logo(svg_widget) -> None:
+    from PyQt6.QtCore import QByteArray, Qt
+
+    svg = themed_logo_svg(str(svg_widget.property(THEMED_LOGO_PROPERTY)))
     svg_widget.load(QByteArray(svg.encode("utf-8")))
     # A new document resets the renderer: Qt would stretch the logo to its widget again.
     svg_widget.renderer().setAspectRatioMode(Qt.AspectRatioMode.KeepAspectRatio)

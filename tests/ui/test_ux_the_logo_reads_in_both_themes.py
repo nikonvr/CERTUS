@@ -28,6 +28,31 @@ def _best_contrast(widget, background: str) -> float:
     return contrast_ratio(ink, background)
 
 
+def test_the_dark_logo_is_written_in_colours_an_svg_can_read() -> None:
+    """A palette colour annotates itself in an f-string (`#e2e8f0/*T:TEXT_MAIN*/`): no colour to an SVG, drawn black.
+
+    Seen in the full suite only (the pixel tests below passed alone): this one reads the SVG text, in any order.
+    """
+    import re
+
+    from certus.core.certus_core import get_resource_path
+    from certus.ui.certus_icons import LOGO_DARK_INK, themed_logo_svg
+
+    was_dark = CertusTheme.DARK_MODE
+    CertusTheme.configure("dark")
+    try:
+        svg = themed_logo_svg(get_resource_path("certus.svg"))
+        inks = re.findall(r'(?:fill|stroke)="([^"]+)"', svg)
+        assert inks
+        for ink in inks:
+            assert re.fullmatch(r"none|#[0-9a-fA-F]{6}", ink), f"not an SVG colour: {ink!r}"
+            assert ink not in LOGO_DARK_INK, f"{ink} kept its light-theme ink"
+        for token in set(LOGO_DARK_INK.values()):
+            assert contrast_ratio(str(getattr(CertusTheme, token)), str(CertusTheme.SURFACE)) >= 4.5, token
+    finally:
+        CertusTheme.configure("dark" if was_dark else "light")
+
+
 @pytest.mark.parametrize("mode", ["light", "dark"])
 def test_the_logo_word_reads_on_the_header(qapp, mode) -> None:
     from PyQt6.QtSvgWidgets import QSvgWidget

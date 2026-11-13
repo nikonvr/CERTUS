@@ -173,8 +173,8 @@ STRAT : l'exemple et les configurations récentes à la place des slogans, STRAT
 quand elle a changé (`certus/ui/certus_session.py`, sous `CERTUS_CONFIG_DIR` ou `%APPDATA%/CERTUS/sessions`), effacée
 par une fermeture menée à son terme, proposée à l'ouverture suivante (jamais offscreen). DESIGN, FIELD, INDEX,
 INDEX SPLINE, METAL ×2 rendent la même configuration (testé) ; suites `ui` et `unit` : `7567 passed` et le test « au
-bit » connu, vert sur cache vierge. **Reste de U12** : STRAT et RE ne reprennent pas encore de session (ils ne
-rechargent que d'un fichier : leur `_apply_config` est celui du mixin) ; U12 B (calculs, STRAT multi-graines d'abord).
+bit » connu, vert sur cache vierge. STRAT et RE reprennent aussi leur session, par leur propre chargeur de fichier (`_SESSION_FILE_LOADER`), commité
+**non poussé**. **Reste de U12** : U12 B (calculs, STRAT multi-graines d'abord), à faire avec 👤.
 
 ## 6. À faire, dans l'ordre
 

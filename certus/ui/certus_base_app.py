@@ -502,6 +502,8 @@ class CertusBaseApp(QMainWindow, CertusZoomMixin, CertusCommandPaletteMixin, Cer
         # sees the close first, and the configuration of the first settled moment is the one the window opened with.
         self.installEventFilter(self)
         QTimer.singleShot(1500, self._mark_initial_config_saved)
+        # U12 A: offer the session a window left without closing, once the opening configuration is the reference.
+        QTimer.singleShot(1600, self._session_start)
 
         # P1.3 - Auto-wire empty-state overlays on well-known table widgets.
         self._auto_install_empty_states()
@@ -748,6 +750,7 @@ class CertusBaseApp(QMainWindow, CertusZoomMixin, CertusCommandPaletteMixin, Cer
         if not self.confirm_close_during_run(event):
             return
 
+        self._session_end()  # a close that goes to its end leaves no session to resume (U12 A)
         self._qs_save()
 
         self._stop_all_workers()

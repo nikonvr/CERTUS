@@ -33,6 +33,7 @@
   "tests/ui/test_certus_ux_battery.py::test_strat_pinned_execution_buttons": 1.5,
   "tests/ui/test_certus_ux_battery.py::test_universal_drag_and_drop_enabled": 4.6,
   "tests/ui/test_certus_ux_drag_and_drop.py::test_drag_and_drop_event_handling": 1.9,
+  "tests/ui/test_ux_a_resumed_session_gives_back_the_configuration.py::test_collect_then_apply_gives_back_the_same_configuration": 5.0,
   "tests/ui/test_ux_a_window_starts_without_noise.py::test_design_still_saves_on_ctrl_s": 15.0,
   "tests/ui/test_ux_a_window_starts_without_noise.py::test_the_window_opens_without_a_repeated_toast_or_a_refused_shortcut": 15.0,
   "tests/ui/test_ux_accessible_names_say_what_the_control_is.py::test_every_visible_control_of_a_real_window_says_something_a_reader_can_use": 3.3,

@@ -1,6 +1,7 @@
 """Configuration persistence of a CERTUS window: the QSettings of its tables and the save / load of its configuration file (moved out of certus_base_app.py, S5.3)."""
 
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
@@ -178,6 +179,76 @@ class CertusAppConfigMixin:
         """Take the delayed initial snapshot only if no save or load established one already."""
         if getattr(self, "_saved_config_snapshot", None) is None:
             self.mark_config_saved()
+
+    # -- Session kept on disk (U12 A, decision Q40) ------------------------------------------------------------------
+    #: Every minute a window whose configuration changed writes it to its session file; a finished close erases it.
+    SESSION_AUTOSAVE_MS = 60_000
+
+    def _session_supported(self) -> bool:
+        """A window resumes through its own `_apply_config`: the mixin's, which does nothing, is not a way back."""
+        cls = type(self)
+        return cls._apply_config is not CertusAppConfigMixin._apply_config and cls._collect_config is not CertusAppConfigMixin._collect_config
+
+    def _session_name(self) -> str:
+        return str(getattr(self, "APP_NAME", "") or type(self).__name__)
+
+    def _session_start(self) -> None:
+        """Offer the session a window left without closing, then keep the session of this one every minute."""
+        from PyQt6.QtCore import QTimer
+
+        from certus.ui.certus_session import clear_session, read_session
+
+        if not self._session_supported():
+            return
+        name = self._session_name()
+        record = read_session(name)
+        # Under the offscreen platform nobody answers: no offer, and the session found is left where it is.
+        if record is not None and os.environ.get("QT_QPA_PLATFORM", "").lower() != "offscreen":
+            if self._ask_to_resume_session(str(record.get("saved_at", ""))):
+                self._apply_config(record["config"])  # left unsaved on purpose: the operator saves it where he wants
+                logging.getLogger("CERTUS").info("Session of %s resumed (saved %s)", name, record.get("saved_at"))
+            clear_session(name)
+        self._session_timer = QTimer(self)
+        self._session_timer.timeout.connect(self._session_autosave)
+        self._session_timer.start(self.SESSION_AUTOSAVE_MS)
+
+    def _ask_to_resume_session(self, saved_at: str) -> bool:
+        """A decision, so a dialog (decision Q33): resume the configuration the window held when it was cut?"""
+        when = saved_at.replace("T", " at ") if saved_at else "a previous run"
+        answer = QMessageBox.question(
+            self,
+            "Resume the previous session?",
+            f"This window did not close normally. Its configuration of {when} was kept.\n\n"
+            "Resume it? It opens unsaved: save it where you want. No computation is resumed.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes,
+        )
+        return answer == QMessageBox.StandardButton.Yes
+
+    def _session_autosave(self) -> None:
+        from certus.ui.certus_session import clear_session, write_session
+
+        name = self._session_name()
+        try:
+            if self.has_unsaved_config():
+                write_session(name, self._collect_config())
+            else:
+                clear_session(name)
+        except (OSError, TypeError, ValueError, RuntimeError):
+            logging.getLogger("CERTUS").debug("Session of %s not written", name, exc_info=True)
+
+    def _session_end(self) -> None:
+        """A close that went to its end: nothing to resume."""
+        from certus.ui.certus_session import clear_session
+
+        timer = getattr(self, "_session_timer", None)
+        if timer is not None:
+            timer.stop()
+        if self._session_supported():
+            try:
+                clear_session(self._session_name())
+            except OSError:
+                logging.getLogger("CERTUS").debug("Session of %s not erased", self._session_name(), exc_info=True)
 
     def has_unsaved_config(self) -> bool:
         """True when the configuration is not the one last saved, loaded or settled at the opening of the window."""

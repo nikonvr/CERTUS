@@ -28,6 +28,8 @@ class CertusFieldApp(
 ):
     APP_NAME = "CERTUS-FIELD"
     APP_TITLE = "Electric Field Optimization"
+    # What an empty plot says at opening (U10, constat C1; CertusEmptyStateMixin).
+    _EMPTY_PLOT_HINT = ('activity', 'No field computed yet', 'Choose the materials and the stack, then press Calculate Field (F5).')
     APP_VERSION = "1.0.0"
 
     def __init__(self, *args, **kwargs):

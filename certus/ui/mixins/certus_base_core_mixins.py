@@ -747,17 +747,33 @@ class CertusEmptyStateMixin:
         except RuntimeError, AttributeError, TypeError, ValueError:
             pass
 
+        # An empty plot says what to do (U10, constat C1): a window opts in with `_EMPTY_PLOT_HINT`, (icon, title,
+        # description); without it, its plots are left as they were.
+        hint = getattr(self, "_EMPTY_PLOT_HINT", None)
+        if hint:
+            try:
+                import pyqtgraph as pg
+
+                from certus.ui.certus_empty_state import attach_plot_empty_state
+
+                icon, title, description = hint
+                for plot in self.findChildren(pg.PlotWidget):
+                    attach_plot_empty_state(plot, icon_name=icon, title=title, description=description)
+            except ImportError, RuntimeError, AttributeError, TypeError, ValueError:
+                pass
+
 
 class CertusRecentsMixin:
     """Provides recent files management."""
 
-    def _record_recent_config(self, filename: str) -> None:
+    def _record_recent_config(self, filename: str, category: str = "CONFIG") -> None:
+        # `category` names a constant of RecentCategories; STRAT keeps its own list (U10).
         if not filename:
             return
         try:
             from certus.ui.certus_recent import RecentCategories, record_recent
 
-            record_recent(RecentCategories.CONFIG, filename)
+            record_recent(getattr(RecentCategories, category), filename)
         except RuntimeError, AttributeError, TypeError, ValueError, ImportError:
             pass
 

@@ -43,6 +43,14 @@ def _plot_texts(win) -> list[str]:
         for item in win.plot_widget.plotItem.items
         if isinstance(item, pg.TextItem)
     ]
+    # The card of the suite laid over an empty plot (U10, certus_empty_state.attach_plot_empty_state).
+    from PyQt6.QtWidgets import QLabel, QWidget
+
+    from certus.ui.certus_empty_state import PLOT_EMPTY_STATE_NAME
+
+    for card in win.plot_widget.findChildren(QWidget, PLOT_EMPTY_STATE_NAME):
+        if card.isVisible():
+            texts += [label.text() for label in card.findChildren(QLabel)]
     return [t for t in texts if t and t.strip()]
 
 

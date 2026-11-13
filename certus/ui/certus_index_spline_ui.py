@@ -76,6 +76,8 @@ class CertusIndexSplineApp(
 
     APP_NAME = "CERTUS_INDEX_SPLINE"
     APP_TITLE = "Index Spline Optimization"
+    # What an empty plot says at opening (U10, constat C1; CertusEmptyStateMixin).
+    _EMPTY_PLOT_HINT = ('line-chart', 'No spectrum loaded', 'Step 1: load a measured spectrum. Then press Run Optimization (F5).')
     DEFAULT_WIDTH = 1380
     DEFAULT_HEIGHT = 650
     MIN_WIDTH = 1100

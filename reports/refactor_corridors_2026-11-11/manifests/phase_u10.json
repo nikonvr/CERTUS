@@ -1,0 +1,14 @@
+{
+  "phase": "U10 - an empty plot says what to do (constat C1), and STRAT's welcome page offers actions where it showed slogans (constat C2, decision Q37): open the bundled example, or one of the last configurations loaded in STRAT.",
+  "changed_code": [
+    "certus.ui.mixins.certus_base_core_mixins:CertusEmptyStateMixin._auto_install_empty_states",
+    "certus.ui.mixins.certus_base_core_mixins:CertusRecentsMixin._record_recent_config",
+    "certus.ui.certus_strat_ui_state:CertusStratStateMixin.load_configuration"
+  ],
+  "added_attributes": [
+    "certus.ui.certus_field_ui:CertusFieldApp._EMPTY_PLOT_HINT",
+    "certus.ui.certus_index_spline_ui:CertusIndexSplineApp._EMPTY_PLOT_HINT",
+    "certus.ui.certus_index_ui:CertusIndexApp._EMPTY_PLOT_HINT"
+  ],
+  "note": "_record_recent_config takes an optional category (default CONFIG: the call of every other window is unchanged); STRAT records its loaded files under STRAT_CONFIG, its own list, one line in place of a blank one (the file is at its ceiling). The plot card sweep is inactive for a window without _EMPTY_PLOT_HINT. SMOOTHER and SUBSTRATE, which are not CertusBaseApp windows, attach the card themselves."
+}

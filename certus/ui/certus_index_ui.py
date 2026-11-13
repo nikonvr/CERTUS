@@ -81,6 +81,8 @@ class CertusIndexApp(CertusIndexLayoutMixin, CertusIndexStateMixin, CertusIndexE
     APP_NAME = "CERTUS-INDEX"
 
     APP_TITLE = "Dielectric Index Characterization"
+    # What an empty plot says at opening (U10, constat C1; CertusEmptyStateMixin).
+    _EMPTY_PLOT_HINT = ('line-chart', 'No spectrum loaded', 'Load a measured spectrum, then press Run optimization (F5).')
 
     DEFAULT_WIDTH = 1380
 

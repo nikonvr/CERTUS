@@ -483,6 +483,14 @@ class SubstrateIndexGUI(QMainWindow):
         self.plot_widget.setLabel("bottom", "Wavelength (nm)")
         self.plot_widget.setLabel("left", "Amplitude")
         attach_excel_clipboard_context_menu(self.plot_widget)
+        # What the empty plot says at opening (U10, constat C1); the card lifts when the spectra are drawn.
+        from certus.ui.certus_empty_state import attach_plot_empty_state
+
+        attach_plot_empty_state(
+            self.plot_widget,
+            title="No spectra loaded",
+            description="Use Load Data (.xlsx/.xls) to open the bare-substrate spectra.",
+        )
 
         spectra_tab = QWidget()
         spectra_layout = QVBoxLayout(spectra_tab)

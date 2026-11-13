@@ -332,16 +332,16 @@ class CurveSmootherGUI(QMainWindow):
         With no data, the axes still graduate 0 to 1 - Qt's default range, not a
         measurement. Unlabelled, that reads as data.
         """
-        if self._empty_notice is not None:
-            return
-        notice = pg.TextItem(
-            "No data loaded.\nUse Load Data to open a spectrum file.",
-            color=CertusTheme.TEXT_SUB,
-            anchor=(0.5, 0.5),
-        )
-        notice.setPos(0.5, 0.5)
-        self.plot_widget.addItem(notice)
-        self._empty_notice = notice
+        # The card of the suite (U10), the one every empty plot carries; it lifts by itself when a curve holds data.
+        if getattr(self, "_empty_card", None) is None:
+            from certus.ui.certus_empty_state import attach_plot_empty_state
+
+            self._empty_card = attach_plot_empty_state(
+                self.plot_widget,
+                icon_name="sliders",
+                title="No data loaded",
+                description="Use Load Data to open a spectrum file.",
+            )
 
     def update_plot(self) -> None:
         if self.df is None:

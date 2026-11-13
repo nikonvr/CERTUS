@@ -126,12 +126,14 @@ def _duree_en_minutes(texte: str) -> float:
 _HORODATAGE = re.compile(r"\d{8}_\d{6}")
 
 
-def _nom_artefact(composant: str, mode: str, graine: int, tag: str = "") -> str:
-    suffixe = f"_{tag}" if tag else ""
+def _nom_artefact(composant: str, mode: str, graine: int, tag: str = "", res_nm: float = 2.0) -> str:
+    # 🔴 LA FENTE ENTRE DANS LE NOM, COMME LA SONDE L'ECRIT (`_<tag>` puis `_res<fente>`, rien a 2 nm). Sans elle,
+    # une campagne a 1 nm prenait la mesure a 2 nm d'une graine pour la sienne, et la sautait (U12 B).
+    suffixe = (f"_{tag}" if tag else "") + ("" if res_nm == 2.0 else f"_res{res_nm:g}")
     return f"blocs_vs_plantage_{composant}_{mode}_s{graine:03d}{suffixe}.json"
 
 
-def _resoudre_artefact(composant: str, mode: str, graine: int, tag: str = "") -> Path | None:
+def _resoudre_artefact(composant: str, mode: str, graine: int, tag: str = "", res_nm: float = 2.0) -> Path | None:
     """Le chemin de l'artefact le plus RECENT qui corresponde EXACTEMENT a cette configuration.
 
     🔴 CE N'EST PAS UNE COMMODITE, C'EST LE DEFAUT N° 2 DE `generer_rampes.py`, REPRODUIT ICI
@@ -149,7 +151,7 @@ def _resoudre_artefact(composant: str, mode: str, graine: int, tag: str = "") ->
     ⚠️ Le meme filtre protege d'une confusion de graines : `s101*` attrape `s1011`, dont le
     reste `1` n'est pas un horodatage et se trouve donc rejete.
     """
-    attendu = _nom_artefact(composant, mode, graine, tag)[:-len(".json")]
+    attendu = _nom_artefact(composant, mode, graine, tag, res_nm)[:-len(".json")]
     candidats = []
     for f in (RACINE / "reports").glob(f"{attendu}*.json"):
         reste = f.stem[len(attendu):].lstrip("_")
@@ -463,7 +465,7 @@ def _passe_multitemoin(a, jdir: Path, n_temoins: int, n: int) -> int:
         p._certus_journal.close()  # type: ignore[attr-defined]
     except Exception:
         pass
-    art = _lire_artefact(_resoudre_artefact(a.composant, a.mode, graine, tag))
+    art = _lire_artefact(_resoudre_artefact(a.composant, a.mode, graine, tag, a.resolution))
     dep = _deposables(art) if art else []
     if not dep:
         print(f"  ❌ {n_temoins} temoin(s) : aucun deposable.")
@@ -731,7 +733,7 @@ def main(argv: list[str] | None = None) -> int:
     meilleur_seel: float | None = None
     fait: dict[int, dict] = {}
     for g in graines:
-        art = _lire_artefact(_resoudre_artefact(a.composant, a.mode, g))
+        art = _lire_artefact(_resoudre_artefact(a.composant, a.mode, g, res_nm=a.resolution))
         if art is not None:
             fait[g] = art
             dep = _deposables(art)
@@ -860,7 +862,7 @@ def main(argv: list[str] | None = None) -> int:
                     duree_reelle = mins
                     print(f"     📏 duree REELLE mesuree ici : {mins:.0f} min "
                           f"(elle remplace l'estimation de {a.duree_attendue:.0f})")
-                art = _lire_artefact(_resoudre_artefact(a.composant, a.mode, g))
+                art = _lire_artefact(_resoudre_artefact(a.composant, a.mode, g, res_nm=a.resolution))
                 if p.returncode != 0 or art is None:
                     # 🔴 Un echec se DIT et n'arrete pas la campagne : les autres graines
                     # gardent leur valeur.
@@ -980,7 +982,7 @@ def main(argv: list[str] | None = None) -> int:
         p._certus_journal.close()  # type: ignore[attr-defined]
     except Exception:
         pass
-    art = _lire_artefact(_resoudre_artefact(a.composant, a.mode, a.graine_notation, tag))
+    art = _lire_artefact(_resoudre_artefact(a.composant, a.mode, a.graine_notation, tag, a.resolution))
     if art is None:
         print(f"  🔴 la notation finale n'a pas rendu de mesure (EXIT={p.returncode}).")
         return 1
@@ -997,7 +999,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  🟢 RESULTAT CITABLE : SEEL {seel:.4f} nm · {best['n_blocs']} blocs · "
           f"plantage {100 * best['crash_rate']:.2f} % · {len(dep)} deposable(s)")
     print(f"     trouve par {sorted(qui_trouvent)} · note sur {a.graine_notation}, disjointe")
-    print(f"     artefact : reports/{_nom_artefact(a.composant, a.mode, a.graine_notation, tag)}")
+    print(f"     artefact : reports/{_nom_artefact(a.composant, a.mode, a.graine_notation, tag, a.resolution)}")
     if meilleur_seel is not None:
         # 🔑 CE DELTA EST LE CANAL DE MALEDICTION DU VAINQUEUR, MESURE A CHAQUE CAMPAGNE. Il
         # valait +12,9 % le 2026-08-15 et +0,55 % le 2026-08-22 : ce n'est donc pas une
@@ -1011,7 +1013,7 @@ def main(argv: list[str] | None = None) -> int:
     _evt("resultat", seel=seel, n_blocs=best["n_blocs"], crash=best["crash_rate"],
          deposables=len(dep), graine_notation=a.graine_notation,
          seel_provisoire=meilleur_seel, graines_trouvees=sorted(qui_trouvent),
-         artefact=_nom_artefact(a.composant, a.mode, a.graine_notation, tag))
+         artefact=_nom_artefact(a.composant, a.mode, a.graine_notation, tag, a.resolution))
     _evt("fin", trouve=True, non_essayees=sorted(set(jamais_lancees)))
     return 0
 

@@ -1477,3 +1477,5 @@ fini ; le « ? » tient la place de la valeur. Laissé.
   `describe_error` (cause et geste, A9). Suites `ui` et `unit` : `7553 passed`, le couple de tests « au bit » de STRAT
   rouge sur le cache de l'arbre et `47 passed` sur cache vierge.
 - [x] **U12** : spécification écrite ([`U12_specification.md`](U12_specification.md)), questions tranchées (Q40).
+- [x] **U12 A** (`e6a068df`, non poussé) : reprise de session pour DESIGN, FIELD, INDEX, INDEX SPLINE, METAL ×2 ;
+  STRAT et RE restent à brancher (rechargement par fichier seulement) ; U12 B à faire.

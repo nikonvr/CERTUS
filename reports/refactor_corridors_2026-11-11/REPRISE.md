@@ -169,7 +169,12 @@ jusque-là. **U9, fait** : plancher de l'en-tête (`b695fe80`) ; corps à 10 pt 
 STRAT : l'exemple et les configurations récentes à la place des slogans, STRAT enregistre ce qu'il charge
 (`6365d7fb`) ; U8 complet du même coup (STRAT n'est plus en `xfail`). `ux_` et états vides : `1434 passed` ; deux tests
 « au bit » de STRAT rouges, `43 passed` sur cache Numba vierge. **U11, fait** : informations en toast (`47fb9076`, `97db8290`), erreurs qui disent la cause et le geste (`f571cd88`).
-**U12** : spécification écrite et tranchée (Q40). Validation complète finale le 2026-11-13 sur `5d5407b3` : l'état connu seul ; **poussé sur `master`** (Q38). **Suivant : U12 A**, la reprise de session, locale.
+**U12** : spécification écrite et tranchée (Q40). Validation complète finale le 2026-11-13 sur `5d5407b3` : l'état connu seul ; **poussé sur `master`** (Q38). **U12 A, fait, commité, NON poussé** (`e6a068df`) : la configuration d'une fenêtre est écrite chaque minute
+quand elle a changé (`certus/ui/certus_session.py`, sous `CERTUS_CONFIG_DIR` ou `%APPDATA%/CERTUS/sessions`), effacée
+par une fermeture menée à son terme, proposée à l'ouverture suivante (jamais offscreen). DESIGN, FIELD, INDEX,
+INDEX SPLINE, METAL ×2 rendent la même configuration (testé) ; suites `ui` et `unit` : `7567 passed` et le test « au
+bit » connu, vert sur cache vierge. **Reste de U12** : STRAT et RE ne reprennent pas encore de session (ils ne
+rechargent que d'un fichier : leur `_apply_config` est celui du mixin) ; U12 B (calculs, STRAT multi-graines d'abord).
 
 ## 6. À faire, dans l'ordre
 
@@ -191,7 +196,8 @@ en toast, avertissements et erreurs restent modaux, réécrits (cause et geste).
 
 **Ce qui reste à 👤 — des gestes, pas des arbitrages (Q29)**
 
-- **Pousser** ce qui suit `9bb4999b` (U6 et la suite) : seulement sur son ordre, le dépôt est public.
+- **Pousser** `e6a068df` (U12 A) et ce qui suit : seulement sur son ordre, le dépôt est public. Tout jusqu'à
+  `73f04732` (U11 et la spécification de U12) est poussé.
 - **Reprendre** sa branche `wip/strat-local-search-ricl-2026-11-11` (dans le checkout principal, pas dans un worktree
   de session) ; un seul conflit attendu avec `master` : `reports/RICL_ultimate_2026-11-05/exhaustive_clean_bs.py`.
 

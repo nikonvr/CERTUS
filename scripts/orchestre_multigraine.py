@@ -178,6 +178,43 @@ def _lire_artefact(chemin: Path | None) -> dict | None:
     return d
 
 
+def _provenance_courante() -> dict:
+    """Ce qui calcule ICI : commit, arbre modifie ou non, cle des noyaux compiles (`numba_cache_key`)."""
+    if str(RACINE) not in sys.path:
+        sys.path.insert(0, str(RACINE))
+    from certus.core.certus_metrology import provenance
+
+    return provenance()
+
+
+def motif_de_refus(artefact: dict, res_nm: float, ici: dict, autre_commit: bool = False) -> str:
+    """Pourquoi la mesure d'une graine ne peut PAS etre reprise ; vide si elle le peut (U12 B).
+
+    🔴 UNE GRAINE REPRISE N'EST JAMAIS RECALCULEE : elle entre dans l'union et la notation finale comme si elle
+    venait d'etre mesuree. Une mesure d'une autre fente ou d'un autre code y donnerait un resultat faux qui a l'air
+    juste -- on refuse donc plutot que se tromper, et on DIT pourquoi : la graine est remesuree.
+    Ce qui ne dit pas ce qui l'a produit (pas de provenance, arbre modifie, commit ou cle inconnus) est refuse aussi.
+    `autre_commit` admet un autre commit a noyaux compiles IDENTIQUES : c'est le choix de l'operateur, pas le defaut,
+    parce que le code Python qui ne mentionne pas numba ne fait pas bouger la cle.
+    """
+    fente = (artefact.get("config") or {}).get("monochromator_resolution_nm")
+    if fente is None or float(fente) != float(res_nm):
+        return f"slit {fente} nm in the artefact, {res_nm:g} nm asked"
+    prov = artefact.get("provenance") or {}
+    if not prov:
+        return "no provenance: nothing says which code measured it"
+    if ici.get("git_dirty") is not False or not ici.get("git_commit"):
+        return "this tree cannot name its commit (modified files or no git): nothing says the code is the same"
+    if prov.get("git_dirty") is not False or not prov.get("git_commit"):
+        return "measured by a modified or unnamed tree: nothing says which code measured it"
+    if not prov.get("numba_cache_key") or prov.get("numba_cache_key") != ici.get("numba_cache_key"):
+        return f"numba_cache_key {prov.get('numba_cache_key')} != {ici.get('numba_cache_key')}: other compiled kernels"
+    if prov.get("git_commit") != ici.get("git_commit") and not autre_commit:
+        return (f"commit {str(prov.get('git_commit'))[:10]} != {str(ici.get('git_commit'))[:10]} "
+                "(same kernels: --reprendre-autre-commit accepts it)")
+    return ""
+
+
 def _deposables(artefact: dict) -> list[dict]:
     """Les strategies sous la tolerance, triees par score CROISSANT.
 
@@ -676,6 +713,9 @@ def main(argv: list[str] | None = None) -> int:
                     help="emet en plus un flux JSONL prefixe « [ORCH] », pour un pilote "
                          "(le GUI STRAT). Les phrases humaines restent inchangees.")
     ap.add_argument("--dry-run", action="store_true", help="dit ce qui serait fait, ne lance rien")
+    ap.add_argument("--reprendre-autre-commit", action="store_true",
+                    help="reprend aussi la mesure d'une graine faite par un AUTRE commit, si ses noyaux compiles "
+                         "(numba_cache_key), sa fente et son arbre propre concordent. Par defaut : remesuree.")
     a = ap.parse_args(argv)
     global _evenements_armes
     _evenements_armes = bool(a.evenements)
@@ -732,8 +772,14 @@ def main(argv: list[str] | None = None) -> int:
     # frequent : c'est celui de la validation du 2026-08-22.
     meilleur_seel: float | None = None
     fait: dict[int, dict] = {}
+    ici = _provenance_courante()
     for g in graines:
         art = _lire_artefact(_resoudre_artefact(a.composant, a.mode, g, res_nm=a.resolution))
+        refus = motif_de_refus(art, a.resolution, ici, a.reprendre_autre_commit) if art is not None else ""
+        if refus:
+            print(f"  🔁 graine {g} : sa mesure n'est PAS reprise -- {refus}. Elle sera remesuree.")
+            _evt("refusee", graine=g, raison=refus)
+            art = None
         if art is not None:
             fait[g] = art
             dep = _deposables(art)

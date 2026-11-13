@@ -4,6 +4,9 @@ The rule removes layers under 5 nm at the end of the workflow and exports withou
 on the 50/50 splitter 400-1200 nm it took a 34-layer design from RMSE 0.000161 to 0.001035 by
 removing one layer (reports/DESIGN_bs5050_2026-10-22/journal.md). With the option, the workflow
 heals (restricted global, then local polish) before it finalizes again; without it, nothing changes.
+
+Since 2026-11-13 the rule is the fallback of the final cleanup (tests/ui/test_design_final_cleanup_at_the_end.py):
+this test turns the cleanup off, as a file does with `final_cleanup: false`.
 """
 
 from __future__ import annotations
@@ -35,6 +38,7 @@ def test_the_finalisation_heals_after_the_5nm_rule_only_when_asked(qapp, monkeyp
     app.ep_current = np.asarray(init_thickness(app._get_front_stack(), app.l0_spin.value(), app._get_materials()))
     app._decimation_done = True  # straight to the rule
     app._polish_after_5nm_rule = option
+    app._design_optional_steps = {"final_cleanup": False}  # the rule under test is the cleanup's fallback
     app._auto_restarts = 0  # the automatic restart is not under test here
     app._export_pending = False
     monkeypatch.setattr("certus.ui.certus_design_ui_optimization.get_export_config", lambda: True)

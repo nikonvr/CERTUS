@@ -67,6 +67,10 @@ Ordre de mise en œuvre conseillé : A, puis STRAT multi-graines (déjà découp
 3. Sessions et journaux dans le **dossier de configuration de CERTUS** (`sessions/`), rien dans les dossiers de travail.
 4. La reprise est **proposée** par l'accueil (« Reprendre la session du … »), jamais automatique.
 
+## 6 bis. Fait le 2026-11-13 : STRAT multi-graines
+
+L'unité est la graine et son artefact dans `reports/` ; la reprise existait (« DEJA MESUREE »), sans garde. Ajouté : la fente dans le nom cherché, le refus d'un artefact d'une autre fente, d'autres noyaux, d'un autre commit ou d'un arbre modifié (graine remesurée, raison dite) ; test au bit de l'union (5.1), éprouvé par mutation. 5.2 (journal tronqué) : un artefact illisible n'est pas une mesure (test existant). 5.4 : aucun noyau touché. Restent STRAT robustesse, DESIGN PGLOBAL, INDEX SPLINE.
+
 ## 7. Estimation (jugement, non mesuré)
 
 A : une journée. B : deux à trois jours par moteur, dont la moitié pour les tests au bit.

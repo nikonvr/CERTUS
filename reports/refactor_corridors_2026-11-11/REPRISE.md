@@ -174,7 +174,9 @@ quand elle a changé (`certus/ui/certus_session.py`, sous `CERTUS_CONFIG_DIR` ou
 par une fermeture menée à son terme, proposée à l'ouverture suivante (jamais offscreen). DESIGN, FIELD, INDEX,
 INDEX SPLINE, METAL ×2 rendent la même configuration (testé) ; suites `ui` et `unit` : `7567 passed` et le test « au
 bit » connu, vert sur cache vierge. STRAT et RE reprennent aussi leur session, par leur propre chargeur de fichier (`_SESSION_FILE_LOADER`), commité
-**poussé sur `master`** le 2026-11-13 sur ordre de 👤 (`6a63b125`, `f30726ad`). **Reste de U12** : U12 B (calculs, STRAT multi-graines d'abord), à faire avec 👤.
+**poussé sur `master`** le 2026-11-13 sur ordre de 👤 (`6a63b125`, `f30726ad`). **U12 B, STRAT multi-graines, fait le 2026-11-13, local, non poussé** (ordre de 👤 « fini U12 et U13 ») : une campagne à une autre fente que 2 nm trouve ses artefacts et non ceux de 2 nm (`f0c8a99f`, défaut : elle sautait les graines mesurées à 2 nm) ; une graine n'est reprise que de la même fente, des mêmes noyaux compilés (`numba_cache_key`) et du même commit, arbre propre, sinon remesurée, raison dite (`6777f835`, `--reprendre-autre-commit` admet un autre commit à noyaux identiques) ; l'onglet dit « measured again » (`ce9002fb`) ; reprise = union d'une traite, au bit, éprouvé par mutation (`332433f3`). **Reste de U12 B** : STRAT robustesse, DESIGN PGLOBAL, INDEX SPLINE (spécification §4) : un journal DANS le calcul, C1 au bit, deux à trois jours chacun, non commencés.
+
+**U13, partie machine, faite le 2026-11-13, local, non poussé** : `audit_ux_certus.py --scale` (`da40bdf1`) ; à 150 % (1280×720 logiques) les flèches d'onglets de DESIGN et INDEX SPLINE ont une infobulle (`6d79a2b0`) ; 125 % et 200 % : 0/11 ; logo lisible en thème sombre (`6de96fc8`, A10). **Reste de U13, à 👤** : écran réel, Narrateur, cinq utilisateurs : `U13_protocole.md`.
 
 ## 6. À faire, dans l'ordre
 

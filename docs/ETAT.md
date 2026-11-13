@@ -15,7 +15,7 @@
 
 **Refactoring des corridors d'INDEX SPLINE (2026-11-11) et feuille de route UX (en cours)** : refactoring et U1 à U5
 validés et poussés sur `master` le 2026-11-12 ; U6 à U11 et la spécification de U12 validés et poussés le
-2026-11-13 ; reste U12 (reprise de session, puis des calculs) et U13 ; fait, à faire, décisions qui attendent 👤 et mode de reprise sur un autre PC dans
+2026-11-13 ; U12 A, U12 B pour STRAT multi-graines et la partie machine de U13 faits le 2026-11-13 ; reste U12 B des trois autres moteurs et U13 à l'écran (`reports/refactor_corridors_2026-11-11/U13_protocole.md`) ; fait, à faire, décisions qui attendent 👤 et mode de reprise sur un autre PC dans
 [`REPRISE.md`](../reports/refactor_corridors_2026-11-11/REPRISE.md), détail dans le plan du même dossier.
 
 **RICL (2026-11-05)** : précontrôle GO ; protocole de charge au sommet et sélection des tours cohérents, témoin nominal,

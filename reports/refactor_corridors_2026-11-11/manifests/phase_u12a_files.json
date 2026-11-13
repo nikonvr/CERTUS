@@ -1,0 +1,23 @@
+{
+  "phase": "U12 A (STRAT, RE) - the windows that reload only from a file resume their session through it: their loader is named by _SESSION_FILE_LOADER, the session goes through a temporary file, and comes back unsaved.",
+  "changed_code": [],
+  "added_attributes": [
+    "CERTUS_RE:CertusREApp._SESSION_FILE_LOADER",
+    "CERTUS_RE:CertusREApp._session_apply",
+    "certus.ui.certus_design_ui:CertusDesignApp._SESSION_FILE_LOADER",
+    "certus.ui.certus_design_ui:CertusDesignApp._session_apply",
+    "certus.ui.certus_field_ui:CertusFieldApp._SESSION_FILE_LOADER",
+    "certus.ui.certus_field_ui:CertusFieldApp._session_apply",
+    "certus.ui.certus_index_spline_ui:CertusIndexSplineApp._SESSION_FILE_LOADER",
+    "certus.ui.certus_index_spline_ui:CertusIndexSplineApp._session_apply",
+    "certus.ui.certus_index_ui:CertusIndexApp._SESSION_FILE_LOADER",
+    "certus.ui.certus_index_ui:CertusIndexApp._session_apply",
+    "certus.ui.certus_metal_bilayer_gui:CertusMetalBilayerApp._SESSION_FILE_LOADER",
+    "certus.ui.certus_metal_bilayer_gui:CertusMetalBilayerApp._session_apply",
+    "certus.ui.certus_metal_single_gui:CertusMetalSingleApp._SESSION_FILE_LOADER",
+    "certus.ui.certus_metal_single_gui:CertusMetalSingleApp._session_apply",
+    "certus.ui.certus_strat_ui:CertusStratApp._SESSION_FILE_LOADER",
+    "certus.ui.certus_strat_ui:CertusStratApp._session_apply"
+  ],
+  "note": "_SESSION_FILE_LOADER is None for every other window (their own _apply_config is used, as before). The loader of STRAT and RE marks what it loaded as saved: the resumed session is marked unsaved again, so that the close still asks. Collect then apply gives back the same configuration in the eight windows (tested)."
+}

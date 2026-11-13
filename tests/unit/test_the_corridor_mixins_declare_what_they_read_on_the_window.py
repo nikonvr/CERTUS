@@ -433,7 +433,7 @@ OVERRIDES_OF = {
     },
     "CERTUS_RE:CertusREApp": {
         "APP_NAME", "APP_TITLE", "DEFAULT_HEIGHT", "DEFAULT_WIDTH", "MIN_HEIGHT", "MIN_WIDTH",
-        "_COMPUTATION_THREADS", "__init__", "_add_front_row", "_apply_theme", "_apply_ui_zoom",
+        "_COMPUTATION_THREADS", "_SESSION_FILE_LOADER", "__init__", "_add_front_row", "_apply_theme", "_apply_ui_zoom",
         "_build_status_bar", "_collect_config", "_get_default_splitter_sizes", "_get_front_stack",
         "_get_plot_info", "_get_substrate_info_display", "_merge_adjacent_layers", "_on_layer_added",
         "_on_layer_deleted", "_on_qwot_changed_connection", "_stack_info_front_table_cols",
@@ -441,8 +441,8 @@ OVERRIDES_OF = {
         "_update_target_table_headers", "_update_thickness_display", "closeEvent", "load_config",
     },
     "certus.ui.certus_strat_ui:CertusStratApp": {
-        "APP_NAME", "APP_TITLE", "DEFAULT_HEIGHT", "DEFAULT_WIDTH", "MIN_HEIGHT", "MIN_WIDTH", "__init__",
-        "_apply_theme", "_apply_ui_zoom", "_build_log_container", "_collect_config", "_get_log_widget",
+        "APP_NAME", "APP_TITLE", "DEFAULT_HEIGHT", "DEFAULT_WIDTH", "MIN_HEIGHT", "MIN_WIDTH", "_SESSION_FILE_LOADER",
+        "__init__", "_apply_theme", "_apply_ui_zoom", "_build_log_container", "_collect_config", "_get_log_widget",
         "_save_undo_state", "_warmup_numba", "closeEvent", "save_config", "sig_numba_error", "sig_numba_ready",
         "timerEvent",
     },

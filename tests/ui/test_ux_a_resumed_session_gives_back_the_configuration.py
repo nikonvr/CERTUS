@@ -3,7 +3,7 @@
 The session file holds what the window's `_collect_config` returned; resuming hands it to `_apply_config`. For each
 window that resumes a session, the configuration collected from one window, applied to a fresh one, must come back
 the same: otherwise a resumed session would be a different configuration that looks like the old one.
-STRAT and RE are not here: they reload only from a file, and resume no session yet (REPRISE.md, U12 A).
+STRAT and RE reload only from a file: their session goes through one, through their own loader.
 """
 
 from __future__ import annotations
@@ -20,6 +20,8 @@ WINDOWS = [
     ("certus.ui.certus_index_spline_ui", "CertusIndexSplineApp"),
     ("CERTUS_METAL_BILAYER", "CertusMetalBilayerApp"),
     ("CERTUS_METAL_SINGLE", "CertusMetalSingleApp"),
+    ("certus.ui.certus_strat_ui", "CertusStratApp"),
+    ("CERTUS_RE", "CertusREApp"),
 ]
 
 
@@ -38,7 +40,11 @@ def test_collect_then_apply_gives_back_the_same_configuration(qapp, module_name,
         first.close()
     second = cls()
     try:
-        second._apply_config(json.loads(json.dumps(config, default=str)))
+        second._mark_initial_config_saved()
+        second._session_apply(json.loads(json.dumps(config, default=str)))
         assert _canonical(second._collect_config()) == _canonical(config)
+        if cls._SESSION_FILE_LOADER:
+            # Its loader marks what it loaded as saved: a session is saved nowhere, the close must still ask.
+            assert second.has_unsaved_config(), "a resumed session is saved nowhere: the close must still ask"
     finally:
         second.close()

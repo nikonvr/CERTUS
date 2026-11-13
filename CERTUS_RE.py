@@ -175,6 +175,7 @@ class CertusREApp(
     """CERTUS application  reverse engineering (Excel measurements)."""
 
     APP_NAME = "CERTUS_RE"
+    _SESSION_FILE_LOADER = "load_config"  # its session goes through a file (U12 A)
     APP_TITLE = "Reverse Engineering"
     DEFAULT_WIDTH = 1440
     DEFAULT_HEIGHT = 640

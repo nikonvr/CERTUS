@@ -61,6 +61,7 @@ class CertusStratApp(
     # CertusBaseApp configuration
 
     APP_NAME = "CERTUS-STRAT"
+    _SESSION_FILE_LOADER = "load_configuration"  # its session goes through a file (U12 A)
 
     APP_TITLE = "Predictive Monitoring Strategy"
 

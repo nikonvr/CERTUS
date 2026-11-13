@@ -183,11 +183,16 @@ class CertusAppConfigMixin:
     # -- Session kept on disk (U12 A, decision Q40) ------------------------------------------------------------------
     #: Every minute a window whose configuration changed writes it to its session file; a finished close erases it.
     SESSION_AUTOSAVE_MS = 60_000
+    #: A window that reloads only from a file (STRAT, RE) names its loader: the session goes through a file and back.
+    # No annotation: an annotated class attribute gives the mixin an `__annotate__` of its own (Python 3.14), and
+    # CertusBaseApp would no longer resolve it to the mixin that comes first (test_the_base_app_split_...).
+    _SESSION_FILE_LOADER = None
 
     def _session_supported(self) -> bool:
         """A window resumes through its own `_apply_config`: the mixin's, which does nothing, is not a way back."""
         cls = type(self)
-        return cls._apply_config is not CertusAppConfigMixin._apply_config and cls._collect_config is not CertusAppConfigMixin._collect_config
+        collects = cls._collect_config is not CertusAppConfigMixin._collect_config
+        return collects and (cls._apply_config is not CertusAppConfigMixin._apply_config or bool(cls._SESSION_FILE_LOADER))
 
     def _session_name(self) -> str:
         return str(getattr(self, "APP_NAME", "") or type(self).__name__)
@@ -205,12 +210,32 @@ class CertusAppConfigMixin:
         # Under the offscreen platform nobody answers: no offer, and the session found is left where it is.
         if record is not None and os.environ.get("QT_QPA_PLATFORM", "").lower() != "offscreen":
             if self._ask_to_resume_session(str(record.get("saved_at", ""))):
-                self._apply_config(record["config"])  # left unsaved on purpose: the operator saves it where he wants
+                self._session_apply(record["config"])  # left unsaved on purpose: the operator saves it where he wants
                 logging.getLogger("CERTUS").info("Session of %s resumed (saved %s)", name, record.get("saved_at"))
             clear_session(name)
         self._session_timer = QTimer(self)
         self._session_timer.timeout.connect(self._session_autosave)
         self._session_timer.start(self.SESSION_AUTOSAVE_MS)
+
+    def _session_apply(self, config: dict[str, Any]) -> None:
+        """Give the window its session back: through `_apply_config`, or through its file loader, then as unsaved."""
+        loader = self._SESSION_FILE_LOADER
+        if not loader:
+            self._apply_config(config)
+            return
+        import json
+
+        from certus.ui.certus_session import session_path
+
+        path = session_path(self._session_name()).with_suffix(".resume.json")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(config, ensure_ascii=False, default=str), encoding="utf-8")
+        try:
+            getattr(self, loader)(str(path))
+        finally:
+            path.unlink(missing_ok=True)
+        # The loader marks what it loaded as saved: a session is saved nowhere, the close must still ask.
+        self._saved_config_snapshot = ""
 
     def _ask_to_resume_session(self, saved_at: str) -> bool:
         """A decision, so a dialog (decision Q33): resume the configuration the window held when it was cut?"""

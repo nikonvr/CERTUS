@@ -292,22 +292,29 @@ class OptimizationManager:
         ot = getattr(self.ui, "_min_layer_ot_nm", None)
         return float(ot) if isinstance(ot, (int, float)) and not isinstance(ot, bool) and ot > 0 else None
 
+    def _thin_layer_nm(self) -> float:
+        """The window's least thickness of a final layer (its `Min. Layer` field); 5 nm without the field."""
+        spin = getattr(self.ui, "min_layer_spin", None)
+        value = spin.value() if spin is not None else None
+        return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else 5.0
+
     def _min_layer_thickness(self, materials: list[str]) -> np.ndarray:
-        """Least final thickness (nm) of each layer: 5 nm, or the file's `min_layer_ot_nm` divided by n4.
+        """Least final thickness (nm) of each layer: the window's field, or the file's `min_layer_ot_nm` / n4.
 
         `min_layer_ot_nm` (optional, owner's request of 2026-10-23) states the floor as an optical thickness,
-        n4 * d, with n4 the index at 400 nm that DESIGN uses for QWOT. Without it every layer keeps 5 nm.
+        n4 * d, with n4 the index at 400 nm that DESIGN uses for QWOT. Without it every layer keeps the window's
+        `Min. Layer` (5 nm by default).
         """
         ot = self._ot_floor()
         if ot is None:
-            return np.full(len(materials), 5.0)
+            return np.full(len(materials), self._thin_layer_nm())
         mats = self.ui._get_materials()
         return np.array([float(ot) / float(mats[m].n4) for m in materials])
 
     def _current_min_layer_thickness(self, n: int) -> np.ndarray:
         """Least final thickness of each row of the front table (n rows expected)."""
         names = [layer.mat for layer in self.ui._get_front_stack()]
-        return self._min_layer_thickness(names) if len(names) == n else np.full(n, 5.0)
+        return self._min_layer_thickness(names) if len(names) == n else np.full(n, self._thin_layer_nm())
 
     def _select_smart_decimation_remove_index(self, ep: np.ndarray) -> int:
         """Pick layer index to remove, prioritizing layers under their least final thickness."""
@@ -644,7 +651,7 @@ class OptimizationManager:
         table, ep = rec.get("table_rmse") or [], rec.get("ep_rmse")
         n = len(ep) if ep is not None else 0
         if len(table) != n:
-            return np.full(n, 5.0)
+            return np.full(n, self._thin_layer_nm())
         return self._min_layer_thickness([row["mat"] for row in table])
 
     def _apply_floor_at_end(self) -> bool:
@@ -787,7 +794,7 @@ class OptimizationManager:
 
         # 5 nm - hard manufacturing limit; per layer when the file states `min_layer_ot_nm`.
         floor = self._current_min_layer_thickness(len(ep))
-        MIN_FINAL_THICKNESS = 5.0 if self._ot_floor() is None else f"OT {self._ot_floor()} "
+        MIN_FINAL_THICKNESS = self._thin_layer_nm() if self._ot_floor() is None else f"OT {self._ot_floor()} "
 
         fixed = self._fixed_rows()
 

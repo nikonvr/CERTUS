@@ -464,6 +464,23 @@ class LayoutManager:
 
         row += 1
 
+        # Least thickness of a final layer (owner, 2026-11-13): 5 nm was written in the code.
+        self.ui.min_layer_spin = QDoubleSpinBox()
+        self.ui.min_layer_spin.setRange(0.0, 100.0)
+        self.ui.min_layer_spin.setDecimals(1)
+        self.ui.min_layer_spin.setSingleStep(0.5)
+        self.ui.min_layer_spin.setValue(5.0)
+        self.ui.min_layer_spin.setSuffix(" nm")
+        self.ui.min_layer_spin.setToolTip(
+            "No layer of the final design is thinner than this.\n"
+            "At the end of an optimization each thinner layer is removed or raised to this value,\n"
+            "whichever fits the targets better, and the design is polished again.\n"
+            "An optical floor stated by the file (min_layer_ot_nm) comes first."
+        )
+        opt_grid.addWidget(QLabel("Min. Layer:"), row, 0)
+        opt_grid.addWidget(self.ui.min_layer_spin, row, 1)
+        row += 1
+
         # Spectrum points (readonly)
 
         self.ui.npts_spin = QSpinBox()

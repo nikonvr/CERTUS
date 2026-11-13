@@ -207,6 +207,9 @@ class StateManager:
                           ("min_layer_ot_nm", "_min_layer_ot_nm"), ("floor_at_end", "_floor_at_end")):
             if getattr(self.ui, attr, None):
                 cfg["optimization"][key] = getattr(self.ui, attr)
+        # Written only when it is not the 5 nm every file had before the field existed.
+        if hasattr(self.ui, "min_layer_spin") and self.ui.min_layer_spin.value() != 5.0:
+            cfg["optimization"]["min_layer_nm"] = self.ui.min_layer_spin.value()
         cfg["optimization"].update(getattr(self.ui, "_design_optional_steps", None) or {})
 
         return cfg
@@ -355,6 +358,9 @@ class StateManager:
         self.ui._max_total_qwot = float(opt["max_total_qwot"]) if opt.get("max_total_qwot") else None
         # Least optical thickness n4 * d of a final layer, in nm; without it every final layer keeps 5 nm.
         self.ui._min_layer_ot_nm = float(opt["min_layer_ot_nm"]) if opt.get("min_layer_ot_nm") else None
+        # Least thickness of a final layer, in nm; a file without it is a file at 5 nm.
+        if hasattr(self.ui, "min_layer_spin"):
+            self.ui.min_layer_spin.setValue(float(opt.get("min_layer_nm") or 5.0))
         # Apply the thickness floor only at the end of the workflow (owner's practice); off unless the file asks.
         self.ui._floor_at_end = bool(opt.get("floor_at_end", False))
         # Optional steps of 2026-10-26, off unless the file names them (DESIGN_OPTIONAL_STEPS).

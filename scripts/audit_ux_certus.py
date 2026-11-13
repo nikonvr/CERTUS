@@ -605,6 +605,37 @@ def emoji_labels(win) -> list[str]:
     return sorted(found)
 
 
+def font_sizes(win) -> dict:
+    """The point sizes painted on the visible texts of the window, with how many texts each (U9).
+
+    `scale` gives the painted size of Typography.CAPTION and BODY in the same process: a point size depends on the
+    resolution of the screen, and the offscreen one is not 96 dpi.
+    """
+    from collections import Counter
+
+    from PyQt6.QtGui import QFont, QFontInfo
+    from PyQt6.QtWidgets import QAbstractButton, QAbstractSpinBox, QComboBox, QGroupBox, QLabel, QLineEdit, QTabBar
+
+    from certus.utils.certus_ux import Typography
+
+    def painted(font) -> float:
+        return round(QFontInfo(font).pointSizeF(), 1)
+
+    sizes: Counter = Counter()
+    for widget in win.findChildren((QAbstractButton, QLabel, QGroupBox, QTabBar, QLineEdit, QComboBox, QAbstractSpinBox)):
+        if not widget.isVisible() or _is_transient(widget):
+            continue
+        if isinstance(widget, (QLabel, QAbstractButton)) and not widget.text().strip():
+            continue
+        sizes[painted(widget.font())] += 1
+    scale = {}
+    for name in ("CAPTION", "BODY"):
+        font = QFont(win.font())
+        font.setPointSize(getattr(Typography, name))
+        scale[name] = painted(font)
+    return {"sizes": {str(k): v for k, v in sorted(sizes.items())}, "scale": scale}
+
+
 def painted_role_fills(win) -> list[str]:
     """`role|text|painted|expected` for each enabled, visible primary or danger button.
 
@@ -899,6 +930,7 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
     out["action_buttons"] = action_buttons(win)
     out["painted_role_fills"] = painted_role_fills(win)
     out["emoji_labels"] = emoji_labels(win)
+    out["font_sizes"] = font_sizes(win)
     logging.setLogRecordFactory(make_record)
     out["shortcut_conflicts"] = conflicts
     out["toasts"] = sorted(

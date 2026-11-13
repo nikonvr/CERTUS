@@ -5,10 +5,9 @@ la mémoire de l'assistant. Il est mis à jour à chaque étape, avant de passer
 de chaque décision est dans `REFACTOR_PLAN.md`, même dossier ; ce fichier dit où on en est, comment repartir, et comment
 faire la suite.
 
-**État au 2026-11-12, 21 h** : le refactoring des corridors est **fini** (Phases 0 à 10, toutes validées). Feuille de
-route UX : **U1 à U5 faites et validées**, **poussées sur `master`** (`9bb4999b`, sur ordre de 👤). La prochaine étape
-est U6, sur la branche `claude/reprise-057fcd`, en autonomie (nuit du 2026-11-12) ; ce qui suit `9bb4999b` n'est pas
-poussé.
+**Reprise active après la coupure du 2026-11-13** : le défaut du polisseur DESIGN est en cours de validation
+sur `claude/reprise-057fcd`. Le [plan de reprise](../audits_2026-11-13/REPRISE.md) donne le point de départ,
+les vérifications déjà faites et la prochaine action. L'avancement des corridors et de l'UX reste au §5.
 
 ## 1. Le chantier en cinq lignes
 
@@ -20,23 +19,16 @@ inchangé, bytecode prouvé identique par `scripts/refactor_guard.py`. S'y sont 
 
 ## 2. Reprendre sur un autre ordinateur
 
-### 2.1 Avoir la branche
+### 2.1 Retrouver le travail local
 
-Tout jusqu'à `9bb4999b` (U1d) est sur **`master`, poussé** le 2026-11-12. La suite est sur la branche locale
-**`claude/reprise-057fcd`**, au-dessus de `origin/master`, non poussée. Branches plus anciennes, toutes contenues dans
-`master` : `claude/certus-refactor-audit-6cd1fc`, `claude/reprise-certus1111-926596`, `claude/certus-1111-reprise-60e136`
-(leurs worktrees sont supprimés).
+Le [point de reprise](../audits_2026-11-13/REPRISE.md#0-point-de-reprise-après-la-coupure) donne la branche,
+le dernier commit et les fichiers modifiés après ce commit. Sur l'autre ordinateur, vérifier `git worktree list`
+puis `git status -sb` dans le worktree indiqué. Si le dossier arrive entier avec `.git` et qu'un chemin de
+worktree a changé, utiliser `git worktree repair` et vérifier l'état à nouveau.
 
-| Voie | Quand | Commandes |
-|---|---|---|
-| Le dossier `certus1111` arrive entier, `.git` compris (synchronisation du disque) | cas attendu | `git branch --sort=-committerdate` montre la branche en tête. Si un worktree pointe sur un chemin absent : `git worktree repair`, ou `git worktree prune` |
-| Un fichier unique à copier | si `.git` ne suit pas | ancien PC : `git bundle create certus_corridors.bundle origin/master..claude/reprise-certus1111-926596` ; nouveau PC, dans un clone de `github.com/nikonvr/CERTUS` : `git fetch certus_corridors.bundle claude/reprise-certus1111-926596:claude/reprise-certus1111-926596` |
-| Pousser la branche | **seulement sur ordre de 👤** : le dépôt est public | `git push origin claude/reprise-certus1111-926596` |
-
-Une session neuve de l'assistant ouvre un worktree neuf sur `master`, qui n'a pas le travail. Y faire
-`git branch --sort=-committerdate`, puis `git merge --ff-only <la branche de tête>`, et noter ici la nouvelle branche.
-Avant, regarder `git worktree list` et `git -C <worktree> status -sb` de chaque worktree : une session coupée peut y
-avoir laissé du travail non commité (c'est arrivé pour U2).
+Si le dossier ne suit pas, transférer la branche par bundle Git ainsi que les changements non commités
+et les résultats conservés dans `scratch/`. Un bundle ne transporte que les commits. La publication sur
+GitHub attend l'ordre de l'utilisateur.
 
 ### 2.2 Avoir l'environnement
 
@@ -189,22 +181,12 @@ la règle des 5 nm. Ferme ALG-19 du registre. Logo sombre corrigé (`b3cfd0b7`, 
 refactoring, dérivées analytiques ; vitesse et convergence locale en cours. Sondes : `scripts/probe_codesign_sensitivity.py`,
 `probe_kernel_threads.py`, `probe_local_convergence.py` (problèmes RICL `bs5050` et `threeline`).
 
-**Passation du 2026-11-13 : lire `reports/audits_2026-11-13/REPRISE.md`** (état exact, décision de 👤 à exécuter en premier : défaut `lbfgs_then_lm` du mémétique).
-
-**En cours (périmé, voir la passation)** : convergence locale (L-BFGS-B en nm, en épaisseur optique, préconditionné ; Levenberg-Marquardt avec et
-sans accélération géodésique). Ce qui gagne sera porté dans CERTUS en option inactive par défaut. **Reste à mesurer** :
-`memetic_workers` (1 exécution sur 4 dans `design_memetic_workers.jsonl`), profil échantillonné d'une optimisation,
-puis la validation complète (non rejouée depuis le nettoyage final).
-
-**Second temps (décision de 👤, 2026-11-13), non commencé** : co-conception niveau A (noter par STRAT plusieurs designs
-équivalents) ; factorisations R1 (METAL simple et bicouche) et R2 (amorçage Numba) ; branchement des gradients
-existants D2 (INDEX infrarouge, après C13) et D3 (METAL, adaptateur PGLOBAL). Détail : `bilan.md` §1.4, §2.2, §4.
+**Reprise en cours** : [validation du défaut du polisseur DESIGN](../audits_2026-11-13/REPRISE.md).
 
 ## 6. À faire, dans l'ordre
 
-2. **U9 à U11** — échelle typographique, états vides actionnables, messages (Q33) (plan §5.5). **U12** (reprise d'un calcul après coupure) est à spécifier avant tout code : elle
-   touche au calcul. **U13** (écran réel, HiDPI, lecteur d'écran, essais avec des utilisateurs) n'est pas à la portée
-   d'une IA.
+Suivre le [plan de reprise du 2026-11-13](../audits_2026-11-13/REPRISE.md#2-première-action--valider-le-défaut-de-design).
+Les moteurs qui restent à couvrir pour U12 B figurent au §5.
 
 **Tranché le 2026-11-12, sur consigne (« autonomie totale, réponds-toi aux questions ») — plan, section 4**
 
@@ -220,8 +202,7 @@ en toast, avertissements et erreurs restent modaux, réécrits (cause et geste).
 
 **Ce qui reste à 👤 — des gestes, pas des arbitrages (Q29)**
 
-- **Pousser** ce qui suit `764af192` : seulement sur son ordre, le dépôt est public. Tout jusqu'à `764af192`
-  (U12 A) est poussé.
+- **Pousser** après validation, seulement sur son ordre. U12 A pour STRAT et RE est publié sur `master`.
 - **Reprendre** sa branche `wip/strat-local-search-ricl-2026-11-11` (dans le checkout principal, pas dans un worktree
   de session) ; un seul conflit attendu avec `master` : `reports/RICL_ultimate_2026-11-05/exhaustive_clean_bs.py`.
 

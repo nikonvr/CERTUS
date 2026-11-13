@@ -1,15 +1,13 @@
 # REPRISE — passation du 2026-11-13 (DESIGN, audits, polisseur Levenberg-Marquardt)
 
 Pour l'IA qui reprend. Lire d'abord `CLAUDE.md`, `AGENTS.md`, `docs/ETAT.md` §0. Ce fichier dit où en est le travail
-du 2026-11-13 ; le reprise général du chantier reste `reports/refactor_corridors_2026-11-11/REPRISE.md`.
+du 2026-11-13 ; la reprise générale du chantier reste `reports/refactor_corridors_2026-11-11/REPRISE.md`.
 
-## 0. Où est le code
+## 0. Point de reprise
 
-- Branche **`claude/reprise-057fcd`**, worktree `.claude/worktrees/reprise-057fcd/`. Arbre propre au départ de la passation.
-- `origin/master` = `f30726ad` (dernier poussé). **Tout ce qui suit est local, non poussé** : 21 commits, de `f0c8a99f`
-  à `e964749d` (`git log --oneline origin/master..HEAD`). Pousser = publier (dépôt public) : seulement sur ordre de 👤.
-- Dernière validation complète : sur `61656d33` (U12 B, U13), parallèle, seuls les rouges connus. **Non rejouée depuis**
-  le nettoyage final de DESIGN ni le polisseur LM. Tests ciblés DESIGN : verts (438 + 11).
+La branche `claude/reprise-057fcd` porte les travaux du 13 novembre. La tête publiée de `master` était
+`f30726ad` lors de la vérification du 2026-11-13. Les journaux et lanceurs locaux sont sous
+`scratch/memetic_polisher_default/` dans le checkout principal.
 
 ## 1. Fait le 2026-11-13 (local)
 
@@ -20,32 +18,40 @@ du 2026-11-13 ; le reprise général du chantier reste `reports/refactor_corrido
 | **DESIGN, nettoyage final automatique** (ordre de 👤, exception C1 décidée par 👤) : chaque couche sous `Min. Layer` (champ, 5 nm) retirée ou remontée, la meilleure après polissage, puis polissage ; repli règle des 5 nm en oblique ou `final_cleanup: false` | `7d7a1d91` `a3bd4cfd` `21f39b98` | fait ; mesuré une fois sur l'exemple (34 couches, rien à retirer, RMSE inchangé 0,000167) ; **pas mesuré sur un cas où il retire** |
 | Audits co-conception, refactoring, dérivées, vitesse, convergence locale | `09c3f7a7` `978006cb` | `bilan.md` (ce dossier) |
 | Polisseur Levenberg-Marquardt de Nielsen (`certus/core/certus_design_lm.py`) | `e828ff88` | fait, testé |
-| Branché dans le mémétique : `memetic_polisher` = `lbfgs` (défaut) / `lbfgs_then_lm` / `lm` | `e964749d` | fait, testé, **défaut encore `lbfgs`** ; `c1_diff` **non passé** (interrompu par la passation) |
+| Polisseur branché dans le mémétique | `e964749d` | fait, testé, C1 tenu au défaut `lbfgs` (§2) |
 
-## 2. Décision de 👤 en attente d'exécution — à faire en premier
+## 2. Première action — valider le défaut de DESIGN
 
-👤 (2026-11-13) : « je n'aime pas les options, je veux quelque chose de clef en main qui fasse le mieux possible ».
-Décidé avec 👤 : **le défaut du mémétique devient `lbfgs_then_lm`** (exception C1 assumée par 👤, comme le nettoyage
-final). Pourquoi celui-là : seul enchaînement au moins aussi bon que L-BFGS-B sur les deux problèmes mesurés
-(`bilan.md` §3.2), et il ne peut pas finir pire que L-BFGS-B (LM part de son résultat et n'accepte que des baisses).
-Repli automatique sur L-BFGS-B seul quand LM ne s'applique pas (oblique, indices absorbants, plancher sous le seuil
-d'absence) ; le journal dit pourquoi.
+Décision du 2026-11-13 : DESIGN doit utiliser L-BFGS-B puis Levenberg-Marquardt (`lbfgs_then_lm`) par défaut,
+avec repli sur L-BFGS-B lorsque LM ne s'applique pas. L'utilisateur a décidé l'exception C1 pour cette bascule.
 
-Étapes :
-1. `python scripts\c1_diff.py HEAD~1` sur l'état `e964749d` (défaut `lbfgs`) : doit rendre C1 TENU (le code ajouté
-   est inerte au défaut). Un écart = s'arrêter.
-2. Basculer `DESIGN_OPTIONAL_STEPS["memetic_polisher"]` à `"lbfgs_then_lm"` (`certus/core/certus_design_workers_dto.py`),
-   adapter `tests/unit/test_design_memetic_lm_polisher.py::test_the_default_keeps_lbfgs`, et le test
-   `tests/unit/test_design_memetic_global_stage.py` qui vérifie que les étapes optionnelles n'atteignent le worker que si
-   le fichier les nomme (le défaut ne passe pas par le fichier : vérifier qu'il reste vert).
-3. **Mesurer avant d'annoncer** : `scripts/design_bench.py run --no-count --set _auto_restarts=0` sur le séparateur 50/50
-   (fichier de problème : `example/example_design/JSON-design-reference-tikhonravov-1996.json`, cible T = 0,5 sur
-   400-1200 nm), ancien (`--set '_design_optional_steps={"memetic_polisher":"lbfgs"}'`) contre nouveau, 3 exécutions
-   chacun, une à la fois (PGLOBAL tire une graine différente à chaque run). Relever RMSE de grille, couches, durée.
-   Si le nouveau est plus lent sans gain, le dire à 👤 avant de garder.
-4. Consigner dans `bilan.md` §3, `docs/ETAT.md`, `docs/AUDITS.md` (ALG-05/06/07, ALG-19 fermé par le nettoyage final,
-   UX-12 corrigé), le REPRISE général ; commit ; validation complète (`python scripts\validate_parallel.py`) ;
-   demander à 👤 s'il faut pousser.
+**Déjà fait.** Avant la bascule, `c1_diff` a comparé `e828ff88` à `e964749d` : `C1 TENU`, 9 092 tableaux identiques
+au bit (`etape1.log`). La bascule est appliquée localement dans `certus/core/certus_design_workers_dto.py` et
+`tests/unit/test_design_memetic_lm_polisher.py`. Ruff ciblé vert et 20 tests passés (`etape2.log`).
+Les six essais 50/50 ont terminé. Résultats, limites et archives dans [le bilan](bilan.md#35-mesures-récupérées-après-la-coupure).
+
+Le chemin de calcul est confirmé : sélection du worker `lbfgs_then_lm`, premier appel LM observé et
+étape mémétique terminée sur l'essai court (graine 42, population et enfants à 4). La comparaison complète
+sur les graines 42, 77 et 202 est au [bilan](bilan.md#36-comparaison-avec-graines-du-mémétique-appariées).
+**Validation complète du 2026-11-13** sur `e2ee96b7` avec la bascule et les correctifs appliqués.
+Ruff, oracle (1 202), unitaires (6 060), interface (1 589), reste (321) et performance (29). Deux tests
+rouges sous charge sont verts seuls (chronométrage des noyaux et transmission du substrat). Les deux sondes
+initialisent le cache Numba avant import des noyaux. Le nettoyage final a été déplacé à l'identique dans
+`certus/ui/certus_design_ui_final_cleanup.py`. `VALIDATION=NO-GO` par le seul `coherence_md` connu, journal
+identique à celui d'avant correction. La bascule est prête pour l'intégration locale.
+
+**File de reprise, une action à la fois**
+
+1. **RICL.** Reprendre au premier cas manquant, `tl_treated / lm_tot_fine`. Le script de `scratch` réinitialise
+   ses sorties au lancement. Pour reprendre, sélectionner les couples (design, polisseur) manquants et
+   écrire dans une nouvelle sortie. Vérifier les contraintes d'admissibilité avant de comparer les scores.
+2. **U13.** Faire les essais sur écran réel, avec le Narrateur et avec les utilisateurs selon le
+   [protocole U13](../refactor_corridors_2026-11-11/U13_protocole.md).
+3. **STRAT local-search.** Examiner l'unique commit propre à `wip/strat-local-search-ricl-2026-11-11`
+   avant de le reporter sur la base validée.
+4. **Reprise de calcul U12 B.** Après STRAT multi-graines, prendre STRAT robustesse en premier, puis traiter
+   DESIGN PGLOBAL et INDEX SPLINE un par un, avec un essai d'interruption et de reprise au bit par moteur.
+5. Reprendre les chantiers scientifiques du §4.
 
 ## 3. Mesures clés (détail : `bilan.md`)
 

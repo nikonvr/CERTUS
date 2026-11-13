@@ -173,10 +173,47 @@ record n'est pas encore recoupé par l'oracle indépendant.
 
 ### 3.4 Suites proposées
 
-- **P1** : un polisseur Levenberg-Marquardt de Nielsen dans DESIGN (option inactive par défaut), à essayer d'abord
-  dans le mémétique sur le séparateur 50/50 ; garder L-BFGS-B au-delà de ~60 couches.
+- **P1** : polisseur Levenberg-Marquardt de Nielsen branché dans le mémétique. La validation du nouveau défaut
+  sur le séparateur 50/50 suit le [plan de reprise](REPRISE.md).
 - **P2** : juger les designs du tri-bande (et de tout problème à bandes étroites) sur une grille résolue ; lancer le
   polissage final sur grille fine, ou en longueurs d'onde complexes une fois le refus des départs éloignés compris.
+
+### 3.5 Mesures récupérées après la coupure
+
+**DESIGN, séparateur 50/50, 2026-11-13.** Six passages sur le worktree à `e2ee96b7` avec la bascule appliquée,
+trois par configuration en alternance. Tous à 34 couches, aucun dépassement du temps imparti, grille de 1 601
+points. Écart maximal avec la transmission de l'oracle inférieur à 1,8 × 10⁻¹⁵.
+
+| Configuration | RMSE de grille médiane | Durée médiane |
+|---|---:|---:|
+| L-BFGS-B explicite | 9,7961 × 10⁻⁵ | 351,6 s |
+| Nouveau défaut | 8,4726 × 10⁻⁵ | 424,8 s |
+
+Les graines étaient libres et la capture du banc ne contient pas le journal du polisseur. Les écarts observés
+ne suffisent pas à isoler l'effet de LM. [Six lignes du banc](memetic_polisher_default_bench.json).
+
+**RICL, 2026-11-13.** Arrêt par Ctrl+C après 13 des 21 lignes prévues. Le record 50/50 bouge de moins de
+5 × 10⁻¹⁰ nm par couche. Pour le trois-raies nominal, le MF résolu passe de 0,030823 % à 0,027852 % avec
+LM sur grille fine à épaisseur optique totale fixée, et à 0,019756 % avec L-BFGS-B sur grille fine à épaisseur
+totale libre. Pour `tl_treated`, le résultat `lm_new_fine` donne 0,013182 % résolu mais excède la limite
+d'épaisseur optique totale (14 172,75 nm pour un maximum de 14 171,1 nm).
+[Résultats partiels](ricl_lm_check_partial.json).
+
+### 3.6 Comparaison avec graines du mémétique appariées
+
+50/50, 1 601 points, 34 couches dans les six sorties. Relances désactivées, population 30, 1 000 enfants.
+Le worker a appelé LM sur les trois passages au nouveau défaut. Écart maximal de transmission avec l'oracle
+inférieur à 1,9 × 10⁻¹⁵. [Résultats des six passages](memetic_polisher_seeded_bench.json).
+
+| Graine | Coût mémétique L-BFGS-B → hybride | RMSE de grille L-BFGS-B → hybride | Durée L-BFGS-B → hybride |
+|---:|---:|---:|---:|
+| 42 | 1,3961 × 10⁻⁸ → 5,6833 × 10⁻⁹ | 1,0863 × 10⁻⁴ → 7,8409 × 10⁻⁵ | 397,1 → 468,2 s |
+| 77 | 1,7380 × 10⁻⁸ → 7,9645 × 10⁻⁹ | 1,3251 × 10⁻⁴ → 8,3001 × 10⁻⁵ | 391,4 → 423,8 s |
+| 202 | 8,7423 × 10⁻⁹ → 1,3728 × 10⁻⁸ | 8,8757 × 10⁻⁵ → 1,0748 × 10⁻⁴ | 358,7 → 442,6 s |
+
+La RMSE médiane baisse de 24 %, la durée médiane augmente de 13 %. Les écarts par graine vont de −37 % à
++21 % en RMSE et de +8 % à +23 % en durée. Le polissage modifie la population et donc les descendants
+du mémétique. L'hybride est conservé par défaut selon le choix de l'utilisateur, avec ce compromis sur le 50/50.
 
 ## 4. Dérivées : ce qui est encore numérique et pourrait être analytique
 

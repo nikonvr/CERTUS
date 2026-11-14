@@ -4,7 +4,7 @@ import pandas as pd
 # JIT Warmup (reduces first-call latency by ~90%)
 # JIT Warmup moved to main() with SplashScreen
 import scipy.optimize
-from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread
 
 from certus.core.certus_core import (
     HC_EV_NM,
@@ -72,8 +72,6 @@ from certus.ui.certus_index_ui_worker import CertusIndexWorkerMixin
 
 
 class CertusIndexApp(CertusIndexLayoutMixin, CertusIndexStateMixin, CertusIndexEventsMixin, CertusIndexWorkerMixin, CertusIndexPlotMixin, CertusIndexExportMixin, CertusBaseApp):
-    sig_numba_ready = pyqtSignal()
-    sig_numba_error = pyqtSignal()
     """Main CERTUS-INDEX Application"""
 
     # CertusBaseApp configuration

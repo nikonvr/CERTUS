@@ -425,13 +425,11 @@ OVERRIDES_OF = {
         "reattach_plot",
     },
     "certus.ui.certus_index_ui:CertusIndexApp": {
-        "_on_numba_error_ui", "_on_numba_ready_ui", "_warmup_numba_thread_runner",
-        "APP_NAME", "APP_TITLE", "DEFAULT_HEIGHT", "DEFAULT_WIDTH", "MIN_HEIGHT", "MIN_WIDTH",
+        "APP_NAME", "APP_TITLE", "DEFAULT_HEIGHT", "DEFAULT_WIDTH", "MIN_HEIGHT", "MIN_WIDTH", "WARMUP_STATUS_LABEL",
         "_COMPUTATION_THREADS", "__init__", "_apply_config", "_apply_theme", "_apply_ui_zoom",
-        "_build_log_container", "_build_ui", "_collect_config", "_config_load_problems",
+        "_build_log_container", "_build_ui", "_collect_config", "_compile_numba_kernels", "_config_load_problems",
         "_get_config_file_filter", "_get_log_widget", "_on_error", "_post_load_config", "_post_save_config",
-        "_update_zoom_status", "_warmup_numba", "closeEvent", "detach_current_plot", "sig_numba_error",
-        "sig_numba_ready",
+        "_update_zoom_status", "_warmup_numba", "closeEvent", "detach_current_plot",
     },
     "CERTUS_RE:CertusREApp": {
         "APP_NAME", "APP_TITLE", "DEFAULT_HEIGHT", "DEFAULT_WIDTH", "MIN_HEIGHT", "MIN_WIDTH",

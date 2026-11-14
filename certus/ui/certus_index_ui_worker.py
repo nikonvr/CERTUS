@@ -98,115 +98,82 @@ def _keep_until_finished(window, thread: QThread, worker) -> None:
 
 
 class CertusIndexWorkerMixin:
+    #: The warm-up writes its state to the INDEX status label (CertusAppEngineMixin).
+    WARMUP_STATUS_LABEL = "lbl_status"
+
     def _warmup_numba(self) -> None:
         """JIT precompilation via background thread"""
-        try:
-            self.sig_numba_ready.disconnect()
-            self.sig_numba_error.disconnect()
-        except TypeError:
-            pass
-        self.sig_numba_ready.connect(self._on_numba_ready_ui)
-        self.sig_numba_error.connect(self._on_numba_error_ui)
-        import threading
+        self._start_numba_warmup_thread()
 
-        self.lbl_status.setText("System warming up (compiling JIT)...")
-        threading.Thread(target=self._warmup_numba_thread_runner, daemon=True).start()
+    def _compile_numba_kernels(self) -> None:
+        from certus.core.certus_index_objectives import warmup_index_objectives
 
-    def _warmup_numba_thread_runner(self) -> None:
-        try:
-            from certus.core.certus_index_objectives import warmup_index_objectives
+        warmup_index_objectives(silent=True)
 
-            warmup_index_objectives(silent=True)
+        wls = np.array([500.0, 600.0], dtype=np.float64)
 
-            wls = np.array([500.0, 600.0], dtype=np.float64)
+        get_n_substrate_array_by_id(0, wls)
 
-            get_n_substrate_array_by_id(0, wls)
+        get_n_frosted_glass_array(wls)
 
-            get_n_frosted_glass_array(wls)
+        n_test = np.array([1.5, 1.5])
 
-            n_test = np.array([1.5, 1.5])
+        k_test = np.array([0.0, 0.0])
 
-            k_test = np.array([0.0, 0.0])
+        calculate_RT_single_layer_backside_array(wls, n_test, k_test, 100.0, n_test)
 
-            calculate_RT_single_layer_backside_array(wls, n_test, k_test, 100.0, n_test)
+        calculate_bare_substrate_RT(wls, n_test)
 
-            calculate_bare_substrate_RT(wls, n_test)
+        calculate_single_interface_R(wls, n_test)
 
-            calculate_single_interface_R(wls, n_test)
+        # Absorbing substrate kernels (sapphire / user k_sub)
 
-            # Absorbing substrate kernels (sapphire / user k_sub)
+        k_sub_test = np.array([1e-4, 1e-4])
 
-            k_sub_test = np.array([1e-4, 1e-4])
+        calculate_bare_substrate_T_absorbing(wls, n_test, k_sub_test, 1.0e6)
 
-            calculate_bare_substrate_T_absorbing(wls, n_test, k_sub_test, 1.0e6)
+        calculate_bare_substrate_R_absorbing(wls, n_test, k_sub_test, 1.0e6)
 
-            calculate_bare_substrate_R_absorbing(wls, n_test, k_sub_test, 1.0e6)
+        calculate_RT_single_layer_absorbing_substrate_array(wls, n_test, k_test, 100.0, n_test, k_sub_test, 1.0e6)
 
-            calculate_RT_single_layer_absorbing_substrate_array(wls, n_test, k_test, 100.0, n_test, k_sub_test, 1.0e6)
+        # Warmup per-lambda kernels (scalar + batch)
 
-            # Warmup per-lambda kernels (scalar + batch)
+        _optimize_point_kernel(
+            1.5,
+            0.0,
+            500.0,
+            0.9,
+            0.1,
+            1.0,
+            1.0,
+            1.5,
+            0.92,
+            0.08,
+            100.0,
+            True,
+            True,
+            True,
+            False,
+        )
 
-            _optimize_point_kernel(
-                1.5,
-                0.0,
-                500.0,
-                0.9,
-                0.1,
-                1.0,
-                1.0,
-                1.5,
-                0.92,
-                0.08,
-                100.0,
-                True,
-                True,
-                True,
-                False,
-            )
-
-            _optimize_all_points_batch(
-                np.array([1.5, 1.5]),
-                np.array([0.0, 0.0]),
-                wls,
-                np.array([0.9, 0.9]),
-                np.array([0.1, 0.1]),
-                1.0,
-                1.0,
-                n_test,
-                np.array([0.92, 0.92]),
-                np.array([0.08, 0.08]),
-                100.0,
-                True,
-                True,
-                True,
-                False,
-                np.array([False, False]),
-            )
-
-            try:
-                self.sig_numba_ready.emit()
-            except RuntimeError, AttributeError:
-                return
-
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
-            self.logger.error(f" Numba warmup failed: {e}", exc_info=True)
-            try:
-                self.sig_numba_error.emit()
-            except RuntimeError, AttributeError:
-                return
-
-    @pyqtSlot()
-    def _on_numba_ready_ui(self) -> None:
-        self.lbl_status.setText("Ready (JIT Compiled)")
-        self._on_numba_ready()  # Mark as ready
-        try:
-            show_toast(self, "System ready. JIT Warmup complete.", "success")
-        except Exception:
-            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
-
-    @pyqtSlot()
-    def _on_numba_error_ui(self) -> None:
-        self.lbl_status.setText("JIT Init Error")
+        _optimize_all_points_batch(
+            np.array([1.5, 1.5]),
+            np.array([0.0, 0.0]),
+            wls,
+            np.array([0.9, 0.9]),
+            np.array([0.1, 0.1]),
+            1.0,
+            1.0,
+            n_test,
+            np.array([0.92, 0.92]),
+            np.array([0.08, 0.08]),
+            100.0,
+            True,
+            True,
+            True,
+            False,
+            np.array([False, False]),
+        )
 
     def _configure_and_start_optimization_worker(self, config: OptimizationConfig) -> None:
         """Instantiate/connect the optimization worker and start the thread."""

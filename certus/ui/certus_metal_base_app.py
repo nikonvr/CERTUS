@@ -1613,9 +1613,8 @@ class MetalBaseApp(CertusBaseApp):
 
     # --- Shared by METAL_SINGLE and METAL_BILAYER ----------------------------------
     #
-    # Each application provides what these methods call: the sig_numba_ready and
-    # sig_numba_error signals, _warmup_numba_thread_runner, _on_numba_ready_ui,
-    # _on_numba_error_ui, _resolve_config_target_file, maybe_quit_after_auto_batch,
+    # Each application provides what these methods call: _compile_numba_kernels (its
+    # warm-up calls), _resolve_config_target_file, maybe_quit_after_auto_batch,
     # and _do_export_results, the writer of its own report.
 
     #: Opening words of the error logged when the report export fails.
@@ -1623,17 +1622,7 @@ class MetalBaseApp(CertusBaseApp):
 
     def _warmup_numba(self) -> None:
         """JIT precompilation via background thread"""
-        try:
-            self.sig_numba_ready.disconnect()
-            self.sig_numba_error.disconnect()
-        except TypeError:
-            pass
-        self.sig_numba_ready.connect(self._on_numba_ready_ui)
-        self.sig_numba_error.connect(self._on_numba_error_ui)
-        import threading
-        if hasattr(self, "status_label"):
-            self.status_label.setText("System warming up (compiling JIT)...")
-        threading.Thread(target=self._warmup_numba_thread_runner, daemon=True).start()
+        self._start_numba_warmup_thread()
 
     def export_results(self) -> None:
         """Exports results to Excel + HTML (Single/Beam)"""

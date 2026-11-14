@@ -38,7 +38,7 @@ READ_FIRST = (
 )
 #: Lus a la demande : (chemin, quand les ouvrir).
 ON_DEMAND = (
-    ("docs/CHANTIERS_RESTANTS.md", "33 chantiers des 12-14 novembre, complexite et priorite"),
+    ("docs/CHANTIERS_RESTANTS.md", "chantiers des 12-14 novembre, revises apres contre-audit"),
     ("docs/ETAT_acquis.md", "acquis du Rate, corrections qui invalident des mesures, vocabulaire"),
     ("docs/REGLES_reference.md", "pieges d'execution, architecture du gel, vocabulaire, documentation, revue d'un autre agent"),
 )

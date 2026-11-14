@@ -155,8 +155,10 @@
                 wavelengths for the final polish from the 101-layer record. The resulting RMSE was
                 9.58 × 10<sup>−5</sup> on both the 0.01 nm and 0.001 nm evaluation grids to three significant figures.
                 The independent oracle agreed on the 0.01 nm grid. This probe used the DESIGN kernels in the RICL
-                engine and allowed total optical thickness to vary. A comparison at the article's fixed total
-                optical thickness remains to be measured.
+                engine. A replay of the adaptive design gave 101 layers, a 9.52 nm minimum physical thickness
+                and a 14,166.47 nm total optical thickness. The structure meets the RICL resource limits.
+                The baseline and the design polished at 0.1 nm have grid-sensitive scores, so the comparison
+                requires a finer common judge and a fixed-total-thickness run.
                 <a href="../reports/questions_design_2026-11-13/bilan.md#10-grille-automatique-sur-le-tri-bande-ricl">Three starts, reference grids and oracle check</a>.</p>
             <table>
                 <caption>50/50 workflow, 2026-11-14, medians over seeds 42, 77 and 202</caption>
@@ -171,8 +173,10 @@
             <p>These runs used 16 parallel polishes and no automatic restart. All final designs were evaluated on
                 the same 0.5 nm grid. The tolerance test used 400 independent Gaussian thickness-error draws with
                 a standard deviation of 1 nm per layer and a disjoint seed. Robust selection reduced the median
-                RMS under those errors by 18.8%, with a 5.36-fold increase in median nominal RMSE. The adaptive
-                grid and robust selection remain optional. The result covers three seeds on this problem.
+                RMS under those errors by 18.8%, with a 5.36-fold increase in median nominal RMSE. Two robust
+                designs used 30 layers versus 34 for their controls. The sole equal-layer-count pair also
+                improved under the same error model (0.02344 to 0.01903 in RMS). The adaptive grid and robust
+                selection remain optional. A comparison under optical monitoring requires STRAT simulations.
                 <a href="../reports/questions_design_2026-11-13/bilan.md#11-grille-et-sélection-robuste-sur-le-5050">Protocol and individual results</a>.</p>
 
             <h3 id="design-limits">Known limits that affect interpretation</h3>

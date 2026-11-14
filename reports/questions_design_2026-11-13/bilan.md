@@ -332,7 +332,8 @@ premier.
 - V. Pervak, M. K. Trubetskov, A. V. Tikhonravov, Opt. Express 19, 2371 (2011).
 - A. V. Tikhonravov et al., Proc. SPIE 4829, 1061 (2003).
 
-Références citées d'après leurs résumés ou d'après le `ROBUST_PLAN` : à lire avant de les citer ailleurs.
+Références citées d'après leurs résumés ou d'après le `ROBUST_PLAN`. Ce plan de travail, retiré de la liste
+active, est consultable dans Git à `de52e01c:reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/ROBUST_PLAN.md`.
 
 ## 8. Fait le 2026-11-13 au soir (ordre de 👤 : « code complet et opérationnel »)
 
@@ -367,7 +368,7 @@ Le test de pondération couvre séparément le changement volontaire sur les ban
 
 Le 14 novembre, sonde sur `tl101_A_best.csv`, 101 couches, TOT 14 171 nm. Polissage L-BFGS-B avec le noyau
 de DESIGN et les cibles du moteur RICL. Jugement commun par quadrature trapézoïdale par bande à 0,01 nm.
-La TOT est libre pendant ce polissage : la comparaison avec l'article à TOT fixée reste à mesurer.
+La TOT est libre pendant ce polissage. Le pas de 0,01 nm est celui de la comparaison exploratoire.
 
 | Départ | Grille 1 nm | Grille 0,1 nm | Grille automatique |
 |---|---:|---:|---:|
@@ -378,7 +379,13 @@ La TOT est libre pendant ce polissage : la comparaison avec l'article à TOT fix
 Sur le départ record, l'oracle indépendant retrouve 9,581e-5 à 0,01 nm. À 0,001 nm, le polissage automatique
 donne 9,579e-5 et le polissage à 0,1 nm donne 2,180e-3. Le record initial donne 3,511e-3 à ce pas. La base
 automatique de 178 points manquait elle-même les pics du record. L'expérience compare le raffinement de la
-quadrature associé à plusieurs polissages avec un polissage sur grille fixe.
+quadrature associé à plusieurs polissages avec un polissage sur grille fixe. Le changement de classement
+entre 0,01 et 0,001 nm pour le témoin fixe signale que le juge à 0,01 nm est trop grossier pour ce témoin.
+Le rejeu sur `ba1f8da2` du 14 novembre confirme l'admissibilité par `engine.admissible` (plafond
+14 171,1 nm, plancher 5 nm, au plus 101 couches). Le départ compte 101 couches, TOT 14 171,000 nm et
+couche minimale 13,087 nm. Après polissage adaptatif, il compte 101 couches, TOT 14 166,472 nm et
+couche minimale 9,520 nm. La comparaison au mérite retenu pour l'article, à TOT égale et sur un
+juge convergé, reste à mesurer.
 [Mesures des trois départs](probe_auto_grid.json) · [rejeu et oracle](probe_auto_grid_crosscheck.json).
 
 ## 11. Grille et sélection robuste sur le 50/50
@@ -399,6 +406,10 @@ et mêmes flux de tirage par indice de couche. Les épaisseurs exportées sont a
 tolérance rapporte aussi leur RMSE nominale recalculée. Les colonnes sont les médianes des trois designs.
 
 La sélection robuste réduit le RMS médian de 18,8 % et augmente la RMSE nominale médiane d'un facteur 5,36.
+Deux paires mélangent un design robuste à 30 couches et un témoin à 34. À 34 couches dans les deux bras
+(graine 202), le RMS passe de 0,023435 à 0,019031 et la RMSE nominale de 7,715e-5 à 4,061e-4.
+Le modèle de tirage reproduit la famille d'erreurs du critère de sélection. L'effet en dépôt contrôlé
+reste à mesurer sous STRAT en appariant aussi le nombre de couches.
 L'automatique reste proche du témoin en médiane, avec des écarts variables selon la graine. Les deux options
 restent inactives par défaut. Ces trois graines sur un problème ne fondent aucune loi de performance.
 [Résultats des neuf essais et du holdout](bench_50_50.json).

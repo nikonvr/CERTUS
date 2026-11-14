@@ -12,7 +12,7 @@
 > L'état présent seulement ; l'historique est dans `git log` et `reports/`. À la demande : actions ouvertes et protocole de mesure
 > ([`CHANTIERS_RESTANTS.md`](CHANTIERS_RESTANTS.md)), acquis ([`ETAT_acquis.md`](ETAT_acquis.md)), preuves dans `reports/`.
 
-**Liste active** : [33 chantiers des 12–14 novembre, classés par complexité et priorité](CHANTIERS_RESTANTS.md).
+**Liste active** : [chantiers des 12–14 novembre, révisés après contre-audit](CHANTIERS_RESTANTS.md).
 Le polisseur hybride et la pondération par bande sont intégrés. La grille automatique et la sélection robuste
 restent optionnelles. Mesures terminées dans le [bilan DESIGN](../reports/questions_design_2026-11-13/bilan.md).
 Le [guide DESIGN](../pages/CERTUS_DESIGN.html#design-robust-search) décrit l'activation et les limites de la recherche robuste.
@@ -171,7 +171,7 @@ Les précautions du cache Numba restent dans le [mode opératoire](../reports/re
 ## 6. Ordre de travail
 
 La [liste unique des chantiers](CHANTIERS_RESTANTS.md) donne complexité, priorité, dépendances et critère de fin.
-Elle est en contre-audit par Claude ; conserver ses 33 entrées stables pendant cette revue.
+Les P1 concernent RICL, le contexte de coût DESIGN, la co-conception DESIGN–STRAT et les essais humains U13.
 
 ## 7. Les composants d'essai
 

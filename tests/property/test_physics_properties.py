@@ -17,7 +17,8 @@ thickness_strategy = st.floats(min_value=1.0, max_value=1000.0, allow_nan=False,
 
 
 @given(wavelength=wavelength_strategy)
-@settings(max_examples=100, deadline=1000)
+# The parallel Numba kernel has its own timing test in tests/performance.
+@settings(max_examples=100, deadline=None)
 def test_bare_substrate_transmission_bounds(wavelength):
     """Property: Transmission of a bare substrate must be between 0 and 1."""
     from certus.core._certus_physics_impl import calculate_bare_substrate_RT

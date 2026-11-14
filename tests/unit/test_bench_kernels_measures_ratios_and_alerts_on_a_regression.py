@@ -8,13 +8,12 @@ moves when a call costs something (so that every measurement is exact):
     a machine twice as slow, or ten times as loaded, leaves the ratio alone
     a pass lasts long enough to be measured, and a call that costs nothing does not loop forever
     a kernel more than 30 % above its baseline fails the run, one inside the tolerance does not; a spike that does not repeat does not fail it
-    a kernel made slower on purpose is caught - with the fake kernels and with a real one
+    a kernel made slower on purpose is caught - the real kernel is exercised in the serial performance suite
     the committed baseline names every kernel the tool measures
 """
 
 from __future__ import annotations
 
-import importlib
 import json
 import sys
 from pathlib import Path
@@ -248,22 +247,3 @@ def test_the_committed_baseline_names_every_kernel_of_the_tool():
     baseline = bench.read_baseline(bench.BASELINE)
     assert set(baseline) == set(bench.build_benches())
     assert all(ratio > 0 for ratio in baseline.values())
-
-
-def test_the_real_kernels_run_and_a_real_slowdown_is_caught(tmp_path, monkeypatch, capsys):
-    """One real kernel, measured and baselined here, then made twice as slow: the tool must say so (no fake clock, no fake kernel)."""
-    path = tmp_path / "real.json"
-    assert bench.main(["--only", "bare_substrate", "--passes", "3", "--write-baseline", "--baseline", str(path)]) == 0
-    assert bench.main(["--only", "bare_substrate", "--passes", "3", "--baseline", str(path)]) == 0  # itself, a minute later: inside the tolerance
-
-    kernels = importlib.import_module("certus.core._certus_physics_impl")
-    original = kernels.calculate_bare_substrate_RT
-
-    def twice_the_work(*args):
-        original(*args)
-        return original(*args)
-
-    monkeypatch.setattr(kernels, "calculate_bare_substrate_RT", twice_the_work)
-    capsys.readouterr()
-    assert bench.main(["--only", "bare_substrate", "--passes", "3", "--baseline", str(path)]) == 1
-    assert "REGRESSION: bare_substrate: slower" in capsys.readouterr().err

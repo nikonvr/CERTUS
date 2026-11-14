@@ -442,6 +442,24 @@ class OptimWorker(QObject):
                 else:
                     wls, n_sub, n_layers_T, n_back_T, tgt_vals, tgt_weights = maybe_upgrade_grid_tikhonravov(ep_current=ep_current, mats=mats, stack=stack, tgts=tgts, oblique_mode=oblique_mode, oblique_tgts=oblique_tgts, wls=wls, float_dtype=float_dtype, complex_dtype=complex_dtype, has_back_stack=has_back_stack, stack_back=stack_back, ep_back=ep_back, n_sub=n_sub, n_layers_T=n_layers_T, n_back_T=n_back_T, tgt_vals=tgt_vals, tgt_weights=tgt_weights)
                     grid_changed = len(wls) != wls_prev_len
+                if oblique_mode and grid_changed:
+                    # ALG-03: the oblique cost reads self._oblique_configs, still built on the initial grid. Rebuild them
+                    # on the densified grid, as the run's setup does, and score the start point there.
+                    valid_targets = [tgt for tgt in oblique_tgts if tgt.valid()]
+                    dense_configs = optim_oblique_configs_from_groups(
+                        optim_oblique_group_targets_on_wavelengths(wls, valid_targets), wls, n_sub, n_layers_T
+                    )
+                    optim_oblique_attach_local_positions(dense_configs)
+                    for config in dense_configs:
+                        config['sw_cfg'] = optim_oblique_config_weights(config)
+                    self._oblique_configs = dense_configs
+                    best_cost = float(
+                        self._evaluate_thicknesses(
+                            ep_current, oblique_mode=oblique_mode, compute_oblique_error=compute_oblique_error,
+                            n_layers_T=n_layers_T, n_sub=n_sub, wls=wls, tgt_vals=tgt_vals, tgt_weights=tgt_weights,
+                            has_back_calc=has_back_calc, n_back_T=n_back_T, d_back=d_back,
+                        )
+                    )
                 if not oblique_mode:
                     self._wls = wls
                     self._n_sub = n_sub

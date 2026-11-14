@@ -1,0 +1,34 @@
+{
+  "oblique": {
+    "mode": "oblique",
+    "initial_points": 2,
+    "refine_grid_points": 135,
+    "gradient_grid_sizes": [
+      135
+    ],
+    "cost_grid_sizes": [
+      135
+    ],
+    "final_ep": [
+      2960.7421875
+    ],
+    "reported_rmse": 0.17196681591248092,
+    "direct_dense_rmse": 0.17196681591248092
+  },
+  "normal": {
+    "mode": "normal",
+    "initial_points": 2,
+    "refine_grid_points": 135,
+    "gradient_grid_sizes": [
+      135
+    ],
+    "cost_grid_sizes": [
+      135
+    ],
+    "final_ep": [
+      2969.6875
+    ],
+    "reported_rmse": 0.0813108207298735,
+    "direct_dense_rmse": 0.0813108207298735
+  }
+}

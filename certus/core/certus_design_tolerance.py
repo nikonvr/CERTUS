@@ -16,6 +16,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from certus.core.certus_design_cost_context import prepare_design_cost_context
+
 
 @dataclass(frozen=True)
 class RmseBand:
@@ -164,18 +166,14 @@ def design_residual_function(mats: dict, stack: list, wls: np.ndarray, tgts: lis
     """Weighted residual vector sqrt(w_j / sum w) (T_j - target_j) of ``design_cost_function``: its squared norm is that
     cost (front face, normal incidence, CERTUS kernel)."""
     from certus.physics.certus_tmm_matrix import calculate_RT_no_backside
-    from certus_physics import prepare_targets_vectorized
 
-    wls = np.ascontiguousarray(np.asarray(wls, dtype=np.float64))
-    nk = {name: np.asarray(m.get_nk(wls), dtype=np.complex128) for name, m in mats.items()}
-    sub_key = "Substrate" if "Substrate" in nk else next(k for k in nk if k.lower() == "substrate")
-    n_sub = np.ascontiguousarray(nk[sub_key])
-    n_layers_t = np.ascontiguousarray(np.array([nk[layer.mat] for layer in stack], dtype=np.complex128).T)
-    tgt_vals, tgt_weights = prepare_targets_vectorized(wls, tgts)
-    tgt_vals, tgt_weights = np.asarray(tgt_vals, dtype=np.float64), np.asarray(tgt_weights, dtype=np.float64)
+    context = prepare_design_cost_context(mats, stack, wls, tgts, cast_materials=True)
+    tgt_vals, tgt_weights = context.normal_targets()
 
     def residual(ep: np.ndarray) -> np.ndarray:
-        _r, t = calculate_RT_no_backside(np.ascontiguousarray(ep, dtype=np.float64), n_layers_t, n_sub, wls)
+        _r, t = calculate_RT_no_backside(
+            np.ascontiguousarray(ep, dtype=np.float64), context.n_front, context.n_sub, context.wls,
+        )
         valid = (tgt_weights > 0) & np.isfinite(t) & np.isfinite(tgt_vals)
         w = np.where(valid, tgt_weights, 0.0)
         return np.sqrt(w / max(float(w.sum()), 1e-300)) * np.where(valid, t - tgt_vals, 0.0)
@@ -189,19 +187,14 @@ def design_cost_function(mats: dict, stack: list, wls: np.ndarray, tgts: list) -
     Front face only (no back side), as the RMSE of the window for a design without back coating.
     """
     from certus.physics.gradient_utils import cost_numba_fast
-    from certus_physics import prepare_targets_vectorized
 
-    wls = np.ascontiguousarray(np.asarray(wls, dtype=np.float64))
-    nk = {name: np.asarray(m.get_nk(wls), dtype=np.complex128) for name, m in mats.items()}
-    sub_key = "Substrate" if "Substrate" in nk else next(k for k in nk if k.lower() == "substrate")
-    n_sub = np.ascontiguousarray(nk[sub_key])
-    n_layers_t = np.ascontiguousarray(np.array([nk[layer.mat] for layer in stack], dtype=np.complex128).T)
-    tgt_vals, tgt_weights = prepare_targets_vectorized(wls, tgts)
-    no_back_n = np.zeros((len(wls), 0), dtype=np.complex128)
-    no_back_d = np.zeros(0, dtype=np.float64)
+    context = prepare_design_cost_context(mats, stack, wls, tgts, cast_materials=True)
+    tgt_vals, tgt_weights = context.normal_targets()
 
     def cost(ep: np.ndarray) -> float:
-        return float(cost_numba_fast(np.ascontiguousarray(ep, dtype=np.float64), n_layers_t, n_sub, wls,
-                                     tgt_vals, tgt_weights, 0.0, False, no_back_n, no_back_d))
+        return float(cost_numba_fast(
+            np.ascontiguousarray(ep, dtype=np.float64), context.n_front, context.n_sub, context.wls,
+            tgt_vals, tgt_weights, 0.0, context.has_back_calc, context.n_back, context.d_back,
+        ))
 
     return cost

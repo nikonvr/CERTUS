@@ -18,8 +18,12 @@ from PyQt6.QtWidgets import QApplication, QMainWindow
 # 180 s, not 30: INDEX's second stage refines after PGLOBAL without reading the stop
 # flag, so teardown waits for its natural end. Under CPU load that outlived 30 s and
 # stopped the suite after test_index (measured 2026-09-26; without load: 9 passed).
+# 600 s, not 180: a STRAT window's Numba warm-up compiles its kernels in about 95 s on a cold cache alone, and
+# longer under 16 xdist workers. On 2026-11-14 the 180 s join stopped 3 unit runs out of 8 on cold caches
+# (multigraine and disconnected-settings tests), which xdist reports as a crashed worker. A thread that ends
+# in time costs nothing more.
 _unjoined_resources = []
-_JOIN_TIMEOUT_S = 180.0
+_JOIN_TIMEOUT_S = 600.0
 
 
 def qt_lifecycle(qapp, monkeypatch, label, main_windows_only=False):

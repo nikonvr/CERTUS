@@ -51,6 +51,7 @@ from certus.spline.spline_presets import (
 from certus.spline.spline_smart_init import (
     build_smart_manual_sigma_knots_from_preview_grid,
     interp_n_L_pwlnk_to_sigmas,
+    optimize_smart_init_nkd_packet,
 )
 from certus.ui.certus_index_spline_common import _QS_SMART_INIT_DEEP, _QS_SMART_INIT_TWO_PHASE
 from certus.ui.certus_index_spline_state_ui import SmartInitPayload, SmartInitState, _SmartInitState
@@ -850,50 +851,26 @@ class SmartInitPreviewManager:
     @safe_ui_action
     def run_nkd_local_opt(self, idx: int) -> None:
         try:
-            import scipy.optimize as opt
-            
-            # Select 3 nearest knots
-            if idx == 0:
-                idx_list = [0, 1, 2]
-            elif idx == self.k_n - 1:
-                idx_list = [self.k_n - 3, self.k_n - 2, self.k_n - 1]
-            else:
-                idx_list = [idx - 1, idx, idx + 1]
-            idx_list = [i for i in idx_list if 0 <= i < self.k_n]
-            
-            init_ne = np.asarray(self.state.n_phys, dtype=np.float64).ravel().copy()
-            init_Le = np.asarray(self.state.L_nodes, dtype=np.float64).ravel().copy()
-            cur_sk = np.asarray(self.state.sk, dtype=np.float64).ravel()
-            
-            n_len = len(idx_list)
-            x0 = np.zeros(1 + 2 * n_len)
-            x0[0] = self.state.preview_d_nm
-            for pos, i_node in enumerate(idx_list):
-                x0[1 + pos] = init_ne[i_node]
-                x0[1 + n_len + pos] = init_Le[i_node]
-                
-            bounds = [(float(self.cfg.d_lo), float(self.cfg.d_hi))]
-            bounds.extend((1.0, 3.3) for _ in idx_list)
-            bounds.extend((self.L_lo_g, self.L_hi_g) for _ in idx_list)
-                
-            def loss(x):
-                cur_d = x[0]
-                cur_ne = init_ne.copy()
-                cur_Le = init_Le.copy()
-                for pos, i_node in enumerate(idx_list):
-                    cur_ne[i_node] = x[1 + pos]
-                    cur_Le[i_node] = x[1 + n_len + pos]
-                _, rmse = rmse_at_spline_stage_x0_init(
-                    self.cfg, cur_sk, cur_ne, cur_Le, cur_d, relax_n_mono=self._relax_si_mono
-                )
-                return float(rmse)
-                
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
             try:
-                res = opt.minimize(loss, x0, method="L-BFGS-B", bounds=bounds, options={"maxfun": 150})
+                packet = optimize_smart_init_nkd_packet(
+                    self.cfg,
+                    self.state.sk,
+                    self.state.n_phys,
+                    self.state.L_nodes,
+                    self.state.preview_d_nm,
+                    idx,
+                    k_n=self.k_n,
+                    L_lo=self.L_lo_g,
+                    L_hi=self.L_hi_g,
+                    relax_n_mono=self._relax_si_mono,
+                )
             finally:
                 QApplication.restoreOverrideCursor()
-                
+
+            idx_list = packet.idx_list
+            n_len = len(idx_list)
+            res = packet.result
             best_x = res.x
             self.preview_d_nm = float(best_x[0])
             self.state.preview_d_nm = float(best_x[0])

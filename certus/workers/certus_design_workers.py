@@ -33,6 +33,7 @@ from certus.core.certus_design_worker_utils import (
     optim_calc_oblique_selected,
     optim_display_wavelength_grid,
     optim_oblique_attach_local_positions,
+    optim_oblique_config_weights,
     optim_oblique_configs_from_groups,
     optim_oblique_group_targets_on_wavelengths,
     optim_oblique_unique_display_keys,
@@ -50,7 +51,6 @@ from certus.core.certus_design_workers_dto import (
     OptimWorkerRequest,
     OptimWorkerResult,
 )
-from certus.domain.spectral_weights import spectral_rmse_weights
 from certus.utils.certus_logging import get_structured_logger
 from certus.utils.certus_progress_tracker import StepState, build_progress_callback, build_progress_snapshot
 from certus.workers.certus_base_workers import WorkerSignals
@@ -371,7 +371,7 @@ class OptimWorker(QObject):
                 oblique_configs = optim_oblique_configs_from_groups(config_groups, wls, n_sub, n_layers_T)
                 optim_oblique_attach_local_positions(oblique_configs)
                 for config in oblique_configs:
-                    config['sw_cfg'] = spectral_rmse_weights(np.asarray(config['wls_config'], dtype=np.float64))
+                    config['sw_cfg'] = optim_oblique_config_weights(config)
                 tgt_vals = None
                 tgt_weights = None
             else:
@@ -701,7 +701,7 @@ class NeedleWorker(QObject):
                     for config in oblique_configs_needle:
                         n_layers_T_config = n_layers_T_test[config['all_clues'], :]
                         R_config, T_config = optim_calc_oblique_selected(config['wls_config'], n_layers_T_config, ep_test, config['n_sub_config'], config['angle'], config['pol'], has_back_calc=has_back, has_back_stack=has_back_stack, d_back=d_back, n_back_T=n_back_T, calc_spectrum_full_oblique_exact=calc_spectrum_full_oblique_exact, calc_spectrum_oblique_backside_vectorized=calc_spectrum_oblique_backside_vectorized, calc_spectrum_oblique_vectorized=calc_spectrum_oblique_vectorized)
-                        _sw_cfg = spectral_rmse_weights(np.asarray(config['wls_config'], dtype=np.float64))
+                        _sw_cfg = optim_oblique_config_weights(config)
                         for tgt_data in config['targets']:
                             local_positions = tgt_data['local_positions']
                             if tgt_data['target_type'] == 'R':

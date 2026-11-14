@@ -22,8 +22,9 @@ ROOT = Path(__file__).resolve().parents[2]
 NAME = "spectral_rmse_weights"
 HOME = "certus.domain.spectral_weights"
 OLD_HOME = "certus.utils.certus_index_utils"
-#: The three modules that reached into the utilities of INDEX for the weights.
-MOVED_READERS = ("certus/workers/certus_design_workers.py", "certus/core/certus_re_worker_utils.py", "certus/physics/gradient_analytic.py")
+#: The three modules that reached into the utilities of INDEX for the weights. The DESIGN workers take the weights of
+#: their oblique groups from `optim_oblique_config_weights` since 2026-11-13 (separate bands): the reader is that module.
+MOVED_READERS = ("certus/core/certus_design_worker_utils.py", "certus/core/certus_re_worker_utils.py", "certus/physics/gradient_analytic.py")
 
 
 def imports_of(path: Path) -> dict[str, set[str]]:
@@ -47,8 +48,8 @@ def test_the_utilities_of_index_expose_the_very_same_function():
 @pytest.mark.parametrize("reader", MOVED_READERS)
 def test_a_reader_takes_the_weights_from_the_domain(reader):
     imports = imports_of(ROOT / reader)
-    assert NAME in imports.get(HOME, set())
-    assert NAME not in imports.get(OLD_HOME, set())
+    assert any(name.startswith(NAME) for name in imports.get(HOME, set()))
+    assert not any(name.startswith(NAME) for name in imports.get(OLD_HOME, set()))
 
 
 def test_no_module_of_the_physics_layer_imports_the_utilities_of_index():

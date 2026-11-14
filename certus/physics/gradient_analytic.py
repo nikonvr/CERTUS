@@ -1112,13 +1112,13 @@ def prepare_targets_vectorized(wls: np.ndarray, targets: list[Target]) -> tuple[
 
     """
 
-    from certus.domain.spectral_weights import spectral_rmse_weights
+    from certus.domain.spectral_weights import spectral_rmse_weights_banded
 
     vals = np.zeros(len(wls), dtype=np.float64)
 
     weights = np.zeros(len(wls), dtype=np.float64)
 
-    spec_w = spectral_rmse_weights(np.asarray(wls, dtype=np.float64))
+    spec_w = spectral_rmse_weights_banded(np.asarray(wls, dtype=np.float64), [(t.lmin, t.lmax) for t in targets if t.valid()])
 
     for t in targets:
         if not t.valid():

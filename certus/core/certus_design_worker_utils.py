@@ -235,6 +235,20 @@ def optim_oblique_attach_local_positions(oblique_configs: list[dict[str, Any]]) 
             )
 
 
+def optim_oblique_config_weights(config: dict[str, Any]) -> np.ndarray:
+    """Spectral weights of one (angle, polarization) group, its targets taken as separate bands (after step 3)."""
+
+    from certus.domain.spectral_weights import spectral_rmse_weights_banded
+
+    wls_config = np.asarray(config["wls_config"], dtype=np.float64)
+    bands = [
+        (float(wls_config[t["local_positions"]].min()), float(wls_config[t["local_positions"]].max()))
+        for t in config["targets"]
+        if len(t["local_positions"])
+    ]
+    return spectral_rmse_weights_banded(wls_config, bands)
+
+
 def optim_prepare_stack_nk_back(
     mats: dict[str, Any],
     stack: list,

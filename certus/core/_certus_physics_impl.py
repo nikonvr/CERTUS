@@ -801,13 +801,13 @@ def calc_qwot(n4: float, l0: float, d: float) -> float:
 def calc_rmse(Ts: np.ndarray, wls: np.ndarray, targets: list[Any]) -> tuple[float, float]:  # `Target` is loaded by path (see `_structures_module`)
     """Calculate RMSE against targets (spectral quadrature Delta ln lambda)."""
 
-    from certus.utils.certus_index_utils import spectral_rmse_weights
+    from certus.domain.spectral_weights import spectral_rmse_weights_banded
 
     total_sse = 0.0
 
     total_weights = 0.0
 
-    spec_w = spectral_rmse_weights(np.asarray(wls, dtype=np.float64))
+    spec_w = spectral_rmse_weights_banded(np.asarray(wls, dtype=np.float64), [(t.lmin, t.lmax) for t in targets if t.valid()])
 
     for t in targets:
         if not t.valid():

@@ -15,7 +15,7 @@
     <script src="assets/certus_report_init.js"></script>
     <link rel="stylesheet" href="assets/certus_report.css">
     <style>
-        #current-strat, #strat-current-settings, #strat-current-benchmarks, #strat-current-limits { scroll-margin-top: 180px; }
+        [id^="strat-"], #current-strat { scroll-margin-top: 180px; }
     </style>
 </head>
 
@@ -62,8 +62,8 @@
         <header>
             <h1>CERTUS-STRAT</h1>
             <p style="font-size: 1.2em; color: #555;">Advanced Optical Monitoring &amp; Error Compensation Logic</p>
-            <p style="font-size: 1.0em; color: #777; font-weight: 300;">Scientific status updated: 2026-10-25 &bull;
-                Reference runtime: Python 3.15.1 &bull; Dated campaign notes retained</p>
+            <p style="font-size: 1.0em; color: #777; font-weight: 300;">Updated 2026-11-14 &bull;
+                Reference runtime Python 3.15.2</p>
         </header>
 
 
@@ -76,9 +76,10 @@
 
         <section id="current-strat">
             <h2>Current settings, reference measurements and limits</h2>
-            <p>This update follows the <a href="../docs/ETAT.md">project state of 2026-10-25</a> and the linked campaign
-                summaries. Each benchmark belongs to its component, source revision and physical configuration.
-                The dated results below were not remeasured for this documentation update or under Python 3.15.1.</p>
+            <p>STRAT takes a fixed optical design and searches for deposition plans. A plan assigns monitoring
+                wavelengths and optical or Rate control to the layers. The simulator checks whether growth stops
+                correctly and how the accumulated thickness errors change the finished spectrum.
+                <a href="../docs/ETAT.md">Project state and operating profile</a>.</p>
 
             <h3 id="strat-current-settings">Delivered monitoring and search settings</h3>
             <table>
@@ -99,7 +100,8 @@
                         <code>rate_rescue</code> enabled; <code>rate_rescue_few = 10</code>.
                         Rate is forbidden on physical layers 0 and 1. Later Rate layers inherit open-loop thickness error.</td></tr>
                     <tr><td>Final local search</td><td>Enabled with <code>strat_local_search_guard</code> at the configured
-                        index corridor. Source: <code>certus_strat_local_search::is_armed / guard_is_armed</code>.</td></tr>
+                        index corridor. <code>strat_local_search_rounds</code> defaults to one round.
+                        <a href="#strat-refinement">Search and acceptance protocol</a>.</td></tr>
                     <tr><td>Search depth: fast / premium / deep</td><td>Robustness draws: 50 / 150 / 300;
                         screening draws: 10 / 25 / 50; <code>dp_top_k</code>: 20 / 40 / 100.
                         The selected mode overrides these values from the file. Default mode: premium.</td></tr>
@@ -156,10 +158,68 @@
                 Use this section and its Markdown sources for the current defaults and reference measurements.</p>
         </section>
 
+        <section id="strat-operation">
+            <h2>Prepare and review a deposition plan</h2>
+            <ol>
+                <li>Load the layer sequence, physical thicknesses, material dispersion and substrate. Verify that
+                    the material names and measurement grid match the design and the intended witnesses.</li>
+                <li>Set the monitoring wavelength range, step, slit width, noise profile, index corridor and
+                    Rate permissions. A witness reset belongs at a layer boundary and changes the optical history
+                    seen by the controller. Leave the reset list empty for a single witness.</li>
+                <li>Phase A screens wavelengths per layer for usable dynamics and stop margins, then propagates
+                    representative thickness errors. Phase B groups consecutive layers, generates complete plans,
+                    evaluates them under paired perturbations and can refine the best plan locally.</li>
+                <li>Inspect the simulation's yield, crash causes, limiting layers, critical margins and SEEL.
+                    Check which layers run in Rate and where each witness is replaced before exporting the plan.</li>
+            </ol>
+            <p>For a first run, use the <a href="../example/example_strat/JSON-strat-example.json">bundled STRAT profile</a>.
+                Record the effective run settings and source revision with the exported plan. Fixed-plan
+                confirmation uses a disjoint seed and the same physical model as the search.</p>
+        </section>
+
+        <section id="strat-refinement">
+            <h2>Final local search and independent confirmation</h2>
+            <p>The final stage tries joint wavelength and mode changes using the native robustness evaluator.
+                Search, checks and confirmation use separate seed streams. The configured-corridor guard
+                checks the candidate at the index uncertainty used for the production ranking.
+                A rejected proposal can leave the accepted starting plan in place.</p>
+            <p>Set <code>strat_local_search_rounds</code> in the STRAT JSON to allow further rounds. A new round
+                begins from the preceding accepted plan and shifts its search, check and confirmation seeds.
+                The search stops at the first rejected round. The setting travels with the configuration.</p>
+            <table>
+                <caption>Paired 48-layer dichroic holdout, 2026-11-10</caption>
+                <thead><tr><th scope="col">Plan</th><th scope="col">SEEL at ±0.005</th><th scope="col">SEEL at ±0.010</th></tr></thead>
+                <tbody>
+                    <tr><td>Production plan after one local search</td><td>0.1556 nm</td><td>0.1718 nm</td></tr>
+                    <tr><td>After the second round with fresh seeds</td><td>0.1522 nm</td><td>0.1648 nm</td></tr>
+                    <tr><td>After the third round with fresh seeds</td><td>0.1506 nm</td><td>0.1611 nm</td></tr>
+                </tbody>
+            </table>
+            <p>The fourth round was rejected. The third-round plan recorded zero stops in 12,000 holdout draws
+                per corridor across the three noise levels. These results describe one component and one search
+                seed. <a href="../reports/AUDIT_STRAT_top8_apparie_2026-11-10/bilan.md">Paired results and protocol</a>.</p>
+        </section>
+
+        <section id="strat-recovery">
+            <h2>Resume a session or a multi-seed campaign</h2>
+            <p>The session snapshot preserves the window configuration. The home screen offers to reopen that
+                configuration. Open the saved plan or session as appropriate and inspect the parameters before
+                starting a new calculation.</p>
+            <p>The multi-seed runner reuses completed seed artifacts whose slit, kernel cache key and Git
+                revision match a clean tree. Unusable artifacts are measured again, with the reason in the log.
+                The completed candidates are combined and scored on a disjoint seed. The campaign can resume
+                between completed seeds. A robustness simulation in progress, a DESIGN PGLOBAL search and an
+                INDEX SPLINE corridor still restart their in-progress calculation.
+                <a href="../reports/refactor_corridors_2026-11-11/U12_specification.md">Recovery scope and acceptance checks</a>.</p>
+        </section>
+
         <div class="toc-nav" style="margin:0 0 34px;border:1px solid #dae1e7;border-radius:8px;padding:16px 20px;background:#f8fafc;">
             <div style="font-weight:700;color:#0284c7;margin:0 0 10px;letter-spacing:0.02em;">Contents</div>
             <ol style="margin:0;padding-left:22px;line-height:1.95;columns:2;column-gap:34px;">
                 <li><a href="#current-strat">Current settings, reference measurements and limits</a></li>
+                <li><a href="#strat-operation">Prepare and review a deposition plan</a></li>
+                <li><a href="#strat-refinement">Final local search and independent confirmation</a></li>
+                <li><a href="#strat-recovery">Session and campaign recovery</a></li>
                 <li><a href="#sec-0">Algorithmic overview</a></li>
                 <li><a href="#sec-1">Physical model — transfer matrix method</a></li>
                 <li><a href="#sec-2">Optical monitoring simulation</a></li>

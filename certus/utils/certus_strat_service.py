@@ -1017,6 +1017,9 @@ def _validate_candidates_phase_a(
     layer_noise_array: np.ndarray = None,
 ) -> tuple[list[dict[str, float]], list[list[float]]]:
     """Phase A - Step 2: Validate candidate wavelengths with Monte Carlo noise."""
+    if not candidates:
+        raise RuntimeError(f"Layer {i_layer + 1}: no monitoring wavelength passed the Phase A selection filters.")
+
     noise_val_pct = float(params["reality_sim_params"]["trigger_tolerance"]) / 100.0
     factor_val = float(params.get("non_monotonic_error_factor", 2.0))
     offset_val = compute_probe_offset_nm_from_ratio(params)

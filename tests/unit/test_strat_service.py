@@ -118,6 +118,11 @@ def test_p1_10_generate_noise_array_is_reproducible_with_local_rng() -> None:
     assert np.all(np.abs(noise_a) <= 2.5)
 
 
+def test_phase_a_reports_layer_when_selection_is_empty() -> None:
+    with pytest.raises(RuntimeError, match=r"Layer 8: no monitoring wavelength passed"):
+        strat_service._validate_candidates_phase_a([], 7, 1, [20.0] * 8, {}, {}, [])
+
+
 def test_p1_10_validate_candidates_phase_a_uses_params_deterministic_flag(monkeypatch: pytest.MonkeyPatch) -> None:
     captured: dict[str, object] = {}
 

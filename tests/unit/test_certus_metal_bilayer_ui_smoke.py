@@ -56,6 +56,15 @@ def test_certus_metal_bilayer_app_constructs_headless(monkeypatch, qapp) -> None
         assert window._auto_batch_best_mse == pytest.approx(0.01)
         window._auto_batch_mode = False
 
+        config = window._get_config_dict()
+        assert config["optimization"]["analytic_polish"] is False
+        config["optimization"]["analytic_polish"] = True
+        window._apply_config_dict(config)
+        assert window._build_bilayer_optimization_params()["analytic_polish"] is True
+        assert window._get_config_dict()["optimization"]["analytic_polish"] is True
+        window._load_defaults()
+        assert window._build_bilayer_optimization_params()["analytic_polish"] is False
+
         # Run JIT warmup directly to guarantee it has executed in this test
         window._warmup_numba_thread_runner()
 

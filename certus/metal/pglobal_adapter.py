@@ -47,6 +47,7 @@ def run_pglobal_optimization(
     ultra_wide: bool = False,
     progress_logger: Callable[[str], None] | None = None,
     skip_polish: bool = False,
+    gradient_fn: Callable[[np.ndarray], np.ndarray] | None = None,
 ) -> OptimizeResult:
     """Run CERTUS-native PGlobal and return an OptimizeResult-compatible object."""
 
@@ -283,6 +284,7 @@ def run_pglobal_optimization(
             ultra_summary_prefix,
             final_x,
             final_fun,
+            gradient_fn=gradient_fn,
         )
 
     severe_polish_enabled = False if skip_polish else (str(os.getenv("CERTUS_METAL_SEVERE_POLISH", "1")).strip().lower() not in {"0", "false", "no", "off"})
@@ -297,6 +299,7 @@ def run_pglobal_optimization(
             final_x,
             final_fun,
             rng_seed,
+            gradient_fn=gradient_fn,
         )
 
     if progress_logger is not None:
@@ -315,8 +318,9 @@ def run_pglobal_optimization(
     )
 
 
-def _multi_start_polish(objective_fn, ultra_wide, progress_logger, bounds_arr, budget, ultra_summary_prefix, final_x, final_fun):
+def _multi_start_polish(objective_fn, ultra_wide, progress_logger, bounds_arr, budget, ultra_summary_prefix, final_x, final_fun, *, gradient_fn=None):
     """Polish the best vector with L-BFGS-B from itself and from a few seeded random perturbations of it, keeping any restart whose cost is no worse; the seed is handed back because the severe polish reuses it."""
+    gradient_options = {"jac": gradient_fn} if gradient_fn is not None else {}
     polish_starts = [final_x.copy()]
     rng_seed = os.getenv("CERTUS_METAL_POLISH_SEED", "12345")
     rng = np.random.default_rng(int(rng_seed) if str(rng_seed).strip().isdigit() else 12345)
@@ -334,6 +338,7 @@ def _multi_start_polish(objective_fn, ultra_wide, progress_logger, bounds_arr, b
                 method="L-BFGS-B",
                 bounds=[tuple(b) for b in bounds_arr],
                 options={"maxiter": max(300, min(3000, budget // 8)), "ftol": 1e-12, "gtol": 1e-8},
+                **gradient_options,
             )
             polished_fun = float(getattr(polish, "fun", np.inf))
             if np.isfinite(polished_fun) and polished_fun <= final_fun:
@@ -353,8 +358,9 @@ def _multi_start_polish(objective_fn, ultra_wide, progress_logger, bounds_arr, b
     return final_fun, final_x, rng_seed
 
 
-def _severe_polish(objective_fn, ultra_wide, progress_logger, bounds_arr, budget, ultra_summary_prefix, final_x, final_fun, rng_seed):
+def _severe_polish(objective_fn, ultra_wide, progress_logger, bounds_arr, budget, ultra_summary_prefix, final_x, final_fun, rng_seed, *, gradient_fn=None):
     """Re-polish the best vector with a few tighter L-BFGS-B restarts from small random perturbations, keeping any that does not make the cost worse."""
+    gradient_options = {"jac": gradient_fn} if gradient_fn is not None else {}
     severe_restarts = int(os.getenv("CERTUS_METAL_SEVERE_POLISH_RESTARTS", "6" if ultra_wide else "4") or 4)
     severe_span_scale = float(os.getenv("CERTUS_METAL_SEVERE_POLISH_SPAN_SCALE", "0.02" if ultra_wide else "0.012") or 0.012)
     severe_maxiter = int(os.getenv("CERTUS_METAL_SEVERE_POLISH_MAXITER", str(max(800, min(5000, budget // 4)))) or max(800, min(5000, budget // 4)))
@@ -378,6 +384,7 @@ def _severe_polish(objective_fn, ultra_wide, progress_logger, bounds_arr, budget
                 method="L-BFGS-B",
                 bounds=[tuple(b) for b in bounds_arr],
                 options={"maxiter": severe_maxiter, "ftol": 1e-14, "gtol": 1e-10},
+                **gradient_options,
             )
             severe_fun = float(getattr(severe, "fun", np.inf))
             if np.isfinite(severe_fun) and severe_fun <= final_fun:

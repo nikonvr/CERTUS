@@ -119,6 +119,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
     def _load_defaults(self):
         """Load default values for CERTUS-METAL-BILAYER."""
+        self._analytic_polish = False
 
         super()._load_defaults()
 
@@ -433,6 +434,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
         params["num_knots"] = int(self.widgets["num_knots"].text())
         params["n_infini_bounds"] = self._get_param_bounds("n_infini")
         params["A_diel_bounds"] = self._get_param_bounds("A_diel")
+        params["analytic_polish"] = getattr(self, "_analytic_polish", False)
         return params
 
     def start_optimization(self):
@@ -1151,6 +1153,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
                 "lmax_filter": self.widgets["lmax_filter"].text(),
             },
             "optimization": {
+                "analytic_polish": getattr(self, "_analytic_polish", False),
                 "popsize": DEFAULT_POPSIZE,
                 "maxiter": DEFAULT_MAXITER,
                 "tol": DEFAULT_TOL,
@@ -1164,6 +1167,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
     def _apply_config_dict(self, config):
         """Loads JSON struct for config"""
+        self._analytic_polish = bool(config.get("optimization", {}).get("analytic_polish", False))
 
         phys = config.get("physical_params", {})
 

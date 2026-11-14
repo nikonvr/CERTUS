@@ -208,8 +208,12 @@
         <p>The worker calls <code>run_pglobal_optimization</code>, which wraps the native
             <code>PGlobalOptimizer</code>. Unless an initial vector is supplied, the worker fits $K=2$ through the
             requested knot count in sequence. Each stage explores a bounded parameter space and passes its best
-            vector to the next stage. Bounded L-BFGS-B restarts without a supplied analytic Jacobian polish the
-            final vector; the separate beam refit uses an analytic gradient. This stochastic search
+            vector to the next stage. Bounded L-BFGS-B restarts polish the final vector. The saved configuration
+            supports <code>optimization.analytic_polish</code>, default false, to supply the existing complete
+            bilayer gradient to both sets of final restarts. The separate beam refit also uses that gradient.
+            The gradient includes the spline smoothness penalty and the internal knot positions.
+            <a href="../reports/metal_gradient_2026-11-14/bilan.md">Paired measurements and scope</a>.
+            This stochastic search
             returns a best-found fit; it does not certify a global optimum.</p>
 
         <!-- ================================================================ -->

@@ -241,6 +241,13 @@ class OptimizationWorker(MetalOptimizationWorker):
                 nSub_precomputed,
             )
 
+            def polish_gradient(x, _args=args_for_objective):
+                if global_objective_function(x, *_args) >= 1e12:
+                    return np.zeros_like(x)
+                return compute_metal_bilayer_gradient_analytic(x, *_args)[1]
+
+            polish_options = {"gradient_fn": polish_gradient} if p.get("analytic_polish", False) else {}
+
             from certus.core._certus_physics_impl import PGlobalConfig
             cfg = PGlobalConfig.for_dimension(dim=len(bounds)).with_overrides(
                 alpha=0.05,
@@ -274,6 +281,7 @@ class OptimizationWorker(MetalOptimizationWorker):
                     ultra_wide=bool(p.get("ultra_wide", False)),
                     config=cfg,
                     skip_polish=(k < target_num_knots),
+                    **polish_options,
                 )
                 
                 if result and hasattr(result, "x") and result.x is not None:

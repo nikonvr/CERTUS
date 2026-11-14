@@ -65,7 +65,7 @@
   },
   "fonctions_non_annotees": [],
   "fichiers_longs": {
-    "certus/core/certus_index_objectives.py": 1933,
+    "certus/core/certus_index_objectives.py": 1940,
     "certus/core/certus_substrate_index.py": 1945,
     "certus/physics/certus_strat_growth.py": 1825,
     "certus/physics/gradient_analytic.py": 1802,
@@ -78,7 +78,7 @@
     "certus/ui/certus_re_layout_mixin.py": 1743,
     "certus/ui/certus_strat_ui_state.py": 1722,
     "certus/utils/certus_re_helpers.py": 1972,
-    "certus/utils/certus_strat_service.py": 1613,
+    "certus/utils/certus_strat_service.py": 1616,
     "certus/workers/certus_strat_workers.py": 1736
   }
 }

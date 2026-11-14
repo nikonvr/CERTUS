@@ -100,7 +100,7 @@ Ce qui mérite d'être mutualisé n'est donc pas du copier-coller, mais **des r�
 | R6 | **Polissage local** (L-BFGS-B borné + « jamais pire ») | `scipy.optimize.minimize` : 27 sites dans 11 fichiers | un polisseur partagé (celui de `certus_design_final_cleanup.py` en est un) | moyen : chaque site a ses tolérances |
 | R7 | **SMOOTHER et SUBSTRATE hors du socle** | 121 lignes communes, `log` identique ; ni thème ni session (UX-59) | les deux fenêtres gagnent thème, session, raccourcis sans code propre | moyen : les migrer sur `CertusBaseApp` |
 | R8 | **Export Excel / HTML** | `export_excel` : 3 fenêtres, 524 lignes, similarité ≤ 0,24 ; 73 sites `openpyxl` dans 15 fichiers | faible : les contenus diffèrent vraiment ; seul un petit utilitaire d'écriture (styles, en-têtes) se partage | — |
-| R9 | `_update_qwot_from_ep` socle ~ RE | 0,64 ; seule la colonne change | 10 lignes ; une constante de colonne | nul |
+| R9 | `_update_qwot_from_ep` socle ~ RE | 0,64 ; seule la colonne change | Clos le 14 novembre, `5a456ec7` | 33 tests ciblés réussis, dont la conversion sur le classeur RE et le nettoyage DESIGN |
 
 Faux amis, à **ne pas** factoriser : `_load_defaults`, `export_results`, `_apply_theme`, `_setup_shortcuts`,
 `_export_results_html` portent le même nom dans plusieurs fenêtres mais une similarité ≤ 0,4 : le code est vraiment

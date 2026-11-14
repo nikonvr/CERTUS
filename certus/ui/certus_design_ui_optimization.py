@@ -1131,15 +1131,14 @@ class OptimizationManager(FinalCleanupMixin):
     def _prune_trial_rmse(self, ep_test: np.ndarray, stack_test: list) -> float:
         """RMSE a candidate stack reaches after a short polish (L-BFGS-B, analytic gradient, 50 iterations at most).
 
-        The inputs are the ones `OptimWorker` gives the same gradient (`optim_backside_flags_from_cfg`,
-        `optim_prepare_stack_nk_back`, `prepare_targets_vectorized`), so the number is the merit being minimised.
+        The inputs use DESIGN's shared cost context and the same analytic gradient as the optimizer.
         Raises when the stack cannot be evaluated: `_best_prune_candidate` reports that, it is not a bad merit.
         """
         import scipy.optimize
 
-        from certus.core.certus_core import get_complex_dtype, get_float_dtype
-        from certus.core.certus_design_worker_utils import optim_backside_flags_from_cfg, optim_prepare_stack_nk_back
-        from certus_physics import compute_gradient_all_layers_analytic, prepare_targets_vectorized
+        from certus.core.certus_design_cost_context import prepare_design_cost_context
+        from certus.core.certus_design_worker_utils import optim_backside_flags_from_cfg
+        from certus_physics import compute_gradient_all_layers_analytic
 
         wls = self.ui._get_optim_wls()
         has_back_stack, has_back_calc, back_stack = optim_backside_flags_from_cfg(
@@ -1150,22 +1149,17 @@ class OptimizationManager(FinalCleanupMixin):
             }
         )
         ep_back = np.asarray(self.ui.ep_back_current) if self.ui.ep_back_current is not None else np.array([])
-        _mats_nk, n_sub, n_layers_T, n_back_T, d_back = optim_prepare_stack_nk_back(
-            self.ui._get_materials(),
-            stack_test,
-            wls,
-            stack_back=back_stack,
-            ep_back=ep_back,
-            has_back_stack=has_back_stack,
-            complex_dtype=get_complex_dtype(),
-            float_dtype=get_float_dtype(),
+        context = prepare_design_cost_context(
+            self.ui._get_materials(), stack_test, wls, [t for t in self.ui._get_tgts() if t.valid()],
+            stack_back=back_stack, ep_back=ep_back, has_back_stack=has_back_stack, has_back_calc=has_back_calc,
         )
-        tgt_vals, tgt_weights = prepare_targets_vectorized(wls, [t for t in self.ui._get_tgts() if t.valid()])
+        tgt_vals, tgt_weights = context.normal_targets()
         var_idx = np.arange(len(ep_test), dtype=np.int64)
 
         def cost_and_gradient(x):
             return compute_gradient_all_layers_analytic(
-                x, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, 0.01, has_back_calc, n_back_T, d_back, var_idx
+                x, context.n_front, context.n_sub, context.wls, tgt_vals, tgt_weights, 0.01,
+                context.has_back_calc, context.n_back, context.d_back, var_idx,
             )
 
         res = scipy.optimize.minimize(

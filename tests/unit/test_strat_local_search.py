@@ -15,10 +15,13 @@ import numpy as np
 import pytest
 
 from certus.core.certus_strat_local_search import (
+    ROUND_SEED_STEP,
     LocalSearchConfig,
     candidates,
+    further_rounds,
     is_armed,
     joint_local_search,
+    rounds_setting,
     search_params,
     stops,
     wavelength_of,
@@ -312,3 +315,42 @@ def test_the_index_guided_pass_spends_more_evaluations_and_still_adds_no_stop() 
     assert guided["index_guided_group"] == 3
     assert guided["evaluations"] > plain["evaluations"]
     assert stops(_evaluator()(plan, 5, 50)) == 0
+
+
+def test_one_round_is_the_single_search_untouched() -> None:
+    cfg = _cfg(passes=1)
+    first, report = joint_local_search(_plan(), _evaluator(), 6, cfg, 11, (101, 102))
+    plan, same = further_rounds(first, report, 1, _evaluator(), 6, cfg, 11, (101, 102))
+    assert plan is first
+    assert same is report
+    assert "rounds" not in report
+    assert rounds_setting({}) == 1  # the default: one search, as before the setting existed
+    assert rounds_setting({"strat_local_search_rounds": 3}) == 3
+    assert rounds_setting({"strat_local_search_rounds": 0}) == 1
+    assert rounds_setting({"strat_local_search_rounds": "invalid"}) == 1
+
+
+def test_further_rounds_go_on_from_the_accepted_plan_on_seeds_of_their_own_until_one_is_refused() -> None:
+    cfg, seen, base = _cfg(passes=1), [], _evaluator()
+
+    def evaluate(plan, seed, runs):
+        seen.append(seed)
+        return base(plan, seed, runs)
+
+    first, report = joint_local_search(_plan(), evaluate, 6, cfg, 11, (101, 102))
+    assert wavelength_of(first, 5) == 500.0  # one pass of 60 nm stops short of 470 nm
+    del seen[:]
+    plan, report = further_rounds(first, report, 6, evaluate, 6, cfg, 11, (101, 102))
+    for k, best in BEST.items():
+        assert wavelength_of(plan, k) == best, (k, wavelength_of(plan, k))
+    assert [r["accepted"] for r in report["rounds"]] == [True, False]  # six rounds allowed: the chain stops at the refused one
+    assert set(seen) == {11 + ROUND_SEED_STEP, 101 + ROUND_SEED_STEP, 102 + ROUND_SEED_STEP, 11 + 2 * ROUND_SEED_STEP}
+    assert stops(base(plan, 5, 50)) == 0
+
+
+def test_no_further_round_follows_a_search_the_check_refused() -> None:
+    start = {"strategy_id": 1, "blocks": [{"start": k, "end": k + 1, "wavelength": BEST[k]} for k in range(6)], "rate_layers": []}
+    plan, report = joint_local_search(start, _evaluator(trap=True), 6, _cfg(), 11, (101, 102))
+    again, same = further_rounds(plan, report, 4, _evaluator(trap=True), 6, _cfg(), 11, (101, 102))
+    assert again is start
+    assert "rounds" not in same

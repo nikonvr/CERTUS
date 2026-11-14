@@ -556,12 +556,10 @@ class CertusStratStateMixin:
             "substrate_choice": self.widgets["substrate_choice"].currentText(),
             "l0": self.widgets["l0"].text(),
         }
-        # Save only relevant H-index data
         if self.widgets["h_type_custom"].isChecked():
             config["nH_r"] = self.widgets["nH_r"].text()
         else:
             config["h_material_file"] = self.widgets["h_material_file"].currentText()
-        # Save only relevant L-index data
         if self.widgets["l_type_custom"].isChecked():
             config["nL_r"] = self.widgets["nL_r"].text()
         else:
@@ -639,6 +637,8 @@ class CertusStratStateMixin:
         config["show_plots"] = True
         config["export_excel"] = True
         config["force_first_layer_same_wl"] = True
+        if (rounds := getattr(self, "_loaded_config", {}).get("strat_local_search_rounds")) is not None:
+            config["strat_local_search_rounds"] = rounds
         return config
 
     def save_config(self) -> None:
@@ -1227,8 +1227,8 @@ class CertusStratStateMixin:
             "tp_hysteresis_factor": _config_float(getattr(self, "_loaded_config", {}), "tp_hysteresis_factor"),
             "tp_hysteresis_floor": _config_float(getattr(self, "_loaded_config", {}), "tp_hysteresis_floor", 0.000415),  # T, 0 = off
             "strat_local_search": _config_flag_default(getattr(self, "_loaded_config", {}), "strat_local_search", True),
+            "strat_local_search_rounds": getattr(self, "_loaded_config", {}).get("strat_local_search_rounds", 1),
             # ── Safety margin at turning point, in noise multiples ──────
-            #
             # > 0 : the stopping level must be separated from neighboring turning points
             # by at least `factor x trigger_tolerance/100`, IN TRANSMISSION. Activates at the
             # same time the true accumulated matrix in Phase A — the zeros placeholder

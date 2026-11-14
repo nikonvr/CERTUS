@@ -26,6 +26,10 @@ MAX_FALLBACK_PLANS intermediate plans of the search (the plan after k kept chang
 draws; the best admissible one must pass the same rule again on `confirm_seeds`, because choosing among several on
 the check draws tunes the choice to them. Otherwise the start is returned unchanged.
 
+THE ROUNDS (`strat_local_search_rounds`, 1 by default: the single search). Two passes do not exhaust the search: run
+again from the plan it accepted, on seeds of its own, it still finds changes that fresh draws confirm. `further_rounds`
+does that until a round is refused.
+
 ON BY DEFAULT since 2026-10-20 (`strat_local_search`, owner decision after the deep benches): a deliberate C1 break,
 like the slit bias; `strat_local_search: false` in the configuration gives the former path back.
 """
@@ -61,6 +65,15 @@ def guard_is_armed(params: dict[str, Any]) -> bool:
     return bool(params.get("strat_local_search_guard", True))
 
 
+def rounds_setting(params: dict[str, Any]) -> int:
+    """`strat_local_search_rounds`: how many times the stage runs, each round from the plan the one before accepted.
+    1 by default, the single search."""
+    try:
+        return max(1, int(params.get("strat_local_search_rounds", 1)))
+    except (TypeError, ValueError, OverflowError):
+        return 1
+
+
 #: Seeds of the stage, offsets of `robustness_seed`: disjoint from the ranking seed, so the stage neither reuses nor
 #: biases the draws the winner was ranked on.
 SEARCH_SEED_OFFSET: int = 7_000_003
@@ -69,6 +82,9 @@ CHECK_SEED_OFFSETS: tuple[int, ...] = (7_100_003, 7_100_011)
 CONFIRM_SEED_OFFSETS: tuple[int, ...] = (7_200_003, 7_200_011)
 #: At most this many intermediate plans are re-judged when the check refuses the final one.
 MAX_FALLBACK_PLANS: int = 12
+#: Every further round (`strat_local_search_rounds`) shifts its search, check and confirmation seeds by this much, so a
+#: round is never judged on draws an earlier one was chosen on.
+ROUND_SEED_STEP: int = 16
 
 #: Index uncertainty the stage searches and checks under: twice the nominal +-0.005 (decided 2026-10-20). Measured on
 #: 75c / r75x0.5 / r75x2: plans searched at +-0.005 stop at +-0.010 (175 and 230 stops in 9 000 on 75c and r75x2);
@@ -391,6 +407,46 @@ def joint_local_search(
         f"confirmation dRMSE2 {100 * v_c['check_relative_gain']:+.1f} %, stops {v_c['check_stops'][0]} -> {v_c['check_stops'][1]}: "
         f"{'kept' if ok_c else 'refused, winner unchanged'}")
     return (history[k], report) if ok_c else (start, report)
+
+
+def further_rounds(
+    plan: dict[str, Any],
+    report: dict[str, Any],
+    rounds: int,
+    evaluate: Callable[[dict[str, Any], int, int], Evaluation],
+    n_layers: int,
+    cfg: LocalSearchConfig,
+    search_seed: int,
+    check_seeds: tuple[int, ...],
+    log: Callable[[str], None] = lambda _msg: None,
+    confirm_seeds: tuple[int, ...] = (),
+    evaluate_guard: Callable[[dict[str, Any], int, int], Evaluation] | None = None,
+    layer_sensitivity: Callable[[dict[str, Any]], np.ndarray] | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Run the stage again from the plan it accepted, up to `rounds` rounds in all; return (plan, report).
+
+    `rounds` is `strat_local_search_rounds`; 1, the default, returns `plan` and `report` untouched. Round r searches,
+    checks and confirms on seeds ROUND_SEED_STEP * (r - 1) further, so it is never judged on draws an earlier round was
+    chosen on, and the chain stops at the first round the check refuses. `report` stays the first round's; the further
+    ones are listed under its `rounds` key.
+
+    Measured 2026-11-10 on the 48-layer dichroic, base seed 42 (reports/AUDIT_STRAT_top8_apparie_2026-11-10): rounds 2
+    and 3 are kept, round 4 is refused; on 4 000 holdout draws per level the SEEL at +-0.005 goes 0.1556 -> 0.1522 ->
+    0.1506 nm (paired z = -4.7 against the single search), no stop in 12 000 draws, about nine minutes a round.
+    """
+    current, last = plan, report
+    for round_no in range(2, int(rounds) + 1):
+        if not last["accepted"]:
+            break
+        shift = ROUND_SEED_STEP * (round_no - 1)
+        log(f"[LOCAL-SEARCH] round {round_no}: from the accepted plan, seeds {shift} further")
+        nxt, last = joint_local_search(current, evaluate, n_layers, cfg, search_seed + shift,
+                                       tuple(s + shift for s in check_seeds), log,
+                                       tuple(s + shift for s in confirm_seeds), evaluate_guard, layer_sensitivity)
+        report.setdefault("rounds", []).append(last)
+        if last["accepted"]:
+            current = nxt
+    return current, report
 
 
 def _preselect(current: dict[str, Any], layer_candidates: list[tuple[str, dict[str, Any]]],

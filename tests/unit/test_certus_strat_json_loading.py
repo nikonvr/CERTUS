@@ -83,3 +83,18 @@ def test_strat_execution_mode_presets_loading(qapp, filename, expected_mode, exp
     assert params["robustness_num_runs"] == expected_mc
     assert params["dp_top_k"] == expected_topk
 
+
+
+def test_strat_local_search_rounds_reaches_the_worker_params(qapp, tmp_path):
+    import json
+
+    source = Path(__file__).resolve().parents[2] / "example/example_strat/JSON-strat-example-fast.json"
+    config = json.loads(source.read_text(encoding="utf-8"))
+    config["strat_local_search_rounds"] = 3
+    path = tmp_path / "strat_rounds.json"
+    path.write_text(json.dumps(config), encoding="utf-8")
+
+    window = CertusSTRATApp()
+    assert window.load_configuration(str(path))
+    assert window.collect_params()["strat_local_search_rounds"] == 3
+    assert window._collect_config()["strat_local_search_rounds"] == 3

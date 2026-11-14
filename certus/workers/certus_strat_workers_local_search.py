@@ -15,6 +15,7 @@ from certus.core.certus_strat_local_search import (
     CONFIRM_SEED_OFFSETS,
     SEARCH_SEED_OFFSET,
     LocalSearchConfig,
+    further_rounds,
     guard_is_armed,
     index_guided_settings,
     index_sensitivity_by_layer,
@@ -22,6 +23,7 @@ from certus.core.certus_strat_local_search import (
     native_evaluator,
     nominal_level_index,
     presel_settings,
+    rounds_setting,
     search_params,
 )
 from certus.core.certus_strat_rate_rules import (
@@ -93,6 +95,8 @@ def run_local_search(
         cfg = LocalSearchConfig(**free, rate_min_layer=max(RATE_MIN_LAYER, rules.min_layer), **ruled)
         plan, report = joint_local_search(start, evaluate, len(nominal), cfg, search_seed, check_seeds, logger.info,
                                           confirm_seeds, evaluate_guard, sensitivity, convert=convert)
+        plan, report = further_rounds(plan, report, rounds_setting(params), evaluate, len(nominal), cfg, search_seed,
+                                      check_seeds, logger.info, confirm_seeds, evaluate_guard, sensitivity)
         if free_report is not None:
             report["free_stage"] = free_report
         report["start_strategy_id"] = origin.get("strategy_id")

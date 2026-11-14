@@ -416,6 +416,18 @@ LEVIERS: tuple[Levier, ...] = (
         reserve="Change l'identifiant exporte du plan affine (le parent est garde dans `parent_strategy_id`) et controle "
                 "l'unicite sur toute la liste. `false` retablit le chemin d'avant.",
     ),
+    Levier(
+        cle="strat_local_search_rounds",
+        libelle="Recherche locale : nombre de tours, chacun repartant du plan accepte par le precedent (1 = une seule recherche)",
+        defaut=1,
+        genre="int",
+        statut=RESERVE,
+        mesure="2026-11-10, dichroique 48 couches, graine 42 : les tours 2 et 3 sont gardes, le tour 4 est refuse ; sur 4 000 "
+               "tirages jamais vus par niveau, SEEL a +-0,005 de 0,1556 a 0,1506 nm (z apparie -4,7), aucun arret sur 12 000 "
+               "(reports/AUDIT_STRAT_top8_apparie_2026-11-10).",
+        reserve="Un seul composant et une seule graine mesures. Chaque tour coute environ neuf minutes et decale ses graines de "
+                "recherche, de controle et de confirmation ; la chaine s'arrete au premier tour refuse. 1 retablit le chemin d'avant.",
+    ),
     # ---------------------------------------------------------------- RATE: the constants
     Levier(
         cle="RATE_MIN_LAYER",

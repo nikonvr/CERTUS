@@ -55,7 +55,7 @@ class CertusAppEngineMixin:
     #: Attribute name of the label the warm-up writes its state to; skipped when missing.
     WARMUP_STATUS_LABEL = "status_label"
     #: Exceptions of _compile_numba_kernels handed to _on_numba_warmup_failure; others propagate.
-    WARMUP_FAULTS: tuple[type[BaseException], ...] | type[BaseException] = NUMERICAL_FAULT_EXCEPTIONS
+    WARMUP_FAULTS = NUMERICAL_FAULT_EXCEPTIONS
 
     def _warmup_status_label(self) -> Any:
         return getattr(self, self.WARMUP_STATUS_LABEL, None)

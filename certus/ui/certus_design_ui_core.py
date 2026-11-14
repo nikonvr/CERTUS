@@ -203,6 +203,8 @@ class CoreManager:
 
         self._load_targets_to_table()
 
+        if hasattr(self.ui, "auto_grid_check"):
+            self.ui.layout_manager.sync_auto_grid()
         self.ui._schedule_eval(True)
 
     def copy_logs_to_clipboard(self) -> None:
@@ -258,6 +260,12 @@ class CoreManager:
         if not active:
             return np.array([])
 
+        if self._auto_wavelength_grid():
+            from certus.core.certus_design_auto_grid import auto_grid_tot_nm, base_grid
+
+            tot = auto_grid_tot_nm(self._current_tot_nm(active), getattr(self.ui, "_max_total_qwot", None), self.ui.l0_spin.value())
+            return base_grid([(t.lmin, t.lmax) for t in active], tot)
+
         wls_list = []
 
         n_points = self.ui.points_per_target_spin.value()
@@ -295,12 +303,57 @@ class CoreManager:
 
         return wls
 
+    def _auto_wavelength_grid(self) -> bool:
+        """The grid finds its own points (`auto_wavelength_grid`, normal incidence only)."""
+        steps = getattr(self.ui, "_design_optional_steps", None) or {}
+        return bool(steps.get("auto_wavelength_grid", False)) and not self.ui.oblique_mode
+
+    def _current_tot_nm(self, active: list) -> float:
+        """Total optical thickness of the front stack (nm), indices at the middle of the targets; 0 if unknown."""
+        mats = self._get_materials()
+        stack = self.ui._get_front_stack()
+        if not stack or not mats:
+            return 0.0
+        ep = self.ui.ep_current
+        if ep is None or len(ep) != len(stack):
+            ep = init_thickness(stack, self.ui.l0_spin.value(), mats)
+        if ep is None:
+            return 0.0
+        from certus.core.certus_design_auto_grid import design_tot_nm
+
+        wl_ref = np.array([0.5 * (min(t.lmin for t in active) + max(t.lmax for t in active))])
+        pairs = [(mats[layer.mat].get_nk(wl_ref)[0].real, d) for layer, d in zip(stack, ep, strict=False) if layer.mat in mats]
+        return design_tot_nm([n for n, _d in pairs], [d for _n, d in pairs])
+
+    def _layer_estimate_hint(self, active: list) -> str:
+        """Contrast estimate of the layer count and of the TOT for the targets, with the extreme indices of the stack."""
+        from certus.core.certus_design_auto_grid import estimate_layers_and_tot
+
+        mats = self._get_materials()
+        stack = self.ui._get_front_stack() or []
+        if not active or not mats or not stack:
+            return ""
+        wl_ref = np.array([0.5 * (min(t.lmin for t in active) + max(t.lmax for t in active))])
+        indices = [mats[layer.mat].get_nk(wl_ref)[0].real for layer in stack if layer.mat in mats]
+        if len(indices) < 2 or max(indices) <= min(indices):
+            return ""
+        est = estimate_layers_and_tot(active, max(indices), min(indices))
+        if est.layers <= 0.0:
+            return ""
+        qwot = 4.0 * est.tot_nm / self.ui.l0_spin.value()
+        return f"Contrast estimate: about {est.layers:.0f} layers, TOT about {est.tot_nm:.0f} nm ({qwot:.1f} QWOT)"
+
     def _update_optim_point_count(self, *args, **kwargs) -> None:
         """Updates optimization point counter"""
 
         wls = self._get_optim_wls()
 
         self.ui.npts_spin.setValue(len(wls))
+
+        hint = ""
+        if self._auto_wavelength_grid():
+            hint = self._layer_estimate_hint([t for t in self.ui._get_tgts() if t.valid()])
+        self.ui.npts_spin.setToolTip(hint or "Total number of spectrum points evaluated (read-only).")
 
     def _calculate_tikhonravov_points(self) -> int:
         """

@@ -51,6 +51,11 @@ DESIGN_OPTIONAL_STEPS: dict[str, Any] = {
     # L-BFGS-B then Levenberg-Marquardt; "lbfgs" keeps L-BFGS-B alone. Default "lbfgs_then_lm" (owner, 2026-11-13):
     # an exception to C1, as the final cleanup; falls back to L-BFGS-B alone where LM does not apply
     "memetic_polisher": "lbfgs_then_lm",
+    # 2026-11-13: the wavelength grid finds its own points (certus_design_auto_grid): a base grid per band from the TOT,
+    # then, after each global or local stage, points added where the quadrature of the merit is not resolved, to
+    # `auto_grid_rel_tol` of the merit. Normal incidence only; off by default (C1): points per target, as before
+    "auto_wavelength_grid": False,
+    "auto_grid_rel_tol": 0.01,
     # 2026-10-30: threads polishing memetic designs at once (1: one after another; 0: cores - 2, as PGLOBAL's pool)
     "memetic_workers": 1,
 }

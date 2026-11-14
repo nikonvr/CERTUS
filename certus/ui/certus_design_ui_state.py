@@ -365,6 +365,8 @@ class StateManager:
         self.ui._floor_at_end = bool(opt.get("floor_at_end", False))
         # Optional steps of 2026-10-26, off unless the file names them (DESIGN_OPTIONAL_STEPS).
         self.ui._design_optional_steps = {k: opt[k] for k in DESIGN_OPTIONAL_STEPS if k in opt}
+        if hasattr(self.ui, "auto_grid_check") and hasattr(self.ui, "layout_manager"):
+            self.ui.layout_manager.sync_auto_grid()
 
     def config_load_problems(self, c: dict) -> list[str]:
         """What `c` names that this window cannot reproduce (D88): loading it would compute with something else.

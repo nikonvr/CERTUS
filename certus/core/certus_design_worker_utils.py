@@ -942,6 +942,99 @@ def run_coord_descent_5cycles(
     return ep_current, best_cost, best_rmse_seen
 
 
+def optim_grid_indices(
+    wls: np.ndarray,
+    mats: Any,
+    stack: Any,
+    stack_back: Any,
+    n_back_T: Any,
+    *,
+    float_dtype: Any,
+    complex_dtype: Any,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, Any]:
+    """The grid and the indices of the substrate, the layers and the back coating (``stack_back``; None keeps
+    ``n_back_T``) on a new wavelength grid."""
+    wls = np.ascontiguousarray(wls.astype(float_dtype))
+    mats_nk = {k: m.get_nk(wls) for k, m in mats.items()}
+    _sub_key = "substrate" if "substrate" in mats_nk else "Substrate"
+    n_sub = np.ascontiguousarray(mats_nk[_sub_key])
+    n_layers = np.array([mats_nk[lyr.mat] for lyr in stack], dtype=complex_dtype)
+    n_layers_T = np.ascontiguousarray(n_layers.T)
+    if stack_back is not None:
+        n_back = np.array([mats_nk[lyr.mat] for lyr in stack_back], dtype=complex_dtype)
+        n_back_T = np.ascontiguousarray(n_back.T)
+    return wls, n_sub, n_layers_T, n_back_T
+
+
+def maybe_refine_grid_auto(
+    *,
+    ep_current: Any,
+    mats: Any,
+    stack: Any,
+    tgts: Any,
+    wls: np.ndarray,
+    float_dtype: Any,
+    complex_dtype: Any,
+    has_back_calc: bool,
+    has_back_stack: Any,
+    stack_back: Any,
+    d_back: np.ndarray,
+    n_sub: np.ndarray,
+    n_layers_T: Any,
+    n_back_T: Any,
+    tgt_vals: Any,
+    tgt_weights: Any,
+    rel_tol: float,
+) -> tuple[Any, ...]:
+    """The grid that finds its own points (``auto_wavelength_grid``, normal incidence), in place of
+    ``maybe_upgrade_grid_tikhonravov``: ``refine_grid`` on the design ``ep_current``, then the arrays on the new grid.
+
+    Evaluate transmission with the same backside setting as the optimization. Keep the original grid when
+    the quadrature is already resolved or preparation fails.
+    """
+    from certus.core.certus_design_auto_grid import refine_grid, target_values_and_weights
+    from certus.physics.certus_tmm_matrix import calculate_RT_no_backside
+    from certus.physics.certus_tmm_oblique import calc_spectrum_full_oblique_exact
+
+    try:
+        active = [t for t in tgts if t.valid()]
+        ep = np.ascontiguousarray(np.asarray(ep_current, dtype=np.float64))
+        back_stack = stack_back if has_back_stack else []
+
+        def squared_residual(lam: np.ndarray) -> np.ndarray:
+            empty_back = np.empty((len(lam), 0), dtype=np.complex128)
+            lam, substrate, front, back = optim_grid_indices(
+                lam, mats, stack, back_stack or None, empty_back,
+                float_dtype=np.float64, complex_dtype=np.complex128,
+            )
+            substrate = np.ascontiguousarray(substrate, dtype=np.complex128)
+            if has_back_calc:
+                _r, t = calc_spectrum_full_oblique_exact(lam, ep, front, d_back, back, substrate, 0.0, True)
+            else:
+                _r, t = calculate_RT_no_backside(ep, front, substrate, lam)
+            vals, weights = target_values_and_weights(active, lam)
+            return weights * (np.asarray(t, dtype=np.float64) - vals) ** 2
+
+        refined = refine_grid([(t.lmin, t.lmax) for t in active], np.asarray(wls, dtype=np.float64), squared_residual,
+                              rel_tol=rel_tol)
+        new = refined.wavelengths
+        logging.info(
+            f"Auto grid: {len(wls)} -> {len(new)} points in {refined.rounds} round(s), estimated quadrature error "
+            f"{refined.error / max(refined.merit, 1e-300):.2%} of the merit{'' if refined.converged else ' (not converged)'}"
+        )
+        if len(new) == len(wls) and np.allclose(new, np.sort(np.asarray(wls, dtype=np.float64)), rtol=0.0, atol=0.0):
+            return wls, n_sub, n_layers_T, n_back_T, tgt_vals, tgt_weights
+        empty_back = np.empty((len(new), 0), dtype=complex_dtype)
+        new_wls, new_n_sub, new_n_layers_T, new_n_back_T = optim_grid_indices(
+            new, mats, stack, back_stack or None, empty_back,
+            float_dtype=float_dtype, complex_dtype=complex_dtype)
+        new_tgt_vals, new_tgt_weights = prepare_targets_vectorized(new_wls, tgts)
+    except NUMERICAL_FAULT_EXCEPTIONS as err:
+        logging.warning(f"Auto grid refinement failed, grid unchanged: {err}")
+        return wls, n_sub, n_layers_T, n_back_T, tgt_vals, tgt_weights
+    return new_wls, new_n_sub, new_n_layers_T, new_n_back_T, new_tgt_vals, new_tgt_weights
+
+
 def maybe_upgrade_grid_tikhonravov(
     *,
     ep_current: Any,
@@ -997,15 +1090,9 @@ def maybe_upgrade_grid_tikhonravov(
                     sigma_grid = np.linspace(sigma_min, sigma_max, N_tikhon)
                     wls_list_new.append(1.0 / sigma_grid)
                 wls = np.unique(np.concatenate(wls_list_new))
-                wls = np.ascontiguousarray(wls.astype(float_dtype))
-                mats_nk = {k: m.get_nk(wls) for k, m in mats.items()}
-                _sub_key = "substrate" if "substrate" in mats_nk else "Substrate"
-                n_sub = np.ascontiguousarray(mats_nk[_sub_key])
-                n_layers = np.array([mats_nk[lyr.mat] for lyr in stack], dtype=complex_dtype)
-                n_layers_T = np.ascontiguousarray(n_layers.T)
-                if has_back_stack:
-                    n_back = np.array([mats_nk[lyr.mat] for lyr in stack_back], dtype=complex_dtype)
-                    n_back_T = np.ascontiguousarray(n_back.T)
+                wls, n_sub, n_layers_T, n_back_T = optim_grid_indices(
+                    wls, mats, stack, stack_back if has_back_stack else None, n_back_T,
+                    float_dtype=float_dtype, complex_dtype=complex_dtype)
                 if not oblique_mode:
                     tgt_vals, tgt_weights = prepare_targets_vectorized(wls, tgts)
                 else:

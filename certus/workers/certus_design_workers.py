@@ -415,11 +415,26 @@ class OptimWorker(QObject):
                 ep_current = ep0.copy()
                 ep_current[var_idx] = best_sample_overall.x
                 best_cost = best_sample_overall.y
-                from certus.core.certus_design_worker_utils import maybe_upgrade_grid_tikhonravov
+                from certus.core.certus_design_worker_utils import (
+                    maybe_refine_grid_auto,
+                    maybe_upgrade_grid_tikhonravov,
+                )
                 from certus.physics.design_fast_kernels import prepare_normal_fast_context
                 had_weak_k = bool(getattr(self, "_normal_fast_ctx", None) and self._normal_fast_ctx.get("has_weak_k"))
                 wls_prev_len = len(wls)
-                wls, n_sub, n_layers_T, n_back_T, tgt_vals, tgt_weights = maybe_upgrade_grid_tikhonravov(ep_current=ep_current, mats=mats, stack=stack, tgts=tgts, oblique_mode=oblique_mode, oblique_tgts=oblique_tgts, wls=wls, float_dtype=float_dtype, complex_dtype=complex_dtype, has_back_stack=has_back_stack, stack_back=stack_back, ep_back=ep_back, n_sub=n_sub, n_layers_T=n_layers_T, n_back_T=n_back_T, tgt_vals=tgt_vals, tgt_weights=tgt_weights)
+                if self._optional_step('auto_wavelength_grid') and not oblique_mode:
+                    old_wls = wls
+                    wls, n_sub, n_layers_T, n_back_T, tgt_vals, tgt_weights = maybe_refine_grid_auto(
+                        ep_current=ep_current, mats=mats, stack=stack, tgts=tgts, wls=wls,
+                        float_dtype=float_dtype, complex_dtype=complex_dtype,
+                        has_back_calc=has_back_calc, has_back_stack=has_back_stack, stack_back=stack_back,
+                        d_back=d_back, n_sub=n_sub, n_layers_T=n_layers_T, n_back_T=n_back_T,
+                        tgt_vals=tgt_vals, tgt_weights=tgt_weights, rel_tol=float(self._optional_step('auto_grid_rel_tol')),
+                    )
+                    grid_changed = wls is not old_wls
+                else:
+                    wls, n_sub, n_layers_T, n_back_T, tgt_vals, tgt_weights = maybe_upgrade_grid_tikhonravov(ep_current=ep_current, mats=mats, stack=stack, tgts=tgts, oblique_mode=oblique_mode, oblique_tgts=oblique_tgts, wls=wls, float_dtype=float_dtype, complex_dtype=complex_dtype, has_back_stack=has_back_stack, stack_back=stack_back, ep_back=ep_back, n_sub=n_sub, n_layers_T=n_layers_T, n_back_T=n_back_T, tgt_vals=tgt_vals, tgt_weights=tgt_weights)
+                    grid_changed = len(wls) != wls_prev_len
                 if not oblique_mode:
                     self._wls = wls
                     self._n_sub = n_sub
@@ -436,7 +451,7 @@ class OptimWorker(QObject):
                         d_back=d_back,
                         k_real_threshold=1e-14,
                     )
-                    if had_weak_k or len(wls) != wls_prev_len:
+                    if had_weak_k or grid_changed:
                         best_cost = float(
                             self._evaluate_thicknesses(
                                 ep_current,

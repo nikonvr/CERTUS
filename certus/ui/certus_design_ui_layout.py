@@ -464,6 +464,18 @@ class LayoutManager:
 
         row += 1
 
+        # Wavelength grid that finds its own points (2026-11-13, off unless asked: `auto_wavelength_grid`)
+        self.ui.auto_grid_check = QCheckBox("Automatic wavelength grid")
+        self.ui.auto_grid_check.setToolTip(
+            "Each target gives only its wavelength range: the number of points follows from the total\n"
+            "optical thickness, and points are added after each optimization where the merit needs them.\n"
+            "Normal incidence only. Replaces Points / Target."
+        )
+        self.ui.auto_grid_check.toggled.connect(self.sync_auto_grid)
+        opt_grid.addWidget(self.ui.auto_grid_check, row, 0, 1, 2)
+
+        row += 1
+
         # Least thickness of a final layer (owner, 2026-11-13): 5 nm was written in the code.
         self.ui.min_layer_spin = QDoubleSpinBox()
         self.ui.min_layer_spin.setRange(0.0, 100.0)
@@ -572,6 +584,26 @@ class LayoutManager:
         opt_grid.addWidget(self.ui.mc_rmse_threshold_spin, row, 1)
 
         return opt_group
+
+    def sync_auto_grid(self, checked: bool | None = None) -> None:
+        """Record the automatic grid among the optional steps (`checked` given) or show what they hold (None)."""
+        steps = getattr(self.ui, "_design_optional_steps", None)
+        if steps is None:
+            steps = self.ui._design_optional_steps = {}
+        if checked is None:
+            checked = bool(steps.get("auto_wavelength_grid", False))
+            self.ui.auto_grid_check.blockSignals(True)
+            self.ui.auto_grid_check.setChecked(checked)
+            self.ui.auto_grid_check.blockSignals(False)
+        elif checked:
+            steps["auto_wavelength_grid"] = True
+        else:
+            steps.pop("auto_wavelength_grid", None)
+        normal_incidence = not self.ui.oblique_mode
+        self.ui.auto_grid_check.setEnabled(normal_incidence)
+        self.ui.points_per_target_spin.setEnabled(not (normal_incidence and checked))
+        if hasattr(self.ui, "npts_spin"):
+            self.ui._update_optim_point_count()
 
     def _build_action_buttons(self) -> QVBoxLayout:
         """Constructs action buttons"""

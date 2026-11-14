@@ -81,134 +81,113 @@ class CertusStratWorkerMixin:
 
             self.update_stats_display()
 
-    def _warmup_numba(self) -> None:
-        try:
-            self.sig_numba_ready.disconnect()
-            self.sig_numba_error.disconnect()
-        except TypeError:
-            pass
-        self.sig_numba_ready.connect(self._on_numba_ready_ui)
-        self.sig_numba_error.connect(self._on_numba_error_ui)
-        import threading
+    #: STRAT runs in fallback mode when its warm-up fails: every failure ends in sig_numba_ready.
+    WARMUP_FAULTS = Exception
 
-        if hasattr(self, "status_label"):
-            self.status_label.setText("System warming up (compiling JIT)...")
-        t = threading.Thread(target=self._warmup_numba_thread_runner, daemon=True)
-        t.start()
+    def _warmup_numba(self) -> None:
+        self._start_numba_warmup_thread()
         # Fallback: unlock UI after 60s even if JIT is still compiling
         self._jit_fallback_timer = QTimer(self)
         self._jit_fallback_timer.setSingleShot(True)
         self._jit_fallback_timer.timeout.connect(self._on_jit_fallback_timeout)
         self._jit_fallback_timer.start(60_000)
 
-    def _warmup_numba_thread_runner(self) -> None:
-        try:
-            _log = logging.getLogger("CERTUS")
-            dummy_wl, dummy_n, dummy_thick = (
-                np.array([1000.0], dtype=np.float64),
-                np.array([1.5], dtype=np.float64),
-                np.array([100.0], dtype=np.float64),
-            )
+    def _compile_numba_kernels(self) -> None:
+        _log = logging.getLogger("CERTUS")
+        dummy_wl, dummy_n, dummy_thick = (
+            np.array([1000.0], dtype=np.float64),
+            np.array([1.5], dtype=np.float64),
+            np.array([100.0], dtype=np.float64),
+        )
 
-            _log.info("[JIT-WARMUP] step 1/5 – calculate_RT_vectorized_real_HL")
-            _ = calculate_RT_vectorized_real_HL(dummy_wl, dummy_n, dummy_n, dummy_n, dummy_thick)
+        _log.info("[JIT-WARMUP] step 1/5 – calculate_RT_vectorized_real_HL")
+        _ = calculate_RT_vectorized_real_HL(dummy_wl, dummy_n, dummy_n, dummy_n, dummy_thick)
 
-            _log.info("[JIT-WARMUP] step 2/5 – simulate_growth_kernel")
-            _ = simulate_growth_kernel(
-                dummy_thick,
-                0,
-                np.array([0.0], dtype=np.float64),
-                1000.0,
-                2.3,
-                1.45,
-                1.52,
-                80.0,
-                0.0,
-                1.0,
-                NON_MONOTONIC_MODE_ATTENUATE,
-            )
+        _log.info("[JIT-WARMUP] step 2/5 – simulate_growth_kernel")
+        _ = simulate_growth_kernel(
+            dummy_thick,
+            0,
+            np.array([0.0], dtype=np.float64),
+            1000.0,
+            2.3,
+            1.45,
+            1.52,
+            80.0,
+            0.0,
+            1.0,
+            NON_MONOTONIC_MODE_ATTENUATE,
+        )
 
-            dummy_cand = np.array([550.0], dtype=np.float64)
-            dummy_thick_nom = np.array([100.0, 100.0], dtype=np.float64)
-            dummy_complex = np.array([2.3 + 0.0j], dtype=np.complex128)
+        dummy_cand = np.array([550.0], dtype=np.float64)
+        dummy_thick_nom = np.array([100.0, 100.0], dtype=np.float64)
+        dummy_complex = np.array([2.3 + 0.0j], dtype=np.complex128)
 
-            _log.info("[JIT-WARMUP] step 3/5 – rank_nucleation_candidates_kernel")
-            _ = rank_nucleation_candidates_kernel(
-                dummy_cand,
-                dummy_thick_nom,
-                dummy_complex,
-                dummy_complex,
-                dummy_complex,
-                0.01,
-                80.0,
-                2.0,
-                2,
-                1,
-                True,
-                NON_MONOTONIC_MODE_ATTENUATE,
-                0,
-            )
+        _log.info("[JIT-WARMUP] step 3/5 – rank_nucleation_candidates_kernel")
+        _ = rank_nucleation_candidates_kernel(
+            dummy_cand,
+            dummy_thick_nom,
+            dummy_complex,
+            dummy_complex,
+            dummy_complex,
+            0.01,
+            80.0,
+            2.0,
+            2,
+            1,
+            True,
+            NON_MONOTONIC_MODE_ATTENUATE,
+            0,
+        )
 
-            _log.info("[JIT-WARMUP] step 4/5 – find_nucleation_adaptive_kernel")
-            _ = find_nucleation_adaptive_kernel(
-                dummy_cand,
-                dummy_thick_nom,
-                dummy_complex,
-                dummy_complex,
-                dummy_complex,
-                0.01,
-                80.0,
-                2.0,
-                2,
-                2,
-                1,
-                1.4,
-                1.5,
-                True,
-                NON_MONOTONIC_MODE_ATTENUATE,
-                0,
-            )
+        _log.info("[JIT-WARMUP] step 4/5 – find_nucleation_adaptive_kernel")
+        _ = find_nucleation_adaptive_kernel(
+            dummy_cand,
+            dummy_thick_nom,
+            dummy_complex,
+            dummy_complex,
+            dummy_complex,
+            0.01,
+            80.0,
+            2.0,
+            2,
+            2,
+            1,
+            1.4,
+            1.5,
+            True,
+            NON_MONOTONIC_MODE_ATTENUATE,
+            0,
+        )
 
-            dummy_history = np.zeros((1, 2), dtype=np.float64)
-            dummy_noise = np.array([0.0], dtype=np.float64)
+        dummy_history = np.zeros((1, 2), dtype=np.float64)
+        dummy_noise = np.array([0.0], dtype=np.float64)
 
-            _log.info("[JIT-WARMUP] step 5/5 – validate_wavelengths_batch")
-            _ = validate_wavelengths_batch(
-                dummy_cand,
-                dummy_complex,
-                dummy_complex,
-                dummy_complex,
-                dummy_history,
-                dummy_thick_nom,
-                0,
-                80.0,
-                dummy_noise,
-                2.0,
-                NON_MONOTONIC_MODE_ATTENUATE,
-            )
+        _log.info("[JIT-WARMUP] step 5/5 – validate_wavelengths_batch")
+        _ = validate_wavelengths_batch(
+            dummy_cand,
+            dummy_complex,
+            dummy_complex,
+            dummy_complex,
+            dummy_history,
+            dummy_thick_nom,
+            0,
+            80.0,
+            dummy_noise,
+            2.0,
+            NON_MONOTONIC_MODE_ATTENUATE,
+        )
 
-            _log.info("[JIT-WARMUP] all kernels compiled OK")
-            self.numba_ready = True
-            try:
-                self.sig_numba_ready.emit()
-            except RuntimeError, AttributeError:
-                return
+        _log.info("[JIT-WARMUP] all kernels compiled OK")
+        self.numba_ready = True
 
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
-            self.logger.warning(f"Numba warmup warning: {e}")
-            self.numba_ready = True
-            try:
-                self.sig_numba_ready.emit()
-            except RuntimeError, AttributeError:
-                return
-
-        except Exception as e:
-            self.logger.error(f"Numba warmup failed: {e}", exc_info=True)
-            self.numba_ready = True
-            try:
-                self.sig_numba_ready.emit()
-            except RuntimeError, AttributeError:
-                return
+    def _on_numba_warmup_failure(self, exc: BaseException) -> None:
+        """Log the failure and unlock the UI anyway (warm-up thread, inside the except block)."""
+        if isinstance(exc, NUMERICAL_FAULT_EXCEPTIONS):
+            self.logger.warning(f"Numba warmup warning: {exc}")
+        else:
+            self.logger.error(f"Numba warmup failed: {exc}", exc_info=True)
+        self.numba_ready = True
+        self._emit_warmup_signal(self.sig_numba_ready)
 
     @pyqtSlot()
     def _on_numba_ready_ui(self) -> None:

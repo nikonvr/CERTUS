@@ -54,8 +54,6 @@ class CertusStratApp(
     CertusStratMultigraineMixin,
     CertusBaseApp,
 ):
-    sig_numba_ready = pyqtSignal()
-    sig_numba_error = pyqtSignal()
     """Main CERTUS-STRAT Application"""
 
     # CertusBaseApp configuration

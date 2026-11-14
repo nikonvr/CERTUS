@@ -440,11 +440,10 @@ OVERRIDES_OF = {
         "_update_target_table_headers", "_update_thickness_display", "closeEvent", "load_config",
     },
     "certus.ui.certus_strat_ui:CertusStratApp": {
-        "_on_numba_error_ui", "_on_numba_ready_ui", "_warmup_numba_thread_runner",
-        "APP_NAME", "APP_TITLE", "DEFAULT_HEIGHT", "DEFAULT_WIDTH", "MIN_HEIGHT", "MIN_WIDTH", "_SESSION_FILE_LOADER",
-        "__init__", "_apply_theme", "_apply_ui_zoom", "_build_log_container", "_collect_config", "_get_log_widget",
-        "_save_undo_state", "_warmup_numba", "closeEvent", "save_config", "sig_numba_error", "sig_numba_ready",
-        "timerEvent",
+        "APP_NAME", "APP_TITLE", "DEFAULT_HEIGHT", "DEFAULT_WIDTH", "MIN_HEIGHT", "MIN_WIDTH", "WARMUP_FAULTS",
+        "_SESSION_FILE_LOADER", "__init__", "_apply_theme", "_apply_ui_zoom", "_build_log_container",
+        "_collect_config", "_compile_numba_kernels", "_get_log_widget", "_on_numba_error_ui", "_on_numba_ready_ui",
+        "_on_numba_warmup_failure", "_save_undo_state", "_warmup_numba", "closeEvent", "save_config", "timerEvent",
     },
     "certus.ui.certus_metal_single_gui:CertusMetalSingleApp": {
         "MODULE_ID", "_COMPUTATION_THREADS", "_LOCAL_OPTIM_PHASE", "__init__", "_add_material_specific_rows",

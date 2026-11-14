@@ -1,13 +1,14 @@
 # Chantiers restants — revue du 14 novembre 2026
 
 Périmètre demandé : suggestions formulées ou actualisées les **12, 13 et 14 novembre 2026**.
-Revue des 209 Markdown présents et suivis, des fichiers non suivis (aucun Markdown), des dates et des
+Revue des Markdown présents et suivis, des fichiers non suivis (aucun Markdown), des dates et des
 changements Git récents. Le seul Markdown ignoré est celui du cache pytest. Les corrections de liens et les
 mentions d'archivage dans des rapports anciens ne constituent pas de nouvelles suggestions.
 
 La liste initiale est suivie depuis `b6fb1939`. Les identifiants sont conservés pour la traçabilité du
 [contre-audit du 14 novembre](../reports/contre_audit_chantiers_2026-11-14/bilan.md).
-Le P1 restant est le 33.
+Les lignes 34 à 42 viennent de l'[audit général du 14 novembre](../reports/audit_general_2026-11-14/bilan.md) et ne sont pas
+classées par complexité. Les P1 sont 33, 34, 35 et 36.
 
 ## Ordre du plus simple au plus complexe
 
@@ -19,7 +20,13 @@ défauts actuels tant qu'une activation différente n'est pas décidée sur mesu
 **P2** = amélioration utile après les fondations ; **P3** = exploration ou rendement attendu plus faible.
 La priorité est indépendante de la difficulté : un P1 complexe peut attendre son préalable plus simple.
 La [campagne de co-conception A](../reports/codesign_2026-11-14/bilan.md) est terminée.
-Les essais humains 33 suivent leur propre calendrier. Le profilage précède les modifications de gradients.
+Le profilage précède les modifications de gradients.
+
+**Bloqués par une décision de 👤** : périmètre UI (16, 18) ; modèle de dépôt représentatif (24, 31, 32) ;
+reprise B, « plus tard » selon U12 (27, 28, 29) ; date des essais humains (33) ; reconstruction, dépendance
+tierce et publication (39, 40, 41). **Exécutables par une IA seule** : 05, 20, 21, 25, 34, 35, 36, 37, 38, 42 et
+la mesure du 29.
+
 | Ordre | Priorité | Complexité | Chantier restant | État et critère de fin | Source |
 |---:|---|---|---|---|---|
 | 05 | P3 | Faible à moyenne | Jacobiens Sellmeier manquants (D6) | Mesurer la part des ajustements concernés. Valider un éventuel gradient par différences finies et mesurer le gain à paramètres identiques. | A §4 |
@@ -28,7 +35,7 @@ Les essais humains 33 suivent leur propre calendrier. Le profilage précède les
 | 18 | P3 | Moyenne à forte | Socle de SMOOTHER et SUBSTRATE (R7) | Après arbitrage du périmètre UI, préserver chargement, calcul et export en ajoutant thème et session communs. | A §2.2–2.3 |
 | 19 | P2 | Moyenne à forte | Éprouver le sélecteur de tests | Compléter l'audit d'appels et le rejeu historique avec comparaison aux mutations de la suite intégrale. La validation complète reste la référence. | Q §5.3 |
 | 20 | P3 | Forte | Raffinement en longueurs d'onde complexes | Le polissage adaptatif à TOT fixée laisse un MF résolu de 0,10983 %. Comparer le raffinement complexe à ce témoin et vérifier sa tenue sur des départs éloignés. | A §3.3–3.4 et Q §10 |
-| 21 | P3 | Forte | Dérivées SPLINE (D4/D5, ancien 13) | (a) fait : le polissage n, k, d par paquet de trois nœuds du Smart Init a quitté l'UI pour `spline_smart_init.py::optimize_smart_init_nkd_packet`, identique au bit ; il tourne encore sur le fil de l'interface. Reste : profiler nœuds libres et Smart Init, puis ajouter les gradients. Vérifier les dérivées des valeurs et positions aux cas limites, y compris les replis. | A §4 |
+| 21 | P3 | Forte | Dérivées SPLINE (D4/D5, ancien 13) | (a) fait : le polissage n, k, d par paquet de trois nœuds du Smart Init a quitté l'UI pour `spline_smart_init.py::optimize_smart_init_nkd_packet`, identique au bit ; il tourne encore sur le fil de l'interface. Reste, après le 36 (C20) : profiler nœuds libres et Smart Init, puis ajouter les gradients. Vérifier les dérivées des valeurs et positions aux cas limites, y compris les replis. | A §4 |
 | 24 | P2 | Forte | Mérite robuste (anciens 23, 24 et 30b) | Le mérite à 1 nm dégrade le RMS déposé des trois paires étudiées. Chiffrer le compromis nominal/robuste sous un modèle de dépôt représentatif avant de tester un nuage, la descente de sensibilité ou la covariance. Confirmer sur tirages disjoints. | Q §4.2–4.5 et campagne A |
 | 25 | P3 | Forte | Germes structurés Fourier pour le mémétique | Piste non mesurée : diversité de phases, conversion H/L compatible avec les contraintes, comparaison au tirage actuel sur trois-raies et cissoïde. | Q §1.3 |
 | 27 | P3 | Très forte | Reprise de calcul STRAT (U12 B) | Mesurer le coût des étapes du pipeline avant de choisir les points de reprise. Vérifier la compatibilité des réglages, graines, noyaux et ouvriers, ainsi que l'identité au bit. | U12 §4–5 |
@@ -37,6 +44,15 @@ Les essais humains 33 suivent leur propre calendrier. Le profilage précède les
 | 31 | P2 | Très forte | Co-conception B : varier épaisseurs et plan ensemble | La recherche locale STRAT varie actuellement le plan. Ajouter les épaisseurs, réaccorder les voisines et confirmer le gain contre les cibles sans arrêts ajoutés. | A §1.4 |
 | 32 | P3 | Très forte | Co-conception C : critère de contrôlabilité dans DESIGN | Corréler les marges et dynamiques aux résultats STRAT sur des plans avec une part de Rate représentative. La campagne A a retenu 31 à 32 couches Rate sur 34. | A §1.4 et campagne A |
 | 33 | P1 | Validation humaine | U13 : écran réel, Narrateur, cinq utilisateurs | Partie machine faite. Exécuter les essais humains et consigner les observations selon le protocole ; cette ligne requiert les personnes et le matériel. | U13 |
+| 34 | P1 | À instruire | Test C1 intermittent (fente) | `test_the_slit_profile_is_inert_when_absent_or_zero` échoue sous charge et passe seul, à deux validations. Trouver la cause, puis corriger le calcul ou le test. Fin : 20 passages verts sous la charge de la validation. | G §2.1 |
+| 35 | P1 | Moyenne | ALG-03 : grille oblique de DESIGN | Vérifier que la grille densifiée laisse le précalcul oblique sur l'ancienne grille. Si oui : test rouge d'abord, correction, oracle avant et après. Sinon, retirer la mention d'`ETAT.md` §1. | G §2.2 |
+| 36 | P1 | Faible | Registre des défauts ouverts | D84, D111, D112, D113, D116 et C20 sont cités ouverts sans définition hors de `reports/`. Retrouver chaque définition, statuer (corrigé avec son test, ou chantier) et consigner l'état. | G §2.3 |
+| 37 | P2 | Faible à moyenne | Contrôle local avant publication | Un script qui vérifie secrets, métadonnées des classeurs et œuvres de tiers sur les commits à pousser. Fin : il échoue sur un secret semé. | G §2.4 |
+| 38 | P2 | Moyenne | Algorithmes restants dans `certus.ui` | Descendre les deux optimisations de `certus_design_ui_optimization.py` hors de l'UI, identiques au bit, comme 21 (a). | G §2.5 |
+| 39 | P3 | Moyenne | Exécutable gelé et version | L'exécutable date de `dbec2fc1`. Reconstruire, essai de fumée, et vérifier que les exports portent une version qui distingue l'état du code. | G §2.6 |
+| 40 | P2 | Moyenne | Recoupement du TMM par un code tiers | Sonde hors noyau comparant R et T à un code externe sur des empilements absorbants et obliques. | G §2.7 |
+| 41 | P3 | Faible | Branches Dependabot | Douze mises à jour en attente depuis le 30 septembre : fusionner ou fermer. | G §2.8 |
+| 42 | P3 | Faible | Scripts introuvables | 30 scripts sur 106 ne sont cités nulle part hors `reports/`. Citer dans la référence ceux qui appliquent une règle, archiver les sondes à usage unique. | G §2.9 |
 
 ## Sources conservées
 
@@ -44,6 +60,7 @@ Les essais humains 33 suivent leur propre calendrier. Le profilage précède les
 - **Q** : [questions DESIGN du 13 novembre et mesures du 14](../reports/questions_design_2026-11-13/bilan.md).
 - **U12** : [spécification de reprise, actualisée le 13 novembre](../reports/refactor_corridors_2026-11-11/U12_specification.md).
 - **U13** : [protocole des essais humains](../reports/refactor_corridors_2026-11-11/U13_protocole.md).
+- **G** : [audit général du 14 novembre](../reports/audit_general_2026-11-14/bilan.md).
 
 Les chantiers 03, 06 et 17 sortent de la liste active pour rendement insuffisant. Le 26 est gelé
 tant que les écarts et plantages du cache Numba restent ouverts. Les regroupements conservent les

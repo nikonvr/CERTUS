@@ -384,9 +384,31 @@ entre 0,01 et 0,001 nm pour le témoin fixe signale que le juge à 0,01 nm est t
 Le rejeu sur `ba1f8da2` du 14 novembre confirme l'admissibilité par `engine.admissible` (plafond
 14 171,1 nm, plancher 5 nm, au plus 101 couches). Le départ compte 101 couches, TOT 14 171,000 nm et
 couche minimale 13,087 nm. Après polissage adaptatif, il compte 101 couches, TOT 14 166,472 nm et
-couche minimale 9,520 nm. La comparaison au mérite retenu pour l'article, à TOT égale et sur un
-juge convergé, reste à mesurer.
+couche minimale 9,520 nm.
 [Mesures des trois départs](probe_auto_grid.json) · [rejeu et oracle](probe_auto_grid_crosscheck.json).
+
+**Comparaison à TOT fixée.** Le départ et les deux bras gardent la séquence de `tl101_A_best.csv`, soit 101
+couches et une TOT de 14 171,000 nm. SLSQP utilise la même contrainte linéaire, le même plancher de 5 nm
+et un budget maximal de 20 000 itérations par bras. Les deux bras minimisent la moyenne du résidu au
+carré pondérée par des trapèzes en longueur d'onde sur l'union des bandes. La grille fixe compte 2 707 points.
+Le bras adaptatif polit successivement sur 178, 283, 582 et 675 points.
+
+| Structure | MF nominal à 1 nm (%) | MF résolu à 0,0001 nm (%) | Couche minimale (nm) | Polissage (s) |
+|---|---:|---:|---:|---:|
+| Départ | 0,01279677 | 0,35107973 | 13,086617 | — |
+| Fixe à 0,1 nm | 0,01815622 | 0,20856368 | 5,000000 | 24,9 |
+| Adaptatif | 0,01975217 | 0,10982871 | 16,430016 | 14,4 |
+
+Les trois structures passent `engine.admissible` et conservent la TOT à moins de 1e-6 nm. Entre les pas
+de 0,0002 et 0,0001 nm, l'écart relatif maximal des scores est inférieur à 0,006 %. L'oracle indépendant
+`rt_stack`, compilé à partir de sa source sans fastmath, confirme chaque score sur la grille de 0,0001 nm
+à moins de 1e-9 point de MF. Le MF résolu est 47,3 % inférieur au bras fixe sur ce départ, avec un MF
+nominal plus élevé. Les résultats du 13 novembre portent sur d'autres départs et le juge de l'article.
+La [mesure reproductible](probe_ricl_fixed_tot.json) conserve les épaisseurs, les pas et les scores des trois structures.
+
+```bat
+python scripts\probe_ricl_fixed_tot.py
+```
 
 ## 11. Grille et sélection robuste sur le 50/50
 

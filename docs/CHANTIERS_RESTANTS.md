@@ -7,7 +7,7 @@ mentions d'archivage dans des rapports anciens ne constituent pas de nouvelles s
 
 La liste initiale est suivie depuis `b6fb1939`. Les identifiants sont conservés pour la traçabilité du
 [contre-audit du 14 novembre](../reports/contre_audit_chantiers_2026-11-14/bilan.md).
-Les quatre P1 retenus sont 04, 10, 15 et 33.
+Les P1 restants sont 10, 15 et 33.
 
 ## Ordre du plus simple au plus complexe
 
@@ -18,13 +18,12 @@ défauts actuels tant qu'une activation différente n'est pas décidée sur mesu
 **Priorité proposée** : **P1** = à traiter en premier (fiabilité, preuve scientifique ou fondation nécessaire) ;
 **P2** = amélioration utile après les fondations ; **P3** = exploration ou rendement attendu plus faible.
 La priorité est indépendante de la difficulté : un P1 complexe peut attendre son préalable plus simple.
-Traiter 04 (RICL à TOT fixée), puis 10 (contexte DESIGN) et 15 (co-conception A).
+Traiter 10 (contexte DESIGN), puis 15 (co-conception A).
 Les essais humains 33 suivent leur propre calendrier. Le profilage précède les modifications de gradients.
 | Ordre | Priorité | Complexité | Chantier restant | État et critère de fin | Source |
 |---:|---|---|---|---|---|
 | 01 | P2 | Faible | Expliquer les quatre coûts de 120 s des tests d'actions UX | À mesurer : séparer coût de fixture et coût propre, puis corriger le registre sans affaiblir les tests. | Q §5.1 |
 | 02 | P3 | Faible | Mutualiser la conversion épaisseur → QWOT de RE et du socle (R9) | Deux méthodes restent distinctes. Une conversion commune, même résultat et colonnes correctes. | A §2.2 |
-| 04 | P1 | Moyenne | RICL à TOT fixée | Le rejeu libre respecte les limites. Comparer à TOT identique, plancher 5 nm et au plus 101 couches. Rapporter le MF en %, tester la stabilité à 1 % entre deux pas fins et recouper par l'oracle au pas du jugement. Consigner N, TOT, épaisseur minimale et admissibilité par structure. | Q §10 |
 | 05 | P3 | Faible à moyenne | Jacobiens Sellmeier manquants (D6) | Mesurer la part des ajustements concernés. Valider un éventuel gradient par différences finies et mesurer le gain à paramètres identiques. | A §4 |
 | 07 | P3 | Moyenne | Amorçage Numba (R2) | Le socle possède déjà le gestionnaire. Mutualiser les comportements communs en préservant signaux, erreurs et durée de vie des fils Qt. Vérifier le démarrage à froid des cinq fenêtres. | A §2.2 |
 | 08 | P2 | Moyenne | Mutualiser les fenêtres METAL simple/bicouche (R1) | Des groupes de paramètres et traitements de progression restent doublés malgré le socle existant. Préserver les différences physiques. | A §2.2 |
@@ -36,7 +35,7 @@ Les essais humains 33 suivent leur propre calendrier. Le profilage précède les
 | 16 | P3 | Moyenne à forte | Graphes et détachement (R4/R5, ancien 09) | Après arbitrage du périmètre UI, préserver les interactions propres à STRAT, les mises à jour et le retour à la fenêtre source. | A §2.2–2.3 |
 | 18 | P3 | Moyenne à forte | Socle de SMOOTHER et SUBSTRATE (R7) | Après arbitrage du périmètre UI, préserver chargement, calcul et export en ajoutant thème et session communs. | A §2.2–2.3 |
 | 19 | P2 | Moyenne à forte | Éprouver le sélecteur de tests | Compléter l'audit d'appels et le rejeu historique avec comparaison aux mutations de la suite intégrale. La validation complète reste la référence. | Q §5.3 |
-| 20 | P3 | Forte | Raffinement en longueurs d'onde complexes | Reprendre les refus des départs éloignés si 04 montre que les contraintes de ressources limitent le gain de la grille adaptative. | A §3.3–3.4 |
+| 20 | P3 | Forte | Raffinement en longueurs d'onde complexes | Le polissage adaptatif à TOT fixée laisse un MF résolu de 0,10983 %. Comparer le raffinement complexe à ce témoin et vérifier sa tenue sur des départs éloignés. | A §3.3–3.4 et Q §10 |
 | 21 | P3 | Forte | Dérivées SPLINE (D4/D5, ancien 13) | Profiler nœuds libres et Smart Init. Vérifier les dérivées des valeurs et positions aux cas limites, y compris les replis. | A §4 |
 | 22 | P2 | Forte | Gradient analytique FIELD (D1) | Profiler. Vérifier la dépendance au gradient absorbant D113 avant de le réutiliser. Contrôler par l'oracle et les différences finies, puis comparer sur graines fixées. | A §4 |
 | 24 | P2 | Forte | Mérite robuste (anciens 23, 24 et 30b) | Après 10 et si 15 le justifie, essayer d'abord le nuage avec les Jacobiennes existantes et des tirages appariés. Tester ensuite la descente de sensibilité ou la covariance si les mesures le justifient. Confirmer sur des tirages disjoints et par STRAT. | Q §4.2–4.5 |

@@ -238,3 +238,24 @@ def test_a_replay_compiles_on_a_fresh_numba_cache(tmp_path: Path, monkeypatch: p
     assert seen["cache"] != str(tmp_path / "shared")
     assert seen["files"] == []
     assert not Path(seen["cache"]).exists(), "the fresh cache is removed after the replay"
+
+
+def _threads_seen(tmp_path: Path, *extra: str) -> str:
+    code = "import os; print('T=' + os.environ.get('NUMBA_NUM_THREADS', '-'))"
+    result = vp.run_stage(vp.Stage("threads", (sys.executable, "-c", code, *extra), "check"), tmp_path)
+    return next(line for line in result.log.read_text(encoding="utf-8").splitlines() if line.startswith("T="))
+
+
+def test_a_parallel_stage_gives_each_worker_its_share_of_the_cores(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Measured 2026-11-14, tests/unit at -n 16 on 16 cores: 299 s with one Numba thread per worker, 512 s with 16."""
+    monkeypatch.delenv("NUMBA_NUM_THREADS", raising=False)
+    monkeypatch.setattr(vp.os, "cpu_count", lambda: 16)
+    assert _threads_seen(tmp_path, "-n", "16") == "T=1"
+    assert _threads_seen(tmp_path, "-n", "6") == "T=2"
+    assert _threads_seen(tmp_path) == "T=-", "a serial stage keeps Numba's default"
+
+
+def test_a_thread_count_chosen_by_the_caller_is_kept(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("NUMBA_NUM_THREADS", "16")
+    monkeypatch.setattr(vp.os, "cpu_count", lambda: 16)
+    assert _threads_seen(tmp_path, "-n", "16") == "T=16"

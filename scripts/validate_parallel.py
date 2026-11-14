@@ -159,8 +159,17 @@ def failed_ids(text: str) -> list[str]:
 # =============================================================================
 
 
-def _env() -> dict[str, str]:
-    return {**os.environ, "PYTHONIOENCODING": "utf-8"}
+def _env(command: tuple[str, ...] = ()) -> dict[str, str]:
+    """L'environnement d'une etape. Une etape xdist donne a chaque worker sa part des coeurs en fils Numba.
+
+    Sans cela, 16 workers lancent chacun 16 fils sur 16 coeurs. Mesure du 2026-11-14, `tests/unit/` a `-n 16` :
+    299 s a un fil par worker, 512 s a 16. Un `NUMBA_NUM_THREADS` deja pose par l'appelant est garde.
+    """
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
+    if "-n" in command and "NUMBA_NUM_THREADS" not in os.environ:
+        workers = int(command[command.index("-n") + 1])
+        env["NUMBA_NUM_THREADS"] = str(max(1, (os.cpu_count() or 1) // max(1, workers)))
+    return env
 
 
 def run_stage(stage: Stage, out_dir: Path) -> Result:
@@ -168,7 +177,7 @@ def run_stage(stage: Stage, out_dir: Path) -> Result:
     start = time.monotonic()
     with open(log, "wb") as stream:
         returncode = subprocess.run(
-            stage.command, cwd=ROOT, env=_env(), stdout=stream, stderr=subprocess.STDOUT, check=False
+            stage.command, cwd=ROOT, env=_env(stage.command), stdout=stream, stderr=subprocess.STDOUT, check=False
         ).returncode
     text = log.read_text(encoding="utf-8", errors="replace")
     counts = parse_summary(text) if stage.kind == "pytest" else {}

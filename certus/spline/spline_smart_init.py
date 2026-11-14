@@ -9,10 +9,11 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
-from scipy.optimize import minimize_scalar
+from scipy.optimize import OptimizeResult, minimize, minimize_scalar
 
 from certus.core.certus_core import K_MAX_LIMIT, N_MAX_LIMIT, N_MIN_LIMIT, NUMERICAL_FAULT_EXCEPTIONS
 from certus.spline.certus_index_spline_core import (
@@ -20,6 +21,7 @@ from certus.spline.certus_index_spline_core import (
     DataType,
     SplineOptConfig,
     _to_fraction_T,
+    rmse_at_spline_stage_x0_init,
 )
 from certus.spline.spline_objective import (
     SplinePWLObjective,
@@ -1122,3 +1124,73 @@ def pick_best_manual_material_preset(
     rows.sort(key=lambda t: t[1])
 
     return best_id, best_rm, best_d, best_n, best_L, rows
+
+
+@dataclass(frozen=True)
+class SmartInitNkdPacketResult:
+    """Outcome of :func:`optimize_smart_init_nkd_packet`.
+
+    ``result.x`` is ``[d, n_0..n_{m-1}, L_0..L_{m-1}]`` for the knots ``idx_list`` (in that order).
+    """
+
+    idx_list: list[int]
+    result: OptimizeResult
+
+
+def optimize_smart_init_nkd_packet(
+    cfg: SplineOptConfig,
+    sk: np.ndarray,
+    n_phys: np.ndarray,
+    L_nodes: np.ndarray,
+    d_nm: float,
+    idx: int,
+    *,
+    k_n: int,
+    L_lo: float,
+    L_hi: float,
+    relax_n_mono: bool = False,
+) -> SmartInitNkdPacketResult:
+    """Polish thickness and the n, ln k values of the 3 knots around ``idx`` (Smart Init, no Qt).
+
+    Packet: ``[0, 1, 2]`` at the first knot, the last three at ``k_n - 1``, else ``[idx-1, idx, idx+1]``.
+    Free parameters ``[d, n_packet..., L_packet...]`` start from the current values; bounds are
+    ``(cfg.d_lo, cfg.d_hi)``, ``(1.0, 3.3)`` per n and ``(L_lo, L_hi)`` per L. The loss is the RMSE of
+    :func:`rmse_at_spline_stage_x0_init`; L-BFGS-B with finite differences, ``maxfun=150``.
+    The other knots stay fixed. Inputs are not modified.
+    """
+
+    if idx == 0:
+        idx_list = [0, 1, 2]
+    elif idx == k_n - 1:
+        idx_list = [k_n - 3, k_n - 2, k_n - 1]
+    else:
+        idx_list = [idx - 1, idx, idx + 1]
+    idx_list = [i for i in idx_list if 0 <= i < k_n]
+
+    init_ne = np.asarray(n_phys, dtype=np.float64).ravel().copy()
+    init_Le = np.asarray(L_nodes, dtype=np.float64).ravel().copy()
+    cur_sk = np.asarray(sk, dtype=np.float64).ravel()
+
+    n_len = len(idx_list)
+    x0 = np.zeros(1 + 2 * n_len)
+    x0[0] = d_nm
+    for pos, i_node in enumerate(idx_list):
+        x0[1 + pos] = init_ne[i_node]
+        x0[1 + n_len + pos] = init_Le[i_node]
+
+    bounds = [(float(cfg.d_lo), float(cfg.d_hi))]
+    bounds.extend((1.0, 3.3) for _ in idx_list)
+    bounds.extend((L_lo, L_hi) for _ in idx_list)
+
+    def loss(x: np.ndarray) -> float:
+        cur_d = x[0]
+        cur_ne = init_ne.copy()
+        cur_Le = init_Le.copy()
+        for pos, i_node in enumerate(idx_list):
+            cur_ne[i_node] = x[1 + pos]
+            cur_Le[i_node] = x[1 + n_len + pos]
+        _, rmse = rmse_at_spline_stage_x0_init(cfg, cur_sk, cur_ne, cur_Le, cur_d, relax_n_mono=relax_n_mono)
+        return float(rmse)
+
+    res = minimize(loss, x0, method="L-BFGS-B", bounds=bounds, options={"maxfun": 150})
+    return SmartInitNkdPacketResult(idx_list=idx_list, result=res)

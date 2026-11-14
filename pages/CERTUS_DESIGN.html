@@ -86,6 +86,7 @@
                 <li><a href="#current-design">Workflow and benchmarks</a></li>
                 <li><a href="#design-setup">Set up a design</a></li>
                 <li><a href="#design-options">Optimization and sampling</a></li>
+                <li><a href="#design-robust-search">Robustness-aware search</a></li>
                 <li><a href="#design-diagnostics">Diagnostics and tolerance analysis</a></li>
                 <li><a href="#design-physics">Transfer matrices and derivatives</a></li>
                 <li><a href="#design-completion">Review and export</a></li>
@@ -154,7 +155,9 @@
                 wavelengths for the final polish from the 101-layer record. The resulting RMSE was
                 9.58 × 10<sup>−5</sup> on both the 0.01 nm and 0.001 nm evaluation grids to three significant figures.
                 The independent oracle agreed on the 0.01 nm grid. This probe used the DESIGN kernels in the RICL
-                engine. <a href="../reports/questions_design_2026-11-13/bilan.md#10-grille-automatique-sur-le-tri-bande-ricl">Three starts, reference grids and oracle check</a>.</p>
+                engine and allowed total optical thickness to vary. A comparison at the article's fixed total
+                optical thickness remains to be measured.
+                <a href="../reports/questions_design_2026-11-13/bilan.md#10-grille-automatique-sur-le-tri-bande-ricl">Three starts, reference grids and oracle check</a>.</p>
             <table>
                 <caption>50/50 workflow, 2026-11-14, medians over seeds 42, 77 and 202</caption>
                 <thead><tr><th scope="col">Option</th><th scope="col">Nominal RMSE</th><th scope="col">Runtime</th>
@@ -181,8 +184,8 @@
                 <li><strong>Score comparison:</strong> the difference between the window's RMSE and fixed-grid RMSE is
                     unresolved (ALG-22). Compare exported structures on the same independent grid.</li>
             </ul>
-            <p>The <a href="../docs/AUDITS.md">audit register</a> records the open issues and corrected export/champion
-                inconsistencies. The technical sections below explain the shared physics and the PGLOBAL branch;
+            <p>The <a href="../docs/CHANTIERS_RESTANTS.md">current work list</a> records the remaining proposals
+                from the November 12–14 review. The technical sections below explain the shared physics and the PGLOBAL branch;
                 PGLOBAL's clustering description is not the default memetic algorithm.</p>
         </section>
 
@@ -245,6 +248,66 @@
                 lies between all sample points and midpoints can escape detection. Check narrow features on a
                 denser independent grid or with the resonance tool.
                 <a href="../reports/questions_design_2026-11-13/bilan.md">Sampling and robust selection study</a>.</p>
+        </section>
+
+        <section id="design-robust-search">
+            <h2>Robustness-aware search</h2>
+            <p>DESIGN can favor candidate stacks whose spectra are less sensitive to independent layer-thickness
+                errors. This optional criterion acts during the memetic population search. It complements
+                <strong>Robust N</strong>, which compares saved layer-count candidates, and
+                <strong>Spectral Monte Carlo</strong>, which tests a finished stack under simulated errors.</p>
+
+            <h3>Activate population selection under thickness errors</h3>
+            <p>Save the design, then merge the following settings into its existing <code>optimization</code> block
+                and reload it. Older example files use the alias <code>optim</code>; update that existing block
+                rather than creating a second one. The robustness setting is configured through the design file.</p>
+            <pre><code>"optimization": {
+    "memetic_polisher": "lbfgs_then_lm",
+    "memetic_robust_sigma_nm": 1.0
+}</code></pre>
+            <p>Here <code>1.0</code> means an independent physical-thickness error with a standard deviation of
+                1 nm for each variable layer. Set <code>memetic_robust_sigma_nm</code> to <code>0</code> to use
+                nominal population ranking, which remains the default. Choose the positive value from the
+                intended deposition process rather than from the desired spectral score.</p>
+
+            <h3>Criterion and supported configurations</h3>
+            <p>If $r(d)$ is the weighted residual vector and $J=\partial r/\partial d$ its Jacobian with respect
+                to variable physical thicknesses in nm, the population ranks locally polished candidates by</p>
+            <p class="math-block">$$C_{\mathrm{selection}}(d)=C_{\mathrm{nominal}}(d)
+                +\sigma_d^2\lVert J(d)\rVert_F^2.$$</p>
+            <p>The added term is the Gauss–Newton estimate of the mean-square sensitivity to independent,
+                zero-mean thickness errors with equal variance. Each local descent still minimizes the nominal
+                merit; the population then favors less sensitive solutions among the minima it finds.
+                Subsequent local refinement and cleanup also use the nominal merit. The final displayed RMSE
+                is nominal, so evaluate the exported final stack under errors as well.</p>
+            <ul>
+                <li>The criterion requires the normal-incidence, real-index fast context and an available
+                    <code>lm</code> or <code>lbfgs_then_lm</code> polisher. The residuals must reproduce the
+                    production merit, and the layer bounds must respect the active thickness floor.</li>
+                <li>If these conditions fail, the log explains the fallback and warns that the robustness
+                    setting was ignored. Check the optimization log before interpreting a run as robust.</li>
+                <li>This selection model uses equal absolute errors on variable layers. Correlated deposition
+                    errors, material-index uncertainty and large nonlinear perturbations require additional
+                    assessment. The Jacobian criterion is a local approximation.</li>
+            </ul>
+
+            <h3>Validate and choose the final structure</h3>
+            <ol>
+                <li>Compare nominal and robustness-aware runs with matching seeds, targets, bounds and budgets.
+                    Evaluate the exported stacks on the same independent wavelength grid.</li>
+                <li>Use <strong>Spectral Monte Carlo</strong> with a fresh seed and the intended absolute,
+                    relative and optical-thickness error settings. Report nominal RMSE, RMS under errors,
+                    95th percentile, mean of the worst 5% and simulated yield when a limit is specified.</li>
+                <li>Use <strong>Robust N</strong> after an optimization to rank the available Pareto records by
+                    their second-order estimated RMSE under the configured error model. Its log recommends
+                    a layer count; inspect and validate that candidate before export.</li>
+            </ol>
+            <p>The <a href="#design-benchmarks">paired 50/50 measurement above</a> found an 18.8% reduction
+                in median RMS under 1 nm errors, with higher nominal RMSE. That result covers three seeds and
+                400 fresh Monte Carlo draws per stack. Recheck the trade-off for each target and process.</p>
+            <p>Implementation: <code>build_memetic_lm_polisher</code>, <code>OptimWorker._run_memetic_global</code>,
+                <code>WorkerManager.run_robust_n</code> and <code>spectral_monte_carlo</code>.
+                <a href="../reports/questions_design_2026-11-13/bilan.md#11-grille-et-sélection-robuste-sur-le-5050">Measured protocol and individual results</a>.</p>
         </section>
 
         <section id="design-diagnostics">

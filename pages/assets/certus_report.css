@@ -61,6 +61,10 @@
             font-weight: 600;
         }
 
+        .container [id] {
+            scroll-margin-top: 90px;
+        }
+
         .abstract {
             background: linear-gradient(145deg, #e8f6f3 0%, #f1f9f7 100%);
             padding: 30px;
@@ -281,9 +285,9 @@
         /* Keep long MathJax formulas inside the report instead of widening the phone viewport. */
         overflow-x: auto;
     }
-    /* Wide tables become their own scroll region rather than pushing the page
-       sideways. They are direct children of .container throughout these pages. */
+    /* Wide tables scroll inside their section instead of widening the report. */
     .container > table,
+    .container section > table,
     .note > table,
     .highlight-box > table {
         display: block;
@@ -291,7 +295,8 @@
         -webkit-overflow-scrolling: touch;
         max-width: 100%;
     }
-    .navbar { flex-wrap: wrap; gap: 8px; }
+    .navbar { position: static; flex-wrap: wrap; gap: 8px; }
+    .container [id] { scroll-margin-top: 16px; }
     .nav-links {
         width: 100%;
         flex-wrap: wrap;

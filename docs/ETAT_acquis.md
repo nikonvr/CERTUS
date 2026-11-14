@@ -2,7 +2,7 @@
 
 > Ce contenu **fait autorité** ;
 > `ETAT.md` n'en garde qu'un renvoi. **Un fait, un seul endroit** : corrige ici, ne recopie pas ailleurs, mets un lien.
-> Les `§N` nus sont les sections de `ETAT.md`. Les actions A3 à A9 et le protocole de mesure sont dans [`ETAT_actions.md`](ETAT_actions.md).
+> Les `§N` nus sont les sections de `ETAT.md`. Les travaux actifs sont dans [`CHANTIERS_RESTANTS.md`](CHANTIERS_RESTANTS.md).
 
 **Vocabulaire.**
 *Rate* : couche posée pour un temps, à la vitesse estimée sur les couches du même matériau contrôlées optiquement (ce n'est pas un quartz).

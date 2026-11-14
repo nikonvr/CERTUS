@@ -353,13 +353,12 @@ Mesures Windows du tri-bande et du 50/50 dans les sections suivantes.
 
 ## 9. Validation Windows
 
-Le 14 novembre, Python 3.15.2, depuis `6ff1bfb2` avec les changements appliqués. Ruff et les trois contrôles
-documentaires passent. Oracle 1 203 passés, interface 1 593, reste 322, performance 30.
-Unitaires : 6 095 passés et quatre échecs au premier passage. Les deux comparaisons STRAT et le test de
-temporisation Qt passent au rejeu isolé. Le registre des tests lents est corrigé, son lot rejoué donne 16 passés.
-La validation d'ensemble a rendu `NO-GO` avant ce dernier correctif. Les deux pages HTML passent le contrôle
-de structure et d'ancres. Les journaux sont archivés hors dépôt dans `validation-windows-20261114/` et
-`validation-windows-20261114-rejeu/`.
+Le 14 novembre, Python 3.15.2, validation complète sur `de52e01c`, 16 ouvriers et 6 pour l'interface :
+**`VALIDATION=GO`**. Ruff et les trois contrôles documentaires passent. Oracle 1 203 passés, interface
+1 593 passés (12 ignorés, 2 xfail), reste 322 passés, performance 30 passés (2 ignorés).
+Unitaires : 6 099 passés, 7 ignorés et 1 xfail ; l'unique échec au premier passage,
+`test_the_slit_profile_is_inert_when_absent_or_zero`, passe au rejeu isolé. Le validateur le classe comme
+artefact d'ordre ou de charge. Les journaux sont archivés hors dépôt sous `validation-windows-20261114-livraison/`.
 
 Le 13 novembre, [C1 sur le corpus des noyaux](c1_windows.json) donne 9 092 tableaux identiques au bit.
 Le test de pondération couvre séparément le changement volontaire sur les bandes disjointes.
@@ -368,6 +367,7 @@ Le test de pondération couvre séparément le changement volontaire sur les ban
 
 Le 14 novembre, sonde sur `tl101_A_best.csv`, 101 couches, TOT 14 171 nm. Polissage L-BFGS-B avec le noyau
 de DESIGN et les cibles du moteur RICL. Jugement commun par quadrature trapézoïdale par bande à 0,01 nm.
+La TOT est libre pendant ce polissage : la comparaison avec l'article à TOT fixée reste à mesurer.
 
 | Départ | Grille 1 nm | Grille 0,1 nm | Grille automatique |
 |---|---:|---:|---:|
@@ -407,3 +407,17 @@ Le test de sélection finale a révélé un score conservé sur l'ancienne grill
 écarter le résultat du raffinement. Corrigé dans `20563e25`, test rouge avant, 39 tests ciblés verts après.
 Les trois essais automatiques ont été rejoués. Les six témoins suivent le même chemin de calcul qu'avant ce
 correctif. Les journaux et exports bruts sont dans l'archive hors dépôt, sous `mesures-design/`.
+
+## 12. Consolidation documentaire et livraison du 14 novembre
+
+Les [33 chantiers restants](../../docs/CHANTIERS_RESTANTS.md) sont classés par complexité et priorité.
+La liste reste stable pendant le contre-audit externe. Les anciennes listes d'actions et passations ont été retirées.
+Le [manifeste du nettoyage](nettoyage_markdown_2026-11-14.json) recense 73 Markdown retirés, leur commit de référence
+et les sources anciennes conservées parce qu'elles servent encore aux documents actuels. Les données scientifiques
+et le code de calcul n'ont pas été supprimés. Les 36 exports générés par les mesures du 14 ont été rangés hors dépôt.
+
+Après cette consolidation : les 10 tests des points d'entrée passent ; Ruff et les trois contrôles documentaires
+passent ; les deux guides ont zéro erreur de structure et d'ancre ; 153 documents Markdown/HTML ont zéro lien local
+manquant. En-têtes et sections d'usage des guides vérifiés à 1 440 px et dans une fenêtre de lecture de 390 px.
+La navigation mobile ne masque plus le titre visé ; les tableaux des sections défilent dans leur propre zone.
+Les captures et le journal de validation complète sont conservés hors dépôt.

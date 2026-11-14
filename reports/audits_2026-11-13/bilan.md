@@ -174,7 +174,7 @@ record n'est pas encore recoupé par l'oracle indépendant.
 ### 3.4 Suites proposées
 
 - **P1** : polisseur Levenberg-Marquardt de Nielsen branché dans le mémétique. La validation du nouveau défaut
-  sur le séparateur 50/50 suit le [plan de reprise](REPRISE.md).
+  sur le séparateur 50/50 suit le [chantiers restants](../../docs/CHANTIERS_RESTANTS.md).
 - **P2** : juger les designs du tri-bande (et de tout problème à bandes étroites) sur une grille résolue ; lancer le
   polissage final sur grille fine, ou en longueurs d'onde complexes une fois le refus des départs éloignés compris.
 

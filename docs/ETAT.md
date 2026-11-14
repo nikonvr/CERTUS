@@ -10,21 +10,21 @@
 ## 0. Reprise — à lire en premier, à tenir à jour
 
 > L'état présent seulement ; l'historique est dans `git log` et `reports/`. À la demande : actions ouvertes et protocole de mesure
-> ([`ETAT_actions.md`](ETAT_actions.md)), acquis ([`ETAT_acquis.md`](ETAT_acquis.md)), registre des audits ([`AUDITS.md`](AUDITS.md),
-> `grep -n "ALG-02" docs/AUDITS.md`), preuves dans `reports/` (le `bilan.md` d'un dossier).
+> ([`CHANTIERS_RESTANTS.md`](CHANTIERS_RESTANTS.md)), acquis ([`ETAT_acquis.md`](ETAT_acquis.md)), preuves dans `reports/`.
 
-**Reprise active** : [réaménagement et plan de nuit](../reports/questions_design_2026-11-13/REPRISE.md).
+**Liste active** : [33 chantiers des 12–14 novembre, classés par complexité et priorité](CHANTIERS_RESTANTS.md).
 Le polisseur hybride et la pondération par bande sont intégrés. La grille automatique et la sélection robuste
-restent optionnelles. Mesures en cours dans le [bilan DESIGN](../reports/questions_design_2026-11-13/bilan.md).
-Voir aussi les [défauts ouverts](AUDITS.md).
+restent optionnelles. Mesures terminées dans le [bilan DESIGN](../reports/questions_design_2026-11-13/bilan.md).
+Le [guide DESIGN](../pages/CERTUS_DESIGN.html#design-robust-search) décrit l'activation et les limites de la recherche robuste.
+Les anciennes passations, listes d'actions et audits remplacés ont été retirés du dépôt.
 
 **Branche de travail** : master local. Le sparse-checkout écarte les gros artefacts scientifiques suivis ;
 git sparse-checkout disable les restaure. Les exports hors Git sont répertoriés dans le manifeste du 2026-10-25.
 
 **Python de référence : 3.15.2**, dépendances de requirements.lock.
 
-**Dernière validation complète** : le 2026-11-14 sous Windows. Oracle, interface, reste et performance verts.
-Les quatre échecs unitaires ont été résolus au rejeu isolé ou après correction du registre des tests lents.
+**Dernière validation complète** : `VALIDATION=GO`, le 2026-11-14 sous Windows sur `de52e01c`.
+L'unique échec unitaire au premier passage passe au rejeu isolé.
 [Résultats de validation](../reports/questions_design_2026-11-13/bilan.md#9-validation-windows).
 
 Pour un échec de comparaison au bit, rejouer sur [cache Numba vierge](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md).
@@ -36,10 +36,10 @@ Pour un échec de comparaison au bit, rejouer sur [cache Numba vierge](../report
 
 | programme | état | prochaine action |
 |---|---|---|
-| **Calcul (STRAT)** | étalon : `r75x2` à la fente de 2 nm. Recherche locale finale active avec sa garde au corridor configuré ; sur `r75x2`, −13,3 / −11,1 / neutre / −9,7 % de SEEL selon la graine de banc ([bilan](../reports/STRAT_garde_2026-10-22/bilan.md)). Sans rampes, aucun plan optique pur n'est déposable ; avec le secours Rate, tous les plans de la liste le sont, au modèle de Rate de STRAT (§7) | A9, A13, A16 ([`ETAT_actions.md`](ETAT_actions.md)) |
-| **Conception (DESIGN)** | étape globale mémétique, champion sans couche < 5 nm et relances par défaut depuis le 2026-10-23 ; séparatrice 400–1200 nm à 0,000135 depuis l'exemple ([bilan](../reports/DESIGN_bs5050_2026-10-22/bilan.md)) ; le mode oblique calcule sur 2 points au lieu de 135 (ALG-03) | ALG-03, ALG-13 à ALG-28 (`AUDITS.md`) |
+| **Calcul (STRAT)** | étalon : `r75x2` à la fente de 2 nm. Recherche locale finale active avec sa garde au corridor configuré ; sur `r75x2`, −13,3 / −11,1 / neutre / −9,7 % de SEEL selon la graine de banc ([bilan](../reports/STRAT_garde_2026-10-22/bilan.md)). Sans rampes, aucun plan optique pur n'est déposable ; avec le secours Rate, tous les plans de la liste le sont, au modèle de Rate de STRAT (§7) | reprise de calcul et co-conception ([chantiers](CHANTIERS_RESTANTS.md)) |
+| **Conception (DESIGN)** | étape globale mémétique, champion sans couche < 5 nm et relances par défaut depuis le 2026-10-23 ; séparatrice 400–1200 nm à 0,000135 depuis l'exemple ([bilan](../reports/DESIGN_bs5050_2026-10-22/bilan.md)) ; le mode oblique calcule sur 2 points au lieu de 135 (ALG-03) | contexte de coût, robustesse et reprise ([chantiers](CHANTIERS_RESTANTS.md)) |
 | **RE** | indices tabulés lus en n − ik depuis R148 (2026-10-05) : un RE antérieur sur indices absorbants en incidence oblique est à refaire ; un indice demandé hors de sa table est prolongé par une constante, avec un avertissement | — |
-| **Base de dépôts** | 140 monocouches mesurées au Photon RT (`example/database_depots/`), chargées par INDEX (« Deposit database… ») ; la voie (T ou R) se lit dans la géométrie du détecteur. Onze ajustements certifiés servent de références (`references_index.json`, `scripts\bench_base_depots.py`) : neuf à moins de 2 % d'épaisseur, deux écarts expliqués (`docs/AUDITS.md` IDX-01). RE ne la lit pas (il lui faut un classeur complet) | IDX-01 ; §5 |
+| **Base de dépôts** | 140 monocouches mesurées au Photon RT (`example/database_depots/`), chargées par INDEX (« Deposit database… ») ; la voie (T ou R) se lit dans la géométrie du détecteur. Onze ajustements certifiés servent de références (`references_index.json`, `scripts\bench_base_depots.py`) : neuf à moins de 2 % d'épaisseur, deux écarts documentés dans les références du banc. RE ne la lit pas (il lui faut un classeur complet) | IDX-01 ; §5 |
 | **Exécutable gelé** | couche OpenMP (D87), 411 Mo (D72), sans les outils de développement ; construit à `dbec2fc1`, « l'exécutable fonctionne » (👤). Licences embarquées dans `licenses/` | D72 |
 | **Interface** | plan clos le 2026-09-08 : 12 critères de fin sur 13, le treizième démontré inatteignable (`xfail` strict) | §5 |
 | **Qualité** | CI : calcul sous Linux, interface et gel sous Windows, `pip-audit`, `gitleaks` ; tests isolés des préférences de 👤 ; aucune arête d'import montante (D26) | §5 |
@@ -141,32 +141,12 @@ dépendant de T ou de λ, grenaille, bruit multiplicatif ou corrélé. Seul un r
   traité ; le miroir chaud et les antireflets sortent du champ de l'article ; la cissoïde OIC 2016 doit battre le
   vainqueur du concours (0,0139), pas seulement 0,0238.
 
-## 4. Défauts ouverts
+## 4. Limites et travaux ouverts
 
-Un défaut corrigé sort de la liste ; son numéro n'est pas réattribué.
-
-| # | défaut |
-|---|---|
-| D11 | **Une fenêtre de module fermée n'est pas détruite** (lambdas et `partial` branchés sur ses signaux, tenus côté C++). Sans effet en production (un processus par module). 44 sites `connect(lambda)`, plafond de la CI à 44 (`tests/unit/test_ci_lambda_connect_audit.py`) : les convertir puis ramener le plafond à 0. Piste : `WA_DeleteOnClose` après avoir retenu les `QThread` actifs (D23) |
-| D23 | À instruire : six `gc.collect()` dans les threads de calcul STRAT peuvent libérer des objets Qt hors du thread GUI ; reproduire avant de toucher au cycle de vie ; avec D11 |
-| D25 | Dette de lint masquée par `extend-ignore` : 8 règles, 1 416 violations hors E501 (2026-10-12 ; E402 554 le 2026-10-25, RUF001 à RUF003, RUF100, RUF022 voulue) ; cliquet `tests/oracle/test_lint_debt_ratchet.py`. E402 : action A8a |
-| D26 | Aucune arête d'import montante (2026-10-23) ; reste un cycle d'imports à l'exécution (le cœur de STRAT) ; `certus.physics.gradient_analytic` ne s'importe pas seul (cycle avec `gradient_utils`) |
-| D50 | Gelé, `loky` ne marche pas (repli sur des fils) et le multigraine est refusé, le message le dit |
-| D68 | La physique lit le silicium (`indices.xlsx`) à l'import par pandas et openpyxl (0,53 s) ; le rendre paresseux touche le chargement de la physique (Numba fige les tableaux) |
-| D69 | La couverture des noyaux se mesure maintenant avec `property` et les tests `kernels` (74,0 %) ; à l'ancienne définition elle serait de 46,0 % : changement de critère, à connaître de 👤 |
-| D71 | **Tauc-Lorentz-Urbach n'est pas continu en E = Eg** (saut de 2·10⁻⁵ du maximum de ε₂) ; le raccorder change le modèle des références certifiées : à trancher avant |
-| D72 | Gel de 411 Mo pour un objectif de 300 (llvmlite 115, Qt 77, scipy 68 Mo…) ; mesurer ce que l'application charge vraiment avant d'autres exclusions |
-| D82 | Thème sombre : logo foncé peu visible, mesure de contraste à terminer |
-| D84 | Écarts au dernier bit intermittents au premier passage après un changement de clé du cache Numba, verts à la relance ; si l'écart persiste, comparer noyaux froids et chauds |
-| D108 | Un NaN dans les nœuds d'une spline devient `n = k = 0` sans alerte sur le chemin par défaut (`get_nk_from_spline`, `use_cache=True`) ; attend 👤 (§5) |
-| D109 | Le TMM accepte une épaisseur négative (R + T jusqu'à 2,09) ; aucun flux connu n'en produit ; attend 👤 (§5) |
-| D110 | La CI ne lance pas les trois contrôles documentaires et saute les benchmarks (`pytest-benchmark`, `pytest-xdist` non déclarés) ; attend 👤 (§5) |
-| D111 | Crash du cache Numba (C18) : parade `cache=False`, cause non traitée, cas minimal à rapporter à Numba (👤) ; le test `xfail` strict passera au rouge le jour où Numba est corrigé |
-| D112 | `_njit_ir_global_gradient_fused` laisse `dk5` non affecté quand `arg == 0` (Numba le met à 0, juste pour β > 1) ; correction de noyau : `c1_diff` obligatoire |
-| D113 | Le noyau de gradient hérité de DESIGN est faux dès que les couches absorbent (convention n + ik) ; latent (DESIGN n'a que des Cauchy réels) ; `conj(n)` le corrige, test contre l'oracle d'abord |
-| D114 | Des entrées invalides (NaN, k négatif, indice nul) donnent du fini plausible ; politique à décider par 👤 (§5) |
-| D115 | La suite ne fixe pas quatre formules (`xyz_to_lab`, `delta_e_2000`, signe de k) : tests de référence à écrire |
-| D116 | Reproductibilité et caches : tableaux de cache modifiables, base de spline RE cachée à 1 nm, RNG global de FIELD, graines brutes voisines corrélées, coût dépendant du nombre de fils au dernier bit, `xyz_from_spectrum` |
+Les chantiers des 12–14 novembre sont suivis uniquement dans
+[`CHANTIERS_RESTANTS.md`](CHANTIERS_RESTANTS.md). Les limites de fonctionnement sont décrites dans les guides
+[DESIGN](../pages/CERTUS_DESIGN.html#design-limits) et [STRAT](../pages/CERTUS_STRAT.html).
+Les précautions du cache Numba restent dans le [mode opératoire](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md).
 
 ## 5. Ce qui attend une décision de 👤
 
@@ -187,19 +167,10 @@ Un défaut corrigé sort de la liste ; son numéro n'est pas réattribué.
 | **publication** | toute poussée (`git push`), la fusion de la PR #9, la vitrine ; le design publié de Tikhonravov et al. 1996 (`example/example_design/JSON-design-reference-tikhonravov-1996-published-design.json`), versionné « avec l'autorisation des auteurs » : garder cette autorisation par écrit, ou retirer le fichier (CLAUDE.md §1) |
 | **dossier et archives** | cible de 600 Mo fixée par 👤 le 2026-10-25 : 560 Mo mesurés après le déplacement des non-suivis, `git gc` et le sparse-checkout (`.git` 286 Mo, arbre suivi 260 Mo), contre 2,5 Go avant ; seconde copie de l'archive de 8,2 Go |
 
-## 6. Chantiers spécifiés, en attente
+## 6. Ordre de travail
 
-- **Saphir** : modéliser son absorption au-delà de 3,9 µm (paramètre inactif par défaut) ; mesurer la polarisation du faisceau du
-  spectrophotomètre (elle domine l'incertitude du niveau).
-- **Calcul** : dimensionner K, le nombre de graines à lancer ; balayer `tp_hysteresis_factor` à bruit fixé sur la grille machine ; porter
-  `r75x2` dans la vitrine avec sa condition ; mesurer `elite_rate_moves` sur d'autres composants, graines et nombres de tours.
-- **Modèle physique** : 12.3 méconnaissance d'indice (corridor de dispersion, spécifié) ; 12.5 quantification temporelle du déclenchement
-  (ouvert) ; 12.7 résolution du monochromateur (spécifié) ; 12.6 facteur de face arrière (en dernier, ou jamais). 12.2 et 12.4 sont faits
-  (lecture lissée sur la grille machine, inactive par défaut : ne pas remonter le seuil).
-- **Réserve** : A25, `sigma_rate` comme prédiction, contre les ±1 à 2 % observés en salle ; A26, un bloc de santé de run.
-- **Architecture** : le cycle de D26 et les points chauds de taille de `tests/architecture_debt.json` (fonctions longues ou complexes,
-  fichiers longs). Lint : A8a (E402, module par module), puis les petites règles RUF.
-- **Prédictibilité** : prédire sans tout calculer si un design passe avec un seul verre témoin ; quatre routes déjà fermées.
+La [liste unique des chantiers](CHANTIERS_RESTANTS.md) donne complexité, priorité, dépendances et critère de fin.
+Elle est en contre-audit par Claude ; conserver ses 33 entrées stables pendant cette revue.
 
 ## 7. Les composants d'essai
 

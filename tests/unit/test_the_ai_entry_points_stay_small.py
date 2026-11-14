@@ -2,8 +2,8 @@
 
 Every AI that takes the work over pays for these files in full, each session. Measured on 2026-10-18 with the `o200k_base` encoding:
 `CLAUDE.md` 4 000 tokens, section 0 of `docs/ETAT.md` 9 963 and `AGENTS.md` 132, so 14 095 before it could touch anything. After the split
-(rules that cancel a piece of work in `CLAUDE.md`, the reference in `docs/REGLES_reference.md`, the Rate record and the actions in
-`docs/ETAT_acquis.md` and `docs/ETAT_actions.md`) the same three cost 7 071, and `AGENTS.md` carries the instructions that keep the rest down.
+(rules in `CLAUDE.md`, the reference in `docs/REGLES_reference.md`, and separate on-demand records and actions),
+the same three cost 7 071, and `AGENTS.md` carries the instructions that keep the rest down.
 Nothing keeps that true by itself: each session appends a paragraph to the state file. These are the ratchets.
 
 * The caps below are a few percent above what was measured. Shrinking is free (lower the cap in the same commit). Raising one needs a reason that
@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CAPS = {
     "CLAUDE.md": 7_900,
     "AGENTS.md": 1_600,
-    "docs/ETAT_actions.md": 16_000,
+    "docs/CHANTIERS_RESTANTS.md": 16_000,
     "docs/ETAT_acquis.md": 12_500,
     "docs/REGLES_reference.md": 8_600,  # 2026-10-19: CLAUDE.md §1, §2, §5, §7 detail moved here, read on demand
 }
@@ -49,7 +49,7 @@ def test_a_document_an_ai_reads_stays_under_its_cap(path):
     size, cap = _size(path), CAPS[path]
     assert size <= cap, (
         f"{path} is {size} bytes, its cap is {cap}: it is paid by every AI that opens it. Move reference text to an on-demand file "
-        "(docs/REGLES_reference.md, docs/ETAT_acquis.md, docs/ETAT_actions.md), or raise the cap here with a reason."
+        "(docs/REGLES_reference.md, docs/ETAT_acquis.md, docs/CHANTIERS_RESTANTS.md), or raise the cap here with a reason."
     )
 
 

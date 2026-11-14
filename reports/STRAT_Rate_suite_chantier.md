@@ -181,7 +181,7 @@ pas un changement silencieux du nombre de tirages. Si la profondeur est augment�
 comparateurs à cette même profondeur dans une expérience séparée.
 
 
-## 6. R7 — modèle de vitesse entre dépôts : chantier distinct (action A6 de [ETAT_actions.md](../docs/ETAT_actions.md))
+## 6. R7 — modèle de vitesse entre dépôts : chantier distinct (action A6 de [chantiers restants](../docs/CHANTIERS_RESTANTS.md))
 
 Cette phase nécessite des données quantitatives encore absentes. Elle est distincte de l'optimisation (programme R0–R6, clos).
 Demander ou exploiter des séries disponibles pour chaque matériau H/L : vitesse et unité, moyenne,

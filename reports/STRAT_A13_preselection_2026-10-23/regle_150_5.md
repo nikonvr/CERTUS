@@ -1,6 +1,6 @@
 # A13 — présélection 150 tirages / 5 candidats : règle écrite avant la mesure (2026-10-23)
 
-Choisie par 👤 le 2026-10-23 après le refus de 75/3 ([bilan](bilan.md)), commitée avant le premier lancement. Même protocole et
+Choisie par 👤 le 2026-10-23 après le refus de 75/3 (bilan (historique Git)), commitée avant le premier lancement. Même protocole et
 mêmes huit cas que [`regle.md`](regle.md) (`stage_ab.py.txt REPO CASE OUT 150 5 [PRÉCÉDENT]` ; le bras « actuel », déterministe, est
 repris d'un résultat précédent du même cas quand il existe). Arrêt dès qu'un cas viole la règle.
 

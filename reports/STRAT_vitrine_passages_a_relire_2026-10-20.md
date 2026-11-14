@@ -11,8 +11,8 @@ La page n'est pas modifiée. Une adoption reste une action séparée après acco
   Ils ont été retirés de l'arbre courant par `81040551` et restent accessibles dans Git.
 - **S2** : [r75x0.5 et secours Rate, 12 octobre](STRAT_r75x0.5_secours_rate_2026-10-12.md), résultats et modèle physique.
 - **S3** : `certus/physics/certus_strat_growth.py`, `_rate_layer_thickness` : moyenne des références optiques du même matériau ; les couches Rate sont exclues ; le dépôt par tours ne reçoit aucune dérive de source supplémentaire.
-- **S4** : [leviers intégrés le 20 octobre](STRAT_r75_leviers_bonne_mere_2026-10-20/bilan.md), §6–§7 : nouvelle recherche locale et comparaison encore limitée des corridors.
-- **S5** : [actions A3 et A10](../docs/ETAT_actions.md) : les repères actuels complets et le choix de corridor restent à mesurer.
+- **S4** : leviers intégrés le 20 octobre (historique Git), §6–§7 : nouvelle recherche locale et comparaison encore limitée des corridors.
+- **S5** : [chantiers restants](../docs/CHANTIERS_RESTANTS.md) : les repères actuels complets et le choix de corridor restent à mesurer.
 
 Contrôle des deux artefacts de S1, nommés `blocs_vs_plantage_r75x2_deep_s101_production_dbf8025f.json` et `blocs_vs_plantage_r75x2_deep_s042_production_dbf8025f.json`, sous `reports/STRAT_r75x2_D106_secours_Rate_2026-10-12/` dans l'archive :
 

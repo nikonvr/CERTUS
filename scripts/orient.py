@@ -38,14 +38,14 @@ READ_FIRST = (
 )
 #: Lus a la demande : (chemin, quand les ouvrir).
 ON_DEMAND = (
-    ("docs/ETAT_actions.md", "actions A3 a A9 et protocole de mesure du Rate"),
+    ("docs/CHANTIERS_RESTANTS.md", "33 chantiers des 12-14 novembre, complexite et priorite"),
     ("docs/ETAT_acquis.md", "acquis du Rate, corrections qui invalident des mesures, vocabulaire"),
     ("docs/REGLES_reference.md", "pieges d'execution, architecture du gel, vocabulaire, documentation, revue d'un autre agent"),
 )
 #: Gros fichiers de la racine : se lisent par identifiant (`grep -n "ID" fichier`), jamais en entier.
 NEVER_WHOLE = ("ideeargon.md",)
 #: Documents dont `--carte` donne les titres.
-MAP_DOCS = ("CLAUDE.md", "docs/ETAT.md", "docs/ETAT_actions.md", "docs/ETAT_acquis.md", "docs/REGLES_reference.md")
+MAP_DOCS = ("CLAUDE.md", "docs/ETAT.md", "docs/CHANTIERS_RESTANTS.md", "docs/ETAT_acquis.md", "docs/REGLES_reference.md")
 
 
 def tokens(size: int) -> str:

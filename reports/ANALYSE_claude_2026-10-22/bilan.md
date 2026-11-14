@@ -3,7 +3,7 @@
 Branche `chatgpt/2026-10-22`, code `4a090135` (A4 : `b399b842`). Sources : artefacts versionnés de
 [A14](../STRAT_etage_A14_2026-10-21/bilan.md), [A10](../STRAT_etage_A10_2026-10-21/bilan.md),
 [A4](../STRAT_A4_parents_optiques_2026-10-22/bilan.md) et de la [relecture GPT](../RELECTURE_gemini_2026-10-22/bilan.md) ;
-demande : [relais GPT](../RELAIS_chatgpt_2026-10-22.md).
+demande : relais GPT (historique Git).
 Aucun banc STRAT relancé : six mesures ciblées sur plans figés (≈ 6 min de calcul), scripts dans `outils/`, chiffres et
 tableaux par tirage dans `resultats/`. SEEL = 2·√(P95, pire des trois niveaux de bruit 0,5×/1×/2×) ; arrêts sur 9 000 tirages
 (3 graines × 1 000 × 3 niveaux) ; IC95 par rééchantillonnage apparié des tirages.

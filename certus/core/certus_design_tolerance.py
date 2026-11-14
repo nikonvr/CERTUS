@@ -126,11 +126,13 @@ def second_order_robust_rmse(
     *,
     step_nm: float = 1e-3,
 ) -> tuple[float, float]:
-    """Nominal RMSE and second-order sqrt(E[MSE]) of ``ep`` under independent zero-mean errors of standard deviation
+    """Nominal RMSE and Gauss-Newton estimate of sqrt(E[MSE]) under independent zero-mean errors of standard deviation
     ``alpha`` (nm, one per layer): E[MSE] ~ |r|^2 + sum_i alpha_i^2 |dr/dd_i|^2.
 
     This is the composite merit function of Tikhonravov et al., Proc. SPIE 4829, 1061 (2003), Eq. (5), with its weights
-    equal to the error standard deviations; the cross term and the off-diagonal terms vanish in expectation.
+    equal to the error standard deviations. The first-order cross term and the off-diagonal terms vanish in
+    expectation. The diagonal residual-curvature term of the full second-order expansion is omitted; this
+    approximation is most useful near a small-residual solution.
     ``residual(ep)`` returns the weighted residual vector whose squared norm is the MSE; its derivatives are central
     differences of step ``step_nm``.
     """

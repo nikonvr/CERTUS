@@ -164,6 +164,15 @@ def test_infrared_band_center_on_a_sample_has_the_correct_slope(center_idx):
     assert obj.gradient(p)[10] == pytest.approx(numeric, rel=1e-6, abs=1e-9)
 
 
+def test_ir_polish_gradient_covers_the_rejected_plateau():
+    obj, p = ir_objective(False, DataType.BOTH, False, False)
+    np.testing.assert_array_equal(obj.polish_gradient(p), obj.gradient(p))
+    invalid = p.copy()
+    invalid[2] = 0.8
+    assert obj(invalid) == 1e12
+    np.testing.assert_array_equal(obj.polish_gradient(invalid), np.zeros_like(p))
+
+
 @pytest.mark.parametrize("absorbing", [False, True], ids=["transparent", "absorbing"])
 @pytest.mark.parametrize("normalised", [False, True], ids=["absolute", "normalised"])
 @pytest.mark.parametrize("data_type", DATA_TYPES, ids=lambda d: d.name.lower())

@@ -960,6 +960,13 @@
 </p>
 
 <h3>6.4 Objective and Guards (<code>IRGlobalObjective</code>)</h3>
+<p>To use the analytic infrared gradient in the stage 0 and stage 2 polishes, set
+    <code>"ir_analytic_polish": true</code> in the saved INDEX configuration's
+    <code>optimization</code> block and reload it. This option defaults to false.
+    The polish gradient returns zero on the constant rejected-region penalty.
+    Its band-center derivative is zero when a sample coincides with the center of the symmetric absorption band.
+    Paired measurements on three starts and the full worker checks are recorded in the
+    <a href="../reports/index_ir_gradient_2026-11-14/bilan.md">infrared polish report</a>.</p>
 <ul>
     <li><strong>Cost:</strong> Weighted MSE on full range: $\text{MSE} = (w_T \cdot \text{MSE}_T + w_R \cdot \text{MSE}_R)/(w_T + w_R)$.
         Normalized mode: $T_{val} = T_{calc}/T_{sub}$, $R_{val} = R_{calc}/T_{sub}$. Spectral weight $1/\lambda$ (normalized)

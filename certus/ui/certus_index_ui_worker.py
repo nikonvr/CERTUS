@@ -472,6 +472,7 @@ class CertusIndexWorkerMixin:
             k_sub_data=k_sub_interp,
             substrate_thickness_nm=sub_thickness_nm,
             n_sub_data=n_sub_data,
+            ir_analytic_polish=getattr(self, "_ir_analytic_polish", False),
         )
 
         # Start progress widget timing

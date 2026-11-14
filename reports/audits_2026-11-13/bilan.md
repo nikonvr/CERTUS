@@ -234,7 +234,7 @@ et 3, SPLINE corridors et finalisation, METAL (polissage principal).
 | # | Où | Aujourd'hui | Analytique possible ? | Gain attendu (non mesuré) |
 |---|---|---|---|---|
 | D1 | **FIELD**, synthèse et nettoyage : `certus_field_workers.py:753`, `:949` | L-BFGS-B sans gradient sur les épaisseurs | oui : dérivée du champ par matrices de transfert, même mécanique que le gradient de DESIGN | le plus gros : un gradient coûte N + 1 évaluations au lieu d'environ 2 à 3 |
-| D2 | **INDEX infrarouge**, étapes 0 et 2 : `certus_index_workers_ir_strat.py:156`, `:224` | L-BFGS-B sans gradient, alors que `IRGlobalObjective.gradient` existe | D112 corrigé dans `3865ac09`, voir la vérification ci-dessous | à mesurer sur les ajustements |
+| D2 | **INDEX infrarouge**, étapes 0 et 2 | Raccordé sous `optimization.ir_analytic_polish`, faux par défaut | D112 corrigé et options vérifiées dans trois parcours complets | [Mesures appariées et limites](../index_ir_gradient_2026-11-14/bilan.md) |
 | D3 | **METAL**, polissages de `pglobal_adapter.py:331`, `:375` | L-BFGS-B sans gradient | le gradient METAL existe (`jac=True` dans `certus_metal_bilayer_app.py`) : le passer à l'adaptateur | moyen, effort faible |
 | D4 | **SPLINE**, étape des nœuds libres : `spline_workers.py:545` ; Smart Init : `spline_smart_init.py:959`, `certus_index_spline_smart_init.py:893` | L-BFGS-B sans gradient | oui pour les valeurs aux nœuds ; plus délicat pour la **position** des nœuds (dérivée de la base spline) | moyen à fort, effort moyen |
 | D5 | SPLINE, repli de `certus_corridor_utils.py:1046` | sans gradient quand `spline_pwl_analytic_grad_supported` dit non | étendre les cas couverts | faible : c'est un repli |

@@ -25,6 +25,7 @@ from certus.utils.certus_qsettings import certus_settings
 class CertusIndexStateMixin:
     def _load_defaults(self) -> None:
         """Load default values for CERTUS-INDEX"""
+        self._ir_analytic_polish = False
 
         # Reset file selection
 
@@ -166,6 +167,8 @@ class CertusIndexStateMixin:
 
         if hasattr(self, "input_max_feval"):
             opt_block["max_feval"] = int(self.input_max_feval.value())
+        if getattr(self, "_ir_analytic_polish", False):
+            opt_block["ir_analytic_polish"] = True
 
         return {
             "version": __version__,
@@ -206,6 +209,7 @@ class CertusIndexStateMixin:
         """
 
         cfg = self._normalize_index_config(cfg)
+        self._ir_analytic_polish = bool(cfg.get("optimization", {}).get("ir_analytic_polish", False))
 
         sub = cfg.get("substrate")
 

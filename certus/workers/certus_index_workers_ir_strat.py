@@ -118,6 +118,7 @@ class IRGlobalModelStrategy:
         worker.logger.info("-" * 65)
         x0_polished = None
         y0_polished = np.inf
+        polish_options = {"jac": obj.polish_gradient} if getattr(c, "ir_analytic_polish", False) else {}
         try:
             _, params_sell = fit_sellmeier_global(l_full, n_tlu_ref)
             k_tlu_ref = None
@@ -159,6 +160,7 @@ class IRGlobalModelStrategy:
                     method="L-BFGS-B",
                     bounds=list(zip(flat_bounds[:, 0], flat_bounds[:, 1], strict=True)),
                     options={"maxiter": 3000, "ftol": 1e-15, "gtol": 1e-10},
+                    **polish_options,
                 )
                 if np.isfinite(res_s0.fun) and res_s0.fun < 100000000000.0:
                     x0_polished = res_s0.x
@@ -228,6 +230,7 @@ class IRGlobalModelStrategy:
                 bounds=list(zip(flat_bounds[:, 0], flat_bounds[:, 1], strict=True)),
                 options={"maxiter": 5000, "ftol": 1e-16, "gtol": 1e-11},
                 callback=_stage2_cb,
+                **polish_options,
             )
             if np.isfinite(res_s2.fun) and res_s2.fun < res_pg.y:
                 _improv = (1.0 - res_s2.fun / res_pg.y) * 100.0

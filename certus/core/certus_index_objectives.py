@@ -771,6 +771,12 @@ class IRGlobalObjective:
 
         return grad_out
 
+    def polish_gradient(self, p: np.ndarray) -> np.ndarray:
+        """Differentiate the spectral cost and its constant rejected-region penalty."""
+        if self(p) >= 1e12:
+            return np.zeros_like(p)
+        return self.gradient(p)
+
 def _phase23_cached_get(cache: dict[str, Any] | None, x: np.ndarray) -> dict[str, Any] | None:
     """Shared cache access for Phase23 objective wrappers."""
     c = cache

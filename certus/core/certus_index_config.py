@@ -55,6 +55,7 @@ class OptimizationConfig:
         "exclude_min",
         "fixed_thickness",
         "high_precision",
+        "ir_analytic_polish",
         "k_sub_data",
         "lambda_max",
         "lambda_max_fit",
@@ -109,6 +110,7 @@ class OptimizationConfig:
         substrate_thickness_nm: float | None = None,
         n_sub_data: np.ndarray | None = None,
         random_seed: int | None = None,
+        ir_analytic_polish: bool = False,
     ) -> None:
 
         self.target_data = target_data
@@ -177,6 +179,7 @@ class OptimizationConfig:
             n_sub_data  # Optional: n_sub from file (a user-supplied substrate table); when set, overrides Sellmeier
         )
         self.random_seed = int(random_seed) if random_seed is not None else None
+        self.ir_analytic_polish = bool(ir_analytic_polish)
 
     @property
     def is_frosted_glass(self) -> bool:

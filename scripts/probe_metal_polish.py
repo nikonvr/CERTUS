@@ -24,7 +24,7 @@ def run(module, seed, out, paired, analytic):
     optimizer = adapter.PGlobalOptimizer
     apply_config = CertusMetalBilayerApp._apply_config_dict
 
-    def enable(app, config):
+    def enable_analytic_polish(app, config):
         loaded = {**config, "optimization": {**config.get("optimization", {}), "analytic_polish": True}}
         apply_config(app, loaded)
         if not app._collect_config()["optimization"]["analytic_polish"]:
@@ -84,7 +84,7 @@ def run(module, seed, out, paired, analytic):
         return fit
 
     with patch.object(adapter, "minimize", timed), patch.object(adapter, "PGlobalOptimizer", seeded), patch.object(
-        CertusMetalBilayerApp, "_apply_config_dict", enable if analytic else apply_config
+        CertusMetalBilayerApp, "_apply_config_dict", enable_analytic_polish if analytic else apply_config
     ):
         setup, elapsed, score = bench.RUNNERS[module]()
     if score is None or not np.isfinite(score) or not rows:

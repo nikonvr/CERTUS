@@ -3169,13 +3169,13 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 <h3>4.5 Full Monte Carlo Robustness Screening</h3>
                 <div style="border:3px solid #15803d;border-radius:10px;padding:16px 20px;margin:20px 0;background:#f0fdf4;">
                     <p style="margin:0 0 12px;font-weight:700;color:#166534;font-size:1.06em;">
-                        ✅ 2026-08-06 — The weighted spectral target is ROUTED (but dormant)
+                        Weighted spectral targets in Phase B
                     </p>
                     <p style="margin:0 0 12px;">
                         <code>compute_batch_rmse</code> now accepts a <b>weights</b> vector, and
                         Phase B builds its target from the <code>{on, lmin, lmax, tmin, tmax, w}</code> zones
                         via <code>prepare_targets_vectorized</code> — <b>the functional that DESIGN already
-                        minimizes</b>. Both modules finally speak about the same thing.
+                        minimizes</b>. Both modules can evaluate the same spectral specification.
                     </p>
                     <p style="margin:0 0 12px;">
                         <b>No additional flag</b>: it is the <i>presence</i> of zones that activates
@@ -3203,16 +3203,13 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         This does not score target compliance. The low-level weighted RMSE returns $+\infty$
                         for explicitly supplied zero-total weights, but that is a different call path.
                     </p>
-                    <p style="margin:0;background:#fff;border:2px solid #b91c1c;border-radius:6px;padding:10px 14px;">
-                        🔴 <b>DELIBERATELY UNUSED — physicist's decision, 2026-08-06:</b>
-                        <i>"The spectral target will remain unweighted until further notice."</i>
-                        <br>The figure of merit file therefore carries no <code>targets</code> key, and the
-                        ranking continues to be on the deviation from the <b>nominal, unweighted</b> spectrum —
-                        computation path identical to the bit compared to before. <b>This is an assumed choice,
-                        not an oversight</b>, and it must be read alongside the consequence stated above: on
-                        this component, the criterion is <i>exactly indifferent</i> between missing the stop
-                        band and missing the passband, and the score remains dominated by the edge shift.
-                        <br>The day that changes, you just need to add the zones: no code to write, no flag to raise.
+                    <p style="margin:0;">
+                        The reference figure-of-merit file still uses nominal-spectrum scoring. To score an
+                        imported design against its specification, include its <code>targets</code> zones
+                        and a spectral grid that covers them in the STRAT configuration. The 34-layer
+                        50/50 campaign checks the transferred target, materials, and physical thicknesses,
+                        then scores the selected plan on independent seeds.
+                        <a href="../reports/codesign_2026-11-14/bilan.md">Campaign protocol and results</a>.
                     </p>
                 </div>
 

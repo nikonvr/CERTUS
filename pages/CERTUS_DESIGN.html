@@ -311,6 +311,12 @@
             <p>The <a href="#design-benchmarks">paired 50/50 measurement above</a> found an 18.8% reduction
                 in median RMS under 1 nm errors, with higher nominal RMSE. That result covers three seeds and
                 400 fresh Monte Carlo draws per stack. Recheck the trade-off for each target and process.</p>
+            <p>The <a href="../reports/codesign_2026-11-14/bilan.md">DESIGN and STRAT campaign</a> estimates the
+                same trade-off under simulated layer-by-layer deposition. STRAT searches one monitoring plan
+                per stack, then measures target RMSE, incomplete depositions and SEEL on independent seeds.
+                On the three tested pairs, the 1 nm selection penalty increased deposited RMSE by 52–82%.
+                The plans used rate control for 31–32 of 34 layers under the simulated rate model.
+                The thickness covariance prediction was 0.9–9.4% below the observed RMS.</p>
             <p>Implementation: <code>build_memetic_lm_polisher</code>, <code>OptimWorker._run_memetic_global</code>,
                 <code>WorkerManager.run_robust_n</code> and <code>spectral_monte_carlo</code>.
                 <a href="../reports/questions_design_2026-11-13/bilan.md#11-grille-et-sélection-robuste-sur-le-5050">Measured protocol and individual results</a>.</p>

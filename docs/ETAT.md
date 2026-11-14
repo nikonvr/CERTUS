@@ -16,6 +16,7 @@
 Le polisseur hybride et la pondération par bande sont intégrés. La grille automatique et la sélection robuste
 restent optionnelles. Mesures terminées dans le [bilan DESIGN](../reports/questions_design_2026-11-13/bilan.md).
 Le [guide DESIGN](../pages/CERTUS_DESIGN.html#design-robust-search) décrit l'activation et les limites de la recherche robuste.
+La [campagne DESIGN–STRAT](../reports/codesign_2026-11-14/bilan.md) mesure trois paires du séparateur 50/50. Avec les plans retenus, le mérite robuste à 1 nm augmente la RMSE déposée de 52 à 82 %.
 Les anciennes passations, listes d'actions et audits remplacés ont été retirés du dépôt.
 
 **Branche de travail** : master local. Le sparse-checkout écarte les gros artefacts scientifiques suivis ;

@@ -67,49 +67,17 @@ _ORPHAN_WORKERS: list = []
 class CertusIndexSplineEventsExtrasMixin:
     """CertusIndexSplineEventsExtrasMixin."""
 
+    #: The warm-up writes its state to the INDEX SPLINE status label (CertusAppEngineMixin).
+    WARMUP_STATUS_LABEL = "lbl_status"
+
     def _warmup_numba(self) -> None:
         """UX consistency for warmup via background thread"""
-        try:
-            self.sig_numba_ready.disconnect()
-            self.sig_numba_error.disconnect()
-        except TypeError:
-            pass
-        self.sig_numba_ready.connect(self._on_numba_ready_ui)
-        self.sig_numba_error.connect(self._on_numba_error_ui)
-        import threading
-        if hasattr(self, "lbl_status"):
-            self.lbl_status.setText("System warming up (compiling JIT)...")
-        threading.Thread(target=self._warmup_numba_thread_runner, daemon=True).start()
+        self._start_numba_warmup_thread()
 
-    def _warmup_numba_thread_runner(self) -> None:
-        try:
-            import time
-            time.sleep(0.5)  # Minimal UI wait to display the toast and ensure base app is ready
-            try:
-                self.sig_numba_ready.emit()
-            except (RuntimeError, AttributeError):
-                return
-        except Exception as e:
-            self.logger.error(f" Numba warmup failed: {e}", exc_info=True)
-            try:
-                self.sig_numba_error.emit()
-            except (RuntimeError, AttributeError):
-                return
-
-    @pyqtSlot()
-    def _on_numba_ready_ui(self) -> None:
-        if hasattr(self, "lbl_status"):
-            self.lbl_status.setText("Ready (JIT Compiled)")
-        self._on_numba_ready()  # Mark as ready
-        try:
-            show_toast(self, "System ready. JIT Warmup complete.", "success")
-        except Exception:
-            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
-
-    @pyqtSlot()
-    def _on_numba_error_ui(self) -> None:
-        if hasattr(self, "lbl_status"):
-            self.lbl_status.setText("JIT Init Error")
+    def _compile_numba_kernels(self) -> None:
+        # No kernel of its own to compile: a short wait lets the window settle before "Ready".
+        import time
+        time.sleep(0.5)
 
     def _prog_reset_bar(self) -> None:
 

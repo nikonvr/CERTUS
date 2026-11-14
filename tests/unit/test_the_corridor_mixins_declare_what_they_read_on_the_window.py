@@ -56,10 +56,9 @@ PROTOCOLS = ("IndexSplineRunHost", "IndexSplineViewHost", "CorridorStateHost", "
 
 #: The names two classes of the window define: each time a class of INDEX SPLINE over the base class, on purpose.
 OVERRIDES = {
-    "APP_NAME", "APP_TITLE", "DEFAULT_WIDTH", "DEFAULT_HEIGHT", "MIN_WIDTH", "MIN_HEIGHT", "__init__",
-    "_COMPUTATION_THREADS", "_apply_config", "_collect_config", "_build_ui", "_get_log_widget", "_setup_logger",
-    "_warmup_numba", "closeEvent",
-    "_on_numba_error_ui", "_on_numba_ready_ui", "_warmup_numba_thread_runner",
+    "APP_NAME", "APP_TITLE", "DEFAULT_HEIGHT", "DEFAULT_WIDTH", "MIN_HEIGHT", "MIN_WIDTH", "WARMUP_STATUS_LABEL",
+    "_COMPUTATION_THREADS", "__init__", "_apply_config", "_build_ui", "_collect_config", "_compile_numba_kernels",
+    "_get_log_widget", "_setup_logger", "_warmup_numba", "closeEvent",
 }
 CLASS_MACHINERY = {
     "__module__", "__dict__", "__weakref__", "__doc__", "__qualname__", "__firstlineno__", "__static_attributes__",

@@ -202,6 +202,12 @@
             <li><strong>Selection:</strong> Minimizes each start point separately. Once all runs finish, it ranks the solutions by cost and returns the best configuration found in those runs.</li>
         </ol>
 
+        <p>For local refinement and cleanup, the saved FIELD configuration supports
+            <code>"analytic_gradient": true</code>, default false. The derivative follows the active reflection
+            constraint, material field peaks and wavelength maximum of the real-index field trace. Singular
+            boundary representations use a finite-difference fallback. The measured local descents were
+            3.1–5.9 times faster on three seeds, with a different local minimum and a 7.8% higher final cost
+            on one seed. <a href="../reports/field_gradient_2026-11-14/bilan.md">Protocol, results and limitations</a>.</p>
         <h3>4.2 PGLOBAL (Global Search)</h3>
         <p>When the <strong>Global Optimization</strong> mode is enabled, the worker switches to the premium <strong>PGLOBAL</strong> algorithm, the same multi-start stochastic global solver used in the design module:</p>
         <ul>

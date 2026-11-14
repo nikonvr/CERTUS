@@ -47,6 +47,75 @@ def _safe_metric_value(value: float) -> float:
     return float(value)
 
 
+def _field_gradient_options(cost_func, params, layer_types=None, integral_points=None):
+    """Build the opt-in derivative of the same maximum-over-wavelengths merit."""
+    if not getattr(params, "analytic_gradient", False):
+        return {}
+    from scipy.optimize import approx_fprime
+
+    from certus.core.certus_field_gradient import field_metric_gradients
+
+    types = params.layer_types if layer_types is None else layer_types
+    points = params.integral_points if integral_points is None else integral_points
+    rmin = params.rmin if params.rmin is not None else 1.0
+    rmax = params.rmax if params.rmax is not None else 1.0
+
+    def gradient(p):
+        best_cost = -np.inf
+        best_gradient = np.zeros_like(p)
+        try:
+            for i, wavelength in enumerate(params.lambda_calcs):
+                local_cost = top_level_objective_function(
+                    p, [params.n1_rs[i]], [params.n2_rs[i]], [params.nSub_rs[i]], params.l0,
+                    params.seuil_int_1, params.seuil_int_2, params.alpha, points, [params.n_supers[i]],
+                    params.theta_inc, params.pol_flag, [wavelength], types, rmin, rmax, params.min_field_active,
+                )
+                if local_cost <= best_cost:
+                    continue
+                if local_cost >= _MAX_COST:
+                    return np.zeros_like(p)
+                metrics = calculate_opt_metrics(
+                    params.n1_rs[i], params.n2_rs[i], params.nSub_rs[i], params.l0, p, types,
+                    params.n_supers[i], points, params.theta_inc, params.pol_flag, wavelength,
+                )
+                grad_r, grad_1, grad_2 = field_metric_gradients(
+                    params.n1_rs[i], params.n2_rs[i], params.nSub_rs[i], params.l0, p, types,
+                    params.n_supers[i], points, params.theta_inc, params.pol_flag, wavelength,
+                )
+                reflection = float(np.clip(metrics["R"], 0.0, 1.0))
+                if not 0.0 <= metrics["R"] <= 1.0:
+                    grad_r = np.zeros_like(p)
+                if abs(rmin - 1.0) < 1e-6 and abs(rmax - 1.0) < 1e-6:
+                    local_gradient = -grad_r
+                else:
+                    outside = 0.0
+                    if reflection < rmin:
+                        outside = reflection - rmin
+                    elif reflection > rmax:
+                        outside = reflection - rmax
+                    local_gradient = 200.0 * outside * grad_r
+                peaks = (metrics["max_peak_1"], metrics["max_peak_2"])
+                thresholds = (params.seuil_int_1, params.seuil_int_2)
+                peak_gradients = (grad_1, grad_2)
+                if params.min_field_active:
+                    eligible = [j for j in (0, 1) if thresholds[j] > 1e-9]
+                    if eligible:
+                        j = max(eligible, key=lambda j: peaks[j] / thresholds[j])
+                        local_gradient += params.alpha * peak_gradients[j] / thresholds[j]
+                else:
+                    for peak, threshold, peak_gradient in zip(peaks, thresholds, peak_gradients, strict=True):
+                        if threshold > 1e-9 and peak > threshold:
+                            local_gradient += 2.0 * params.alpha * (peak - threshold) / threshold**2 * peak_gradient
+                best_cost, best_gradient = local_cost, local_gradient
+            if not np.isfinite(best_gradient).all():
+                raise FloatingPointError("Non-finite FIELD derivative")
+            return best_gradient
+        except (ValueError, FloatingPointError, ZeroDivisionError):
+            return approx_fprime(p, cost_func, np.sqrt(np.finfo(float).eps))
+
+    return {"jac": gradient}
+
+
 def top_level_objective_function(
     p: np.ndarray | list[float], 
     n1_rs: Iterable[float], 
@@ -757,6 +826,7 @@ class FieldWorkerThread(QThread):
                     bounds=bounds,
                     callback=opt_callback,
                     options={'maxiter': params.maxiter},
+                    **_field_gradient_options(cost_func, params),
                 )
 
                 cost = float(res_opt.fun)
@@ -946,10 +1016,12 @@ class FieldWorkerThread(QThread):
                     )
                 return clean_cost_func
 
+            clean_cost = make_cost_func(current_types)
             res_clean = minimize(
-                make_cost_func(current_types), np.asarray(current_x, dtype=float),
+                clean_cost, np.asarray(current_x, dtype=float),
                 method='L-BFGS-B', bounds=clean_bounds,
-                options={'maxiter': params.maxiter}
+                options={'maxiter': params.maxiter},
+                **_field_gradient_options(clean_cost, params, current_types, min(10, params.integral_points)),
             )
 
             if res_clean.fun < float('inf'):

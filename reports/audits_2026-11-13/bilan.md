@@ -233,7 +233,7 @@ et 3, SPLINE corridors et finalisation, METAL (polissage principal).
 
 | # | Où | Aujourd'hui | Analytique possible ? | Gain attendu (non mesuré) |
 |---|---|---|---|---|
-| D1 | **FIELD**, synthèse et nettoyage : `certus_field_workers.py:753`, `:949` | L-BFGS-B sans gradient sur les épaisseurs | oui : dérivée du champ par matrices de transfert, même mécanique que le gradient de DESIGN | le plus gros : un gradient coûte N + 1 évaluations au lieu d'environ 2 à 3 |
+| D1 | **FIELD**, descente locale, synthèse et nettoyage | Gradient des traces de champ réelles sous `analytic_gradient`, faux par défaut | Dérivées de R, des pics et du maximum spectral vérifiées par différences finies | [Mesures appariées et limites de convergence](../field_gradient_2026-11-14/bilan.md) |
 | D2 | **INDEX infrarouge**, étapes 0 et 2 | Raccordé sous `optimization.ir_analytic_polish`, faux par défaut | D112 corrigé et options vérifiées dans trois parcours complets | [Mesures appariées et limites](../index_ir_gradient_2026-11-14/bilan.md) |
 | D3 | **METAL**, deux séries de polissages finaux | Bicouche raccordée sous `optimization.analytic_polish`, faux par défaut | Monocouche non couverte par son gradient partiel, 6,3 % du temps dans les polissages mesurés | [Mesures appariées, couverture et limites](../metal_gradient_2026-11-14/bilan.md) |
 | D4 | **SPLINE**, étape des nœuds libres : `spline_workers.py:545` ; Smart Init : `spline_smart_init.py:959`, `certus_index_spline_smart_init.py:893` | L-BFGS-B sans gradient | oui pour les valeurs aux nœuds ; plus délicat pour la **position** des nœuds (dérivée de la base spline) | moyen à fort, effort moyen |

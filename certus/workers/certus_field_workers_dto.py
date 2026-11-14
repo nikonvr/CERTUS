@@ -54,6 +54,7 @@ class FieldParamsDTO(_MappingBase):
     min_field_active: bool | None = False
     global_opt: bool | None = False
     dmin: float | None = 5.0
+    analytic_gradient: bool = False
 
     @field_validator('n1_rs', 'n2_rs', 'nSub_rs', 'n_supers', 'lambda_calcs', 'emp_factors', 'layer_types', mode='before')
     @classmethod

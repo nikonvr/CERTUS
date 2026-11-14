@@ -284,6 +284,7 @@ class CertusFieldStateMixin:
         return reset_app_to_defaults(self)
 
     def _load_defaults(self):
+        self._analytic_gradient = False
         self._skip_auto_calc = True
         try:
             # Restore OpticsPanel defaults
@@ -361,11 +362,13 @@ class CertusFieldStateMixin:
             "rmax": params.rmax,
             "min_field_active": bool(params.min_field_active),
             "global_opt": bool(params.global_opt),
+            "analytic_gradient": bool(params.analytic_gradient),
             "allow_growth": bool(self.chk_allow_growth.isChecked()),
         }
 
     def _apply_config(self, data: dict) -> None:
         """Apply FIELD settings read by `CertusBaseApp.load_config`."""
+        self._analytic_gradient = bool(data.get("analytic_gradient", False))
 
         def set_combo(combo: QComboBox, text: str):
             idx = combo.findText(text)
@@ -462,6 +465,7 @@ class CertusFieldStateMixin:
             min_field_active=self.chk_min_field.isChecked(),
             global_opt=self.chk_global_opt.isChecked(),
             dmin=self.opt_panel.edit_dmin.value(),
+            analytic_gradient=getattr(self, "_analytic_gradient", False),
         )
 
     def on_import_design(self):

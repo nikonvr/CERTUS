@@ -7,7 +7,7 @@ mentions d'archivage dans des rapports anciens ne constituent pas de nouvelles s
 
 La liste initiale est suivie depuis `b6fb1939`. Les identifiants sont conservés pour la traçabilité du
 [contre-audit du 14 novembre](../reports/contre_audit_chantiers_2026-11-14/bilan.md).
-Les P1 restants sont 10, 15 et 33.
+Les P1 restants sont 15 et 33.
 
 ## Ordre du plus simple au plus complexe
 
@@ -18,7 +18,7 @@ défauts actuels tant qu'une activation différente n'est pas décidée sur mesu
 **Priorité proposée** : **P1** = à traiter en premier (fiabilité, preuve scientifique ou fondation nécessaire) ;
 **P2** = amélioration utile après les fondations ; **P3** = exploration ou rendement attendu plus faible.
 La priorité est indépendante de la difficulté : un P1 complexe peut attendre son préalable plus simple.
-Traiter 10 (contexte DESIGN), puis 15 (co-conception A).
+Traiter 15 (co-conception A).
 Les essais humains 33 suivent leur propre calendrier. Le profilage précède les modifications de gradients.
 | Ordre | Priorité | Complexité | Chantier restant | État et critère de fin | Source |
 |---:|---|---|---|---|---|
@@ -27,7 +27,6 @@ Les essais humains 33 suivent leur propre calendrier. Le profilage précède les
 | 05 | P3 | Faible à moyenne | Jacobiens Sellmeier manquants (D6) | Mesurer la part des ajustements concernés. Valider un éventuel gradient par différences finies et mesurer le gain à paramètres identiques. | A §4 |
 | 07 | P3 | Moyenne | Amorçage Numba (R2) | Le socle possède déjà le gestionnaire. Mutualiser les comportements communs en préservant signaux, erreurs et durée de vie des fils Qt. Vérifier le démarrage à froid des cinq fenêtres. | A §2.2 |
 | 08 | P2 | Moyenne | Mutualiser les fenêtres METAL simple/bicouche (R1) | Des groupes de paramètres et traitements de progression restent doublés malgré le socle existant. Préserver les différences physiques. | A §2.2 |
-| 10 | P1 | Moyenne à forte | Contexte de coût unique pour DESIGN (R3) | Préparer cibles, indices, poids et géométrie dans le cœur. Migrer un appelant par commit et comparer son coût, son gradient et ses résultats à l'oracle et au corpus C1. Préalable aux nouveaux mérites robustes. | A §2.2 et Q §4.6 |
 | 11 | P2 | Moyenne | Gradient METAL dans PGLOBAL (D3) | Profiler les deux polissages. L'adaptateur reçoit un scalaire et le gradient monocouche disponible concerne les paramètres à eM fixé. Vérifier la couverture et l'accord coût/gradient avant branchement. | A §4 |
 | 12 | P2 | Moyenne | Gradient INDEX infrarouge, étapes 0 et 2 (D2) | Profiler, puis traiter D112, le cas `arg == 0` de `dk5` dans `_njit_ir_global_gradient_fused`. Cas de régression, différences finies et comparaison appariée avant activation. | A §4 |
 | 14 | P3 | Moyenne | Diagnostic Fourier du résidu | Piste non mesurée : relier le contenu en chemin optique à la TOT et éprouver son utilité sur des cas connus. | Q §1.3 |
@@ -38,7 +37,7 @@ Les essais humains 33 suivent leur propre calendrier. Le profilage précède les
 | 20 | P3 | Forte | Raffinement en longueurs d'onde complexes | Le polissage adaptatif à TOT fixée laisse un MF résolu de 0,10983 %. Comparer le raffinement complexe à ce témoin et vérifier sa tenue sur des départs éloignés. | A §3.3–3.4 et Q §10 |
 | 21 | P3 | Forte | Dérivées SPLINE (D4/D5, ancien 13) | Profiler nœuds libres et Smart Init. Vérifier les dérivées des valeurs et positions aux cas limites, y compris les replis. | A §4 |
 | 22 | P2 | Forte | Gradient analytique FIELD (D1) | Profiler. Vérifier la dépendance au gradient absorbant D113 avant de le réutiliser. Contrôler par l'oracle et les différences finies, puis comparer sur graines fixées. | A §4 |
-| 24 | P2 | Forte | Mérite robuste (anciens 23, 24 et 30b) | Après 10 et si 15 le justifie, essayer d'abord le nuage avec les Jacobiennes existantes et des tirages appariés. Tester ensuite la descente de sensibilité ou la covariance si les mesures le justifient. Confirmer sur des tirages disjoints et par STRAT. | Q §4.2–4.5 |
+| 24 | P2 | Forte | Mérite robuste (anciens 23, 24 et 30b) | Si 15 le justifie, essayer d'abord le nuage avec les Jacobiennes existantes et des tirages appariés. Tester ensuite la descente de sensibilité ou la covariance si les mesures le justifient. Confirmer sur des tirages disjoints et par STRAT. | Q §4.2–4.5 |
 | 25 | P3 | Forte | Germes structurés Fourier pour le mémétique | Piste non mesurée : diversité de phases, conversion H/L compatible avec les contraintes, comparaison au tirage actuel sur trois-raies et cissoïde. | Q §1.3 |
 | 27 | P3 | Très forte | Reprise de calcul STRAT (U12 B) | Mesurer le coût des étapes du pipeline avant de choisir les points de reprise. Vérifier la compatibilité des réglages, graines, noyaux et ouvriers, ainsi que l'identité au bit. | U12 §4–5 |
 | 28 | P3 | Très forte | Reprise de calcul DESIGN (U12 B) | Mesurer séparément le mémétique et PGLOBAL. Pour le mémétique, inclure population, générateur, lot et nombre d'ouvriers dans l'état de reprise. Pour PGLOBAL, vérifier la reconstruction du regroupement. | U12 §4–5 |

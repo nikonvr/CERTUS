@@ -457,3 +457,16 @@ manquant. En-têtes et sections d'usage des guides vérifiés à 1 440 px et dan
 La navigation mobile ne masque plus le titre visé ; les tableaux des sections défilent dans leur propre zone.
 Les captures de contrôle et le journal de validation complète figurent dans l'inventaire de l'archive locale
 (`artifacts/archives-20261114/inventaire.json`).
+
+## 13. Contexte de coût DESIGN
+
+`prepare_design_cost_context` prépare les indices, la grille, les poids de cible et la géométrie arrière.
+Le worker, les changements de grille, les aiguilles, le nettoyage, le repolissage, l'élagage, le jugement
+du champion et les diagnostics de tolérance et de comparaison partagent cette préparation.
+
+Le [contrôle C1](c1_design_context.json) retrouve 9 092 tableaux identiques au bit contre `41d80c7f`.
+L'oracle passe avant (1 203 tests) et après (1 204). Après migration, interface 1 593, reste 322 et
+performance 30 passent. Le premier passage unitaire est interrompu par xdist. À six ouvriers, 6 100
+tests passent et deux échouent. Le test STRAT de bruit d'ancrage passe seul. Le registre des symboles
+est corrigé dans `e572dc7f`, puis ses 17 tests passent. Les journaux sont sous
+`artifacts/archives-20261114/validation-contexte-design/`.

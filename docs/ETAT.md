@@ -171,7 +171,7 @@ Les précautions du cache Numba restent dans le [mode opératoire](../reports/re
 ## 6. Ordre de travail
 
 La [liste unique des chantiers](CHANTIERS_RESTANTS.md) donne complexité, priorité, dépendances et critère de fin.
-Les P1 concernent le contexte de coût DESIGN, la co-conception DESIGN–STRAT et les essais humains U13.
+Les P1 concernent la co-conception DESIGN–STRAT et les essais humains U13.
 
 ## 7. Les composants d'essai
 

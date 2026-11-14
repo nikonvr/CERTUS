@@ -654,6 +654,7 @@ def execute(sel: Selection, workers: int, c1: bool) -> bool:
 
 AUDIT_PLUGIN = r"""
 import json, os, sys
+from contextlib import contextmanager
 from pathlib import Path
 ROOT = str(Path(os.environ["VERIFY_ROOT"]).resolve())
 TOOL = 4
@@ -674,25 +675,39 @@ mon.use_tool_id(TOOL, "verify_changed_audit")
 mon.register_callback(TOOL, mon.events.PY_START, _start)
 mon.set_events(TOOL, mon.events.PY_START)
 import pytest
-@pytest.hookimpl(wrapper=True)
-def pytest_runtest_call(item):
+@contextmanager
+def _record(item):
     test = item.nodeid.split("::")[0]
     if test != CURRENT[0]:
         CURRENT[0] = test
         mon.restart_events()
+    SEEN.setdefault(test, set())
     ACTIVE[0] = True
     try:
-        return (yield)
+        yield
     finally:
         ACTIVE[0] = False
+@pytest.hookimpl(wrapper=True)
+def pytest_runtest_setup(item):
+    with _record(item):
+        return (yield)
+@pytest.hookimpl(wrapper=True)
+def pytest_runtest_call(item):
+    with _record(item):
+        return (yield)
+@pytest.hookimpl(wrapper=True)
+def pytest_runtest_teardown(item):
+    with _record(item):
+        return (yield)
 def pytest_sessionfinish(session, exitstatus):
     mon.set_events(TOOL, 0)
-    with open(os.environ["VERIFY_OUT"], "w", encoding="utf-8") as fh:
+    suffix = "." + session.config.workerinput["workerid"] if hasattr(session.config, "workerinput") else ""
+    with open(os.environ["VERIFY_OUT"] + suffix, "w", encoding="utf-8") as fh:
         json.dump({k: sorted(v) for k, v in SEEN.items()}, fh)
 """
 
 
-def audit_calls(graph: Graph, tests: list[str]) -> int:
+def audit_calls(graph: Graph, tests: list[str], workers: int = 1) -> int:
     """La preuve : chaque fonction du depot qu'un test EXECUTE (sys.monitoring) est-elle dans sa cloture statique ?
 
     Un noyau compile n'est pas vu de l'interieur (ce que le graphe voit par les noms) ; le code de niveau module,
@@ -707,12 +722,16 @@ def audit_calls(graph: Graph, tests: list[str]) -> int:
         out = Path(tmp) / "calls.json"
         env = {**os.environ, "VERIFY_ROOT": str(ROOT), "VERIFY_OUT": str(out),
                "PYTHONPATH": os.pathsep.join([tmp, os.environ.get("PYTHONPATH", "")])}
+        parallel = ["-n", str(workers), "--dist", "loadfile"] if workers > 1 else []
         code, text = run_env([sys.executable, "-m", "pytest", "-q", "--no-cov", "-p", "no:cacheprovider", "-p",
-                              "verify_changed_audit_plugin", *tests], env)
+                              "verify_changed_audit_plugin", *parallel, *tests], env)
         if not out.exists():
             print(last_lines(text))
             return 2
-        seen = json.loads(out.read_text(encoding="utf-8"))
+        seen: dict[str, set[tuple[str, int]]] = {}
+        for result in [out, *Path(tmp).glob("calls.json.*")]:
+            for test, calls in json.loads(result.read_text(encoding="utf-8")).items():
+                seen.setdefault(test, set()).update((rel, line) for rel, line in calls)
     holes = 0
     for test, calls in sorted(seen.items()):
         reach = forward(graph, [(c, WHOLE) for c in (test, *conftests_of(test, tracked))])
@@ -729,9 +748,12 @@ def audit_calls(graph: Graph, tests: list[str]) -> int:
         if missing:
             holes += 1
             print(f"  TROU {test} : {', '.join(sorted(missing)[:4])}" + (" ..." if len(missing) > 4 else ""))
-    print(f"AUDIT_APPELS={'OK' if holes == 0 else 'TROUS'} ({len(seen)} fichiers de test, {holes} avec un trou ; pytest "
+    status = "TROUS" if holes else "ECHEC" if code else "OK"
+    if code:
+        print(last_lines(text))
+    print(f"AUDIT_APPELS={status} ({len(seen)} fichiers de test, {holes} avec un trou ; pytest "
           f"{'vert' if code == 0 else 'ROUGE'})")
-    return 0 if holes == 0 else 1
+    return 0 if holes == 0 and code == 0 else 1
 
 
 def run_env(command: list[str], env: dict[str, str]) -> tuple[int, str]:
@@ -748,10 +770,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--c1", action="store_true")
     parser.add_argument("--workers", type=int, default=max(1, min(8, (os.cpu_count() or 2) - 2)))
     parser.add_argument("--audit-calls", nargs="+", metavar="TEST")
+    parser.add_argument("--audit-workers", type=int, default=1, help="workers de l'audit d'appels (defaut : serie)")
     args = parser.parse_args(argv)
     graph = build_graph(git("ls-files", "*.py") + git("ls-files", "--others", "--exclude-standard", "*.py"))
     if args.audit_calls:
-        return audit_calls(graph, args.audit_calls)
+        return audit_calls(graph, args.audit_calls, max(1, args.audit_workers))
     changed = sorted(f.replace("\\", "/") for f in args.files) if args.files else changed_files(args.base)
     if not changed:
         print("Rien n'a change.\nVERIF_CIBLEE=GO (0 test)")

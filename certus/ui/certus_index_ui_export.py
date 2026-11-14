@@ -151,7 +151,7 @@ class CertusIndexExportMixin:
 
         eps2 = epsilon2_TLU_array(E_arr, Eg, A, E0, C, Eu)
 
-        eps1 = epsilon1_TL_analytic(E_arr, Eg, A, E0, C, Eu)
+        eps1 = epsilon1_TL_analytic(E_arr, Eg, A, E0, C, eps_inf)
 
         n_calc, k_calc, is_valid = epsilon_to_nk(eps1, eps2, N_MIN_LIMIT, N_MAX_LIMIT, K_MAX_LIMIT)
 

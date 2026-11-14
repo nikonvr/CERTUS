@@ -12,7 +12,7 @@ pas regardé.
 
 | Point | Constat |
 |---|---|
-| Frontières de §8 | 0 import de PyQt6 et 0 import de `certus.ui` dans `certus/core`, `certus/physics`, `certus/domain` |
+| Frontières de CLAUDE.md §8 | 0 import de PyQt6 et 0 import de `certus.ui` dans `certus/core`, `certus/physics`, `certus/domain` |
 | Exceptions | 0 `except:` nu ; 226 `except Exception` dans `certus/` (138 dans `ui`, 4 dans `physics`), gardés par `tests/unit/test_no_broad_exception_is_swallowed_in_silence.py` |
 | Dette visible | 0 `TODO`/`FIXME` dans `certus/` ; 16 `# noqa` ; 28 `type: ignore` |
 | Tests | 668 fichiers de test, 115 738 lignes pour 177 000 lignes de `certus/` environ ; témoin du 19 : 9 327 tests passés |
@@ -39,7 +39,7 @@ pas regardé.
    `master` a 93 commits d'avance sur `origin/master` : aucun n'est passé par la CI, ni sous Linux. Aucun script
    local ne vérifie secrets, métadonnées des classeurs et œuvres de tiers.
 5. **Il reste des algorithmes dans `certus.ui` (→ 38).** Deux `scipy.optimize.minimize` avec leur fonction de coût
-   et de gradient dans `certus/ui/certus_design_ui_optimization.py`. Même violation de §8 que celle levée par 21 (a).
+   et de gradient dans `certus/ui/certus_design_ui_optimization.py`. Même violation de CLAUDE.md §8 que celle levée par 21 (a).
 6. **L'exécutable gelé a 657 commits de retard (→ 39).** Construit à `dbec2fc1` (2026-10-06). `pyproject.toml` porte
    la version `26.05.0`. Non vérifié : que les exports portent une version qui distingue l'état du code.
 7. **Aucun recoupement par un code tiers (→ 40).** `tests/oracle/tmm_reference.py` est indépendant de
@@ -67,3 +67,47 @@ pas regardé.
 2. **37** avant la prochaine poussée, quelle qu'en soit la date.
 3. **38**, puis le reste de la liste selon les décisions de 👤.
 4. **39 à 42** : décisions de 👤 d'abord.
+
+## 5. Validation
+
+`VALIDATION=GO` le 2026-11-14 sur `376baef1`, branche `claude/claude-code-suije-bf4f1f`, 16 workers, ui 6 :
+20 min 41 s au total. Paliers : ruff et documentation 0:09, oracle 0:22 (1 205), unit 4:18 (6 176 ; 4 échecs verts au
+rejeu), ui 10:29 (1 594), rest 3:54 (322), performance 0:21 (30). Les quatre échecs du premier passage, verts seuls
+sur cache Numba vierge : POEM (§6), `test_the_automatic_export_is_off_under_test` et les deux tests de
+`test_the_default_pytest_run_is_quiet.py`.
+
+## 6. Bits selon l'historique de compilation (chantier 34)
+
+- `test_without_the_flag_the_kernel_keeps_the_coarse_samples_bit_for_bit` échouait **seul** (150,0000000000008 contre
+  150,0000000000001) sur le cache partagé, et passait sur cache vierge (deux fois). Reproduit : cache vierge, palier
+  `unit` complet, puis le test seul sur ce cache → échec.
+- Coupable isolé par dichotomie parmi 42 objets : une spécialisation de `simulate_growth_kernel`, même signature qu'un
+  objet compilé à neuf, mais 444 Ko de code machine contre 333 Ko. Elle lie deux versions de plus des routines
+  internes `complex_mul` et `complex_div` de Numba, compilées plus tôt dans le même processus. Les derniers bits d'un
+  noyau dépendent donc de ce que le processus a compilé avant lui, et le cache transmet cet historique.
+- Conséquence : « identique au bit » ne vaut qu'entre processus de même historique, ou froid contre froid (règle déjà
+  suivie par `c1_diff.py`). Les reprises 27 à 29 doivent en tenir compte.
+- `f350044d` : `validate_parallel.py` rejoue ses échecs sur un cache Numba vierge (la section 0 d’`ETAT.md` le demandait à la main).
+- Non fait : rendre les noyaux indépendants de l'historique ; tout changement de noyau change les bits (C1).
+
+## 7. Durée des tests (chantier 43)
+
+- `b6d392bb` : `test_le_pilotage_par_QProcess_remplit_reellement_le_tableau` attendait au démontage le préchauffage
+  STRAT de sa fenêtre (fichier seul à froid : 100 s, 3,8 s sans préchauffage). Sous 16 workers, l'attente dépassait les
+  180 s de `qt_lifecycle`, qui appelle `pytest.exit` ; xdist le rapporte comme un worker mort. Deux passages `unit` sur
+  cinq ont ainsi perdu environ 1 500 tests.
+- `376baef1` : une étape xdist reçoit `NUMBA_NUM_THREADS` = cœurs ÷ workers, sauf valeur déjà posée.
+
+| `tests/unit/`, `-n 16 --dist loadfile`, même arbre | durée |
+|---|---:|
+| 16 fils Numba par worker, cache chaud | 512 s |
+| 1 fil par worker, cache chaud | 299 s |
+| 1 fil par worker, cache vierge | 408 s |
+
+| `tests/ui/`, 6 workers, cache chaud, `D:` | durée |
+|---|---:|
+| 16 fils Numba | 10:11 |
+| 2 fils (règle de `376baef1`) | 10:31 |
+| 2 fils, `OMP_NUM_THREADS=OPENBLAS_NUM_THREADS=1` | 10:44 |
+
+La règle est neutre sur `ui` et divise `unit` par 1,7.

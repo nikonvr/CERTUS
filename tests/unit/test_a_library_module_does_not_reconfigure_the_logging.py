@@ -33,7 +33,7 @@ def certus_logger(tmp_path, monkeypatch):
 def test_an_entry_script_sets_the_logging_up(certus_logger, tmp_path) -> None:
     create_module_environment(str(tmp_path / "entry.py"), "ENTRY")
 
-    assert (tmp_path / "certus_entry.log").exists()
+    assert (tmp_path / "logs" / "certus_entry.log").exists()
     assert certus_logger.handlers
 
 
@@ -44,13 +44,13 @@ def test_a_library_module_leaves_the_logging_of_the_entry_script_alone(certus_lo
     create_module_environment(a_library_module.__file__, "CERTUS_INDEX_CORE")
 
     assert certus_logger.handlers == before
-    assert not (tmp_path / "certus_certus_index_core.log").exists()
+    assert not (tmp_path / "logs" / "certus_certus_index_core.log").exists()
 
 
 def test_a_library_module_imported_alone_does_not_make_a_log_file_named_after_itself(certus_logger, tmp_path) -> None:
     env = create_module_environment(a_library_module.__file__, "CERTUS_INDEX_CORE")
 
-    assert not list(tmp_path.glob("certus_*.log"))
+    assert not list(tmp_path.rglob("certus_*.log"))
     assert env["logger"] is not None
     assert env["script_dir"]
 
@@ -60,4 +60,4 @@ def test_the_entry_script_that_comes_after_a_library_module_still_wins(certus_lo
 
     create_module_environment(str(tmp_path / "entry.py"), "ENTRY")
 
-    assert (tmp_path / "certus_entry.log").exists()
+    assert (tmp_path / "logs" / "certus_entry.log").exists()

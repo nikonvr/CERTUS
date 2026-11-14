@@ -77,6 +77,13 @@ def _resolve_console_log_level(default: int) -> int:
     return getattr(logging, raw, default)
 
 
+def _log_path(log_file: str) -> Path:
+    """A bare file name goes under `logs/`, beside the default journal, instead of the working folder; a path that
+    names its folder is kept."""
+    path = Path(log_file)
+    return Path("logs") / path if path.parent == Path(".") and not path.is_absolute() else path
+
+
 def setup_logging(log_file: str | None = None, level: int | None = None) -> logging.Logger:
     logger = logging.getLogger("CERTUS")
     logger.setLevel(logging.INFO if level is None else level)
@@ -92,7 +99,7 @@ def setup_logging(log_file: str | None = None, level: int | None = None) -> logg
     console_handler.setLevel(_resolve_console_log_level(logger.level))
     logger.addHandler(console_handler)
     if log_file:
-        log_path = Path(log_file)
+        log_path = _log_path(log_file)
         from logging.handlers import RotatingFileHandler
         try:
             # Inside the try: an uncreatable log directory must degrade to console
@@ -104,7 +111,7 @@ def setup_logging(log_file: str | None = None, level: int | None = None) -> logg
             logger.addHandler(file_handler)
         except (OSError, PermissionError):
             pass
-    jsonl_path = Path(log_file).with_suffix(".jsonl") if log_file else Path("logs") / "CERTUS.jsonl"
+    jsonl_path = _log_path(log_file).with_suffix(".jsonl") if log_file else Path("logs") / "CERTUS.jsonl"
     try:
         jsonl_path.parent.mkdir(parents=True, exist_ok=True)
         attach_jsonl_handler(logger, jsonl_path)

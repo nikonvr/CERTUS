@@ -247,6 +247,7 @@ def main() -> None:
         app = load(args.config)
         for key, value in window_attrs.items():
             setattr(app, key, value)
+        initial_grid_points = len(app._get_optim_wls())
         t0 = time.perf_counter()
         app.run_optim("global", **run_kwargs)
         n_passes, quiet = wait_for_workflow(app, args.max_s)
@@ -260,6 +261,7 @@ def main() -> None:
                 "window_attrs": window_attrs,
                 "rmse_app": float(getattr(app, "_workflow_best_rmse", float("nan"))),
                 "table_layers": app.front_table.rowCount(),
+                "initial_optimization_grid_points": initial_grid_points,
                 **judge(app, config),
                 "passes": n_passes,
                 "cost_evals": None if args.no_count else COUNTS["cost"],

@@ -66,7 +66,6 @@ from certus_physics import (
     calc_spectrum_full_wrapper,
     calc_spectrum_oblique_backside_vectorized,
     calc_spectrum_oblique_vectorized,
-    prepare_targets_vectorized,
     xyz_from_spectrum,
     xyz_to_lab,
 )
@@ -693,10 +692,6 @@ class NeedleWorker(QObject):
                 return
             oblique_mode = self.request.params.oblique_mode
             oblique_tgts = self.request.params.oblique_tgts
-            mats_nk = {k: m.get_nk(wls) for k, m in mats.items()}
-            _sub_key_n = 'substrate' if 'substrate' in mats_nk else 'Substrate'
-            n_sub = np.ascontiguousarray(mats_nk[_sub_key_n])
-            
             # Backface extraction
             has_back = self.request.params.has_back
             n_back_T = self.request.params.n_back_T
@@ -706,15 +701,18 @@ class NeedleWorker(QObject):
             if d_back is None:
                 d_back = np.zeros(0, dtype=float_dtype)
             has_back_stack = n_back_T.shape[1] > 0 and len(d_back) > 0
-            n_lay_list = [mats_nk[layer.mat] for layer in stack]
-            if not n_lay_list:
+            if not stack:
                 self.signals.finished.emit(NeedleWorkerResult.action_only(
                     'empty_init',
                     trace=self.request.trace,
                 ).to_legacy_dict())
                 return
-            n_layers_orig = np.array(n_lay_list, dtype=complex_dtype)
-            n_layers_T_orig = np.ascontiguousarray(n_layers_orig.T)
+            context = prepare_design_cost_context(
+                mats, stack, wls, None if oblique_mode else tgts, has_back_calc=has_back, substrate_key="substrate",
+                float_dtype=float_dtype, complex_dtype=complex_dtype,
+            )
+            wls, mats_nk = context.wls, context.mats_nk
+            n_sub, n_layers_T_orig = context.n_sub, context.n_front
             if oblique_mode:
                 valid_targets = [tgt for tgt in oblique_tgts if tgt.valid()]
                 config_groups = optim_oblique_group_targets_on_wavelengths(wls, valid_targets)
@@ -744,7 +742,7 @@ class NeedleWorker(QObject):
                         return 1e+30
                     return total_err / total_wt
             else:
-                tgt_vals, tgt_weights = prepare_targets_vectorized(wls, tgts)
+                tgt_vals, tgt_weights = context.normal_targets()
             STEP_NM = 1.0
             PROBE_THICKNESS = 0.01
             best_res = None

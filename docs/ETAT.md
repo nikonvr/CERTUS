@@ -25,9 +25,9 @@ dans `artifacts/archives-20261114/inventaire.json`, dans `certus1111`.
 
 **Python de référence : 3.15.2**, dépendances de requirements.lock.
 
-**Dernière validation complète** : `VALIDATION=GO`, le 2026-11-14 sous Windows sur `de52e01c`.
-L'unique échec unitaire au premier passage passe au rejeu isolé.
-[Résultats de validation](../reports/questions_design_2026-11-13/bilan.md#9-validation-windows).
+**Dernière validation complète** : `VALIDATION=GO`, le 2026-11-14 sous Windows sur `376baef1` (branche
+`claude/claude-code-suije-bf4f1f`), en 20 min 41 s. Quatre échecs unitaires au premier passage passent au rejeu isolé
+sur cache Numba vierge. [Détails](../reports/audit_general_2026-11-14/bilan.md#5-validation).
 
 Pour un échec de comparaison au bit, rejouer sur [cache Numba vierge](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md).
 

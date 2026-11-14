@@ -25,6 +25,7 @@ from certus.core.certus_core import (
     get_complex_dtype,
     get_float_dtype,
 )
+from certus.core.certus_design_cost_context import prepare_design_cost_context
 from certus.core.certus_design_worker_utils import (
     optim_backside_flags_from_cfg,
     optim_bounds_thickness_global,
@@ -363,8 +364,13 @@ class OptimWorker(QObject):
             mode = self.cfg.get('mode', 'global')
             ep_back = ensure_numpy_array(self.cfg.get('ep_back', []), dtype=float_dtype)
             has_back_stack, has_back_calc, stack_back = optim_backside_flags_from_cfg(self.cfg)
-            _mats_nk, n_sub, n_layers_T, n_back_T, d_back = optim_prepare_stack_nk_back(mats, stack, wls, stack_back=stack_back, ep_back=ep_back, has_back_stack=has_back_stack, complex_dtype=complex_dtype, float_dtype=float_dtype)
             oblique_mode = self.cfg.get('oblique_mode', False)
+            context = prepare_design_cost_context(
+                mats, stack, wls, None if oblique_mode else tgts, stack_back=stack_back, ep_back=ep_back,
+                has_back_stack=has_back_stack, has_back_calc=has_back_calc,
+            )
+            wls, n_sub, n_layers_T = context.wls, context.n_sub, context.n_front
+            n_back_T, d_back = context.n_back, context.d_back
             oblique_tgts = self.cfg.get('oblique_tgts', [])
             if oblique_mode and has_back_calc and has_back_stack:
                 logging.info('[OPTIM] Oblique+backside with back coating: using full oblique exact kernel.')
@@ -383,7 +389,7 @@ class OptimWorker(QObject):
             else:
                 self._compute_oblique_error = None
                 self._compute_oblique_error_and_grad_analytic = None
-                tgt_vals, tgt_weights = prepare_targets_vectorized(wls, tgts)
+                tgt_vals, tgt_weights = context.normal_targets()
                 display_oblique_keys = []
             var_idx = optim_var_indices_from_stack(stack)
             if self._abort_if_no_variable_layers(var_idx):

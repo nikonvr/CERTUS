@@ -59,6 +59,7 @@ OVERRIDES = {
     "APP_NAME", "APP_TITLE", "DEFAULT_WIDTH", "DEFAULT_HEIGHT", "MIN_WIDTH", "MIN_HEIGHT", "__init__",
     "_COMPUTATION_THREADS", "_apply_config", "_collect_config", "_build_ui", "_get_log_widget", "_setup_logger",
     "_warmup_numba", "closeEvent",
+    "_on_numba_error_ui", "_on_numba_ready_ui", "_warmup_numba_thread_runner",
 }
 CLASS_MACHINERY = {
     "__module__", "__dict__", "__weakref__", "__doc__", "__qualname__", "__firstlineno__", "__static_attributes__",
@@ -424,6 +425,7 @@ OVERRIDES_OF = {
         "reattach_plot",
     },
     "certus.ui.certus_index_ui:CertusIndexApp": {
+        "_on_numba_error_ui", "_on_numba_ready_ui", "_warmup_numba_thread_runner",
         "APP_NAME", "APP_TITLE", "DEFAULT_HEIGHT", "DEFAULT_WIDTH", "MIN_HEIGHT", "MIN_WIDTH",
         "_COMPUTATION_THREADS", "__init__", "_apply_config", "_apply_theme", "_apply_ui_zoom",
         "_build_log_container", "_build_ui", "_collect_config", "_config_load_problems",
@@ -441,12 +443,14 @@ OVERRIDES_OF = {
         "_update_target_table_headers", "_update_thickness_display", "closeEvent", "load_config",
     },
     "certus.ui.certus_strat_ui:CertusStratApp": {
+        "_on_numba_error_ui", "_on_numba_ready_ui", "_warmup_numba_thread_runner",
         "APP_NAME", "APP_TITLE", "DEFAULT_HEIGHT", "DEFAULT_WIDTH", "MIN_HEIGHT", "MIN_WIDTH", "_SESSION_FILE_LOADER",
         "__init__", "_apply_theme", "_apply_ui_zoom", "_build_log_container", "_collect_config", "_get_log_widget",
         "_save_undo_state", "_warmup_numba", "closeEvent", "save_config", "sig_numba_error", "sig_numba_ready",
         "timerEvent",
     },
     "certus.ui.certus_metal_single_gui:CertusMetalSingleApp": {
+        "_on_numba_error_ui", "_on_numba_ready_ui", "_warmup_numba_thread_runner",
         "MODULE_ID", "_COMPUTATION_THREADS", "_LOCAL_OPTIM_PHASE", "__init__", "_add_material_specific_rows",
         "_apply_config", "_apply_config_dict", "_apply_theme", "_collect_config",
         "_do_export_results", "_get_config_dict", "_get_log_widget", "_post_load_config", "_post_save_config",
@@ -455,6 +459,7 @@ OVERRIDES_OF = {
         "start_optimization",
     },
     "certus.ui.certus_metal_bilayer_gui:CertusMetalBilayerApp": {
+        "_on_numba_error_ui", "_on_numba_ready_ui", "_warmup_numba_thread_runner",
         "APP_NAME", "EXPORT_FAILURE_LOG", "MODULE_ID", "_COMPUTATION_THREADS", "__init__", "_add_material_specific_rows", "_apply_config",
         "_apply_config_dict", "_apply_theme", "_collect_config", "_create_labeled_input",
         "_create_live_params_group", "_create_physical_params_group",

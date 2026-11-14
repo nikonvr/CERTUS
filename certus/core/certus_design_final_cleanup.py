@@ -17,6 +17,8 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
+from certus.core.certus_design_cost_context import DesignCostContext, design_layer_indices
+
 #: Lower bound of a layer still under its floor while another is treated: it will have its own turn.
 FREE_LOWER_BOUND_NM = 0.05
 #: The thinnest a layer may be for the cost kernel (below it the kernel returns its cliff value).
@@ -159,28 +161,20 @@ def final_cleanup(
     return CleanupResult(mats, d, v, origin, cost_start, cost, steps, kept_fixed)
 
 
-def design_cost_factory(
-    mats_nk: dict[str, np.ndarray],
-    n_sub: np.ndarray,
-    wls: np.ndarray,
-    tgt_vals: np.ndarray,
-    tgt_weights: np.ndarray,
-    has_back_calc: bool,
-    n_back_t: np.ndarray,
-    d_back: np.ndarray,
-) -> Callable[[Sequence[str]], CostAndGrad]:
+def design_cost_factory(context: DesignCostContext) -> Callable[[Sequence[str]], CostAndGrad]:
     """The cost of DESIGN at normal incidence (its analytic gradient kernel) for any layout of the same materials."""
     from certus.physics.gradient_oblique import compute_gradient_all_layers_analytic
 
-    wls = np.ascontiguousarray(np.asarray(wls, dtype=np.float64))
+    values, weights = context.normal_targets()
 
     def make_cost(materials: Sequence[str]) -> CostAndGrad:
-        n_layers_t = np.ascontiguousarray(np.array([mats_nk[m] for m in materials], dtype=np.complex128).T)
+        n_layers_t = design_layer_indices(context.mats_nk, materials)
 
         def cost_and_grad(ep: np.ndarray, var_idx: np.ndarray) -> tuple[float, np.ndarray]:
             cost, grad = compute_gradient_all_layers_analytic(
-                np.ascontiguousarray(ep, dtype=np.float64), n_layers_t, n_sub, wls, tgt_vals, tgt_weights,
-                KERNEL_MIN_THICKNESS_NM, has_back_calc, n_back_t, d_back, np.asarray(var_idx, dtype=np.int64),
+                np.ascontiguousarray(ep, dtype=np.float64), n_layers_t, context.n_sub, context.wls, values, weights,
+                KERNEL_MIN_THICKNESS_NM, context.has_back_calc, context.n_back, context.d_back,
+                np.asarray(var_idx, dtype=np.int64),
             )
             return float(cost), np.asarray(grad, dtype=np.float64)
 

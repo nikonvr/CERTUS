@@ -25,13 +25,9 @@ class FinalCleanupMixin:
         if len(state) == 0 or len(ep0) != len(state):
             return None
         try:
-            from certus.core.certus_core import get_complex_dtype, get_float_dtype
+            from certus.core.certus_design_cost_context import prepare_design_cost_context
             from certus.core.certus_design_final_cleanup import design_cost_factory, final_cleanup
-            from certus.core.certus_design_worker_utils import (
-                optim_backside_flags_from_cfg,
-                optim_prepare_stack_nk_back,
-            )
-            from certus_physics import prepare_targets_vectorized
+            from certus.core.certus_design_worker_utils import optim_backside_flags_from_cfg
 
             wls = np.asarray(self.ui._get_optim_wls(), dtype=np.float64)
             tgts = [t for t in self.ui._get_tgts() if t.valid()]
@@ -45,22 +41,15 @@ class FinalCleanupMixin:
                 }
             )
             ep_back = np.asarray(self.ui.ep_back_current) if self.ui.ep_back_current is not None else np.array([])
-            mats_nk, n_sub, _n_layers_t, n_back_t, d_back = optim_prepare_stack_nk_back(
-                self.ui._get_materials(),
-                self.ui._get_front_stack(),
-                wls,
-                stack_back=back_stack,
-                ep_back=ep_back,
-                has_back_stack=has_back_stack,
-                complex_dtype=get_complex_dtype(),
-                float_dtype=get_float_dtype(),
+            context = prepare_design_cost_context(
+                self.ui._get_materials(), self.ui._get_front_stack(), wls, tgts,
+                stack_back=back_stack, ep_back=ep_back, has_back_stack=has_back_stack, has_back_calc=has_back_calc,
             )
-            tgt_vals, tgt_weights = prepare_targets_vectorized(wls, tgts)
             names = [row["mat"] for row in state]
             floors = {name: float(self._min_layer_thickness([name])[0]) for name in set(names)}
             result = final_cleanup(
                 names, ep0, [bool(row["var"]) for row in state], floors.__getitem__,
-                design_cost_factory(mats_nk, n_sub, wls, tgt_vals, tgt_weights, has_back_calc, n_back_t, d_back),
+                design_cost_factory(context),
             )
         except (*NUMERICAL_FAULT_EXCEPTIONS, KeyError, TypeError, AttributeError, ValueError) as exc:
             self.ui.log(f"[FINAL CLEANUP] Not run ({type(exc).__name__}: {exc}); the 5 nm rule applies", "WARNING")

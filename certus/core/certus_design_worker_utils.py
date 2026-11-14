@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS, get_float_dtype
+from certus.core.certus_design_cost_context import optim_prepare_stack_nk_back as optim_prepare_stack_nk_back
 from certus.physics.certus_inputs import PHASE_IMAG_OVERFLOW, is_s_polarization
 from certus_physics import PGlobalConfig, PGlobalOptimizer, prepare_targets_vectorized
 
@@ -247,58 +248,6 @@ def optim_oblique_config_weights(config: dict[str, Any]) -> np.ndarray:
         if len(t["local_positions"])
     ]
     return spectral_rmse_weights_banded(wls_config, bands)
-
-
-def optim_prepare_stack_nk_back(
-    mats: dict[str, Any],
-    stack: list,
-    wls: np.ndarray,
-    *,
-    stack_back: list,
-    ep_back: np.ndarray,
-    has_back_stack: bool,
-    complex_dtype,
-    float_dtype,
-    substrate_key: str = "Substrate",
-) -> tuple[dict[str, np.ndarray], np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """
-
-    nk(lambda) indices for the front stack, substrate (key *substrate* in design),
-
-    and backside stacks / thicknesses if ``has_back_stack``.
-
-    Aligned on OptimWorker.run (preparation before oblique kernels).
-
-    """
-
-    mats_nk = {k: m.get_nk(wls) for k, m in mats.items()}
-
-    # Robust substrate lookup: try provided key, then case-insensitive 'substrate'
-    if substrate_key not in mats_nk:
-        lower_mats = {k.lower(): k for k in mats_nk.keys()}
-        fallback = lower_mats.get("substrate")
-        if fallback:
-            substrate_key = fallback
-
-    n_sub = np.ascontiguousarray(mats_nk[substrate_key])
-
-    n_layers = np.array([mats_nk[layer.mat] for layer in stack], dtype=complex_dtype)
-
-    n_layers_T = np.ascontiguousarray(n_layers.T)
-
-    if has_back_stack:
-        n_back = np.array([mats_nk[layer.mat] for layer in stack_back], dtype=complex_dtype)
-
-        n_back_T = np.ascontiguousarray(n_back.T)
-
-        d_back = np.ascontiguousarray(ep_back, dtype=float_dtype)
-
-    else:
-        n_back_T = np.zeros((len(wls), 0), dtype=complex_dtype)
-
-        d_back = np.zeros(0, dtype=float_dtype)
-
-    return mats_nk, n_sub, n_layers_T, n_back_T, d_back
 
 
 def optim_display_wavelength_grid(

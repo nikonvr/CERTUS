@@ -234,12 +234,18 @@ et 3, SPLINE corridors et finalisation, METAL (polissage principal).
 | # | Où | Aujourd'hui | Analytique possible ? | Gain attendu (non mesuré) |
 |---|---|---|---|---|
 | D1 | **FIELD**, synthèse et nettoyage : `certus_field_workers.py:753`, `:949` | L-BFGS-B sans gradient sur les épaisseurs | oui : dérivée du champ par matrices de transfert, même mécanique que le gradient de DESIGN | le plus gros : un gradient coûte N + 1 évaluations au lieu d'environ 2 à 3 |
-| D2 | **INDEX infrarouge**, étapes 0 et 2 : `certus_index_workers_ir_strat.py:156`, `:224` | L-BFGS-B sans gradient, alors que `IRGlobalObjective.gradient` existe | déjà écrit, non branché ; à vérifier d'abord : C13 du registre (`dk5` non affecté quand `arg == 0`) | fort pour ces deux étapes, effort faible |
+| D2 | **INDEX infrarouge**, étapes 0 et 2 : `certus_index_workers_ir_strat.py:156`, `:224` | L-BFGS-B sans gradient, alors que `IRGlobalObjective.gradient` existe | D112 corrigé dans `3865ac09`, voir la vérification ci-dessous | à mesurer sur les ajustements |
 | D3 | **METAL**, polissages de `pglobal_adapter.py:331`, `:375` | L-BFGS-B sans gradient | le gradient METAL existe (`jac=True` dans `certus_metal_bilayer_app.py`) : le passer à l'adaptateur | moyen, effort faible |
 | D4 | **SPLINE**, étape des nœuds libres : `spline_workers.py:545` ; Smart Init : `spline_smart_init.py:959`, `certus_index_spline_smart_init.py:893` | L-BFGS-B sans gradient | oui pour les valeurs aux nœuds ; plus délicat pour la **position** des nœuds (dérivée de la base spline) | moyen à fort, effort moyen |
 | D5 | SPLINE, repli de `certus_corridor_utils.py:1046` | sans gradient quand `spline_pwl_analytic_grad_supported` dit non | étendre les cas couverts | faible : c'est un repli |
 | D6 | **SUBSTRATE** Sellmeier : `certus_substrate_sellmeier.py:242`, `:665`, `:843` ; `certus_substrate_index.py:1498` ; `certus_index_utils.py:576`, `:611` | différences finies | oui, trivial : n²(λ) est une somme de fractions rationnelles ; un site a déjà son Jacobien (`_jac_polish_q`) | faible : ces ajustements sont déjà rapides |
 | D7 | INDEX optique, `certus_index_workers_opt_strat.py:84`, `:223` | Nelder-Mead, à côté de deux appels qui ont leur gradient | à instruire : sans doute un choix de robustesse | — |
+
+**D112, 14 novembre.** Si le centre d'une bande coïncidait avec un point mesuré, le noyau pouvait reprendre
+la dérivée du centre au point précédent. Le cas reproduit donne 0,0032077524 au lieu de 0,0031486516 par
+différences finies. La dérivée symétrique de cette contribution est désormais nulle au centre. 59 tests de
+gradients passent, ainsi que les 1 204 tests de l'oracle avant et après. Le corpus C1 conserve 9 092 tableaux
+identiques au bit. Le branchement du gradient aux étapes 0 et 2 reste à mesurer.
 
 Restent numériques par nature : les recherches à une variable (`minimize_scalar`, `brentq`, 6 sites) et les deux
 `differential_evolution` (recherche globale).

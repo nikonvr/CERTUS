@@ -7,8 +7,8 @@ mentions d'archivage dans des rapports anciens ne constituent pas de nouvelles s
 
 La liste initiale est suivie depuis `b6fb1939`. Les identifiants sont conservés pour la traçabilité du
 [contre-audit du 14 novembre](../reports/contre_audit_chantiers_2026-11-14/bilan.md).
-Les lignes 34 à 42 viennent de l'[audit général du 14 novembre](../reports/audit_general_2026-11-14/bilan.md) et ne sont pas
-classées par complexité. Les P1 sont 33, 34, 35 et 36.
+Les lignes 34 à 43 viennent de l'[audit général du 14 novembre](../reports/audit_general_2026-11-14/bilan.md) et ne sont pas
+classées par complexité. Les P1 sont 33, 35 et 36.
 
 ## Ordre du plus simple au plus complexe
 
@@ -24,7 +24,7 @@ Le profilage précède les modifications de gradients.
 
 **Bloqués par une décision de 👤** : périmètre UI (16, 18) ; modèle de dépôt représentatif (24, 31, 32) ;
 reprise B, « plus tard » selon U12 (27, 28, 29) ; date des essais humains (33) ; reconstruction, dépendance
-tierce et publication (39, 40, 41). **Exécutables par une IA seule** : 05, 20, 21, 25, 34, 35, 36, 37, 38, 42 et
+tierce et publication (39, 40, 41). **Exécutables par une IA seule** : 05, 20, 21, 25, 34, 35, 36, 37, 38, 42, 43 et
 la mesure du 29.
 
 | Ordre | Priorité | Complexité | Chantier restant | État et critère de fin | Source |
@@ -44,15 +44,16 @@ la mesure du 29.
 | 31 | P2 | Très forte | Co-conception B : varier épaisseurs et plan ensemble | La recherche locale STRAT varie actuellement le plan. Ajouter les épaisseurs, réaccorder les voisines et confirmer le gain contre les cibles sans arrêts ajoutés. | A §1.4 |
 | 32 | P3 | Très forte | Co-conception C : critère de contrôlabilité dans DESIGN | Corréler les marges et dynamiques aux résultats STRAT sur des plans avec une part de Rate représentative. La campagne A a retenu 31 à 32 couches Rate sur 34. | A §1.4 et campagne A |
 | 33 | P1 | Validation humaine | U13 : écran réel, Narrateur, cinq utilisateurs | Partie machine faite. Exécuter les essais humains et consigner les observations selon le protocole ; cette ligne requiert les personnes et le matériel. | U13 |
-| 34 | P1 | À instruire | Test C1 intermittent (fente) | `test_the_slit_profile_is_inert_when_absent_or_zero` échoue sous charge et passe seul, à deux validations. Trouver la cause, puis corriger le calcul ou le test. Fin : 20 passages verts sous la charge de la validation. | G §2.1 |
+| 34 | P2 | À instruire | Bits selon l'historique de compilation | Cause du POEM trouvée : un objet du cache Numba compilé dans un long processus lie d'autres routines complexes internes et change les derniers bits. Le validateur rejoue désormais sur cache vierge (`f350044d`). Reste : vérifier que les tests de fente et de paramètres neutres relèvent du même mécanisme, et décider s'il faut rendre les noyaux indépendants de l'historique (change les bits). | G §6 |
 | 35 | P1 | Moyenne | ALG-03 : grille oblique de DESIGN | Vérifier que la grille densifiée laisse le précalcul oblique sur l'ancienne grille. Si oui : test rouge d'abord, correction, oracle avant et après. Sinon, retirer la mention d'`ETAT.md` §1. | G §2.2 |
-| 36 | P1 | Faible | Registre des défauts ouverts | D84, D111, D112, D113, D116 et C20 sont cités ouverts sans définition hors de `reports/`. Retrouver chaque définition, statuer (corrigé avec son test, ou chantier) et consigner l'état. | G §2.3 |
+| 36 | P1 | Faible | Registre des défauts ouverts | `docs/AUDITS.md` (une soixantaine d'entrées « ouvert » au 26 octobre) a été supprimé par `b6fb1939` ; il se relit par `git show b6fb1939^:docs/AUDITS.md`. C13 (D112) est corrigé ; C18 (D111) garde sa parade `cache=False`, cause ouverte ; C20 (D113) reste à confirmer par sa sonde. Trier les autres entrées : corrigée avec son test, ou chantier. | G §2.3 |
 | 37 | P2 | Faible à moyenne | Contrôle local avant publication | Un script qui vérifie secrets, métadonnées des classeurs et œuvres de tiers sur les commits à pousser. Fin : il échoue sur un secret semé. | G §2.4 |
 | 38 | P2 | Moyenne | Algorithmes restants dans `certus.ui` | Descendre les deux optimisations de `certus_design_ui_optimization.py` hors de l'UI, identiques au bit, comme 21 (a). | G §2.5 |
 | 39 | P3 | Moyenne | Exécutable gelé et version | L'exécutable date de `dbec2fc1`. Reconstruire, essai de fumée, et vérifier que les exports portent une version qui distingue l'état du code. | G §2.6 |
 | 40 | P2 | Moyenne | Recoupement du TMM par un code tiers | Sonde hors noyau comparant R et T à un code externe sur des empilements absorbants et obliques. | G §2.7 |
 | 41 | P3 | Faible | Branches Dependabot | Douze mises à jour en attente depuis le 30 septembre : fusionner ou fermer. | G §2.8 |
 | 42 | P3 | Faible | Scripts introuvables | 30 scripts sur 106 ne sont cités nulle part hors `reports/`. Citer dans la référence ceux qui appliquent une règle, archiver les sondes à usage unique. | G §2.9 |
+| 43 | P2 | Faible | Durée de la validation | `376baef1` : fils Numba = cœurs ÷ workers ; `unit` passe de 512 à 299 s, `ui` est inchangé (~10 min). Mesurer `ui` hors du disque `D:` et, s'il le faut, son nombre de workers. | G §7 |
 
 ## Sources conservées
 

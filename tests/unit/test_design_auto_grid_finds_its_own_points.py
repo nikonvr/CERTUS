@@ -161,3 +161,44 @@ def test_refinement_samples_the_transmission_of_the_selected_geometry(monkeypatc
     )
     np.testing.assert_array_equal(result[0], refined_wl)
     assert all(len(array) == len(refined_wl) for array in result)
+
+
+def test_final_selection_uses_the_refined_grid_merit(monkeypatch, qapp):
+    from certus.core import certus_design_worker_utils
+    from certus.physics import design_fast_kernels
+    from certus.workers import certus_design_workers
+    from certus_physics import Layer
+
+    material = SimpleNamespace(n4=1.5, get_nk=lambda wl: np.full(len(wl), 1.5 + 0j))
+    wavelengths = np.array([500.0, 550.0, 600.0])
+    worker = certus_design_workers.OptimWorker({
+        "mats": {"H": material, "Substrate": material}, "stack": [Layer(mat="H", qwot=1.0)],
+        "ep0": np.array([100.0]), "wls": wavelengths, "tgts": [Target(500.0, 600.0, 0.5, 0.5)],
+        "l0": 550.0, "memetic_children": 1, "auto_wavelength_grid": True,
+    })
+    monkeypatch.setattr(worker, "_prepare_pglobal_inputs", lambda **_: (1, None, None, 1))
+    monkeypatch.setattr(worker, "_prepare_optimizer_entry", lambda **_: (np.array([100.0]), None, None, None, None))
+    monkeypatch.setattr(worker, "_run_pglobal_setup", lambda *_: (None, 0.0))
+
+    def global_result(**_kwargs):
+        worker.best_rmse_seen = worker.best_rmse_final = 0.01
+        worker.best_ep_final = np.array([100.0])
+        return SimpleNamespace(x=np.array([100.0]), y=0.0001)
+
+    def refine(**kwargs):
+        grid = np.array([500.0, 525.0, 550.0, 600.0])
+        return grid, material.get_nk(grid), material.get_nk(grid)[:, None], np.empty((4, 0)), np.full(4, 0.5), np.ones(4)
+
+    monkeypatch.setattr(worker, "_run_memetic_global", global_result)
+    monkeypatch.setattr(certus_design_worker_utils, "maybe_refine_grid_auto", refine)
+    monkeypatch.setattr(design_fast_kernels, "prepare_normal_fast_context", lambda **_: {"has_weak_k": False})
+    monkeypatch.setattr(worker, "_evaluate_thicknesses", lambda *_args, **_kwargs: 0.16)
+    monkeypatch.setattr(certus_design_workers, "run_coord_descent_5cycles", lambda **_: (np.array([120.0]), 0.04, 0.2))
+    results = []
+    worker.signals.finished.connect(results.append)
+
+    worker.run()
+
+    assert len(results) == 1
+    np.testing.assert_array_equal(results[0]["ep"], [120.0])
+    assert results[0]["rmse"] == pytest.approx(0.2)

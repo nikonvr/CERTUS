@@ -473,7 +473,11 @@ class OptimWorker(QObject):
                                 d_back=d_back,
                             )
                         )
-                        if had_weak_k and hasattr(self, "best_rmse_final"):
+                        if self._optional_step("auto_wavelength_grid") and grid_changed:
+                            # The callback's earlier score belongs to the previous grid.
+                            self.best_ep_final = ep_current.copy()
+                            self.best_rmse_seen = self.best_rmse_final = float(np.sqrt(max(best_cost, 0.0)))
+                        elif had_weak_k and hasattr(self, "best_rmse_final"):
                             self.best_rmse_final = float("inf")
                 try:
                     self.signals.progress_snapshot.emit(build_progress_snapshot(message='Final refinement (5x coordinate descent)...', display_ratio=0.95, progress_ratio=0.95, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='DESIGN', phase='FINAL_REFINEMENT'))

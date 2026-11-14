@@ -45,7 +45,7 @@ la mesure du 29.
 | 32 | P3 | Très forte | Co-conception C : critère de contrôlabilité dans DESIGN | Corréler les marges et dynamiques aux résultats STRAT sur des plans avec une part de Rate représentative. La campagne A a retenu 31 à 32 couches Rate sur 34. | A §1.4 et campagne A |
 | 33 | P1 | Validation humaine | U13 : écran réel, Narrateur, cinq utilisateurs | Partie machine faite. Exécuter les essais humains et consigner les observations selon le protocole ; cette ligne requiert les personnes et le matériel. | U13 |
 | 34 | P2 | À instruire | Bits selon l'historique de compilation | Cause du POEM trouvée : un objet du cache Numba compilé dans un long processus lie d'autres routines complexes internes et change les derniers bits. Le validateur rejoue désormais sur cache vierge (`f350044d`). Reste : vérifier que les tests de fente et de paramètres neutres relèvent du même mécanisme, et décider s'il faut rendre les noyaux indépendants de l'historique (change les bits). | G §6 |
-| 36 | P2 | Faible à moyenne | Défauts du registre supprimé | [Tri du 14 novembre](../reports/audit_general_2026-11-14/registre_tri.md) du registre retiré par `b6fb1939` : C13, C20 et ALG-03 corrigés. Restent présents ALG-13 (arrêt ignoré par l'affinage final), ALG-20 et C18 ; les UX présents relèvent du périmètre UI (16, 18). Mesurer chacun avant de le corriger. | G §8 |
+| 36 | P2 | Faible à moyenne | Défauts du registre supprimé | [Tri du 14 novembre](../reports/audit_general_2026-11-14/registre_tri.md) du registre retiré par `b6fb1939` : C13, C20, ALG-03 et ALG-13 corrigés. Restent présents ALG-20 et C18 ; les UX présents relèvent du périmètre UI (16, 18). Mesurer chacun avant de le corriger. | G §8 |
 | 37 | P2 | Faible à moyenne | Contrôle local avant publication | Un script qui vérifie secrets, métadonnées des classeurs et œuvres de tiers sur les commits à pousser. Fin : il échoue sur un secret semé. | G §2.4 |
 | 38 | P2 | Moyenne | Algorithmes restants dans `certus.ui` | Descendre les deux optimisations de `certus_design_ui_optimization.py` hors de l'UI, identiques au bit, comme 21 (a). | G §2.5 |
 | 39 | P3 | Moyenne | Exécutable gelé et version | L'exécutable date de `dbec2fc1`. Reconstruire, essai de fumée, et vérifier que les exports portent une version qui distingue l'état du code. | G §2.6 |
@@ -74,7 +74,7 @@ consignées dans les bilans liés ci-dessus.
 U1–U11, refactoring des corridors, reprise des sessions U12 A, reprise STRAT multi-graines, partie machine
 d'U13, tours supplémentaires STRAT, aperçu INDEX TLU, rangement des journaux, contrôle des liens,
 polisseur hybride, poids des bandes disjointes, estimateur N/TOT, grille automatique et sélection robuste
-sont intégrés, ainsi que les corrections de C20 et d'ALG-03 (35). Les mesures appariées et l'oracle sont dans les sources ci-dessus.
+sont intégrés, ainsi que les corrections de C20, d'ALG-03 (35) et d'ALG-13. Les mesures appariées et l'oracle sont dans les sources ci-dessus.
 
 L'imprécision de la docstring de `second_order_robust_rmse` est corrigée : il s'agit de l'approximation
 Gauss–Newton, qui omet le terme diagonal de courbure du résidu. Cette correction ne change aucun calcul.

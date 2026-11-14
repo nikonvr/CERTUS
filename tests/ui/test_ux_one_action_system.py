@@ -21,6 +21,9 @@ import pytest
 
 from scripts.audit_ux_certus import MODULES, _run_worker
 
+# Any selected check can be the first to start the eleven windows in this process.
+pytestmark = pytest.mark.slow
+
 #: Words written in capitals because they are names, not because they shout: acronyms and the modules of the suite.
 ACRONYMS = frozenset({"CSV", "JSON", "MC", "PGLOBAL", "QWOT", "RMSE", "SEEL", "TMM", "XLS", "XLSX"}) | frozenset(
     {"CERTUS", "DESIGN", "FIELD", "HUB", "INDEX", "METAL", "SMOOTHER", "SPLINE", "STRAT", "SUBSTRATE"}

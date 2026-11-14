@@ -262,8 +262,10 @@ endroits jugent avec des mérites différents (ALG-18). Tout paramètre inactif 
 
 - Suite complète : environ 40 min en série, 17 min par `validate_parallel.py` (2026-10-18).
 - `tests/slow_tests.json` : 286 fonctions, 2 093 s cumulées — `ui` 977 s (100), `unit` 795 s (169), `headless` 218 s
-  (8), `regression` 72 s. Quatre tests de `tests/ui/test_ux_one_action_system.py` y figurent à 120,0 s chacun : à
-  regarder en premier (coût partagé compté quatre fois, ou réel).
+  (8), `regression` 72 s. Mesure Windows isolée le 14 novembre : les 44 tests de `test_ux_one_action_system.py`
+  passent en 120,95 s, dont 120,35 s pour la fixture qui ouvre les onze fenêtres. Toutes les autres phases sont
+  sous 5 ms. Le test de couleur lancé seul déclenche les mêmes ouvertures (121,55 s de préparation, 11 tests
+  réussis). Le registre retient le coût observé en groupe et le module reste marqué lent pour toute sélection.
 - `numba_cache_key` est global : modifier un fichier qui cite numba recompile tous les noyaux à froid.
 - `docs/ETAT.md` : un sous-ensemble a déjà laissé passer une régression
   (`test_the_architecture_debt_only_shrinks.py`).

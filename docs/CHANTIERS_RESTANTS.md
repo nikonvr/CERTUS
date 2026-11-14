@@ -22,7 +22,6 @@ Traiter 15 (co-conception A).
 Les essais humains 33 suivent leur propre calendrier. Le profilage précède les modifications de gradients.
 | Ordre | Priorité | Complexité | Chantier restant | État et critère de fin | Source |
 |---:|---|---|---|---|---|
-| 01 | P2 | Faible | Expliquer les quatre coûts de 120 s des tests d'actions UX | À mesurer : séparer coût de fixture et coût propre, puis corriger le registre sans affaiblir les tests. | Q §5.1 |
 | 05 | P3 | Faible à moyenne | Jacobiens Sellmeier manquants (D6) | Mesurer la part des ajustements concernés. Valider un éventuel gradient par différences finies et mesurer le gain à paramètres identiques. | A §4 |
 | 07 | P3 | Moyenne | Amorçage Numba (R2) | Le socle possède déjà le gestionnaire. Mutualiser les comportements communs en préservant signaux, erreurs et durée de vie des fils Qt. Vérifier le démarrage à froid des cinq fenêtres. | A §2.2 |
 | 08 | P2 | Moyenne | Mutualiser les fenêtres METAL simple/bicouche (R1) | Des groupes de paramètres et traitements de progression restent doublés malgré le socle existant. Préserver les différences physiques. | A §2.2 |

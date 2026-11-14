@@ -171,11 +171,6 @@ class OptimWorker(QObject):
     def _finalize_and_emit_optimization_result(self, ep_current, best_cost) -> None:
         return self.design_strat._finalize_and_emit_optimization_result(self, ep_current, best_cost)
 
-    def _maybe_upgrade_grid_tikhonravov(self, *, ep_current: np.ndarray, mats: dict, stack, tgts, oblique_mode: bool, oblique_tgts, wls: np.ndarray, float_dtype, complex_dtype, has_back_stack: bool, stack_back, ep_back: np.ndarray, n_sub: np.ndarray, n_layers_T: np.ndarray, n_back_T: np.ndarray, tgt_vals, tgt_weights) -> tuple:
-        kwargs = locals().copy()
-        kwargs.pop('self')
-        return self.design_strat._maybe_upgrade_grid_tikhonravov(self, **kwargs)
-
     def _build_pglobal_config(self, *, mode: str, dim: int, conv_tol: float) -> tuple[PGlobalConfig, int]:
         kwargs = locals().copy()
         kwargs.pop('self')
@@ -368,6 +363,7 @@ class OptimWorker(QObject):
             context = prepare_design_cost_context(
                 mats, stack, wls, None if oblique_mode else tgts, stack_back=stack_back, ep_back=ep_back,
                 has_back_stack=has_back_stack, has_back_calc=has_back_calc,
+                float_dtype=float_dtype, complex_dtype=complex_dtype,
             )
             wls, n_sub, n_layers_T = context.wls, context.n_sub, context.n_front
             n_back_T, d_back = context.n_back, context.d_back

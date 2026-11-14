@@ -33,7 +33,6 @@ from certus_physics import (
     PGlobalConfig,
     compute_gradient_all_layers_analytic,
     cost_numba_fast,
-    prepare_targets_vectorized,
 )
 
 
@@ -366,83 +365,6 @@ class DesignOptimizationStrategy:
             trace=worker.request.trace,
         )
         worker.signals.finished.emit(result_payload.to_legacy_dict())
-
-    @staticmethod
-
-    def _maybe_upgrade_grid_tikhonravov(worker, *, ep_current: np.ndarray, mats: dict, stack, tgts, oblique_mode: bool, oblique_tgts, wls: np.ndarray, float_dtype, complex_dtype, has_back_stack: bool, stack_back, ep_back: np.ndarray, n_sub: np.ndarray, n_layers_T: np.ndarray, n_back_T: np.ndarray, tgt_vals, tgt_weights) -> tuple:
-        """Apply optional Tikhonravov-driven wavelength grid densification before final polish."""
-        try:
-            lambda_min = min(t.lmin for t in tgts if t.valid()) if not oblique_mode else min(t.lmin for t in oblique_tgts if t.valid())
-            lambda_max = max(t.lmax for t in tgts if t.valid()) if not oblique_mode else max(t.lmax for t in oblique_tgts if t.valid())
-            wl_ref = (lambda_min + lambda_max) / 2.0
-            L_total = 0.0
-            for i, layer in enumerate(stack):
-                if i >= len(ep_current):
-                    continue
-                mat_obj = mats.get(layer.mat)
-                if mat_obj:
-                    n_ref = mat_obj.get_nk(np.array([wl_ref]))[0].real
-                    L_total += n_ref * ep_current[i]
-            if L_total > 1e-06 and lambda_max > lambda_min:
-                nu_min = 1.0 / lambda_max
-                nu_max = 1.0 / lambda_min
-                delta_nu = nu_max - nu_min
-                marge = 10.0
-                N_tikhon = int(np.ceil(2.0 * L_total * delta_nu * marge))
-                N_tikhon = max(10, min(5000, N_tikhon))
-                current_n_points = len(wls)
-                if N_tikhon > current_n_points * 1.15:
-                    logging.info(f'Tikhonravov: Upgrading grid from {current_n_points} to {N_tikhon} points for final refinement')
-                    active_tgts_for_grid = [t for t in (oblique_tgts if oblique_mode else tgts) if t.valid()]
-                    wls_list_new = []
-                    for t in active_tgts_for_grid:
-                        start = max(t.lmin, 0.001)
-                        end = max(t.lmax, start + 0.001)
-                        sigma_min = 1.0 / end
-                        sigma_max = 1.0 / start
-                        sigma_grid = np.linspace(sigma_min, sigma_max, N_tikhon)
-                        wls_list_new.append(1.0 / sigma_grid)
-                    wls = np.unique(np.concatenate(wls_list_new))
-                    wls = np.ascontiguousarray(wls.astype(float_dtype))
-                    mats_nk = {k: m.get_nk(wls) for k, m in mats.items()}
-                    _sub_key = 'substrate' if 'substrate' in mats_nk else 'Substrate'
-                    n_sub = np.ascontiguousarray(mats_nk[_sub_key])
-                    n_layers = np.array([mats_nk[lyr.mat] for lyr in stack], dtype=complex_dtype)
-                    n_layers_T = np.ascontiguousarray(n_layers.T)
-                    if has_back_stack:
-                        n_back = np.array([mats_nk[lyr.mat] for lyr in stack_back], dtype=complex_dtype)
-                        n_back_T = np.ascontiguousarray(n_back.T)
-                    if not oblique_mode:
-                        tgt_vals, tgt_weights = prepare_targets_vectorized(wls, tgts)
-                    else:
-                        config_groups = {}
-                        for tgt in [t for t in oblique_tgts if t.valid()]:
-                            mask = (wls >= tgt.lmin) & (wls <= tgt.lmax)
-                            if not np.any(mask):
-                                continue
-                            key = (tgt.angle, tgt.pol)
-                            clues = np.where(mask)[0]
-                            if key not in config_groups:
-                                config_groups[key] = {'clues_set': set(), 'targets': []}
-                            config_groups[key]['clues_set'].update(clues.tolist())
-                            wls_tgt = wls[clues]
-                            denom = max(tgt.lmax - tgt.lmin, 1e-09)
-                            slope = (tgt.tmax - tgt.tmin) / denom
-                            tgt_vals_oblique = tgt.tmin + slope * (wls_tgt - tgt.lmin)
-                            config_groups[key]['targets'].append({'clues': clues, 'tgt_vals': tgt_vals_oblique, 'target_type': tgt.target_type, 'weight': tgt.w})
-                        oblique_configs = []
-                        for (angle, pol), group in config_groups.items():
-                            all_clues = np.array(sorted(group['clues_set']), dtype=np.int64)
-                            idx_to_local = {idx: i for i, idx in enumerate(all_clues)}
-                            oblique_configs.append({'angle': angle, 'pol': pol, 'all_clues': all_clues, 'wls_config': wls[all_clues], 'n_sub_config': n_sub[all_clues], 'n_layers_T_config': n_layers_T[all_clues, :], 'idx_to_local': idx_to_local, 'targets': group['targets']})
-                        for config in oblique_configs:
-                            idx_to_local = config['idx_to_local']
-                            for tgt_data in config['targets']:
-                                tgt_data['local_positions'] = np.array([idx_to_local[i] for i in tgt_data['clues']], dtype=np.int64)
-                    logging.info(f'Tikhonravov: Grid upgraded successfully to {len(wls)} points')
-        except NUMERICAL_FAULT_EXCEPTIONS as tikhon_err:
-            logging.warning(f'Tikhonravov grid update failed, using original grid: {tikhon_err}')
-        return (wls, n_sub, n_layers_T, n_back_T, tgt_vals, tgt_weights)
 
     @staticmethod
 

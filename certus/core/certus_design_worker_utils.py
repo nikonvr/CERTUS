@@ -18,8 +18,9 @@ import numpy as np
 
 from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS, get_float_dtype
 from certus.core.certus_design_cost_context import optim_prepare_stack_nk_back as optim_prepare_stack_nk_back
+from certus.core.certus_design_cost_context import prepare_design_cost_context
 from certus.physics.certus_inputs import PHASE_IMAG_OVERFLOW, is_s_polarization
-from certus_physics import PGlobalConfig, PGlobalOptimizer, prepare_targets_vectorized
+from certus_physics import PGlobalConfig, PGlobalOptimizer
 
 if TYPE_CHECKING:
     from threading import Event
@@ -904,15 +905,11 @@ def optim_grid_indices(
     """The grid and the indices of the substrate, the layers and the back coating (``stack_back``; None keeps
     ``n_back_T``) on a new wavelength grid."""
     wls = np.ascontiguousarray(wls.astype(float_dtype))
-    mats_nk = {k: m.get_nk(wls) for k, m in mats.items()}
-    _sub_key = "substrate" if "substrate" in mats_nk else "Substrate"
-    n_sub = np.ascontiguousarray(mats_nk[_sub_key])
-    n_layers = np.array([mats_nk[lyr.mat] for lyr in stack], dtype=complex_dtype)
-    n_layers_T = np.ascontiguousarray(n_layers.T)
-    if stack_back is not None:
-        n_back = np.array([mats_nk[lyr.mat] for lyr in stack_back], dtype=complex_dtype)
-        n_back_T = np.ascontiguousarray(n_back.T)
-    return wls, n_sub, n_layers_T, n_back_T
+    _, n_sub, n_layers_t, rear, _ = optim_prepare_stack_nk_back(
+        mats, stack, wls, stack_back=stack_back or (), ep_back=(), has_back_stack=stack_back is not None,
+        float_dtype=float_dtype, complex_dtype=complex_dtype, substrate_key="substrate",
+    )
+    return wls, n_sub, n_layers_t, rear if stack_back is not None else n_back_T
 
 
 def maybe_refine_grid_auto(
@@ -973,15 +970,15 @@ def maybe_refine_grid_auto(
         )
         if len(new) == len(wls) and np.allclose(new, np.sort(np.asarray(wls, dtype=np.float64)), rtol=0.0, atol=0.0):
             return wls, n_sub, n_layers_T, n_back_T, tgt_vals, tgt_weights
-        empty_back = np.empty((len(new), 0), dtype=complex_dtype)
-        new_wls, new_n_sub, new_n_layers_T, new_n_back_T = optim_grid_indices(
-            new, mats, stack, back_stack or None, empty_back,
-            float_dtype=float_dtype, complex_dtype=complex_dtype)
-        new_tgt_vals, new_tgt_weights = prepare_targets_vectorized(new_wls, tgts)
+        context = prepare_design_cost_context(
+            mats, stack, new, tgts, stack_back=back_stack, ep_back=d_back, has_back_stack=has_back_stack,
+            has_back_calc=has_back_calc, substrate_key="substrate", float_dtype=float_dtype, complex_dtype=complex_dtype,
+        )
+        new_tgt_vals, new_tgt_weights = context.normal_targets()
     except NUMERICAL_FAULT_EXCEPTIONS as err:
         logging.warning(f"Auto grid refinement failed, grid unchanged: {err}")
         return wls, n_sub, n_layers_T, n_back_T, tgt_vals, tgt_weights
-    return new_wls, new_n_sub, new_n_layers_T, new_n_back_T, new_tgt_vals, new_tgt_weights
+    return context.wls, context.n_sub, context.n_front, context.n_back, new_tgt_vals, new_tgt_weights
 
 
 def maybe_upgrade_grid_tikhonravov(
@@ -1039,11 +1036,16 @@ def maybe_upgrade_grid_tikhonravov(
                     sigma_grid = np.linspace(sigma_min, sigma_max, N_tikhon)
                     wls_list_new.append(1.0 / sigma_grid)
                 wls = np.unique(np.concatenate(wls_list_new))
-                wls, n_sub, n_layers_T, n_back_T = optim_grid_indices(
-                    wls, mats, stack, stack_back if has_back_stack else None, n_back_T,
-                    float_dtype=float_dtype, complex_dtype=complex_dtype)
+                context = prepare_design_cost_context(
+                    mats, stack, wls, None if oblique_mode else tgts,
+                    stack_back=stack_back, ep_back=ep_back, has_back_stack=has_back_stack,
+                    substrate_key="substrate", float_dtype=float_dtype, complex_dtype=complex_dtype,
+                )
+                wls, n_sub, n_layers_T = context.wls, context.n_sub, context.n_front
+                if has_back_stack:
+                    n_back_T = context.n_back
                 if not oblique_mode:
-                    tgt_vals, tgt_weights = prepare_targets_vectorized(wls, tgts)
+                    tgt_vals, tgt_weights = context.normal_targets()
                 else:
                     config_groups = optim_oblique_group_targets_on_wavelengths(wls, [t for t in oblique_tgts if t.valid()])
                     oblique_configs = optim_oblique_configs_from_groups(config_groups, wls, n_sub, n_layers_T)

@@ -82,12 +82,12 @@ def prepare_design_cost_context(
     ep_back: Any = (),
     substrate_key: str = "Substrate",
     cast_materials: bool = False,
+    float_dtype: type = np.float64,
+    complex_dtype: type = np.complex128,
 ) -> DesignCostContext:
     """Build one context for the requested grid. Oblique callers supply their own target groups."""
-    from certus.domain.constants import get_complex_dtype, get_float_dtype
     from certus_physics import prepare_targets_vectorized
 
-    float_dtype, complex_dtype = get_float_dtype(), get_complex_dtype()
     wls = np.ascontiguousarray(wls, dtype=float_dtype)
     mats_nk, substrate, front, rear, rear_thickness = optim_prepare_stack_nk_back(
         mats, stack, wls, stack_back=stack_back, ep_back=ep_back, has_back_stack=has_back_stack,

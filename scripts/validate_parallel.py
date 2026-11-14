@@ -39,6 +39,7 @@ import argparse
 import importlib.util
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -176,12 +177,22 @@ def run_stage(stage: Stage, out_dir: Path) -> Result:
 
 
 def replay_alone(ids: list[str], out_dir: Path, name: str) -> list[str]:
-    """Rejoue ces tests EN SERIE, sans xdist ; rend ceux qui echouent encore (aucun : tous verts seuls)."""
+    """Rejoue ces tests EN SERIE, sans xdist, sur un cache Numba VIERGE ; rend ceux qui echouent encore.
+
+    Cache vierge (ETAT §0, mesure du 2026-11-14) : un objet du cache partage, compile dans un processus a long
+    historique, liait d'autres routines complexes internes de Numba et rendait 150.0000000000008 au lieu de
+    150.0000000000001 ; le test C1 de POEM echouait alors seul aussi. Le rejeu juge le code, pas l'historique.
+    """
     log = out_dir / f"{name}_replay.log"
-    with open(log, "wb") as stream:
-        returncode = subprocess.run(
-            (*PYTEST, *ids), cwd=ROOT, env=_env(), stdout=stream, stderr=subprocess.STDOUT, check=False
-        ).returncode
+    cache = tempfile.mkdtemp(prefix="certus_replay_numba_")
+    try:
+        with open(log, "wb") as stream:
+            returncode = subprocess.run(
+                (*PYTEST, *ids), cwd=ROOT, env={**_env(), "NUMBA_CACHE_DIR": cache},
+                stdout=stream, stderr=subprocess.STDOUT, check=False,
+            ).returncode
+    finally:
+        shutil.rmtree(cache, ignore_errors=True)
     if returncode == 0:
         return []
     still = failed_ids(log.read_text(encoding="utf-8", errors="replace"))

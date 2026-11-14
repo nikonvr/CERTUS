@@ -215,3 +215,26 @@ def test_a_check_is_run_for_its_exit_code_only(tmp_path: Path) -> None:
     assert result.returncode == 1
     assert result.counts == {}
     assert result.failed == []
+
+
+def test_a_replay_compiles_on_a_fresh_numba_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """ETAT §0: a bit-comparison failure is replayed on a fresh Numba cache, never on the run's own.
+
+    Measured 2026-11-14: one object of the shared cache, compiled in a long-lived process, gave
+    150.0000000000008 where a fresh compilation gives 150.0000000000001, so the POEM C1 test failed alone too.
+    """
+    seen = {}
+
+    def fake_run(command, *, cwd, env, stdout, stderr, check):
+        seen["cache"] = env.get("NUMBA_CACHE_DIR")
+        seen["files"] = list(Path(seen["cache"]).iterdir()) if seen["cache"] else None
+        return type("Done", (), {"returncode": 0})()
+
+    monkeypatch.setenv("NUMBA_CACHE_DIR", str(tmp_path / "shared"))
+    monkeypatch.setattr(vp.subprocess, "run", fake_run)
+
+    assert vp.replay_alone(["tests/x.py::t"], tmp_path, "unit") == []
+    assert seen["cache"]
+    assert seen["cache"] != str(tmp_path / "shared")
+    assert seen["files"] == []
+    assert not Path(seen["cache"]).exists(), "the fresh cache is removed after the replay"

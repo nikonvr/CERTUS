@@ -104,7 +104,7 @@ code du 2026-10-19, audit d'arrêt OMS du 2026-10-10 : rapports datés dans `rep
 | ALG-27 | Criblage des enfants par polissage court (`memetic_screen_maxiter`, 0 par défaut) jamais mesuré | `run_memetic` | piste ; ×2 estimé, risque sur la qualité |
 | ALG-28 | Trois appelants recompilés à chaque démarrage (parade C18, `cache=False`) | `calc_spectrum_front`, `calc_spectrum_full`, `compute_batch_rmse` | piste ; quelques secondes par lancement |
 | ALG-29 | Règles Rate d'opérateur appliquées dès la recherche : aucun plan déposable sur bm90 (12 271 plans, plantage ≥ 59,7 %) | `apply_rate_rules` dans `_execute_robustness_tasks` | constaté ; `rate_rules_final_only` en mesure |
-| ALG-32 | Grille de λ à nombre de points fixé par cible | `certus_design_auto_grid`, `maybe_refine_grid_auto` | option `auto_wavelength_grid`, inactive par défaut (case « Automatic wavelength grid ») ; non mesurée sur un design de CERTUS ([bilan](../reports/questions_design_2026-11-13/bilan.md)) |
+| ALG-32 | Grille de λ à nombre de points fixé par cible | `certus_design_auto_grid`, `maybe_refine_grid_auto` | option `auto_wavelength_grid`, inactive par défaut. Sonde tri-bande RICL recoupée par l'oracle ([bilan](../reports/questions_design_2026-11-13/bilan.md#10-grille-automatique-sur-le-tri-bande-ricl)) |
 | ALG-33 | Population mémétique jugée sur le coût nominal seul | `build_memetic_lm_polisher` | option `memetic_robust_sigma_nm`, inactive par défaut ; non mesurée sur un design |
 | C20 | Gradient hérité faux sur couches absorbantes (D113) | `compute_gradient_all_layers_analytic` | ouvert |
 | C06/C07 | Nœud NaN → `n = k = 0` (D108) ; épaisseur négative acceptée (D109) | `get_nk_from_spline`, `calculate_RT_vectorized_real` | ouvert |

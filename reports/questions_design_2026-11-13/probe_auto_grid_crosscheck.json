@@ -1,0 +1,58 @@
+{
+  "source": "tl101_A_best.csv",
+  "adaptive_points": 1064,
+  "rounds": [
+    {
+      "points": 178,
+      "points_after": 280,
+      "converged": true
+    },
+    {
+      "points": 280,
+      "points_after": 615,
+      "converged": true
+    },
+    {
+      "points": 615,
+      "points_after": 1064,
+      "converged": true
+    },
+    {
+      "points": 1064,
+      "points_after": 1064,
+      "converged": true
+    }
+  ],
+  "solutions": {
+    "record": {
+      "rmse_0.01": 0.003148668236582343,
+      "rmse_0.001": 0.0035107972824550806,
+      "oracle_rmse_0.01": 0.0031486682365851346
+    },
+    "fixed_0_1": {
+      "rmse_0.01": 0.005325724414819998,
+      "rmse_0.001": 0.0021801269724380508,
+      "oracle_rmse_0.01": 0.005325724414794033
+    },
+    "adaptive": {
+      "rmse_0.01": 9.580808033689462e-05,
+      "rmse_0.001": 9.578742825105197e-05,
+      "oracle_rmse_0.01": 9.580808033689122e-05
+    }
+  },
+  "seconds": 127.1,
+  "provenance": {
+    "certus_version": "26_05",
+    "git_commit": "a4a48ec1b225742801777aead5103ab47a5cee2e",
+    "git_dirty": false,
+    "python": "3.15.2",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "numba": "0.68.0",
+    "numba_cache_key": "eca2f6bdb801",
+    "numba_cache_keyed": true,
+    "platform": "Windows-11-10.0.26200-SP0",
+    "machine": "AMD64",
+    "generated_at_utc": "2026-11-14T08:14:27+00:00"
+  }
+}

@@ -1,0 +1,167 @@
+{
+  "record_file": "tl101_A_best.csv",
+  "layers": 101,
+  "tot_nm": 14171.000000002648,
+  "reference_points": 27007,
+  "judge": {
+    "1 nm": {
+      "points": 277,
+      "rmse": 0.00012796769301553105
+    },
+    "0,1 nm": {
+      "points": 2707,
+      "rmse": 0.004806378752021525
+    },
+    "auto, base": {
+      "points": 178,
+      "rmse": 0.00012968729924631224
+    },
+    "auto, raffinee": {
+      "points": 452,
+      "rmse": 0.003511370482194587
+    },
+    "reference 0,01 nm": {
+      "points": 27007,
+      "rmse": 0.0031486682365823434
+    }
+  },
+  "polish": [
+    {
+      "start": "record",
+      "start_rmse": 0.0031486682365823434,
+      "1 nm": {
+        "points": 277,
+        "rmse_reference": 0.0031486682365823434,
+        "s": 0.8
+      },
+      "0,1 nm": {
+        "points": 2707,
+        "rmse_reference": 0.005325724414819998,
+        "s": 75.2
+      },
+      "auto": {
+        "points": 1064,
+        "rmse_reference": 9.580808033689461e-05,
+        "s": 24.3,
+        "rounds": [
+          {
+            "points": 178,
+            "points_after": 280,
+            "converged": true
+          },
+          {
+            "points": 280,
+            "points_after": 615,
+            "converged": true
+          },
+          {
+            "points": 615,
+            "points_after": 1064,
+            "converged": true
+          },
+          {
+            "points": 1064,
+            "points_after": 1064,
+            "converged": true
+          }
+        ]
+      }
+    },
+    {
+      "start": "sigma 0.05, graine 1",
+      "start_rmse": 0.2848122826471782,
+      "1 nm": {
+        "points": 277,
+        "rmse_reference": 0.0046332752662714815,
+        "s": 3.3
+      },
+      "0,1 nm": {
+        "points": 2707,
+        "rmse_reference": 0.006069428132401856,
+        "s": 30.7
+      },
+      "auto": {
+        "points": 520,
+        "rmse_reference": 0.00013302788117505656,
+        "s": 31.0,
+        "rounds": [
+          {
+            "points": 177,
+            "points_after": 264,
+            "converged": true
+          },
+          {
+            "points": 264,
+            "points_after": 365,
+            "converged": true
+          },
+          {
+            "points": 365,
+            "points_after": 520,
+            "converged": true
+          },
+          {
+            "points": 520,
+            "points_after": 618,
+            "converged": true
+          }
+        ]
+      }
+    },
+    {
+      "start": "sigma 0.05, graine 2",
+      "start_rmse": 0.28742821077874875,
+      "1 nm": {
+        "points": 277,
+        "rmse_reference": 0.004382556346390463,
+        "s": 3.4
+      },
+      "0,1 nm": {
+        "points": 2707,
+        "rmse_reference": 0.005500591264236759,
+        "s": 54.5
+      },
+      "auto": {
+        "points": 873,
+        "rmse_reference": 0.0003839490888862951,
+        "s": 94.4,
+        "rounds": [
+          {
+            "points": 178,
+            "points_after": 390,
+            "converged": true
+          },
+          {
+            "points": 390,
+            "points_after": 589,
+            "converged": false
+          },
+          {
+            "points": 589,
+            "points_after": 873,
+            "converged": true
+          },
+          {
+            "points": 873,
+            "points_after": 1201,
+            "converged": true
+          }
+        ]
+      }
+    }
+  ],
+  "provenance": {
+    "certus_version": "26_05",
+    "git_commit": "a4a48ec1b225742801777aead5103ab47a5cee2e",
+    "git_dirty": false,
+    "python": "3.15.2",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "numba": "0.68.0",
+    "numba_cache_key": "eca2f6bdb801",
+    "numba_cache_keyed": true,
+    "platform": "Windows-11-10.0.26200-SP0",
+    "machine": "AMD64",
+    "generated_at_utc": "2026-11-14T08:12:11+00:00"
+  }
+}

@@ -349,8 +349,7 @@ Travail fait sur une copie Linux de l'arbre (le shell du poste ne démarrait pas
 | Nombre de tours de la recherche locale STRAT | six fichiers de la passation du 2026-11-13, intégrés tels quels | celui de la passation | ses tests ; validation ci-dessous |
 | Journaux des modules sous `logs/` | `certus/core/certus_logging.py` : un nom nu (`certus_design.log`) va dans `logs/`, plus à la racine du dépôt | — | `test_the_module_logs_go_under_logs.py`, rouge sur le code d'avant |
 
-**Non mesuré** : la grille automatique et la sélection robuste sur un design de CERTUS (50/50 et tri-bande RICL à
-faire, une mesure à la fois).
+Mesures Windows du tri-bande et du 50/50 dans les sections suivantes.
 
 ## 9. Validation Windows
 
@@ -364,3 +363,20 @@ de structure et d'ancres. Les journaux sont archivés hors dépôt dans `validat
 
 Le 13 novembre, [C1 sur le corpus des noyaux](c1_windows.json) donne 9 092 tableaux identiques au bit.
 Le test de pondération couvre séparément le changement volontaire sur les bandes disjointes.
+
+## 10. Grille automatique sur le tri-bande RICL
+
+Le 14 novembre, sonde sur `tl101_A_best.csv`, 101 couches, TOT 14 171 nm. Polissage L-BFGS-B avec le noyau
+de DESIGN et les cibles du moteur RICL. Jugement commun par quadrature trapézoïdale par bande à 0,01 nm.
+
+| Départ | Grille 1 nm | Grille 0,1 nm | Grille automatique |
+|---|---:|---:|---:|
+| Record | 3,149e-3 (277 points, 0,8 s) | 5,326e-3 (2 707 points, 75,2 s) | 9,581e-5 (1 064 points, 24,3 s) |
+| Épaisseurs perturbées à 5 %, graine 1 | 4,633e-3 (3,3 s) | 6,069e-3 (30,7 s) | 1,330e-4 (520 points, 31,0 s) |
+| Épaisseurs perturbées à 5 %, graine 2 | 4,383e-3 (3,4 s) | 5,501e-3 (54,5 s) | 3,840e-4 (873 points, 94,4 s) |
+
+Sur le départ record, l'oracle indépendant retrouve 9,581e-5 à 0,01 nm. À 0,001 nm, le polissage automatique
+donne 9,579e-5 et le polissage à 0,1 nm donne 2,180e-3. Le record initial donne 3,511e-3 à ce pas. La base
+automatique de 178 points manquait elle-même les pics du record. L'expérience compare le raffinement de la
+quadrature associé à plusieurs polissages avec un polissage sur grille fixe.
+[Mesures des trois départs](probe_auto_grid.json) · [rejeu et oracle](probe_auto_grid_crosscheck.json).

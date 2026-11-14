@@ -13,6 +13,9 @@ def design_layer_indices(
     material_indices: dict[str, np.ndarray], materials: Sequence[str], dtype: type = np.complex128,
 ) -> np.ndarray:
     """Build the contiguous wavelength-by-layer array for a material sequence."""
+    if not materials:
+        wavelengths = next(iter(material_indices.values()))
+        return np.empty((len(wavelengths), 0), dtype=dtype)
     return np.ascontiguousarray(np.array([material_indices[name] for name in materials], dtype=dtype).T)
 
 

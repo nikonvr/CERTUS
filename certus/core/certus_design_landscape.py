@@ -274,17 +274,16 @@ def design_residual_jacobian(mats: dict, materials: Sequence[str], wls: np.ndarr
     kernel (``_res_jac_lossless_normal_kernel``); otherwise central differences of 1e-3 nm of
     ``design_residual_function``.
     """
-    from certus.core.certus_design_tolerance import design_residual_function
+    from certus.core.certus_design_cost_context import prepare_design_cost_context
+    from certus.core.certus_design_tolerance import design_residual_from_context
     from certus.physics.design_fast_gauss_newton import _res_jac_lossless_normal_kernel
-    from certus_physics import Layer, prepare_targets_vectorized
+    from certus_physics import Layer
 
-    wls = np.ascontiguousarray(np.asarray(wls, dtype=np.float64))
-    nk = {name: np.asarray(m.get_nk(wls), dtype=np.complex128) for name, m in mats.items()}
-    sub_key = "Substrate" if "Substrate" in nk else next(k for k in nk if k.lower() == "substrate")
-    n_layers = np.array([nk[m] for m in materials], dtype=np.complex128).T.reshape(len(wls), len(materials))
-    lossless = not np.any(n_layers.imag) and not np.any(nk[sub_key].imag)
+    context = prepare_design_cost_context(mats, [Layer(m, 0.0) for m in materials], wls, tgts, cast_materials=True)
+    wls, n_layers = context.wls, context.n_front
+    lossless = not np.any(n_layers.imag) and not np.any(context.n_sub.imag)
     if not lossless:
-        residual = design_residual_function(mats, [Layer(m, 0.0) for m in materials], wls, tgts)
+        residual = design_residual_from_context(context)
 
         def numeric(ep: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
             ep = np.asarray(ep, dtype=np.float64)
@@ -298,15 +297,14 @@ def design_residual_jacobian(mats: dict, materials: Sequence[str], wls: np.ndarr
 
         return numeric
 
-    tgt_vals, tgt_weights = prepare_targets_vectorized(wls, tgts)
-    tgt_vals, tgt_weights = np.asarray(tgt_vals, dtype=np.float64), np.asarray(tgt_weights, dtype=np.float64)
+    tgt_vals, tgt_weights = context.normal_targets()
     valid = (tgt_weights > 0) & np.isfinite(tgt_vals)
     w = np.where(valid, tgt_weights, 0.0)
     sqrt_w = np.ascontiguousarray(np.sqrt(w / max(float(w.sum()), 1e-300)))
     tgt = np.ascontiguousarray(np.where(valid, tgt_vals, 0.0))
     n_real = np.ascontiguousarray(n_layers.real)
     inv_n = np.ascontiguousarray(1.0 / n_real)
-    n_sub = np.ascontiguousarray(nk[sub_key].real)
+    n_sub = np.ascontiguousarray(context.n_sub.real)
     k0 = np.ascontiguousarray(2.0 * np.pi / wls)
     zeros, ones = np.zeros(len(wls)), np.ones(len(wls))
     var_idx = np.arange(len(materials), dtype=np.int64)

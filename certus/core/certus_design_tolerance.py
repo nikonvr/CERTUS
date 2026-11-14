@@ -16,7 +16,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from certus.core.certus_design_cost_context import prepare_design_cost_context
+from certus.core.certus_design_cost_context import DesignCostContext, prepare_design_cost_context
 
 
 @dataclass(frozen=True)
@@ -165,9 +165,13 @@ def error_alpha(ep: np.ndarray, n_real: np.ndarray | None, sigma_abs_nm: float, 
 def design_residual_function(mats: dict, stack: list, wls: np.ndarray, tgts: list) -> Callable[[np.ndarray], np.ndarray]:
     """Weighted residual vector sqrt(w_j / sum w) (T_j - target_j) of ``design_cost_function``: its squared norm is that
     cost (front face, normal incidence, CERTUS kernel)."""
+    return design_residual_from_context(prepare_design_cost_context(mats, stack, wls, tgts, cast_materials=True))
+
+
+def design_residual_from_context(context: DesignCostContext) -> Callable[[np.ndarray], np.ndarray]:
+    """Evaluate the front-face residual using already prepared optical inputs."""
     from certus.physics.certus_tmm_matrix import calculate_RT_no_backside
 
-    context = prepare_design_cost_context(mats, stack, wls, tgts, cast_materials=True)
     tgt_vals, tgt_weights = context.normal_targets()
 
     def residual(ep: np.ndarray) -> np.ndarray:

@@ -107,8 +107,6 @@ certus.physics.certus_material_db:MaterialDatabase.get_cache_stats
 certus.workers.certus_design_workers:OptimWorker._run_pglobal_restart_loop
 # OptimWorker coordinate-descent facade delegates to DesignStratService; no caller found.
 certus.workers.certus_design_workers:OptimWorker._run_coord_descent_5cycles
-# OptimWorker fine-grid upgrade facade delegates to DesignStratService; no caller found.
-certus.workers.certus_design_workers:OptimWorker._maybe_upgrade_grid_tikhonravov
 # OptimWorker PGlobal-config facade delegates to DesignStratService; no caller found.
 certus.workers.certus_design_workers:OptimWorker._build_pglobal_config
 

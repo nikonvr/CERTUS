@@ -1,5 +1,7 @@
 # REPRISE — refactoring des corridors d'INDEX SPLINE et feuille de route UX
 
+> Passation close le 2026-11-13. Suite dans le [point de reprise actif](../questions_design_2026-11-13/REPRISE.md).
+
 Fichier de reprise, **autonome** : il suffit pour reprendre le chantier sur un autre ordinateur, sans la conversation ni
 la mémoire de l'assistant. Il est mis à jour à chaque étape, avant de passer à la suivante. Le détail de chaque phase et
 de chaque décision est dans `REFACTOR_PLAN.md`, même dossier ; ce fichier dit où on en est, comment repartir, et comment

@@ -13,7 +13,7 @@ Rien n'a été exécuté, aucun fichier `.md` n'a été lu, aucun fichier source
 
 **Statut des affirmations**
 
-- « vérifié » : lu dans le code, référence `fichier.py:ligne` donnée (chemins relatifs à `certus/`, sauf `tests/`, `scripts/`
+- « vérifié » : lu dans le code, référence au fichier et au symbole (chemins relatifs à `certus/`, sauf `tests/`, `scripts/`
   et les scripts racine `CERTUS_*.py`).
 - « à confirmer en Phase 0 » : déduit d'un relevé par motif, pas d'une lecture complète du corps des méthodes
   (les 24 fichiers `ui/certus_index_spline*.py` font 15 229 lignes ; leur plan de classes et de méthodes a été relevé en
@@ -21,8 +21,7 @@ Rien n'a été exécuté, aucun fichier `.md` n'a été lu, aucun fichier source
 - `tests/architecture_debt.json` (pas un `.py`) : relevé par recherche ciblée le 2026-11-11, après l'arbitrage Q2 (§1.6) ;
   sa lecture complète reste une tâche de Phase 0.
 
-**Arbitrages** : tous tranchés (section 4) ; les Phases 2b à 2e, 9 et 10 en découlent. Reprise : `REPRISE.md`. Les numéros de ligne sont ceux
-de l'audit : chaque phase décale les suivantes, on repère donc par le nom.
+**Arbitrages** : tous tranchés (section 4) ; les Phases 2b à 2e, 9 et 10 en découlent. Reprise : `REPRISE.md`. Pour consulter les emplacements à la date de l'audit, ouvrir ce plan dans le commit `211d561b`.
 
 **Ce que « garanti sans régression » veut dire ici** : la garantie n'est pas une affirmation de ce plan, c'est un mécanisme.
 Chaque phase est soit un *ajout pur*, soit un *déplacement pur* de fonctions dont l'équivalence est prouvée par outil
@@ -37,14 +36,14 @@ Tout ce qui sort de ces deux catégories est isolé dans une phase à part et so
 
 - `re`, `index`, `design`, `strat` ne sont **pas des paquets** : ce sont des préfixes de fichiers (`certus_re_*`,
   `certus_index_*`, `certus_design_*`, `certus_strat_*`) répartis dans des paquets par **couche** :
-  `domain < physics < core = utils < metal = spline < workers < ui` (`scripts/metrics.py:89-92`).
+  `domain < physics < core = utils < metal = spline < workers < ui` (`scripts/metrics.py`).
 - `certus` est un paquet-espace de noms : seuls `domain/**/__init__.py` existent. Il n'y a aucun `__init__.py` à câbler.
 - Aucun module ni paquet CERTUS ne s'appelle `re` (Glob `**/re.py`, `**/re/__init__.py` : vide). `import re` désigne
-  partout la bibliothèque standard (ex. `CERTUS_HUB.py:38`).
+  partout la bibliothèque standard (ex. `CERTUS_HUB.py`).
 - La logique « corridors » n'existe côté fenêtre que dans **INDEX SPLINE** (`ui/certus_index_spline*.py`), et côté
   algorithme dans `spline/`. Les familles `re`, `index`, `design`, `field`, `metal` n'en contiennent pas. STRAT a ses
-  propres notions homonymes, sans import commun : `corridor_wl_range` (`physics/certus_strat_batch.py:22`),
-  `corridor_monitor_span` (`core/certus_strat_robustness_noise.py:169`), `_add_corridor` (`ui/certus_strat_spectrum_ui.py:146`).
+  propres notions homonymes, sans import commun : `corridor_wl_range` (`physics/certus_strat_batch.py`),
+  `corridor_monitor_span` (`core/certus_strat_robustness_noise.py`), `_add_corridor` (`ui/certus_strat_spectrum_ui.py`).
 
 Le refactoring « corridors » porte donc sur une seule fenêtre, `CertusIndexSplineApp` ; le découplage inter-familles est
 un chantier distinct, plus petit (§1.3, Phase 7).
@@ -53,33 +52,33 @@ un chantier distinct, plus petit (§1.3, Phase 7).
 
 | # | Constat | Références |
 |---|---------|------------|
-| F1 | **La logique corridors est éparpillée sur 10 classes et 9 fichiers.** `_CorridorControlMixin`, `_CorridorGenMixin`, `_CorridorWorkerMixin`, `_CorridorTabMixin`, `_CorridorExportMixin`, `CertusIndexSplineCorridorUIMixin`, plus des méthodes corridors logées dans `CertusIndexSplineManualMeshMixin`, `_PlotMixin`, `_UIBuilderMixin`, `CertusIndexSplineEventsExtrasMixin`. | `_CorridorControlMixin` `ui/certus_index_spline_settings.py:749` ; `_CorridorGenMixin` `ui/certus_index_spline_corridor_gen.py:20` ; `_CorridorWorkerMixin` `ui/certus_index_spline_corridor_worker.py:28` ; `_CorridorTabMixin` `ui/certus_index_spline_corridor_tab.py:24` ; `_CorridorExportMixin` `ui/certus_index_spline_execution.py:90` ; `CertusIndexSplineCorridorUIMixin` `ui/certus_index_spline_corridorui_mixin.py:26` ; `_corridor_manual_half_width_nm` `ui/certus_index_spline_manualmesh_mixin.py:1015-1122` ; `_plot_rmse_data_scatter` `ui/certus_index_spline_rendering.py:247-1049, 1463, 1876, 1915` ; `_is_rmse_d_grid_worker_finalize_dict` `ui/certus_index_spline_eventsextras_mixin.py:319, 326, 372, 657, 959` |
-| F2 | **L'état corridor n'a pas de propriétaire.** `self._corridor_rmse_*` est écrit depuis 9 fichiers. Il naît à trois endroits : dans `__init__`, dans un *constructeur de widgets*, et paresseusement au fil de l'eau. La remise à zéro n'en couvre qu'une partie. | naissance `__init__` : `ui/certus_index_spline_ui.py:110, 120-126, 139` ; naissance dans un builder : `ui/certus_index_spline_corridorui_mixin.py:152-161` ; naissance paresseuse : `ui/certus_index_spline_settings.py:1046-1056`, `ui/certus_index_spline_corridor_worker.py:883`, `ui/certus_index_spline_rendering.py:747, 849-859`, `ui/certus_index_spline_corridor_tab.py:154-157` ; remise à zéro partielle : `ui/certus_index_spline_state_mixin.py:85-119, 179-191` |
-| F3 | **Contrat implicite par `getattr` / `hasattr`.** 208 `getattr(self, "…")` et 230 `hasattr(self, "…")` dans le groupe ; une soixantaine de `getattr(self, "_corridor_…", défaut)` recopient la même valeur par défaut à chaque site. Le même attribut est lu tantôt gardé, tantôt nu. | défauts recopiés : `_corridor_rmse_manual_slider_scale` = 100 en `ui/certus_index_spline_corridorui_mixin.py:342`, `ui/certus_index_spline_manualmesh_mixin.py:1020`, `ui/certus_index_spline_settings.py:1211` ; lecture nue puis gardée du même état : `ui/certus_index_spline_manualmesh_mixin.py:1062-1063` vs `:1100-1107` ; gardes sur des *méthodes* d'autres mixins : `ui/certus_index_spline_settings.py:241, 244, 1058, 1061, 1068` |
-| F4 | **Responsabilités mélangées.** Le répartiteur général de fin de calcul (`_on_worker_done`, tous rôles de worker) vit dans le mixin corridors ; `_DataMixin` (tables n/k, décalage de substrat) vit dans le groupe « corridor » ; `_CorridorExportMixin` porte aussi l'export n/k générique. | `ui/certus_index_spline_corridor_worker.py:366, 600, 627, 689` ; `ui/certus_index_spline_corridor_data.py:24` ; `ui/certus_index_spline_execution.py:93, 402` |
-| F5 | **Les mixins rappellent la classe hôte.** Un mandataire paresseux `CertusIndexSplineApp` importe la fenêtre à l'appel ; plus de 40 sites l'utilisent. S'y ajoutent des imports retardés du module de la fenêtre. Cycle d'exécution mixin ↔ hôte, invisible au niveau module. | mandataire : `ui/certus_index_spline_common.py:371-376` ; usages : `ui/certus_index_spline_manualmesh_mixin.py:46-975`, `ui/certus_index_spline_eventsextras_mixin.py:206, 302-307, 390, 718-728, 1057` ; imports retardés de la fenêtre : `ui/certus_index_spline_corridor_worker.py:893`, `ui/certus_index_spline_execution.py:869`, `ui/certus_index_spline_mixins_ui.py:478` |
-| F6 | **Le code de production a pris la forme du harnais de test.** `self.__class__._prepare_worker_restart(self)` et `CertusIndexSplineApp._prepare_worker_restart(self)` n'existent que parce que les tests appellent les méthodes hors instance sur un faux hôte. | `ui/certus_index_spline_corridor_worker.py:889` ; `ui/certus_index_spline_execution.py:533, 706` ; `ui/certus_index_spline_settings.py:762` ; `ui/certus_index_spline_manualmesh_mixin.py:635, 764, 835, 903, 975` ; `ui/certus_index_spline_eventsextras_mixin.py:390` ; harnais : `tests/unit/test_mwir_gui_flow.py:6-49` |
-| F7 | **Duplications.** `_apply_fixed_log_k_axis` défini 5 fois — une référence (`common:155`), une délégation vers elle (`monitor_ui:14`), trois copies locales identiques entre elles (`corridor_common:22`, `execution:44`, `rendering:71`) ; toutes règlent le même axe (log, 1e-6 à 1e-2), seuls les messages DEBUG divergent (journal « CERTUS » ou « CERTUS_INDEX_SPLINE », exception tue ou journalisée) ; `_DEFAULT_CORRIDOR_*` 3 fois ; 16 constantes de fenêtre (clés QSettings, révisions, épaisseurs SiO2) 2 à 3 fois, à valeurs égales, dont 13 définies dans le cœur spline sans y être utilisées ; `_QS_SMART_INIT_DEEP` et `_QS_SMART_INIT_TWO_PHASE` 2 fois, hors du cœur (`ui/certus_index_spline_smart_init.py:70-71`, `ui/certus_index_spline_common.py:92-94`) ; `SmartInitPayload` et ses deux classes d'état 2 fois ; `_SCRIPT_DIR` 2 fois avec deux modes de calcul. | `_apply_fixed_log_k_axis` `ui/certus_index_spline_corridor_common.py:22`, `ui/certus_index_spline_common.py:155`, `ui/certus_index_spline_execution.py:44`, `ui/certus_index_spline_monitor_ui.py:14`, `ui/certus_index_spline_rendering.py:71` ; `ui/certus_index_spline_common.py:110-115`, `ui/certus_index_spline_corridor_common.py:13-19`, `ui/certus_index_spline_settings.py:62-64` ; `spline/certus_index_spline_core.py:43, 2095-2107` vs `ui/certus_index_spline_common.py:70-123` et `ui/certus_index_spline_smart_init.py:68` ; `ui/certus_index_spline_smart_init.py:74-148` vs `ui/certus_index_spline_state_ui.py:11-85` ; `ui/certus_index_spline_common.py:66` vs `ui/certus_index_spline_corridor_common.py:10` |
-| F8 | **Module-carrefour fragile.** `certus_index_spline_common.py` importe les mixins de 4 modules en tête, définit des constantes au milieu, calcule `__all__` par `dir()`, puis importe encore un module *après* `__all__`. Son bon chargement dépend de l'ordre ; il figure dans la liste des modules sortis d'un cycle. | `ui/certus_index_spline_common.py:37-53, 378, 396-401` ; `tests/unit/test_a_module_that_was_in_an_import_cycle_imports_first_and_alone.py:28-35` |
-| F9 | **Code mort dans le MRO et dans le corps.** Deux mixins vides restent dans les bases de la fenêtre ; une branche lit un attribut que rien n'affecte et appelle une méthode qui n'existe nulle part. | `ui/certus_index_spline_mixins_ui.py:41, 736` (dans `ui/certus_index_spline_ui.py:62, 65`) ; `ui/certus_index_spline_execution.py:910-916` (`_corridor_rmse_profile_win`, `update_profile`) |
-| F10 | **Éléments de fenêtre rangés hors de la couche `ui`, et l'inverse.** Un mixin de fenêtre et des clés QSettings vivent dans `spline/` ; trois points d'entrée de calcul vivent dans le carrefour `ui`. | `spline/certus_index_spline_excel_export.py:23, 31` ; `spline/certus_index_spline_core.py:2094-2107` ; `ui/certus_index_spline_common.py:278, 319, 348` |
-| F11 | **Héritage de base à contre-sens.** `CertusBaseApp(QMainWindow, 13 mixins)` place la classe Qt en premier : ses 13 mixins ne peuvent redéfinir aucune méthode virtuelle Qt, et `super().__init__(parent)` n'atteint que `QMainWindow` — aucun `__init__` de mixin ne s'exécute. Les signaux `sig_numba_*` de la base sont redéfinis dans les sous-classes. | `ui/certus_base_app.py:276, 327, 277-278` ; `ui/certus_index_ui.py:75-76` ; `ui/certus_strat_ui.py:57-58` ; piège déjà documenté : `ui/certus_field_ui.py:19-20` |
-| F12 | **Trois arêtes entre familles.** FIELD importe un utilitaire des workers STRAT ; DESIGN et RE importent une fonction des utilitaires INDEX. | `_resolve_strat_indices_db_path` (`ui/certus_field_ui.py:15`) ; `spectral_rmse_weights` (`workers/certus_design_workers.py:53` et `core/certus_re_worker_utils.py:35`) |
-| F13 | **Noms trompeurs pour tout outillage par famille.** Le suffixe `_strat` veut dire « stratégie », pas STRAT ; `certus_design_tokens` est le système graphique, pas DESIGN. | `workers/certus_index_workers_ir_strat.py`, `workers/certus_index_workers_opt_strat.py`, `workers/certus_design_workers_strat.py` ; `core/certus_design_tokens.py:13` (importé par `ui/certus_index_spline_rendering.py:36`) |
-| F14 | **Fichier long.** Seul `certus_index_spline_rendering.py` dépasse le seuil de 1 500 lignes (1 967) ; `certus_index_spline_settings.py` en fait 1 388. | seuil : `scripts/metrics.py:102` |
-| F15 | **La fenêtre RE n'est pas dans `ui/`.** `CertusREApp` est définie dans le script racine, contrairement aux autres fenêtres. | `CERTUS_RE.py:166` ; comparer `ui/certus_strat_ui.py:46`, `ui/certus_design_ui.py:24`, `ui/certus_field_ui.py:18` |
+| F1 | **La logique corridors est éparpillée sur 10 classes et 9 fichiers.** `_CorridorControlMixin`, `_CorridorGenMixin`, `_CorridorWorkerMixin`, `_CorridorTabMixin`, `_CorridorExportMixin`, `CertusIndexSplineCorridorUIMixin`, plus des méthodes corridors logées dans `CertusIndexSplineManualMeshMixin`, `_PlotMixin`, `_UIBuilderMixin`, `CertusIndexSplineEventsExtrasMixin`. | `_CorridorControlMixin` `ui/certus_index_spline_settings.py` ; `_CorridorGenMixin` `ui/certus_index_spline_corridor_gen.py` ; `_CorridorWorkerMixin` `ui/certus_index_spline_corridor_worker.py` ; `_CorridorTabMixin` `ui/certus_index_spline_corridor_tab.py` ; `_CorridorExportMixin` `ui/certus_index_spline_execution.py` ; `CertusIndexSplineCorridorUIMixin` `ui/certus_index_spline_corridorui_mixin.py` ; `_corridor_manual_half_width_nm` `ui/certus_index_spline_manualmesh_mixin.py` ; `_plot_rmse_data_scatter` `ui/certus_index_spline_rendering.py` ; `_is_rmse_d_grid_worker_finalize_dict` `ui/certus_index_spline_eventsextras_mixin.py` |
+| F2 | **L'état corridor n'a pas de propriétaire.** `self._corridor_rmse_*` est écrit depuis 9 fichiers. Il naît à trois endroits : dans `__init__`, dans un *constructeur de widgets*, et paresseusement au fil de l'eau. La remise à zéro n'en couvre qu'une partie. | naissance `__init__` : `ui/certus_index_spline_ui.py` ; naissance dans un builder : `ui/certus_index_spline_corridorui_mixin.py` ; naissance paresseuse : `ui/certus_index_spline_settings.py`, `ui/certus_index_spline_corridor_worker.py`, `ui/certus_index_spline_rendering.py`, `ui/certus_index_spline_corridor_tab.py` ; remise à zéro partielle : `ui/certus_index_spline_state_mixin.py` |
+| F3 | **Contrat implicite par `getattr` / `hasattr`.** 208 `getattr(self, "…")` et 230 `hasattr(self, "…")` dans le groupe ; une soixantaine de `getattr(self, "_corridor_…", défaut)` recopient la même valeur par défaut à chaque site. Le même attribut est lu tantôt gardé, tantôt nu. | défauts recopiés : `_corridor_rmse_manual_slider_scale` = 100 en `ui/certus_index_spline_corridorui_mixin.py`, `ui/certus_index_spline_manualmesh_mixin.py`, `ui/certus_index_spline_settings.py` ; lecture nue puis gardée du même état : `ui/certus_index_spline_manualmesh_mixin.py` vs `:1100-1107` ; gardes sur des *méthodes* d'autres mixins : `ui/certus_index_spline_settings.py` |
+| F4 | **Responsabilités mélangées.** Le répartiteur général de fin de calcul (`_on_worker_done`, tous rôles de worker) vit dans le mixin corridors ; `_DataMixin` (tables n/k, décalage de substrat) vit dans le groupe « corridor » ; `_CorridorExportMixin` porte aussi l'export n/k générique. | `ui/certus_index_spline_corridor_worker.py` ; `ui/certus_index_spline_corridor_data.py` ; `ui/certus_index_spline_execution.py` |
+| F5 | **Les mixins rappellent la classe hôte.** Un mandataire paresseux `CertusIndexSplineApp` importe la fenêtre à l'appel ; plus de 40 sites l'utilisent. S'y ajoutent des imports retardés du module de la fenêtre. Cycle d'exécution mixin ↔ hôte, invisible au niveau module. | mandataire : `ui/certus_index_spline_common.py` ; usages : `ui/certus_index_spline_manualmesh_mixin.py`, `ui/certus_index_spline_eventsextras_mixin.py` ; imports retardés de la fenêtre : `ui/certus_index_spline_corridor_worker.py`, `ui/certus_index_spline_execution.py`, `ui/certus_index_spline_mixins_ui.py` |
+| F6 | **Le code de production a pris la forme du harnais de test.** `self.__class__._prepare_worker_restart(self)` et `CertusIndexSplineApp._prepare_worker_restart(self)` n'existent que parce que les tests appellent les méthodes hors instance sur un faux hôte. | `ui/certus_index_spline_corridor_worker.py` ; `ui/certus_index_spline_execution.py` ; `ui/certus_index_spline_settings.py` ; `ui/certus_index_spline_manualmesh_mixin.py` ; `ui/certus_index_spline_eventsextras_mixin.py` ; harnais : `tests/unit/test_mwir_gui_flow.py` |
+| F7 | **Duplications.** `_apply_fixed_log_k_axis` défini 5 fois — une référence (`common:155`), une délégation vers elle (`monitor_ui:14`), trois copies locales identiques entre elles (`corridor_common:22`, `execution:44`, `rendering:71`) ; toutes règlent le même axe (log, 1e-6 à 1e-2), seuls les messages DEBUG divergent (journal « CERTUS » ou « CERTUS_INDEX_SPLINE », exception tue ou journalisée) ; `_DEFAULT_CORRIDOR_*` 3 fois ; 16 constantes de fenêtre (clés QSettings, révisions, épaisseurs SiO2) 2 à 3 fois, à valeurs égales, dont 13 définies dans le cœur spline sans y être utilisées ; `_QS_SMART_INIT_DEEP` et `_QS_SMART_INIT_TWO_PHASE` 2 fois, hors du cœur (`ui/certus_index_spline_smart_init.py`, `ui/certus_index_spline_common.py`) ; `SmartInitPayload` et ses deux classes d'état 2 fois ; `_SCRIPT_DIR` 2 fois avec deux modes de calcul. | `_apply_fixed_log_k_axis` `ui/certus_index_spline_corridor_common.py`, `ui/certus_index_spline_common.py`, `ui/certus_index_spline_execution.py`, `ui/certus_index_spline_monitor_ui.py`, `ui/certus_index_spline_rendering.py` ; `ui/certus_index_spline_common.py`, `ui/certus_index_spline_corridor_common.py`, `ui/certus_index_spline_settings.py` ; `spline/certus_index_spline_core.py` vs `ui/certus_index_spline_common.py` et `ui/certus_index_spline_smart_init.py` ; `ui/certus_index_spline_smart_init.py` vs `ui/certus_index_spline_state_ui.py` ; `ui/certus_index_spline_common.py` vs `ui/certus_index_spline_corridor_common.py` |
+| F8 | **Module-carrefour fragile.** `certus_index_spline_common.py` importe les mixins de 4 modules en tête, définit des constantes au milieu, calcule `__all__` par `dir()`, puis importe encore un module *après* `__all__`. Son bon chargement dépend de l'ordre ; il figure dans la liste des modules sortis d'un cycle. | `ui/certus_index_spline_common.py` ; `tests/unit/test_a_module_that_was_in_an_import_cycle_imports_first_and_alone.py` |
+| F9 | **Code mort dans le MRO et dans le corps.** Deux mixins vides restent dans les bases de la fenêtre ; une branche lit un attribut que rien n'affecte et appelle une méthode qui n'existe nulle part. | `ui/certus_index_spline_mixins_ui.py` (dans `ui/certus_index_spline_ui.py`) ; `ui/certus_index_spline_execution.py` (`_corridor_rmse_profile_win`, `update_profile`) |
+| F10 | **Éléments de fenêtre rangés hors de la couche `ui`, et l'inverse.** Un mixin de fenêtre et des clés QSettings vivent dans `spline/` ; trois points d'entrée de calcul vivent dans le carrefour `ui`. | `spline/certus_index_spline_excel_export.py` ; `spline/certus_index_spline_core.py` ; `ui/certus_index_spline_common.py` |
+| F11 | **Héritage de base à contre-sens.** `CertusBaseApp(QMainWindow, 13 mixins)` place la classe Qt en premier : ses 13 mixins ne peuvent redéfinir aucune méthode virtuelle Qt, et `super().__init__(parent)` n'atteint que `QMainWindow` — aucun `__init__` de mixin ne s'exécute. Les signaux `sig_numba_*` de la base sont redéfinis dans les sous-classes. | `ui/certus_base_app.py` ; `ui/certus_index_ui.py` ; `ui/certus_strat_ui.py` ; piège déjà documenté : `ui/certus_field_ui.py` |
+| F12 | **Trois arêtes entre familles.** FIELD importe un utilitaire des workers STRAT ; DESIGN et RE importent une fonction des utilitaires INDEX. | `_resolve_strat_indices_db_path` (`ui/certus_field_ui.py`) ; `spectral_rmse_weights` (`core/certus_re_worker_utils.py` ; DESIGN lit `spectral_rmse_weights_banded` par `core/certus_design_worker_utils.py` depuis le 2026-11-13) |
+| F13 | **Noms trompeurs pour tout outillage par famille.** Le suffixe `_strat` veut dire « stratégie », pas STRAT ; `certus_design_tokens` est le système graphique, pas DESIGN. | `workers/certus_index_workers_ir_strat.py`, `workers/certus_index_workers_opt_strat.py`, `workers/certus_design_workers_strat.py` ; `core/certus_design_tokens.py` (importé par `ui/certus_index_spline_rendering.py`) |
+| F14 | **Fichier long.** Seul `certus_index_spline_rendering.py` dépasse le seuil de 1 500 lignes (1 967) ; `certus_index_spline_settings.py` en fait 1 388. | seuil : `scripts/metrics.py` |
+| F15 | **La fenêtre RE n'est pas dans `ui/`.** `CertusREApp` est définie dans le script racine, contrairement aux autres fenêtres. | `CERTUS_RE.py` ; comparer `ui/certus_strat_ui.py`, `ui/certus_design_ui.py`, `ui/certus_field_ui.py` |
 
 ### 1.3 Dépendances actuelles
 
 **Entre couches** — aucune arête montante de niveau module n'a été trouvée depuis `core`, `physics`, `spline`, `metal` ou
 `workers` vers une couche supérieure. Les imports montants sont indentés (dans une fonction ou un bloc conditionnel) :
-`utils/certus_command_palette.py:265`, `utils/certus_badges.py:84, 180`, `utils/certus_progress_tracker.py:213, 394`,
-`utils/certus_skeleton.py:64`, `utils/certus_ux.py:24, 305`, `utils/errors.py:87`, `workers/certus_spectral_workers.py:119`,
-`physics/certus_optimizers.py:636, 690`, `physics/gradient_analytic.py:1115`, `physics/certus_material_db.py:82`.
+`utils/certus_command_palette.py`, `utils/certus_badges.py`, `utils/certus_progress_tracker.py`,
+`utils/certus_skeleton.py`, `utils/certus_ux.py`, `utils/errors.py`, `workers/certus_spectral_workers.py`,
+`physics/certus_optimizers.py`, `physics/gradient_analytic.py`, `physics/certus_material_db.py`.
 Le registre `tests/architecture_debt.json` fait foi pour leur statut exact.
 
 **Entre familles** — STRAT n'importe aucune autre famille. Aucune famille hors INDEX SPLINE n'importe `certus.spline`,
-sauf `ui/certus_index_ui_utils.py:15` (import indenté). Les trois arêtes de F12 sont les seules trouvées.
+sauf `ui/certus_index_ui_utils.py` (import indenté). Les trois arêtes de F12 sont les seules trouvées.
 
 **Dans le groupe INDEX SPLINE (niveau module)** — c'est un graphe sans cycle :
 
@@ -103,7 +102,7 @@ Les retours vers la fenêtre sont tous retardés (dans une fonction) : `common:3
 
 ### 1.4 MRO et états partagés
 
-**Bases directes de `CertusIndexSplineApp`** (`ui/certus_index_spline_ui.py:51-74`), dans l'ordre :
+**Bases directes de `CertusIndexSplineApp`** (`ui/certus_index_spline_ui.py`), dans l'ordre :
 `_CorridorControlMixin`, `_SettingsMixin`, `_CorridorGenMixin`, `_DataMixin`, `_RunMixin`, `_CorridorExportMixin`,
 `_UIBuilderMixin`, `_PlotMixin`, `_CorridorWorkerMixin` (→ `_CorridorTabMixin`), `_SmartInitDialogMixin`,
 `_ConfigBuilderMixin`, `_MeshOptimizationMixin`, `_ExcelExportMixin`, `_UIMixin`, `CertusIndexSplineStateMixin`,
@@ -112,42 +111,42 @@ Les retours vers la fenêtre sont tous retardés (dans une fonction) : `common:3
 `CertusBaseApp` (→ `QMainWindow` + 13 mixins).
 
 - **Aucune méthode n'est définie par deux des 21 mixins** (relevé des 258 `def` de niveau classe du groupe, plus
-  `export_excel` de `spline/certus_index_spline_excel_export.py:26`). L'ordre de ces 21 bases n'a donc aujourd'hui aucun
+  `export_excel` de `spline/certus_index_spline_excel_export.py`). L'ordre de ces 21 bases n'a donc aujourd'hui aucun
   effet sur la résolution des méthodes. Confirmé par l'exécution en Phase 0, attributs de classe compris (liste des 15 noms redéfinis dans la phase).
 - **Redéfinitions voulues de la base** (les mixins précèdent `CertusBaseApp`) :
-  `_setup_logger` (`ui/certus_index_spline_eventsextras_mixin.py:519` sur `ui/certus_base_app_engine_mixin.py:15`),
+  `_setup_logger` (`ui/certus_index_spline_eventsextras_mixin.py` sur `ui/certus_base_app_engine_mixin.py`),
   `_warmup_numba` (`:60` sur `:37`), `_get_log_widget` (`:572` sur `:157`),
-  `_collect_config` / `_apply_config` (`ui/certus_index_spline_state_mixin.py:24, 42` sur
-  `ui/certus_base_app_config_mixin.py:117, 128`), `closeEvent` (`ui/certus_index_spline_state_mixin.py:204` sur
-  `ui/certus_base_app.py:725`), `_build_ui` (`ui/certus_index_spline_rendering.py:1053` sur `ui/certus_base_app.py:635`),
-  attribut de classe `_COMPUTATION_THREADS` (`ui/certus_index_spline_state_mixin.py:21` sur
-  `ui/certus_base_app_run_mixin.py:110`).
+  `_collect_config` / `_apply_config` (`ui/certus_index_spline_state_mixin.py` sur
+  `ui/certus_base_app_config_mixin.py`), `closeEvent` (`ui/certus_index_spline_state_mixin.py` sur
+  `ui/certus_base_app.py`), `_build_ui` (`ui/certus_index_spline_rendering.py` sur `ui/certus_base_app.py`),
+  attribut de classe `_COMPUTATION_THREADS` (`ui/certus_index_spline_state_mixin.py` sur
+  `ui/certus_base_app_run_mixin.py`).
 - **Risque MRO propre à Qt** : un mixin ne doit hériter ni de `typing.Protocol` ni de `abc.ABC` à l'exécution (conflit
   de métaclasse avec celle de `QMainWindow`), et ne doit pas définir `__init__` (jamais appelé, cf. F11).
 - **État partagé entre mixins** : outre l'état corridor (F2), le cycle de vie du worker est commun à tous :
   `_worker`, `_stop_event`, `_worker_role`, `_last_run_cfg`, `_last_result`, `_last_worker_result`, `_best_live_rmse`,
-  `_best_live_result` (`ui/certus_index_spline_ui.py:102-118`), et `logger` (`ui/certus_base_app.py:367`).
+  `_best_live_result` (`ui/certus_index_spline_ui.py`), et `logger` (`ui/certus_base_app.py`).
 
 ### 1.5 Invariants stricts (ce que la suite de tests fige déjà)
 
 | # | Invariant | Où il est figé |
 |---|-----------|----------------|
-| I1 | Tout nom de niveau module défini par une partie du groupe corridors reste attribut de la façade, même objet. | `tests/unit/test_the_corridors_split_keeps_every_name_and_the_layering_where_it_was.py:60-70` |
+| I1 | Tout nom de niveau module défini par une partie du groupe corridors reste attribut de la façade, même objet. | `tests/unit/test_the_corridors_split_keeps_every_name_and_the_layering_where_it_was.py` |
 | I2 | `_plot_corridor_tab`, `_build_corridor_tab_rmse_controls` restent dans `_CorridorTabMixin.__dict__` ; `_finish_corridor_rmse_d_grid_worker_done`, `_on_worker_done`, `_start_corridor_rmse_grid_recalc` dans `_CorridorWorkerMixin.__dict__`. | même fichier `:81-84` |
 | I3 | Dans le MRO de la fenêtre, `_CorridorTabMixin` suit immédiatement `_CorridorWorkerMixin`. | même fichier `:78-80` |
 | I4 | Seule la passerelle `certus_index_spline_corridor_ui` importe `certus.ui.*` hors groupe, en **exactement 3 instructions** ; ni les autres parties ni la façade ne le font. | même fichier `:93-112` |
 | I5 | Aucune partie ni la façade ne dépasse 1 500 lignes. | même fichier `:115-118` |
-| I6 | Douze noms de mixins restent dans le MRO : `_ExcelExportMixin`, `_MeshOptimizationMixin`, `_ConfigBuilderMixin`, `_CorridorWorkerMixin`, `_PlotMixin`, `_UIBuilderMixin`, `_CorridorExportMixin`, `_RunMixin`, `_DataMixin`, `_CorridorGenMixin`, `_SettingsMixin`, `_CorridorControlMixin`. | `tests/unit/test_gui_smoke.py:218-238` |
-| I7 | **Coutures de monkeypatch** : une fonction résout ses globaux dans *son* module. Noms patchés par module : `corridor_data` (`substrate_id_from_name`, `_get_substrate_n_array_spline`, `_sync_theoretical_tr_from_nk_dict`, `spectral_mse_rmse_masked_from_nk`) ; `corridor_worker` (`log_index_spline_d_trace`, `log_structured_json_event`, `uninstall_skeleton`) ; `rendering` (`pg`) ; `mixins_ui` (`canonical_spline_sigma_knots`) ; `manualmesh_mixin` (`GenericWorker`, `install_skeleton`) ; `corridorui_mixin` (`GenericWorker`) ; `execution` (`_plot_spectrum_raw_scatter`) ; `smart_init` (`SmartInitPreviewManager`). | `tests/unit/test_index_spline_handled_failures_stay_handled.py:42-43, 70-71` ; `tests/unit/test_corridor_worker_done_steps.py:183-184` ; `tests/unit/test_post_opt_option_unlock.py:134` ; `tests/unit/test_rmse_scatter_pieces.py:49` ; `tests/unit/test_build_opt_config_pieces.py:46` ; `tests/unit/test_mwir_gui_flow.py:256-257, 296-297, 354-355, 399, 435` ; `tests/unit/test_spectral_knot_markers.py:106` ; `tests/ui/test_the_two_unplugged_windows_are_plugged_back.py:58` |
-| I8 | **Texte source figé** de `_on_worker_done`, `_finish_corridor_rmse_d_grid_worker_done`, `_plot_rmse_data_scatter`, `_plot_corridor_rmse_tab`, `_build_opt_config` (sous-chaînes lues par `inspect.getsource`). | `tests/unit/test_corridor_worker_done_steps.py:492-507` ; `tests/unit/test_corridor_worker_logs_the_regular_grid.py:112` ; `tests/unit/test_rmse_scatter_pieces.py:475-479` ; `tests/unit/test_rmse_tab_summary.py:230` ; `tests/unit/test_build_opt_config_pieces.py:135` |
-| I9 | **Appels hors instance sur de faux hôtes** : `CertusIndexSplineApp.methode(SimpleNamespace(...))` et `_XxxMixin.methode(faux)`. Une méthode ne peut donc exiger de `self` aucun attribut nouveau, et l'état doit rester en attributs plats, sous les mêmes noms. | `tests/unit/test_mwir_gui_flow.py:143-613` ; `tests/unit/test_post_opt_option_unlock.py:77-254` ; `tests/unit/test_rmse_scatter_pieces.py:44-424` ; `tests/unit/test_rmse_tab_summary.py:24, 120` ; `tests/unit/test_data_th_tab.py:28, 75` ; `tests/unit/test_data_th_clipboard.py:42, 92` ; `tests/unit/test_spectral_knot_markers.py:115` ; `tests/unit/test_build_opt_config_pieces.py:58-104` |
-| I10 | Un mixin est sous-classé seul par un test. | `tests/unit/test_index_spline_handled_failures_stay_handled.py:21` |
-| I11 | Tout `self.nom` lu est défini quelque part ; les classes dont le nom ne contient pas « Mixin » sont balayées seules. | `tests/unit/test_self_attributes_are_defined.py:96-142` |
-| I12 | Registre de dette : aucune arête montante nouvelle, aucun cycle nouveau, aucun fichier > 1 500 lignes ni fonction > 300 lignes ou de complexité > 60 qui ne soit déjà listé ; **un plafond qui baisse doit être réécrit dans le même commit**. | `tests/unit/test_the_architecture_debt_only_shrinks.py:62-155` |
-| I13 | Les modules sortis d'un cycle s'importent seuls, en premier, dans un interpréteur neuf. | `tests/unit/test_a_module_that_was_in_an_import_cycle_imports_first_and_alone.py:64-68` |
-| I14 | Tout `from certus… import nom` se résout, même dans une fonction ; balayage fondé sur `git ls-files` (un fichier non suivi n'est pas vu). | `tests/unit/test_project_imports_resolve.py:29-45` |
-| I15 | `CERTUS_INDEX_SPLINE` relaie lecture **et écriture** d'attributs vers 4 sous-modules, dans cet ordre : cœur spline, `smart_init`, façade `corridors`, `certus_index_spline_ui`. Un nom ajouté à la façade masque donc le même nom du module de la fenêtre. | `CERTUS_INDEX_SPLINE.py:35-40` ; `core/certus_core.py:1229-1255` |
-| I16 | Un indicateur compte les modules qu'aucun test ne nomme. | `scripts/metrics.py:65, 623` |
+| I6 | Douze noms de mixins restent dans le MRO : `_ExcelExportMixin`, `_MeshOptimizationMixin`, `_ConfigBuilderMixin`, `_CorridorWorkerMixin`, `_PlotMixin`, `_UIBuilderMixin`, `_CorridorExportMixin`, `_RunMixin`, `_DataMixin`, `_CorridorGenMixin`, `_SettingsMixin`, `_CorridorControlMixin`. | `tests/unit/test_gui_smoke.py` |
+| I7 | **Coutures de monkeypatch** : une fonction résout ses globaux dans *son* module. Noms patchés par module : `corridor_data` (`substrate_id_from_name`, `_get_substrate_n_array_spline`, `_sync_theoretical_tr_from_nk_dict`, `spectral_mse_rmse_masked_from_nk`) ; `corridor_worker` (`log_index_spline_d_trace`, `log_structured_json_event`, `uninstall_skeleton`) ; `rendering` (`pg`) ; `mixins_ui` (`canonical_spline_sigma_knots`) ; `manualmesh_mixin` (`GenericWorker`, `install_skeleton`) ; `corridorui_mixin` (`GenericWorker`) ; `execution` (`_plot_spectrum_raw_scatter`) ; `smart_init` (`SmartInitPreviewManager`). | `tests/unit/test_index_spline_handled_failures_stay_handled.py` ; `tests/unit/test_corridor_worker_done_steps.py` ; `tests/unit/test_post_opt_option_unlock.py` ; `tests/unit/test_rmse_scatter_pieces.py` ; `tests/unit/test_build_opt_config_pieces.py` ; `tests/unit/test_mwir_gui_flow.py` ; `tests/unit/test_spectral_knot_markers.py` ; `tests/ui/test_the_two_unplugged_windows_are_plugged_back.py` |
+| I8 | **Texte source figé** de `_on_worker_done`, `_finish_corridor_rmse_d_grid_worker_done`, `_plot_rmse_data_scatter`, `_plot_corridor_rmse_tab`, `_build_opt_config` (sous-chaînes lues par `inspect.getsource`). | `tests/unit/test_corridor_worker_done_steps.py` ; `tests/unit/test_corridor_worker_logs_the_regular_grid.py` ; `tests/unit/test_rmse_scatter_pieces.py` ; `tests/unit/test_rmse_tab_summary.py` ; `tests/unit/test_build_opt_config_pieces.py` |
+| I9 | **Appels hors instance sur de faux hôtes** : `CertusIndexSplineApp.methode(SimpleNamespace(...))` et `_XxxMixin.methode(faux)`. Une méthode ne peut donc exiger de `self` aucun attribut nouveau, et l'état doit rester en attributs plats, sous les mêmes noms. | `tests/unit/test_mwir_gui_flow.py` ; `tests/unit/test_post_opt_option_unlock.py` ; `tests/unit/test_rmse_scatter_pieces.py` ; `tests/unit/test_rmse_tab_summary.py` ; `tests/unit/test_data_th_tab.py` ; `tests/unit/test_data_th_clipboard.py` ; `tests/unit/test_spectral_knot_markers.py` ; `tests/unit/test_build_opt_config_pieces.py` |
+| I10 | Un mixin est sous-classé seul par un test. | `tests/unit/test_index_spline_handled_failures_stay_handled.py` |
+| I11 | Tout `self.nom` lu est défini quelque part ; les classes dont le nom ne contient pas « Mixin » sont balayées seules. | `tests/unit/test_self_attributes_are_defined.py` |
+| I12 | Registre de dette : aucune arête montante nouvelle, aucun cycle nouveau, aucun fichier > 1 500 lignes ni fonction > 300 lignes ou de complexité > 60 qui ne soit déjà listé ; **un plafond qui baisse doit être réécrit dans le même commit**. | `tests/unit/test_the_architecture_debt_only_shrinks.py` |
+| I13 | Les modules sortis d'un cycle s'importent seuls, en premier, dans un interpréteur neuf. | `tests/unit/test_a_module_that_was_in_an_import_cycle_imports_first_and_alone.py` |
+| I14 | Tout `from certus… import nom` se résout, même dans une fonction ; balayage fondé sur `git ls-files` (un fichier non suivi n'est pas vu). | `tests/unit/test_project_imports_resolve.py` |
+| I15 | `CERTUS_INDEX_SPLINE` relaie lecture **et écriture** d'attributs vers 4 sous-modules, dans cet ordre : cœur spline, `smart_init`, façade `corridors`, `certus_index_spline_ui`. Un nom ajouté à la façade masque donc le même nom du module de la fenêtre. | `CERTUS_INDEX_SPLINE.py` ; `core/certus_core.py` |
+| I16 | Un indicateur compte les modules qu'aucun test ne nomme. | `scripts/metrics.py` |
 
 ### 1.6 Registre de dette (relevé ciblé de `tests/architecture_debt.json`, autorisé par Q2)
 
@@ -217,56 +216,55 @@ entrent dans le MRO par les deux classes de compatibilité. L'adjacence I3 est c
 
 | Tranche (module cible) | Méthode | Origine |
 |---|---|---|
-| `_CorridorRunMixin` (`certus_index_spline_corridor_run.py`) | `_start_deferred_corridor_worker` | `ui/certus_index_spline_settings.py:752` |
-| | `_finish_curve_minimum_deep_worker_done` | `ui/certus_index_spline_settings.py:869` |
-| | `_finish_rmse_heal_worker_done` | `ui/certus_index_spline_settings.py:961` |
-| | `_set_corridor_grid_busy` | `ui/certus_index_spline_settings.py:1071` |
-| | `_set_corridor_grid_progress_ui` | `ui/certus_index_spline_settings.py:1118` |
-| | `_schedule_corridor_auto_refine` | `ui/certus_index_spline_corridorui_mixin.py:29` |
-| | `_continue_corridor_auto_refine_after_deep` | `ui/certus_index_spline_corridorui_mixin.py:55` |
-| | `_set_corridor_grid_completed_badge` | `ui/certus_index_spline_corridorui_mixin.py:210` |
-| | `_refresh_corridors_gui_state_labels` | `ui/certus_index_spline_corridorui_mixin.py:428` |
-| | `_on_btn_corridor_clicked` | `ui/certus_index_spline_corridorui_mixin.py:459` |
-| | `_on_corridor_chk_state_changed` | `ui/certus_index_spline_corridorui_mixin.py:481` |
-| | `_is_rmse_d_grid_worker_finalize_dict` | `ui/certus_index_spline_eventsextras_mixin.py:319` |
-| | `_merge_rmse_grid_promotion_into_nominal` | `ui/certus_index_spline_eventsextras_mixin.py:326` |
-| | `_on_corr_mode_changed` | `ui/certus_index_spline_eventsextras_mixin.py:959` |
-| | `_on_corridor_rmse_grid_live_update` | `ui/certus_index_spline_corridor_gen.py:23` |
-| | `_start_curve_minimum_deep_refit` (Phase 5 : utilise le mandataire, F5) | `ui/certus_index_spline_eventsextras_mixin.py:372` |
-| `_CorridorRmseViewMixin` (`certus_index_spline_corridor_rmse_view.py`) | `_build_tab_corridor_rmse` | `ui/certus_index_spline_corridorui_mixin.py:132` |
-| | `_refresh_corridor_rmse_robust_view` | `ui/certus_index_spline_corridorui_mixin.py:197` |
-| | `_update_corridor_rmse_state_bar` | `ui/certus_index_spline_corridorui_mixin.py:221` |
-| | `_corridor_profile_source_result` | `ui/certus_index_spline_corridorui_mixin.py:252` |
-| | `_set_corridor_rmse_view_data_bounds` | `ui/certus_index_spline_corridorui_mixin.py:267` |
-| | `_on_corridor_rmse_lock_scale_toggled` | `ui/certus_index_spline_corridorui_mixin.py:306` |
-| | `_on_corridor_rmse_plot_clicked` | `ui/certus_index_spline_settings.py:1332` |
-| | `_robust_interval_from_local_quadratic` | `ui/certus_index_spline_eventsextras_mixin.py:657` |
-| | `_build_corridor_labels` | `ui/certus_index_spline_rendering.py:1876` |
-| `_CorridorIntervalMixin` (`certus_index_spline_corridor_interval.py`) | `_apply_corridor_preset_auto_robust` | `ui/certus_index_spline_settings.py:1019` |
-| | `_sync_corridor_manual_controls` | `ui/certus_index_spline_settings.py:1178` |
-| | `_generate_corridor_from_current_grid` | `ui/certus_index_spline_settings.py:1250` |
-| | `_use_robust_corridor_interval` | `ui/certus_index_spline_corridorui_mixin.py:319` |
-| | `_corridor_manual_half_width_nm` | `ui/certus_index_spline_manualmesh_mixin.py:1015` |
-| | `_set_corridor_manual_interval_preview` | `ui/certus_index_spline_manualmesh_mixin.py:1024` |
-| | `_set_corridor_manual_bounds_labels` | `ui/certus_index_spline_manualmesh_mixin.py:1040` |
-| | `_corridor_manual_max_half_width_nm` | `ui/certus_index_spline_manualmesh_mixin.py:1051` |
-| | `_reset_corridor_manual_controls` | `ui/certus_index_spline_manualmesh_mixin.py:1071` |
-| | `_on_corridor_manual_slider_changed` | `ui/certus_index_spline_manualmesh_mixin.py:1098` |
-| | `_build_corridor_tab_generate` | `ui/certus_index_spline_rendering.py:1463` |
-| `_CorridorNkMixin` (`certus_index_spline_corridor_nk.py`) | `_interp_corridor_value` (`@staticmethod`, décorateur en `:103`) | `ui/certus_index_spline_corridorui_mixin.py:104` |
-| | `_k_corridor_crosshair_formatter` | `ui/certus_index_spline_corridorui_mixin.py:117` |
-| | `_build_tab_data_corridor` | `ui/certus_index_spline_corridorui_mixin.py:354` |
-| | `_copy_corridor_to_clipboard` | `ui/certus_index_spline_corridorui_mixin.py:391` |
-| | `_export_corridor_csv` | `ui/certus_index_spline_corridorui_mixin.py:403` |
-| | `_refresh_corridor_table` | `ui/certus_index_spline_corridor_gen.py:646` |
-| | `_build_tab_corridor` | `ui/certus_index_spline_rendering.py:1915` |
-| `_CorridorRmsePlotMixin` (`certus_index_spline_corridor_rmse_plot.py`, Phase 4) | `_plot_rmse_data_scatter`, `_plot_the_reversal_and_fallback_points`, `_plot_the_breakpoint_events`, `_draw_the_local_parabola`, `_corridor_profile_arrays`, `_prep_rmse_plot_data`, `_draw_corridor_curvature_label`, `_plot_corridor_rmse_tab`, `_manual_grid_note`, `_write_the_rmse_summary` | `ui/certus_index_spline_rendering.py:247, 425, 478, 548, 624, 633, 718, 749, 964, 992` |
+| `_CorridorRunMixin` (`certus_index_spline_corridor_run.py`) | `_start_deferred_corridor_worker` | `ui/certus_index_spline_settings.py` |
+| | `_finish_curve_minimum_deep_worker_done` | `ui/certus_index_spline_settings.py` |
+| | `_finish_rmse_heal_worker_done` | `ui/certus_index_spline_settings.py` |
+| | `_set_corridor_grid_busy` | `ui/certus_index_spline_settings.py` |
+| | `_set_corridor_grid_progress_ui` | `ui/certus_index_spline_settings.py` |
+| | `_schedule_corridor_auto_refine` | `ui/certus_index_spline_corridorui_mixin.py` |
+| | `_continue_corridor_auto_refine_after_deep` | `ui/certus_index_spline_corridorui_mixin.py` |
+| | `_set_corridor_grid_completed_badge` | `ui/certus_index_spline_corridorui_mixin.py` |
+| | `_refresh_corridors_gui_state_labels` | `ui/certus_index_spline_corridorui_mixin.py` |
+| | `_on_btn_corridor_clicked` | `ui/certus_index_spline_corridorui_mixin.py` |
+| | `_on_corridor_chk_state_changed` | `ui/certus_index_spline_corridorui_mixin.py` |
+| | `_is_rmse_d_grid_worker_finalize_dict` | `ui/certus_index_spline_eventsextras_mixin.py` |
+| | `_merge_rmse_grid_promotion_into_nominal` | `ui/certus_index_spline_eventsextras_mixin.py` |
+| | `_on_corr_mode_changed` | `ui/certus_index_spline_eventsextras_mixin.py` |
+| | `_on_corridor_rmse_grid_live_update` | `ui/certus_index_spline_corridor_gen.py` |
+| | `_start_curve_minimum_deep_refit` (Phase 5 : utilise le mandataire, F5) | `ui/certus_index_spline_eventsextras_mixin.py` |
+| `_CorridorRmseViewMixin` (`certus_index_spline_corridor_rmse_view.py`) | `_build_tab_corridor_rmse` | `ui/certus_index_spline_corridorui_mixin.py` |
+| | `_refresh_corridor_rmse_robust_view` | `ui/certus_index_spline_corridorui_mixin.py` |
+| | `_update_corridor_rmse_state_bar` | `ui/certus_index_spline_corridorui_mixin.py` |
+| | `_corridor_profile_source_result` | `ui/certus_index_spline_corridorui_mixin.py` |
+| | `_set_corridor_rmse_view_data_bounds` | `ui/certus_index_spline_corridorui_mixin.py` |
+| | `_on_corridor_rmse_lock_scale_toggled` | `ui/certus_index_spline_corridorui_mixin.py` |
+| | `_on_corridor_rmse_plot_clicked` | `ui/certus_index_spline_settings.py` |
+| | `_robust_interval_from_local_quadratic` | `ui/certus_index_spline_eventsextras_mixin.py` |
+| | `_build_corridor_labels` | `ui/certus_index_spline_rendering.py` |
+| `_CorridorIntervalMixin` (`certus_index_spline_corridor_interval.py`) | `_apply_corridor_preset_auto_robust` | `ui/certus_index_spline_settings.py` |
+| | `_sync_corridor_manual_controls` | `ui/certus_index_spline_settings.py` |
+| | `_generate_corridor_from_current_grid` | `ui/certus_index_spline_settings.py` |
+| | `_use_robust_corridor_interval` | `ui/certus_index_spline_corridorui_mixin.py` |
+| | `_corridor_manual_half_width_nm` | `ui/certus_index_spline_manualmesh_mixin.py` |
+| | `_set_corridor_manual_interval_preview` | `ui/certus_index_spline_manualmesh_mixin.py` |
+| | `_set_corridor_manual_bounds_labels` | `ui/certus_index_spline_manualmesh_mixin.py` |
+| | `_corridor_manual_max_half_width_nm` | `ui/certus_index_spline_manualmesh_mixin.py` |
+| | `_reset_corridor_manual_controls` | `ui/certus_index_spline_manualmesh_mixin.py` |
+| | `_on_corridor_manual_slider_changed` | `ui/certus_index_spline_manualmesh_mixin.py` |
+| | `_build_corridor_tab_generate` | `ui/certus_index_spline_rendering.py` |
+| `_CorridorNkMixin` (`certus_index_spline_corridor_nk.py`) | `_interp_corridor_value` (`@staticmethod`) | `ui/certus_index_spline_corridorui_mixin.py` |
+| | `_k_corridor_crosshair_formatter` | `ui/certus_index_spline_corridorui_mixin.py` |
+| | `_build_tab_data_corridor` | `ui/certus_index_spline_corridorui_mixin.py` |
+| | `_copy_corridor_to_clipboard` | `ui/certus_index_spline_corridorui_mixin.py` |
+| | `_export_corridor_csv` | `ui/certus_index_spline_corridorui_mixin.py` |
+| | `_refresh_corridor_table` | `ui/certus_index_spline_corridor_gen.py` |
+| | `_build_tab_corridor` | `ui/certus_index_spline_rendering.py` |
+| `_CorridorRmsePlotMixin` (`certus_index_spline_corridor_rmse_plot.py`, Phase 4) | `_plot_rmse_data_scatter`, `_plot_the_reversal_and_fallback_points`, `_plot_the_breakpoint_events`, `_draw_the_local_parabola`, `_corridor_profile_arrays`, `_prep_rmse_plot_data`, `_draw_corridor_curvature_label`, `_plot_corridor_rmse_tab`, `_manual_grid_note`, `_write_the_rmse_summary` | `ui/certus_index_spline_rendering.py` |
 
 **Ne déménagent pas** : les 5 méthodes de I2 ; `_log_regular_grid_result`, `_settle_a_run_that_returned_no_result_dict`,
-`_log_the_result_dictionary_received`, `_hand_the_result_to_the_manual_dialog` (`ui/certus_index_spline_corridor_worker.py:314,
-600, 627, 689` — I7, I8) ; toutes les méthodes de `_DataMixin` (I7, I10) ; `_launch_corridor_rmse_gap_heal`
-(`ui/certus_index_spline_corridorui_mixin.py:75` — I7) ; les 5 méthodes de génération de `_CorridorGenMixin`
-(`ui/certus_index_spline_corridor_gen.py:159, 262, 323, 440, 580`), déjà cohérentes.
+`_log_the_result_dictionary_received`, `_hand_the_result_to_the_manual_dialog` (`ui/certus_index_spline_corridor_worker.py` — I7, I8) ; toutes les méthodes de `_DataMixin` (I7, I10) ; `_launch_corridor_rmse_gap_heal`
+(`ui/certus_index_spline_corridorui_mixin.py` — I7) ; les 5 méthodes de génération de `_CorridorGenMixin`
+(`ui/certus_index_spline_corridor_gen.py`), déjà cohérentes.
 
 ### 2.4 Contrats explicites
 
@@ -351,30 +349,30 @@ Nouveau module feuille `ui/certus_index_spline_corridor_state.py` (n'importe que
 
 | Attribut | Défaut | Naissance actuelle |
 |---|---|---|
-| `_corridor_rmse_base_snapshot` | `None` | `ui/certus_index_spline_ui.py:110` |
-| `_corridor_rmse_manual_active` / `_lo` / `_hi` | `False` / `nan` / `nan` | `ui/certus_index_spline_ui.py:120-124` |
-| `_corridor_rmse_manual_slider_scale` | `100` | `ui/certus_index_spline_ui.py:126` |
-| `_corridor_auto_refine_plan` | `None` | `ui/certus_index_spline_ui.py:139` |
-| `_corridor_rmse_d_vals`, `_corridor_rmse_vals` | tableau vide `float64` | `ui/certus_index_spline_corridorui_mixin.py:152-153` |
-| `_corridor_rmse_best_idx`, `_corridor_rmse_center_nm` | `-1`, `nan` | `ui/certus_index_spline_corridorui_mixin.py:154-155` |
-| `_corridor_rmse_grid_live_t0`, `_corridor_rmse_live_last_plot_ts` | `nan`, `nan` | `ui/certus_index_spline_corridorui_mixin.py:156-157` |
-| `_corridor_rmse_live_plot_min_interval_s` | `0.12` | `ui/certus_index_spline_corridorui_mixin.py:158` |
-| `_corridor_rmse_robust_lo` / `_hi` / `_ok` | `nan` / `nan` / `False` | `ui/certus_index_spline_corridorui_mixin.py:159-161` |
-| `_corridor_parabola_half_window_pts` | `4` | `ui/certus_index_spline_settings.py:1046` |
-| `_corridor_symmetric_center_mode` | `"parabola"` | `ui/certus_index_spline_settings.py:1048` |
-| `_corridor_adaptive_rmse_ref_half_width_nm` | `1.5` | `ui/certus_index_spline_settings.py:1050` |
-| `_corridor_adaptive_rmse_probe_steps_each_side` | `3` | `ui/certus_index_spline_settings.py:1052` |
-| `_corridor_adaptive_rmse_noise_factor` | `3.0` | `ui/certus_index_spline_settings.py:1054` |
-| `_corridor_adaptive_rmse_min` | `_DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN` | `ui/certus_index_spline_settings.py:239, 1056` |
-| `_corridor_rmse_requested_grid` | tableau vide | `ui/certus_index_spline_corridor_worker.py:883` |
-| `_corridor_rmse_smart_interval` | `None` | `ui/certus_index_spline_rendering.py:849-851` |
-| `_corridor_rmse_parab_export`, `_corridor_rmse_robust_export` | `None` | `ui/certus_index_spline_rendering.py:858-859` |
-| `_corridor_rmse_curvature_label` | `None` | `ui/certus_index_spline_rendering.py:747` |
-| `_corridor_k_crosshair_lam` / `_nom` / `_lo` / `_hi` | liste vide | `ui/certus_index_spline_corridor_tab.py:154-157` |
+| `_corridor_rmse_base_snapshot` | `None` | `ui/certus_index_spline_ui.py` |
+| `_corridor_rmse_manual_active` / `_lo` / `_hi` | `False` / `nan` / `nan` | `ui/certus_index_spline_ui.py` |
+| `_corridor_rmse_manual_slider_scale` | `100` | `ui/certus_index_spline_ui.py` |
+| `_corridor_auto_refine_plan` | `None` | `ui/certus_index_spline_ui.py` |
+| `_corridor_rmse_d_vals`, `_corridor_rmse_vals` | tableau vide `float64` | `ui/certus_index_spline_corridorui_mixin.py` |
+| `_corridor_rmse_best_idx`, `_corridor_rmse_center_nm` | `-1`, `nan` | `ui/certus_index_spline_corridorui_mixin.py` |
+| `_corridor_rmse_grid_live_t0`, `_corridor_rmse_live_last_plot_ts` | `nan`, `nan` | `ui/certus_index_spline_corridorui_mixin.py` |
+| `_corridor_rmse_live_plot_min_interval_s` | `0.12` | `ui/certus_index_spline_corridorui_mixin.py` |
+| `_corridor_rmse_robust_lo` / `_hi` / `_ok` | `nan` / `nan` / `False` | `ui/certus_index_spline_corridorui_mixin.py` |
+| `_corridor_parabola_half_window_pts` | `4` | `ui/certus_index_spline_settings.py` |
+| `_corridor_symmetric_center_mode` | `"parabola"` | `ui/certus_index_spline_settings.py` |
+| `_corridor_adaptive_rmse_ref_half_width_nm` | `1.5` | `ui/certus_index_spline_settings.py` |
+| `_corridor_adaptive_rmse_probe_steps_each_side` | `3` | `ui/certus_index_spline_settings.py` |
+| `_corridor_adaptive_rmse_noise_factor` | `3.0` | `ui/certus_index_spline_settings.py` |
+| `_corridor_adaptive_rmse_min` | `_DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN` | `ui/certus_index_spline_settings.py` |
+| `_corridor_rmse_requested_grid` | tableau vide | `ui/certus_index_spline_corridor_worker.py` |
+| `_corridor_rmse_smart_interval` | `None` | `ui/certus_index_spline_rendering.py` |
+| `_corridor_rmse_parab_export`, `_corridor_rmse_robust_export` | `None` | `ui/certus_index_spline_rendering.py` |
+| `_corridor_rmse_curvature_label` | `None` | `ui/certus_index_spline_rendering.py` |
+| `_corridor_k_crosshair_lam` / `_nom` / `_lo` / `_hi` | liste vide | `ui/certus_index_spline_corridor_tab.py` |
 
 Hors tableau, car ce sont des objets graphiques gardés par `hasattr` : `_corridor_rmse_curve`,
-`_corridor_rmse_best_marker` (`ui/certus_index_spline_corridorui_mixin.py:162, 169` ; gardes
-`ui/certus_index_spline_rendering.py:278, 311`).
+`_corridor_rmse_best_marker` (`ui/certus_index_spline_corridorui_mixin.py` ; gardes
+`ui/certus_index_spline_rendering.py`).
 
 Dans ce plan, le tableau **déclare et vérifie** (test T3) ; il n'initialise rien. L'initialisation anticipée de tout
 l'état dans `__init__` est une option séparée (Phase 6, arbitrage Q8).
@@ -439,7 +437,7 @@ illisible). Un manifeste nomme ce qu'une phase a le droit de changer — clés `
 du script ; les manifestes se cumulent, la comparaison se fait toujours contre la référence de Phase 0. Deux valeurs
 refaites à chaque import sont relevées par leur nom et leur type seulement : `_env`, et les attributs `__pydantic_*`.
 
-Il relève, pour les 9 fenêtres listées en `tests/unit/test_self_attributes_are_defined.py:35-45` (un test tient les deux
+Il relève, pour les 9 fenêtres listées en `tests/unit/test_self_attributes_are_defined.py` (un test tient les deux
 listes égales), et pour les classes que définissent les modules du groupe :
 
 1. **Surface de classe** : pour chaque attribut, nature (fonction, `staticmethod`, `classmethod`, propriété, signal),
@@ -464,7 +462,7 @@ déplacées. Aucune entrée du registre de dette nommée par fonction n'est touc
 
 **Les deux écarts au « déplacement pur », isolés et listés** : la Phase 2b change des messages DEBUG, et rien d'autre
 (détail dans la phase) ; les Phases 2a et 2c retirent du `__annotations__` du module `common` les constantes qui y
-deviennent des imports — aucun lecteur : vérifié en Phase 0 (seul `tests/unit/test_self_attributes_are_defined.py:78`
+deviennent des imports — aucun lecteur : vérifié en Phase 0 (seul `tests/unit/test_self_attributes_are_defined.py`
 lit des annotations, et ce sont celles des classes).
 
 ---
@@ -511,8 +509,8 @@ se lance à la fin de chaque phase entière, pas de chaque sous-phase.
 
   | Étape | Échec | Cause | Suite donnée |
   |---|---|---|---|
-  | ruff | 1 erreur B905 | `reports/RICL_ultimate_2026-11-05/exhaustive_clean_bs.py:43` (commit `9632f15b`) | corrigé, `strict=False`, commit `9d011d68` |
-  | unit | `test_no_source_carries_an_invalid_escape` | `"\l"` en `reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/oe_complex_figures_2026-11-03_before_print.py:83` (commit `ddf8bf24`) | corrigé, chaîne brute, commit `15d518aa` |
+  | ruff | 1 erreur B905 | `reports/RICL_ultimate_2026-11-05/exhaustive_clean_bs.py` (commit `9632f15b`) | corrigé, `strict=False`, commit `9d011d68` |
+  | unit | `test_no_source_carries_an_invalid_escape` | `"\l"` en `reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/oe_complex_figures_2026-11-03_before_print.py` (commit `ddf8bf24`) | corrigé, chaîne brute, commit `15d518aa` |
   | unit | `test_a_big_document_at_the_root_is_hidden_from_the_default_searches` | ce plan, posé à la racine | plan déplacé dans `reports/` : `10 passed` |
   | coherence_md | 3 commandes mortes | `PROCEDURE_2026-10-31_11-01.md:164-165` et `code1_README_2026-11-02_before_localmax.md:15` (dossier `envelope_v2`) citent `cissoid_metal_trade.py`, `take_record.py`, `hidden_resonances.py` | **échec connu, laissé tel quel sur décision** : hors périmètre |
   | rest | 1 artefact de charge | `tests/property/test_physics_properties.py::test_bare_substrate_transmission_bounds`, vert seul en série | signalé |
@@ -529,8 +527,8 @@ se lance à la fin de chaque phase entière, pas de chaque sous-phase.
   - Coutures (I7) : l'inventaire mécanique retrouve les 8 modules et les 14 noms de I7, sans en ajouter au niveau module.
     `settings`, `eventsextras_mixin`, `corridor_gen`, `corridor_tab` et `common` n'en ont aucune. S'y ajoutent deux
     remplacements globaux, qu'un déplacement ne déplace pas : `pg.TextItem` (atteint par `corridors`, `execution` et la
-    façade, `tests/unit/test_spectral_knot_markers.py:107-109`) et `QMessageBox.warning` (par la façade,
-    `tests/unit/test_post_opt_option_unlock.py:165`).
+    façade, `tests/unit/test_spectral_knot_markers.py`) et `QMessageBox.warning` (par la façade,
+    `tests/unit/test_post_opt_option_unlock.py`).
   - `__annotations__` d'un module : aucun lecteur dans `certus/`, `tests/`, `scripts/`.
   - **Q5, par l'exécution** : dans chacun des deux tests, 0 faux worker construit, 1 vrai `GenericWorker` construit et
     **démarré**. Le fil lance le vrai calcul de corridor sur la fausse configuration et y échoue
@@ -574,9 +572,9 @@ se lance à la fin de chaque phase entière, pas de chaque sous-phase.
     la valeur de naissance par le type seulement (`[]` pour un tableau vide `float64`).
   - Quatre widgets que les mixins corridors lisent ne sont posés par aucune classe de la fenêtre : `lbl_corridors_state_adv`,
     `cb_corr_mode`, `sp_corr_rmse_delta`, `chk_corr_scientific_nominal` sont écrits **sur** la fenêtre, de l'extérieur, par
-    le constructeur de `ui/certus_index_spline_managers_ui.py:268, 284, 332, 353` (`app.x = …`). C'est le site de création
+    le constructeur de `ui/certus_index_spline_managers_ui.py` (`app.x = …`). C'est le site de création
     que §2.4 laissait à relever ; les tests en tiennent compte.
-  - `_corridor_rmse_best_idx` reçoit `None` dans `_PlotMixin._plot_rmse_data_scatter` (`ui/certus_index_spline_rendering.py:306`)
+  - `_corridor_rmse_best_idx` reçoit `None` dans `_PlotMixin._plot_rmse_data_scatter` (`ui/certus_index_spline_rendering.py`)
     alors que partout ailleurs « pas de minimum » vaut `-1`, repli compris : Q17.
   - Sept attributs d'état ne sont lus par aucun mixin corridor (les six réglages du préréglage robuste et
     `_corridor_rmse_curvature_label`) : leurs lecteurs sont dans `mixins_ui` et `rendering`.
@@ -624,23 +622,23 @@ partout ailleurs c'est le même objet, importé. Chaque cas ajouté doit échoue
   `problems=0`, `GUARD=OK`. Écarts au texte ci-dessous : `common` reçoit les trois noms par son import existant de la
   façade `corridors` (mêmes objets que la feuille) ; plafond de `rendering.py` 1967 → 1952 ; le test admet la délégation
   de `monitor_ui` par une table `DELEGATES` et vérifie qu'elle atteint la définition unique.
-  Référence retenue : le corps de `ui/certus_index_spline_common.py:155-177`.
+  Référence retenue : le corps de `ui/certus_index_spline_common.py`.
   Modifier :
   - `certus/ui/certus_index_spline_corridor_common.py` : `import logging` en tête ; y définir `_K_PLOT_YMIN` et
-    `_K_PLOT_YMAX` (valeurs de `ui/certus_index_spline_common.py:152-153`) ; donner à `_apply_fixed_log_k_axis` le corps
+    `_K_PLOT_YMAX` (valeurs de `ui/certus_index_spline_common.py`) ; donner à `_apply_fixed_log_k_axis` le corps
     de référence, le journal y étant obtenu sur place par `logging.getLogger("CERTUS_INDEX_SPLINE")`. **Aucun nom
     `logger` de niveau module n'y est ajouté** : I1 l'imposerait à la façade, où il masquerait celui de la fenêtre (I15).
   - `certus/ui/certus_index_spline_corridors.py` (façade) : ajouter `_K_PLOT_YMIN` et `_K_PLOT_YMAX` à l'import existant
     depuis `corridor_common` (I1 : tout nom affecté par une partie est attribut de la façade).
   - `certus/ui/certus_index_spline_common.py` : retirer les lignes 152-177, importer les trois noms de la feuille
-    (`tests/unit/test_spectral_knot_markers.py:9` les lit ici : ils doivent y rester).
+    (`tests/unit/test_spectral_knot_markers.py` les lit ici : ils doivent y rester).
   - `certus/ui/certus_index_spline_execution.py` (lignes 44-58) et `certus/ui/certus_index_spline_rendering.py`
     (lignes 71-85) : remplacer la copie locale par le même import.
   - `tests/architecture_debt.json` : plafond de `rendering.py` abaissé (I12).
   - le test nouveau : cas « une seule définition ; `monitor_ui` ne fait que déléguer ».
-  Ne pas toucher : `certus/ui/certus_index_spline_monitor_ui.py:14-16` (sa délégation paresseuse vers `common` atteint
-  désormais la feuille), `certus/ui/certus_index_spline_corridor_tab.py:14`,
-  `certus/ui/certus_index_spline_layoutextras_mixin.py:6`, `tests/unit/test_spectral_knot_markers.py`.
+  Ne pas toucher : `certus/ui/certus_index_spline_monitor_ui.py` (sa délégation paresseuse vers `common` atteint
+  désormais la feuille), `certus/ui/certus_index_spline_corridor_tab.py`,
+  `certus/ui/certus_index_spline_layoutextras_mixin.py`, `tests/unit/test_spectral_knot_markers.py`.
   Écarts admis, et eux seuls — `refactor_guard` en reçoit la liste :
   1. le bytecode de `corridor_common._apply_fixed_log_k_axis` ;
   2. `_apply_fixed_log_k_axis` de `common`, `execution` et `rendering` devient l'objet de la feuille ;
@@ -660,7 +658,7 @@ partout ailleurs c'est le même objet, importé. Chaque cas ajouté doit échoue
   flottants `SIO2_DEFAULT_D_*`) et passent (`45 passed`) ; ruff PASS ; lot de contrôle `247 passed` ; garde avec
   `manifests/phase_2c.json` : `problems=0`, `GUARD=OK`. Le commentaire de `_UNCERTAINTY_DEFAULTS_REV` reste dans
   `common`, où il renvoie au cœur.
-  Source, **non modifiée** : `certus/spline/certus_index_spline_core.py:43-45, 2095-2107` (16 noms). Ce fichier est au
+  Source, **non modifiée** : `certus/spline/certus_index_spline_core.py` (16 noms). Ce fichier est au
   registre à 2 108 lignes (§1.6) : il ne reçoit rien.
   Modifier :
   - `certus/ui/certus_index_spline_common.py` : remplacer les 16 définitions (lignes 70-84, 90, 96-102, 106, 121-123)
@@ -681,7 +679,7 @@ partout ailleurs c'est le même objet, importé. Chaque cas ajouté doit échoue
   ci-dessous et le lot de contrôle `255 passed` ; garde avec `manifests/phase_2d.json` : `problems=0`, `GUARD=OK`. Le
   cas « seul et en premier » lance un interpréteur neuf et y exige que `smart_init` ait chargé `common` et en tienne
   les deux clés.
-  Source, **non modifiée** : `certus/ui/certus_index_spline_common.py:92-94` (`_QS_SMART_INIT_DEEP`,
+  Source, **non modifiée** : `certus/ui/certus_index_spline_common.py` (`_QS_SMART_INIT_DEEP`,
   `_QS_SMART_INIT_TWO_PHASE`).
   Modifier :
   - `certus/ui/certus_index_spline_smart_init.py` : remplacer les définitions des lignes 70-71 par
@@ -689,13 +687,13 @@ partout ailleurs c'est le même objet, importé. Chaque cas ajouté doit échoue
     module). Les lectures de `:667` et `:673` y trouvent toujours leurs globaux.
   - le test nouveau : cas des deux noms, et `smart_init` importé seul et en premier dans un interpréteur neuf.
   Préalable vérifié le 2026-11-11 : `common` n'importe `smart_init` à aucun niveau. Dans tout `certus/`, le seul import
-  de `smart_init` est retardé (`ui/certus_index_spline_mixins_ui.py:394`, dans une fonction) : aucun module que `common`
+  de `smart_init` est retardé (`ui/certus_index_spline_mixins_ui.py`, dans une fonction) : aucun module que `common`
   charge ne l'importe au niveau module, donc pas de cycle.
   Garde-fous :
-  - l'import de `ui/certus_index_spline_mixins_ui.py:394` doit rester dans sa fonction : le hisser fermerait le cycle
+  - l'import de `ui/certus_index_spline_mixins_ui.py` doit rester dans sa fonction : le hisser fermerait le cycle
     `smart_init → common → mixins_ui → smart_init` (`common` et `mixins_ui` sont deux des modules sortis d'un cycle, I13) ;
   - effet de bord accepté : importer `smart_init` charge désormais `common`, donc `corridors`, `execution`, `rendering`,
-    `settings` et `mixins_ui`. `CERTUS_INDEX_SPLINE.py:26` importe `smart_init` avant la fenêtre : l'ordre de chargement
+    `settings` et `mixins_ui`. `CERTUS_INDEX_SPLINE.py` importe `smart_init` avant la fenêtre : l'ordre de chargement
     des modules change, pas leur contenu.
   Vérifier : `refactor_guard compare` — valeurs égales, mêmes noms dans `smart_init`, résolution par la façade identique.
   Test : le test nouveau, puis `tests/unit/test_a_module_that_was_in_an_import_cycle_imports_first_and_alone.py`, puis
@@ -825,7 +823,7 @@ et `test_the_default_pytest_run_is_quiet.py`) ; ui `1363 passed` ; rest `321 pas
 - Créer : `certus/ui/certus_index_spline_corridor_rmse_plot.py` (les 10 méthodes de §2.3 et les aides de niveau module
   qu'elles utilisent, R3).
 - Modifier : `certus/ui/certus_index_spline_rendering.py` (`_PlotMixin` hérite de la tranche et réimporte les aides) ;
-  `tests/unit/test_rmse_scatter_pieces.py:21` (l'alias `module` désigne le nouveau module, puisque le test patche `pg`
+  `tests/unit/test_rmse_scatter_pieces.py` (l'alias `module` désigne le nouveau module, puisque le test patche `pg`
   là où le code le lit) ; `tests/architecture_debt.json` (le fichier passe sous 1 500 lignes : il quitte la liste).
 - Test : `tests/unit/test_rmse_scatter_pieces.py`, puis `tests/unit/test_rmse_tab_summary.py`, puis LOT.
 - La retouche du test part dans le même commit que le déplacement et se limite à cette ligne.
@@ -848,9 +846,9 @@ mortes).
   Le module est tenu par `test_the_index_spline_shared_names_have_one_definition.py` : une définition, dans
   `corridor_jobs` ; `common` et les trois lecteurs (`ui`, `corridorui_mixin`, `eventsextras_mixin`) tiennent le même objet.
   Créer `certus/ui/certus_index_spline_corridor_jobs.py` : y déplacer `_worker_corridor_rmse_regular_grid`,
-  `_worker_corridor_rmse_healer`, `_worker_curve_minimum_deep_refit` (`ui/certus_index_spline_common.py:278, 319, 348`).
+  `_worker_corridor_rmse_healer`, `_worker_curve_minimum_deep_refit` (`ui/certus_index_spline_common.py`).
   Modifier `certus/ui/certus_index_spline_common.py` (réimport, mêmes objets). L'import retardé
-  `ui/certus_index_spline_corridor_worker.py:893` reste tel quel (couture de la façade, I15).
+  `ui/certus_index_spline_corridor_worker.py` reste tel quel (couture de la façade, I15).
   Test : `tests/unit/test_manual_rmse_grid_integration.py`, puis LOT.
   Q18 : `common` affecte `logger` ; si l'une des trois fonctions le lit, `corridor_jobs` l'affecte aussi.
 - [x] **5b** — faite le 2026-11-11 : classe et instance déplacées, texte inchangé ; `common` les réimporte. Garde avec
@@ -861,7 +859,7 @@ mortes).
   noms partagés : une seule instance dans les trois modules, elle rend les attributs de la vraie classe, et la façade
   `corridors` ne l'expose pas (R4).
   Créer `certus/ui/certus_index_spline_lazy_app.py` : y déplacer `_LazyCertusIndexSplineApp` et son
-  instance (`ui/certus_index_spline_common.py:371-376`). Modifier `certus/ui/certus_index_spline_common.py` (réimport).
+  instance (`ui/certus_index_spline_common.py`). Modifier `certus/ui/certus_index_spline_common.py` (réimport).
   Ne pas l'exporter par la façade (R4).
   Test : `tests/unit/test_gui_smoke.py`, puis LOT.
 - [x] **5c** — faite le 2026-11-11 : méthode déplacée, texte inchangé, bytecode identique (elle ne lit pas `logger`).
@@ -908,7 +906,7 @@ tests qui chronomètrent ou attendent un délai) ; ui `1366 passed` ; rest `322 
   classe Qt placée avant elle dans le MRO** (mesuré : 0 dans les neuf ; le garde-fou détecte un cas construit,
   `M.close` masqué par `QWidget`). Le fichier `67 passed`.
   Le test T4 à T6 de la Phase 1 est étendu aux huit autres fenêtres de
-  `tests/unit/test_self_attributes_are_defined.py:35-45`, avec leur liste blanche de redéfinitions. Il gagne le garde-fou de F11 (Q10) : aucun attribut défini par une classe
+  `tests/unit/test_self_attributes_are_defined.py`, avec leur liste blanche de redéfinitions. Il gagne le garde-fou de F11 (Q10) : aucun attribut défini par une classe
   du projet n'est masqué par une classe Qt placée avant elle dans le MRO (0 aujourd'hui, dans les 9 fenêtres).
   Modifier : `tests/unit/test_the_corridor_mixins_declare_what_they_read_on_the_window.py`.
   Test : ce fichier, puis LOT.
@@ -917,9 +915,9 @@ tests qui chronomètrent ou attendent un délai) ; ui `1366 passed` ; rest `322 
   `manifests/phase_6b.json` (`removed_from_mro`) : `problems=0`, `GUARD=OK` ; `test_gui_smoke.py` `29 passed` ; lot
   `337 passed`. **La garde avait un défaut**, corrigé dans un commit à part (`ab7f6884`, 2 tests dont 1 rouge avant) :
   elle retirait la classe sortie aussi de son propre MRO, et signalait un écart sur la classe elle-même.
-  Retirer `_UIMixin` des bases de la fenêtre (`ui/certus_index_spline_ui.py:65`), la classe
+  Retirer `_UIMixin` des bases de la fenêtre (`ui/certus_index_spline_ui.py`), la classe
   restant définie et importable. `_ConfigBuilderMixin` ne peut sortir du MRO sans retoucher
-  `tests/unit/test_gui_smoke.py:226`.
+  `tests/unit/test_gui_smoke.py`.
   Test : `tests/unit/test_gui_smoke.py`, puis LOT.
 - [x] **6c (Q8 : oui)** — faite le 2026-11-11 : `corridor_state.initial_corridor_state()` rend une valeur neuve par
   attribut de la table, et le constructeur de la fenêtre les pose en tête, avant `_setup_logger`. Garde avec
@@ -950,7 +948,7 @@ Chaque arête se traite seule, par descente de l'utilitaire dans un module parta
 La liste des tests propres à chaque famille est à compléter par un Grep du nom déplacé dans `tests/` en début de sous-phase.
 
 - [x] **7a** — `_resolve_strat_indices_db_path` : `certus/workers/certus_strat_workers.py` → module partagé ;
-  modifier `certus/ui/certus_field_ui.py:15`.
+  modifier `certus/ui/certus_field_ui.py`.
   Test : `tests/unit/test_gui_apps_smoke.py`, puis LOT.
   Fait le 2026-11-12 : la fonction est dans `certus/core/certus_indices_db.py` (le cœur : ni Qt, ni worker ; elle
   appelle le même `get_resource_path` de `certus_core`), les workers STRAT la réimportent, FIELD la prend au cœur.
@@ -961,8 +959,8 @@ La liste des tests propres à chaque famille est à compléter par un Grep du no
   le gel, FIELD et les workers STRAT : `413 passed`. Clé du cache Numba inchangée (`832213ea6465`). Registre de dette :
   `certus_strat_workers.py` 1746 → 1736 lignes.
 - [x] **7b** — `spectral_rmse_weights` : `certus/utils/certus_index_utils.py` → module partagé ; modifier
-  `certus/workers/certus_design_workers.py:53`, `certus/core/certus_re_worker_utils.py:35`,
-  `certus/physics/gradient_analytic.py:1115`.
+  `certus/workers/certus_design_workers.py`, `certus/core/certus_re_worker_utils.py`,
+  `certus/physics/gradient_analytic.py`.
   Test : `tests/unit/test_gui_apps_smoke.py`, puis LOT.
   **Protocole de noyau, obligatoire (Q21)** : `physics/gradient_analytic.py` et `utils/certus_index_utils.py` citent
   Numba ; les modifier change la clé du cache (premier passage à froid). Avant : oracle (`pytest tests/oracle/`).
@@ -1014,7 +1012,7 @@ Preuve faite : l'assertion `isinstance(app._worker, _FakeWorker)`, ajoutée seul
 `certus.ui.certus_index_spline_corridor_run.GenericWorker`, le fichier rend `16 passed`. Garde : `problems=0`,
 `GUARD=OK`. Les deux tests ne construisent plus de fil de calcul réel.
 
-- Modifier : `tests/unit/test_mwir_gui_flow.py:399, 435` — le remplacement de `GenericWorker` vise le module où
+- Modifier : `tests/unit/test_mwir_gui_flow.py` — le remplacement de `GenericWorker` vise le module où
   `_start_deferred_corridor_worker` le lit depuis la Phase 3a (`certus.ui.certus_index_spline_corridor_run`) ; chacun des
   deux tests gagne l'assertion `isinstance(app._worker, _FakeWorker)`.
 - Preuve exigée : cette assertion, ajoutée seule, **échoue** sur le test d'avant (elle montre que le vrai worker était
@@ -1087,9 +1085,9 @@ chacun inscrit ses fonctions dans `changed_code` d'un manifeste.
 
 | # | Question | Décision | Effet sur le plan |
 |---|---|---|---|
-| Q1 | Retoucher un test quand le code qu'il patche déménage ? | **Oui**, une ligne (`tests/unit/test_rmse_scatter_pieces.py:21`), dans le commit du déplacement. | Phase 4 exécutée ; `rendering.py` vise moins de 1 500 lignes. |
+| Q1 | Retoucher un test quand le code qu'il patche déménage ? | **Oui**, une ligne (`tests/unit/test_rmse_scatter_pieces.py`), dans le commit du déplacement. | Phase 4 exécutée ; `rendering.py` vise moins de 1 500 lignes. |
 | Q2 | Lire `tests/architecture_debt.json` et le réécrire quand un plafond baisse ? | **Oui** aux deux. | Relevé ciblé fait (§1.6) ; lecture complète en Phase 0 ; registre réécrit en 2b, 3b, 3c, 3d, 4 et 8. |
-| Q3 | `_apply_fixed_log_k_axis` en 5 exemplaires : laisser ou unifier ? | **Unifier**, commit isolé, sur le corps de `ui/certus_index_spline_common.py:155`. | Phase 2b ; seule sous-phase qui change un comportement (messages DEBUG). |
+| Q3 | `_apply_fixed_log_k_axis` en 5 exemplaires : laisser ou unifier ? | **Unifier**, commit isolé, sur le corps de `ui/certus_index_spline_common.py`. | Phase 2b ; seule sous-phase qui change un comportement (messages DEBUG). |
 | Q4 | Source unique des constantes de fenêtre ? | **Le cœur spline**, non modifié. | Phase 2c ; la règle vaut pour les 16 noms que le cœur définit (`:43-45` et `:2095-2107`). |
 | Q5 | Couture de test périmée sur `GenericWorker` ? | **Conserver** pendant la migration, **réparer après**, dans un commit de test séparé. | Note en 3a ; constat en Phase 0 ; Phase 9. |
 | Q16 | `_QS_SMART_INIT_DEEP` et `_QS_SMART_INIT_TWO_PHASE`, en double hors du cœur : quelle source ? | **`ui/certus_index_spline_common.py`** ; `smart_init` les importe. Préalable vérifié : `common` n'importe `smart_init` à aucun niveau. | Phase 2d ; `smart_init` dépend désormais du carrefour `common`. |
@@ -1157,7 +1155,7 @@ questions »)** — les questions que les sessions précédentes lui réservaien
 | Q35 | U8 : le garde-fou qui rend vides les icônes SVG sous Windows avec Python ≥ 3.14 ? | **Levé à partir de PyQt6 6.11**, gardé pour les versions antérieures ; `CERTUS_SVG_ICONS` force toujours. **Choix de 👤, 2026-11-13**, sur la mesure : 6 × 14 080 rendus, dorsales `offscreen` et `windows`, aucun plantage (PyQt6 6.11.0, Python 3.15.2). | Le plantage d'origine (2026-05-27) date d'une version plus ancienne ; une borne de version garde la protection là où elle n'a pas été réfutée. |
 | Q36 | La police du bouton Reset, fixée à 11 pt par 👤 le 2026-10-06 (D58), avec un corps à 10 pt (Q34) ? | **Alignée sur 10 pt** : D58 est remplacée par Q34. **Choix de 👤, 2026-11-13.** | Une seule taille pour les boutons. |
 | Q37 | U10 : quelles actions dans les accueils de STRAT et du HUB ? | **Fichiers récents et ouvrir l'exemple** (`example/example_strat/JSON-strat-example.json`, lu, jamais écrit). **Choix de 👤, 2026-11-13.** | La reprise de session touche à U12. |
-| Q38 | Pousser les commits de la nuit ? | **Oui, après la validation complète finale, si seuls les rouges connus restent** (§8 de REPRISE). **Ordre de 👤, 2026-11-13.** | — |
+| Q38 | Pousser les commits de la nuit ? | **Oui, après la validation complète finale, si seuls les rouges connus restent** (section « Validation complète » de `REPRISE.md`). **Ordre de 👤, 2026-11-13.** | — |
 | Q39 | U12 cette nuit ? | **Une spécification dans `reports/`, aucun code.** **Choix de 👤, 2026-11-13.** | U12 touche au calcul (C1, C2). |
 | Q40 | U12 : par quoi commencer, où ranger, proposer ou reprendre seul ? | **La reprise de session d'abord** (aucun calcul touché) ; pour les calculs, plus tard, STRAT multi-graines en premier ; rangement dans le dossier de configuration de CERTUS ; reprise **proposée** par l'accueil. **Choix de 👤, 2026-11-13** ; détail dans [`U12_specification.md`](U12_specification.md). | Le niveau sans risque pour le calcul d'abord ; une reprise automatique surprend qui veut repartir de zéro. |
 

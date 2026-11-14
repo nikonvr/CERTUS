@@ -34,7 +34,7 @@ Sources identiques au A/B : base `da1af082`, deux fichiers expérimentaux figés
 
 Le premier contrôle, à 17 h 04, utilise les indices directement. Il donne 0,03934489424322656 et 0,03663501788493102,
 au lieu des scores attendus 0,039345655797984144 et 0,03663586891447066. Il échoue au seuil strict fixé avant mesure
-(`rel_tol=1e-7`, `abs_tol=1e-10`) : [artefact conservé](STRAT_Rate_validation_budget240_2026-10-13/control.json),
+(`rel_tol=1e-7`, `abs_tol=1e-10`) : artefact brut `STRAT_Rate_validation_budget240_2026-10-13/control.json` hors dépôt,
 requête et journaux dans le même dossier. Les graines indépendantes ne sont pas lancées par ce contrôleur.
 
 Cause lue puis éprouvée : `SharedIndicesManager` convertit les indices en `float32` pour les workers du batch ;

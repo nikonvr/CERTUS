@@ -37,8 +37,8 @@ leurs SEEL ne se comparent pas entre eux.
 
 | artefact et provenance | meilleur plan déposable | références H/L avant chaque paquet Rate |
 |---|---|---|
-| [`r75x0.5`, deep, graine 101, `cea0db66`](STRAT_ELITE_couches_Rate_2026-10-12/blocs_vs_plantage_r75x0.5_deep_s101_ratemoves_cea0db66.json) ; id `900951015`, SEEL 0,396715 nm | Optique L1–6 à 630 nm → Rate L7–10 → Optique L11–12 à 451 nm → Rate L13–34 → Optique L35–36 à 706 nm → Rate L37–75 | 3/3 → 4/4 → 5/5 |
-| [`r75x1.5`, deep, graine 42, `da1af082`](STRAT_ELITE_couches_Rate_autres_composants_2026-10-13/r75x1.5_deep_s042_avec_da1af082.json) ; id `901550854`, SEEL 0,471784 nm | Optique L1–11, à 562 puis 571 nm → Rate L12–52 → Optique L53 à 651 nm → Rate L54–75 | 6/5 → 7/5 |
+| `r75x0.5`, deep, graine 101, `cea0db66` (`blocs_vs_plantage_r75x0.5_deep_s101_ratemoves_cea0db66.json`, hors dépôt) ; id `900951015`, SEEL 0,396715 nm | Optique L1–6 à 630 nm → Rate L7–10 → Optique L11–12 à 451 nm → Rate L13–34 → Optique L35–36 à 706 nm → Rate L37–75 | 3/3 → 4/4 → 5/5 |
+| `r75x1.5`, deep, graine 42, `da1af082` (`r75x1.5_deep_s042_avec_da1af082.json`, hors dépôt) ; id `901550854`, SEEL 0,471784 nm | Optique L1–11, à 562 puis 571 nm → Rate L12–52 → Optique L53 à 651 nm → Rate L54–75 | 6/5 → 7/5 |
 
 Les artefacts portent `git_dirty=false`, un cache Numba identifié et régi par les sources, et un taux de
 plantage nul aux trois niveaux de bruit pour ces meilleurs plans. Le premier est un résultat antérieur ;

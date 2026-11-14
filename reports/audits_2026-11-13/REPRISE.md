@@ -1,5 +1,7 @@
 # REPRISE — passation du 2026-11-13 (DESIGN, audits, polisseur Levenberg-Marquardt)
 
+> Passation close le 2026-11-13. Suite dans le [point de reprise actif](../questions_design_2026-11-13/REPRISE.md).
+
 Pour l'IA qui reprend. Lire d'abord `CLAUDE.md`, `AGENTS.md`, `docs/ETAT.md` §0. Ce fichier dit où en est le travail
 du 2026-11-13 ; la reprise générale du chantier reste `reports/refactor_corridors_2026-11-11/REPRISE.md`.
 
@@ -47,8 +49,9 @@ identique à celui d'avant correction. La bascule est prête pour l'intégration
    `ricl_lm_resume.py` reprend les couples manquants et écrit dans une sortie séparée.
 2. **U13.** Faire les essais sur écran réel, avec le Narrateur et avec les utilisateurs selon le
    [protocole U13](../refactor_corridors_2026-11-11/U13_protocole.md).
-3. **STRAT local-search.** Examiner l'unique commit propre à `wip/strat-local-search-ricl-2026-11-11`
-   avant de le reporter sur la base validée.
+3. **STRAT local-search.** Le nombre de tours est intégré à l'arbre principal le 2026-11-13 au soir
+   ([bilan](../questions_design_2026-11-13/bilan.md)). Reste : examiner l'unique commit propre à
+   `wip/strat-local-search-ricl-2026-11-11` avant de le reporter sur la base validée.
 4. **Reprise de calcul U12 B.** Après STRAT multi-graines, prendre STRAT robustesse en premier, puis traiter
    DESIGN PGLOBAL et INDEX SPLINE un par un, avec un essai d'interruption et de reprise au bit par moteur.
 5. Reprendre les chantiers scientifiques du §4.

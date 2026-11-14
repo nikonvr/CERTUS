@@ -143,7 +143,7 @@ masques et limites. Tout est conservé dans `attempt_02`, sans écraser le premi
 L'essai `budget_360` commence à 17 h 11 min 36 s, contrôleur 32588, calcul 26580, même ordre et même profondeur,
 une seule variable modifiée, ressources inchangées. Aucun rejeu concurrent ni changement de défaut scientifique.
 
-Le choix conjoint est préparé **sans simulation** : [958 propositions](STRAT_Rate_expertise_2026-10-13/joint_window_proposals_v1.json),
+Le choix conjoint est préparé **sans simulation** : 958 propositions (`joint_window_proposals_v1.json`, hors dépôt),
 SHA256 `462f48cacc0579316b1c9f45fef70de9afa623bd3024d55f3368f6e99e3b8409`.
 Chaque proposition modifie une seule des deux fenêtres optiques du plan budget 240, reste dans son bloc et conserve
 la partition : largeur 2/4/6, décalage −2/−1/0/1/2 si admissible, 40 λ sur la grille de contrôle. Les autres couches

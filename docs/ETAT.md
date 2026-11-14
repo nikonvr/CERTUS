@@ -5,7 +5,7 @@
 > [`CLAUDE.md`](../CLAUDE.md). Il se tient **en place** : un fait change, on corrige sa ligne,
 > on ne raconte pas la correction (`git log` s'en charge). Toute mesure porte sa date.
 > Le détail et l'historique sont dans `git`, sans autorité (CLAUDE.md, en-tête).
-> Mis à jour le 2026-11-07.
+> Mis à jour le 2026-11-14.
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
@@ -13,62 +13,22 @@
 > ([`ETAT_actions.md`](ETAT_actions.md)), acquis ([`ETAT_acquis.md`](ETAT_acquis.md)), registre des audits ([`AUDITS.md`](AUDITS.md),
 > `grep -n "ALG-02" docs/AUDITS.md`), preuves dans `reports/` (le `bilan.md` d'un dossier).
 
-**Reprise active du 2026-11-13** : polisseur hybride DESIGN mesuré, validation effectuée. Campagne RICL reprise et terminée.
-[Point de reprise et ordre des actions](../reports/audits_2026-11-13/REPRISE.md).
-[Avancement des corridors d'INDEX SPLINE et de l'UX, dont U12 et U13](../reports/refactor_corridors_2026-11-11/REPRISE.md).
+**Reprise active** : [réaménagement et plan de nuit](../reports/questions_design_2026-11-13/REPRISE.md).
+Le polisseur hybride et la pondération par bande sont intégrés. La grille automatique et la sélection robuste
+restent optionnelles. Mesures en cours dans le [bilan DESIGN](../reports/questions_design_2026-11-13/bilan.md).
+Voir aussi les [défauts ouverts](AUDITS.md).
 
-**RICL (2026-11-05)** : précontrôle GO ; protocole de charge au sommet et sélection des tours cohérents, témoin nominal,
-audit indépendant et pilote de 109 couches validés. Sources figées, travail antérieur préservé, aucun noyau modifié ;
-validation parallèle GO, un artefact unitaire vert seul ; série bloquée en préparation GUI ([bilan](../reports/A2_preparation_calculs_2026-11-05/bilan.md)).
+**Branche de travail** : master local. Le sparse-checkout écarte les gros artefacts scientifiques suivis ;
+git sparse-checkout disable les restaure. Les exports hors Git sont répertoriés dans le manifeste du 2026-10-25.
 
-**Résonances DESIGN (2026-11-05, étendu le 2026-11-07)** : outil natif optionnel et interface implémentés. Étendu aux couches absorbantes (n − ik constants), aux cibles en réflexion et aux cibles variables (rampes de DESIGN, fonction de λ), par le noyau R/T existant `gradient_oblique.compute_oblique_rt_and_grads_analytic` à 0° (aucune nouvelle formule TMM) ; chemin sans pertes en T inchangé. 42 tests ciblés passés (oracle, unitaires, interface, cliquet TMM, anglais). Validation générale du 2026-11-07 : oracle 1186 passés, interface 1356 passés ; unitaires et `tests/` restants interrompus par le garde-fou `tests/qt_lifecycle.py` (QThread d'INDEX > 180 s sous la charge d'une campagne de 15 processus ; `test_index_headless` passe seul) : à refaire machine libre. Pilote natif : MF résolu 0,032431 %, témoin nominal 0,382927 % ; voir le [bilan d'intégration](../reports/DESIGN_resonances_integration_2026-11-05/bilan.md).
+**Python de référence : 3.15.2**, dépendances de requirements.lock.
 
-**Reprise en cours (2026-10-30)** : changement d'ordinateur ; lire d'abord
-[`REPRISE_2026-10-30.md`](../reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/REPRISE_2026-10-30.md). Cissoïde OIC 2016 :
-0,02407 (oracle), quintet Ni, Ag, F, H, M, 49 couches ; à battre 0,0139. Portage DESIGN commité le 2026-10-31 (`7e386166`, `8d4602a9`).
+**Dernière validation complète** : le 2026-11-14 sous Windows. Oracle, interface, reste et performance verts.
+Les quatre échecs unitaires ont été résolus au rejeu isolé ou après correction du registre des tests lents.
+[Résultats de validation](../reports/questions_design_2026-11-13/bilan.md#9-validation-windows).
 
-**Branche de travail** : `master`, locale, non poussée. Depuis le 2026-10-25 elle réunit `gemini/2026-10-21` (supprimée) et `claude/2026-10-22`,
-séparées du 2026-10-21 au 2026-10-25 ([audit](../reports/AUDIT_travaux_2026-10-21_25/bilan.md)). Le dossier est en *sparse-checkout* : les 38
-artefacts bruts `reports/**/blocs_vs_plantage_*.json` (427 Mo) sont versionnés mais absents du disque ; `git sparse-checkout disable` les restaure.
-Les fichiers non versionnés (journaux, exports) sont hors de Drive, dans un dossier à part qui porte leur manifeste (`manifest_2026-10-25.tsv`) ; 👤 en connaît l'emplacement.
+Pour un échec de comparaison au bit, rejouer sur [cache Numba vierge](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md).
 
-**STRAT** : réglages par défaut au §3 ; défaut ouvert : à bas bruit, le seuil des points tournants passe sous l'ondulation du biais de
-fente et fabrique de faux points tournants ([analyse](../reports/ANALYSE_claude_2026-10-22/bilan.md)).
-
-**DESIGN** : mémétique et relances par défaut depuis le 2026-10-23 ; séparatrice 400–1200 nm à 0,000135, et 8,6e-5 sur le problème de
-Tikhonravov et al. 1996 contre 1,77e-4 pour leur design ([bilan](../reports/DESIGN_bs5050_2026-10-22/bilan.md)). Enveloppe hors fenêtre du 2026-10-26 :
-3,53e-5 à 34 couches libres, 4,03e-5 à 31 couches ≥ 5 nm ([README](../reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_free/README.md)). Travail
-d'Antigravity Argon du 2026-10-26 vérifié puis corrigé ([vérification](../reports/VERIFICATION_argon_2026-10-26/bilan.md)) : noyaux rapides actifs
-(ALG-08/25/30), ALG-02 corrigé ; Gauss-Newton, fusion N+2 → N, alternance HL/LH, repolissage après 5 nm : inactifs par défaut
-(`DESIGN_OPTIONAL_STEPS`). Outils de robustesse (« Spectral Monte Carlo », « Robust N ») commités le 2026-10-28 (`7f849f42`).
-Comparaisons aux cas publiés de Tikhonravov et Trubetskov (50/50, trois raies, miroir chaud, antireflet robuste, EF1–EF10,
-cissoïde OIC 2016 B1) : [README](../reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/README.md) et
-[audit du 2026-10-28](../reports/DESIGN_bs5050_2026-10-22/tikhonravov/envelope_v2/AUDIT_2026-10-28.md). Bilan au 2026-10-29
-(audit, section 7) : battus sur le 50/50 et les 51 couches (0,4597 contre 0,464) ; égalité sur le miroir chaud ;
-perdu sur le trois raies libre de 2020 (0,0145 depuis un germe de leur design ; depuis le substrat nu, avec leur pas
-d'évolution graduelle et le nettoyage à 2 nm, 0,0193 à 14 480 nm contre ≈ 0,05 avec notre ancien pas ; eux 0,0128) et la
-cissoïde OIC 2016 (0,182 contre 0,0238). Onglet « Compare » de DESIGN (distance et barrière entre deux designs) commité
-le 2026-10-30 (`02b25ed7`). Enseignements de méthode dans le README d'`envelope_v2`. Calcul en parallèle :
-`OPENBLAS_NUM_THREADS=1` par processus, sinon les fils OpenBLAS saturent les cœurs.
-
-**Bonne Mère, 90 couches sur silice** : plan à déposer, fait à la main sous les règles de 👤 : 15 Rate, SEEL 0,2608 nm au holdout.
-STRAT natif avec l'étape libre avant la conversion : 0,2655 nm, une graine, sans la garde ; A16 le remesure
-([bilan](../reports/BONNE_MERE_strat_90c_2026-10-23/bilan.md)).
-
-**Python de référence : 3.15.2** (depuis le 2026-10-27 ; 3.15.1 du 2026-10-25 au 2026-10-26) ; les mesures antérieures sont sous 3.14.8. Dépendances : `pip install --require-hashes -r requirements.lock`
-(numba 0.68.0, llvmlite 0.50.0 ; les anciens pins n'avaient pas de roue 3.15). Même banc (`48c` premium, graine 42) sous 3.14.8 et 3.15.1 : mêmes 2 653
-stratégies, même meilleur plan, SEEL 0,15313 nm ; scores à 10⁻¹⁴ près (relatif médian), aucun identique au bit. Exécutable gelé construit et contrôlé sous 3.15.1.
-
-**Dernière validation complète** : le 2026-11-13 avec la bascule du polisseur DESIGN, sur
-`e2ee96b7` avec les correctifs appliqués. [Résultats de validation](../reports/audits_2026-11-13/REPRISE.md#2-première-action--valider-le-défaut-de-design).
-Dernier contrôle C1 avant la bascule : 9 092 tableaux identiques au bit. Pour un test « au bit » rouge sur
-le cache de l'arbre, rejouer sur cache Numba vierge ([note](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md)).
-
-Avant de committer du code, la validation de CLAUDE.md §2 en entier : un sous-ensemble a déjà laissé passer une régression
-(`tests/unit/test_the_architecture_debt_only_shrinks.py` ne tourne pas avec les tests voisins).
-
-**Contrôle GUI ciblé** : 2026-10-25, `687ebe0b`, sous 3.15.1 : suite UI sans échec et onze interfaces affichées sur Qt Windows ;
-portée, exclusions et captures dans le [bilan](../reports/VERIFICATION_GUI_python3151_2026-10-25/bilan.md). Ne remplace pas la validation complète.
 
 **Décisions qui n'appartiennent qu'à 👤** : §5. Une IA ne les tranche pas, elle rapporte les mesures.
 
@@ -198,7 +158,6 @@ Un défaut corrigé sort de la liste ; son numéro n'est pas réattribué.
 | D72 | Gel de 411 Mo pour un objectif de 300 (llvmlite 115, Qt 77, scipy 68 Mo…) ; mesurer ce que l'application charge vraiment avant d'autres exclusions |
 | D82 | Thème sombre : logo foncé peu visible, mesure de contraste à terminer |
 | D84 | Écarts au dernier bit intermittents au premier passage après un changement de clé du cache Numba, verts à la relance ; si l'écart persiste, comparer noyaux froids et chauds |
-| D107 | À instruire : l'élagage DESIGN vers un nombre cible de couches ne peut pas évaluer ses candidats (`_prune_to_target` lit des attributs absents, `except` → `inf`) ; correctif, test et rapport sur la branche locale `claude/alg02-prune-evaluator-0d2a8d` (`46261901`), non validés ; attend 👤 |
 | D108 | Un NaN dans les nœuds d'une spline devient `n = k = 0` sans alerte sur le chemin par défaut (`get_nk_from_spline`, `use_cache=True`) ; attend 👤 (§5) |
 | D109 | Le TMM accepte une épaisseur négative (R + T jusqu'à 2,09) ; aucun flux connu n'en produit ; attend 👤 (§5) |
 | D110 | La CI ne lance pas les trois contrôles documentaires et saute les benchmarks (`pytest-benchmark`, `pytest-xdist` non déclarés) ; attend 👤 (§5) |
@@ -222,7 +181,6 @@ Un défaut corrigé sort de la liste ; son numéro n'est pas réattribué.
 | **le Rate et l'optique pure** | le meilleur plan porte du Rate sous tous les modèles d'arrêt ; le Rate de STRAT n'a ni dérive de la source ni bruit de vitesse (§7) ; A4 : réserver des parents optiques purs à ELITE ne donne aucun plan optique pur au modèle d'arrêt par défaut ([rapport](../reports/ANALYSE_claude_2026-10-22/bilan.md) §4). Dépend de la stabilité réelle de la vitesse (A25, §6) |
 | **comportements** | D108 (lever `ValueError`), D109 (épaisseur ≥ 0 au TMM), D114 (politique des entrées invalides) : changements de comportement, test rouge d'abord |
 | **CI** (D110) | déclarer `pytest-benchmark` et `pytest-xdist` ; ajouter les trois contrôles documentaires à `lint.yml` ; rendre bloquantes les étapes mypy et `bench_kernels` |
-| **branches** | reprendre ou abandonner `claude/alg02-prune-evaluator-0d2a8d` (D107) et `claude/dreamy-burnell-85397a` (fenêtre admissible 48c) ; `claude/a5-tours-budgets-2026-10-25` est sans objet (A5 fait le 2026-10-24) |
 | **A9** | refiger le protocole sur la branche de travail (il refuse un code différent de son commit figé), puis donner ou non le GO ; A14, son préalable, est fait |
 | **réglages STRAT** | `elite_rate_moves` (actif, ou `git revert 978b8f04` ; mesures d'A2 dans `ETAT_acquis.md`) ; `rate_rescue_hard` (inactif, sans gain : 35 déposables sur 410) ; `tp_hysteresis_floor` à bas bruit ; armer `strat_local_search_fresh_id` |
 | **modèles** | D71 (continuité de Tauc-Lorentz-Urbach en E = Eg) ; D69 (nouvelle définition de la couverture des noyaux) |

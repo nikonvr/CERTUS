@@ -109,7 +109,7 @@ python reports/A2_preparation_calculs_2026-11-05/pilote_threeline.py --rounds 40
 
 Entrée : meilleur `mf_oracle` de `gradual_deep2_cont_seed89_clean2.csv`. Les
 [`résultats complets`](pilote_109/summary.json) et le
-[`journal`](pilote_109.log) sont conservés.
+le journal `pilote_109.log` sont conservés. Le journal est dans l'archive hors dépôt du 2026-11-13, sous `sorties-ignorees/`.
 
 | État | MF nominal (%) | MF résolu, 0,001 nm (%) | MF de contrôle, 0,0002 nm (%) | OT (nm) |
 |---|---:|---:|---:|---:|
@@ -171,7 +171,7 @@ Monte-Carlo. Les anciens résultats restent conservés et ne deviennent pas des
 applications de la méthode finale par simple changement de légende.
 
 La suite reste celle du
-[plan de calcul RICL](../../../../RICL_article/besoin_nouveaux_calculs_2026-11-05.md) :
+plan de calcul de l'article RICL (`besoin_nouveaux_calculs_2026-11-05.md`, hors dépôt) :
 audit de l'union des frontières, traitement ciblé avec témoin, puis comparaisons
 appariées avant/après sous erreurs d'épaisseur. Les classements doivent être
 reconstruits à partir de ces sorties avant toute revendication générale.

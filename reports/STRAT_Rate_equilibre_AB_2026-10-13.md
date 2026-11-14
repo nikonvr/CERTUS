@@ -14,11 +14,11 @@ Patch : [source.patch](STRAT_Rate_equilibre_AB_2026-10-13/source.patch), SHA256 
 | equilibre | 0.479488 | 3777 | 37.80 |
 
 `actuel` : Rate L7-L10, L13-L34, L37-L75 ; optique L1-L6, L11-L12, L35-L36 ; 9 blocs (1-9 a 630 nm, 10-20 a 451 nm, 21-30 a 691 nm, 31-40 a 706 nm, 41-50 a 741 nm, 51-60 a 705 nm, 61-65 a 708 nm, 66-70 a 742 nm, 71-75 a 580 nm)
-Artefact : [blocs_vs_plantage_r75x0.5_deep_s101_rate_equilibre_off.json](STRAT_Rate_equilibre_AB_2026-10-13/blocs_vs_plantage_r75x0.5_deep_s101_rate_equilibre_off.json).
+Artefact : `blocs_vs_plantage_r75x0.5_deep_s101_rate_equilibre_off.json` (hors dépôt).
 
 
 `equilibre` : Rate L4-L10, L15-L69, L74-L75 ; optique L1-L3, L11-L14, L70-L73 ; 3 blocs (1-20 a 451 nm, 21-50 a 691 nm, 51-75 a 732 nm)
-Artefact : [blocs_vs_plantage_r75x0.5_deep_s101_rate_equilibre_on.json](STRAT_Rate_equilibre_AB_2026-10-13/blocs_vs_plantage_r75x0.5_deep_s101_rate_equilibre_on.json).
+Artefact : `blocs_vs_plantage_r75x0.5_deep_s101_rate_equilibre_on.json` (hors dépôt).
 
 
 Écart équilibré / actuel : **+20.86 %**.

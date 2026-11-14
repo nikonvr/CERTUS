@@ -80,7 +80,6 @@ code du 2026-10-19, audit d'arrêt OMS du 2026-10-10 : rapports datés dans `rep
 | id | constat | où | état |
 |---|---|---|---|
 | ALG-01 | Scan Needle divisé par `count`, coût par `sum_w` (classement inchangé si le rapport est constant) | `needle_scan_cached` | ouvert, impact faible |
-| ALG-02 | Évaluateur d'élagage inopérant (D107) | `_prune_trial_rmse`, `_best_prune_candidate` | corrigé 2026-10-26 ; test `test_design_overshoot_pruning_removes_the_layer_the_filter_misses_least.py` |
 | ALG-03 | Grille oblique densifiée non rendue au worker | `maybe_upgrade_grid_tikhonravov` | ouvert : mesuré, gradient et coût sur 2 points au lieu de 135, RMSE rapporté 0,026 contre 0,175 sur la grille dense (`reports/ARGON_contre_audit_2026-10-16/pass02.json`, R03) ; la voie normale utilise 135 points (R04) |
 | ALG-04 | Le scan Needle ne teste que le premier matériau différent | `NeedleOptimizationStrategy._build_needle_scan_mask` | piste |
 | ALG-05/06 | Mode local par PGLOBAL ; raffinement final par gradient normalisé | `OptimWorker`, `run_coord_descent_5cycles` | piste |
@@ -94,7 +93,6 @@ code du 2026-10-19, audit d'arrêt OMS du 2026-10-10 : rapports datés dans `rep
 | ALG-16 | Le bloc `optim` des fichiers d'exemple était ignoré au chargement | `StateManager._apply_config` | corrigé `a813fa64` |
 | ALG-17 | La session de décimation Pareto ne se refermait jamais | `_clear_smart_decimation_state` | corrigé `08f7e7e6` |
 | ALG-18 | Champion et relances jugés sur le RMSE d'un autre design (export « 0,00013 » pour 0,0029) | `_restore_smart_decimation_best_overall`, `_restart_from_best` | corrigé `0f11743f` ; tenue des enregistrements Pareto à revoir |
-| ALG-19 | La règle finale des 5 nm retire des couches sans réoptimiser | `_apply_5nm_minimum`, `_polish_remaining_layers_above_floor` | correctif 2026-10-26 **inactif par défaut** : `polish_after_5nm_rule`, `final_refine_lower_bounds` |
 | ALG-20 | L'étape globale PGLOBAL borne chaque couche à 1,2 QWOT | `optim_bounds_thickness_global` | ouvert ; le mémétique monte à 3 QWOT (`memetic_layer_qwot_max`, 5 au 50/50 hors fenêtre) |
 | ALG-21 | `floor_at_end` : des couches fines réapparaissent après les aiguilles | `_apply_floor_at_end` | ouvert, option inactive |
 | ALG-22 | RMSE de la fenêtre sous celui de la grille fixe, même à 420 points par cible | `_calculate_tikhonravov_points` | à reproduire |
@@ -106,6 +104,8 @@ code du 2026-10-19, audit d'arrêt OMS du 2026-10-10 : rapports datés dans `rep
 | ALG-27 | Criblage des enfants par polissage court (`memetic_screen_maxiter`, 0 par défaut) jamais mesuré | `run_memetic` | piste ; ×2 estimé, risque sur la qualité |
 | ALG-28 | Trois appelants recompilés à chaque démarrage (parade C18, `cache=False`) | `calc_spectrum_front`, `calc_spectrum_full`, `compute_batch_rmse` | piste ; quelques secondes par lancement |
 | ALG-29 | Règles Rate d'opérateur appliquées dès la recherche : aucun plan déposable sur bm90 (12 271 plans, plantage ≥ 59,7 %) | `apply_rate_rules` dans `_execute_robustness_tasks` | constaté ; `rate_rules_final_only` en mesure |
+| ALG-32 | Grille de λ à nombre de points fixé par cible | `certus_design_auto_grid`, `maybe_refine_grid_auto` | option `auto_wavelength_grid`, inactive par défaut (case « Automatic wavelength grid ») ; non mesurée sur un design de CERTUS ([bilan](../reports/questions_design_2026-11-13/bilan.md)) |
+| ALG-33 | Population mémétique jugée sur le coût nominal seul | `build_memetic_lm_polisher` | option `memetic_robust_sigma_nm`, inactive par défaut ; non mesurée sur un design |
 | C20 | Gradient hérité faux sur couches absorbantes (D113) | `compute_gradient_all_layers_analytic` | ouvert |
 | C06/C07 | Nœud NaN → `n = k = 0` (D108) ; épaisseur négative acceptée (D109) | `get_nk_from_spline`, `calculate_RT_vectorized_real` | ouvert |
 | C21/C22 | Entrées invalides (NaN, k < 0, n = 0) rendues en fini plausible (D114) | noyaux `fastmath`, `certus_inputs` | ouvert ; politique k < 0 à trancher |

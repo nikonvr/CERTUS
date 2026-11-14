@@ -1,6 +1,6 @@
 # Recoupement des audits avec le code — 2026-10-20
 
-Portée : [`UXargon.md`](../UXargon.md) (§1 à §13), [`ARGON_contre_audit_Claude_2026-10-17.md`](ARGON_contre_audit_Claude_2026-10-17.md)
+Portée : `UXargon.md` (archive Git, `2c3f0a97^`) (§1 à §13), [`ARGON_contre_audit_Claude_2026-10-17.md`](ARGON_contre_audit_Claude_2026-10-17.md)
 (volet UX) et l'outil [`scripts/audit_ux_certus.py`](../scripts/audit_ux_certus.py), contre `certus/ui/`, `certus/metal/`,
 `certus/spline/` et `CERTUS_HUB.py` à `4c10ce44`. Lecture du code seulement (grep, fonctions) : aucun programme lancé, aucun
 code modifié. Les tableaux du §1.1 (harnais du 2026-10-16) n'ont pas été remesurés : une autre session mesurait STRAT.
@@ -32,7 +32,7 @@ Seuls STRAT (`1eb35535`, `4c10ce44`) et `pyproject.toml` ont changé dans le cod
 
 | audit | amendement |
 |---|---|
-| [`designargon.md`](../designargon.md) | ALG-01 à ALG-11 tiennent. `[CORRIGÉ bdcae9ed]` sur D08 et la suppression de couches fixes (§7.1) ; `CFG.MIN_THICKNESS` vaut 0,01 nm, pas zéro (§3.2.A) ; citation d'ALG-02 rendue exacte. |
+| `designargon.md` (archive Git, `2c3f0a97^`) | ALG-01 à ALG-11 tiennent. `[CORRIGÉ bdcae9ed]` sur D08 et la suppression de couches fixes (§7.1) ; `CFG.MIN_THICKNESS` vaut 0,01 nm, pas zéro (§3.2.A) ; citation d'ALG-02 rendue exacte. |
 | [`AUDIT_SUITE_CERTUS_2026-10-18.md`](AUDIT_SUITE_CERTUS_2026-10-18.md) | Note datée : l'état de chaque constat est le §4 de la deuxième passe ; audits de la racine et `studies/bonne_mere/` publiés sur `origin`. Numéros de ligne remplacés par des fonctions (REGLES §10). |
 | [`AUDIT_SUITE_CERTUS_2e_passe_2026-10-18.md`](AUDIT_SUITE_CERTUS_2e_passe_2026-10-18.md) | C20 à C32 et les ouverts tiennent (D107 à D109, C10, C13, C23 à C26, A23 à A35 non faits). Numéros de ligne remplacés par des fonctions. |
 | [`AUDIT_ARGON_code_2026-10-19.md`](AUDIT_ARGON_code_2026-10-19.md) | Note datée : rien des phases 1, 2, 4, 5 n'est fait ; P3.1 et P3.2 non codés ; P3.0 mesuré le 2026-10-20 (deux règles de Bonne Mère perdent sur les trois designs, la recherche locale gagne et entre comme `strat_local_search`, inactive). |

@@ -16,7 +16,7 @@ Lire `R2_native_base/etat.json`, les processus et les verrous. La base native un
 
 ## R0 — trois points fixes reproduits
 
-[R0 auditéGO](R0_verified.json), [résultat complet et paramètres](R0_control/control.json). Douze appels effectivement observés : trois plans × graines101/41/42/43, chacun300tirages. Consensus complet de trois scores par plan ; `n_samples=3` n’est pas une profondeur de trois tirages. Tous les plans conservent blocs, masquesRate, fente et témoins.
+[R0 auditéGO](R0_verified.json), [paramètres du contrôle](R0_control/launch.json), sortie brute `R0_control/control.json` hors dépôt. Douze appels effectivement observés : trois plans × graines101/41/42/43, chacun300tirages. Consensus complet de trois scores par plan ; `n_samples=3` n’est pas une profondeur de trois tirages. Tous les plans conservent blocs, masquesRate, fente et témoins.
 
 | Plan | Score de base101 | Score consensus41/42/43 | Score consensus attendu |
 |---|---:|---:|---:|

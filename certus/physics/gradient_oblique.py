@@ -1254,9 +1254,14 @@ def compute_gradient_all_layers_analytic(
             cost, grad = err_sum / weight_sum, grad_raw * (2.0 / weight_sum)
 
     else:
+        # C20 (D113): this kernel matches the reference only for indices given as n + ik. Absorbing layers in the
+        # project convention n - ik made its cost 343 % off the reference (tests/oracle/
+        # test_absorbing_front_cost_matches_the_reference.py), so they are conjugated at this boundary only. A
+        # lossless stack is passed unchanged and keeps its bits.
+        kernel_layers = np.conj(n_layers_T_c128) if np.any(n_layers_T_c128.imag < 0.0) else n_layers_T_c128
         cost, grad, _ = _compute_gradient_analytic_kernel(
             ep_f64,
-            n_layers_T_c128,
+            kernel_layers,
             n_sub_c128,
             wls_f64,
             tgt_vals_f64,

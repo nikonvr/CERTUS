@@ -97,6 +97,8 @@ sur cache Numba vierge : POEM (§6), `test_the_automatic_export_is_off_under_tes
   180 s de `qt_lifecycle`, qui appelle `pytest.exit` ; xdist le rapporte comme un worker mort. Deux passages `unit` sur
   cinq ont ainsi perdu environ 1 500 tests.
 - `376baef1` : une étape xdist reçoit `NUMBA_NUM_THREADS` = cœurs ÷ workers, sauf valeur déjà posée.
+- `ddd29cc4` : `qt_lifecycle` accorde 600 s au lieu de 180 aux fils d'une fenêtre. Sur cache froid, le même
+  arrêt a tué le témoin du sélecteur sur `test_strat_disconnected_settings.py` : 3 passages `unit` sur 8 cette nuit.
 
 | `tests/unit/`, `-n 16 --dist loadfile`, même arbre | durée |
 |---|---:|
@@ -130,6 +132,9 @@ La règle est neutre sur `ui` et divise `unit` par 1,7.
   ([avant](../alg03_grille_oblique_2026-11-14/alg03.json)) ; après, 135 points et RMSE rapporté = RMSE dense = 0,17197
   ([après](../alg03_grille_oblique_2026-11-14/alg03_apres.json)). `c1_diff HEAD` : identique au bit (son corpus
   n'exerce pas le worker).
+- **ALG-13, `df36593f`.** L'affinage final de DESIGN ne lisait aucun drapeau d'arrêt (12 gradients après la
+  demande, mesure du 2026-10-16). `run_coord_descent_5cycles` reçoit `should_stop`, inactif par défaut ; le worker
+  passe son événement d'arrêt. Sans demande d'arrêt, rien ne change : `c1_diff HEAD` identique au bit.
 
 Seconde validation, sur `3e047e5f` (C20 et ALG-03 compris) : `VALIDATION=GO` en 21 min 32 s, aucun échec au premier
 passage. oracle 1 209, unit 6 183 (6:31, cache Numba froid après le changement de `gradient_oblique.py`), ui 1 594,

@@ -380,3 +380,30 @@ donne 9,579e-5 et le polissage à 0,1 nm donne 2,180e-3. Le record initial donne
 automatique de 178 points manquait elle-même les pics du record. L'expérience compare le raffinement de la
 quadrature associé à plusieurs polissages avec un polissage sur grille fixe.
 [Mesures des trois départs](probe_auto_grid.json) · [rejeu et oracle](probe_auto_grid_crosscheck.json).
+
+## 11. Grille et sélection robuste sur le 50/50
+
+Le 14 novembre, workflow DESIGN sur `JSON-design-reference-tikhonravov-1996.json`, graines 42, 77 et 202,
+sans relance automatique, 16 polissages concurrents. Chaque design final est jugé à 0,5 nm par le noyau et
+l'oracle indépendant. Leurs transmissions diffèrent de moins de 2e-15. La grille fixe démarre avec 108 points,
+l'automatique avec 78. La sélection robuste utilise `memetic_robust_sigma_nm=1.0` sur la grille fixe.
+
+| Option | RMSE nominale médiane | Durée médiane | RMS sous erreurs | P95 sous erreurs |
+|---|---:|---:|---:|---:|
+| Grille fixe | 7,715e-5 | 271,5 s | 0,02344 | 0,03236 |
+| Grille automatique | 7,757e-5 | 269,1 s | 0,02307 | 0,03221 |
+| Sélection robuste | 4,134e-4 | 262,8 s | 0,01903 | 0,02750 |
+
+Tolérance : 400 tirages gaussiens indépendants par couche, σ = 1 nm, graine 20261114, même grille de jugement
+et mêmes flux de tirage par indice de couche. Les épaisseurs exportées sont arrondies à 1e-4 nm. Le calcul de
+tolérance rapporte aussi leur RMSE nominale recalculée. Les colonnes sont les médianes des trois designs.
+
+La sélection robuste réduit le RMS médian de 18,8 % et augmente la RMSE nominale médiane d'un facteur 5,36.
+L'automatique reste proche du témoin en médiane, avec des écarts variables selon la graine. Les deux options
+restent inactives par défaut. Ces trois graines sur un problème ne fondent aucune loi de performance.
+[Résultats des neuf essais et du holdout](bench_50_50.json).
+
+Le test de sélection finale a révélé un score conservé sur l'ancienne grille automatique, susceptible de faire
+écarter le résultat du raffinement. Corrigé dans `20563e25`, test rouge avant, 39 tests ciblés verts après.
+Les trois essais automatiques ont été rejoués. Les six témoins suivent le même chemin de calcul qu'avant ce
+correctif. Les journaux et exports bruts sont dans l'archive hors dépôt, sous `mesures-design/`.

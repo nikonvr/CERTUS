@@ -23,7 +23,7 @@ inchangé, bytecode prouvé identique par `scripts/refactor_guard.py`. S'y sont 
 
 ### 2.1 Retrouver le travail local
 
-Le [point de reprise](../audits_2026-11-13/REPRISE.md#0-point-de-reprise-après-la-coupure) donne la branche,
+Le [point de reprise](../audits_2026-11-13/REPRISE.md#0-point-de-reprise) donne la branche,
 le dernier commit et les fichiers modifiés après ce commit. Sur l'autre ordinateur, vérifier `git worktree list`
 puis `git status -sb` dans le worktree indiqué. Si le dossier arrive entier avec `.git` et qu'un chemin de
 worktree a changé, utiliser `git worktree repair` et vérifier l'état à nouveau.

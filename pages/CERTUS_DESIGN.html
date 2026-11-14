@@ -155,6 +155,22 @@
                 9.58 × 10<sup>−5</sup> on both the 0.01 nm and 0.001 nm evaluation grids to three significant figures.
                 The independent oracle agreed on the 0.01 nm grid. This probe used the DESIGN kernels in the RICL
                 engine. <a href="../reports/questions_design_2026-11-13/bilan.md#10-grille-automatique-sur-le-tri-bande-ricl">Three starts, reference grids and oracle check</a>.</p>
+            <table>
+                <caption>50/50 workflow, 2026-11-14, medians over seeds 42, 77 and 202</caption>
+                <thead><tr><th scope="col">Option</th><th scope="col">Nominal RMSE</th><th scope="col">Runtime</th>
+                    <th scope="col">RMS with thickness errors</th><th scope="col">95th percentile</th></tr></thead>
+                <tbody>
+                    <tr><td>Fixed grid</td><td>7.715 × 10<sup>−5</sup></td><td>271.5 s</td><td>0.02344</td><td>0.03236</td></tr>
+                    <tr><td>Automatic grid</td><td>7.757 × 10<sup>−5</sup></td><td>269.1 s</td><td>0.02307</td><td>0.03221</td></tr>
+                    <tr><td>Robust population selection</td><td>4.134 × 10<sup>−4</sup></td><td>262.8 s</td><td>0.01903</td><td>0.02750</td></tr>
+                </tbody>
+            </table>
+            <p>These runs used 16 parallel polishes and no automatic restart. All final designs were evaluated on
+                the same 0.5 nm grid. The tolerance test used 400 independent Gaussian thickness-error draws with
+                a standard deviation of 1 nm per layer and a disjoint seed. Robust selection reduced the median
+                RMS under those errors by 18.8%, with a 5.36-fold increase in median nominal RMSE. The adaptive
+                grid and robust selection remain optional. The result covers three seeds on this problem.
+                <a href="../reports/questions_design_2026-11-13/bilan.md#11-grille-et-sélection-robuste-sur-le-5050">Protocol and individual results</a>.</p>
 
             <h3 id="design-limits">Known limits that affect interpretation</h3>
             <ul>

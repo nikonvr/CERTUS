@@ -149,6 +149,21 @@ def test_the_infrared_stage_follows_the_slope_of_its_cost(data_type, normalised,
     assert relative_gap_to_finite_differences(obj, p, relative_step=1e-5) < 1e-6
 
 
+@pytest.mark.parametrize("center_idx", [0, 17])
+def test_infrared_band_center_on_a_sample_has_the_correct_slope(center_idx):
+    obj, p = ir_objective(False, DataType.BOTH, False, False)
+    p = p.copy()
+    p[10] = obj.wl_um[center_idx]
+    step = 1e-5
+    up, down = p.copy(), p.copy()
+    up[10] += step
+    down[10] -= step
+
+    numeric = (obj(up) - obj(down)) / (2.0 * step)
+    assert abs(numeric) > 1e-6
+    assert obj.gradient(p)[10] == pytest.approx(numeric, rel=1e-6, abs=1e-9)
+
+
 @pytest.mark.parametrize("absorbing", [False, True], ids=["transparent", "absorbing"])
 @pytest.mark.parametrize("normalised", [False, True], ids=["absolute", "normalised"])
 @pytest.mark.parametrize("data_type", DATA_TYPES, ids=lambda d: d.name.lower())

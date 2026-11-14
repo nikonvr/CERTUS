@@ -157,6 +157,7 @@ def _njit_ir_global_gradient_fused(
         dk3 = base2 * d_e2_dx2 * 1.0
         dk4 = np.exp(-arg_beta)
         
+        dk5 = 0.0  # At the center, the symmetric slope of the band is zero.
         dk6 = 0.0
         dk7 = 0.0
         if arg > 0:

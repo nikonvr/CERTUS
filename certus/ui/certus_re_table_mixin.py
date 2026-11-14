@@ -300,25 +300,6 @@ class CertusRETableMixin:
 
         self._re_refresh_front_table_num_and_n()
 
-    def _update_qwot_from_ep(self, ep):
-        """QWOT in column 3 (RE table)."""
-
-        self.front_table.blockSignals(True)
-
-        ep = np.asarray(ep, dtype=float).ravel()
-
-        for r in range(min(len(ep), self.front_table.rowCount())):
-            mat_name = self._safe_get_combo_text(r, _RE_FT_COL_MAT)
-
-            qw_val = self._ep_nm_to_qwot(ep[r], mat_name)
-
-            sb = self.front_table.cellWidget(r, _RE_FT_COL_QW)
-
-            if sb:
-                sb.setValue(qw_val)
-
-        self.front_table.blockSignals(False)
-
     def _add_front_row(self, mat: str, qwot: float, var: bool, del_checked: bool = False):
         """RE: no Var/Del columns (thicknesses driven by RE file / optimization)."""
 

@@ -24,6 +24,23 @@ def _choose(win, key: str) -> None:
     win.re_aperture_combo.setCurrentIndex(win.re_aperture_combo.findData(key))
 
 
+def test_physical_thickness_updates_the_re_qwot_column(re_window):
+    mat = re_window.front_table.cellWidget(0, 1)
+    qwot = re_window.front_table.cellWidget(0, 3)
+    material = re_window._get_materials()[mat.currentText()]
+    thickness = 42.0
+    expected = 4.0 * material.n4 * thickness / re_window.l0_spin.value()
+    assert qwot.value() != round(expected, qwot.decimals())
+
+    previous = re_window.front_table.blockSignals(True)
+    try:
+        re_window._update_qwot_from_ep([thickness])
+        assert qwot.value() == pytest.approx(round(expected, qwot.decimals()))
+        assert re_window.front_table.signalsBlocked()
+    finally:
+        re_window.front_table.blockSignals(previous)
+
+
 def test_by_default_the_aperture_is_fitted(re_window):
     assert re_window.re_aperture_combo.currentData() == "fitted"
     assert "re_beam_aperture_imposed_deg" not in re_window.build_re_worker_cfg()

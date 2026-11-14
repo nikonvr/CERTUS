@@ -403,21 +403,18 @@ class CertusAppFrontStackMixin:
     def _update_qwot_from_ep(self, ep) -> None:
         """Update front-table QWOT from thicknesses (nm)."""
 
-        self.front_table.blockSignals(True)
-
         ep = np.asarray(ep, dtype=float).ravel()
-
-        for r in range(min(len(ep), self.front_table.rowCount())):
-            mat_name = self._safe_get_combo_text(r, 0)
-
-            qw_val = self._ep_nm_to_qwot(ep[r], mat_name)
-
-            sb = self.front_table.cellWidget(r, 1)
-
-            if sb:
-                sb.setValue(qw_val)
-
-        self.front_table.blockSignals(False)
+        mat_col, qwot_col = self._stack_info_front_table_cols()
+        was_blocked = self.front_table.blockSignals(True)
+        try:
+            for row, thickness in enumerate(ep[:self.front_table.rowCount()]):
+                mat_name = self._safe_get_combo_text(row, mat_col)
+                qwot = self._ep_nm_to_qwot(thickness, mat_name)
+                spinbox = self.front_table.cellWidget(row, qwot_col)
+                if spinbox:
+                    spinbox.setValue(qwot)
+        finally:
+            self.front_table.blockSignals(was_blocked)
 
     def _ep_nm_to_qwot(self, thickness_nm: float, mat_name: str) -> float:
         """Physical thickness (nm) -> QWOT at current lambda₀ (l0_spin or RE lambda_ref)."""

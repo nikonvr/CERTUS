@@ -713,8 +713,13 @@ def run_coord_descent_5cycles(
     normal_fast_ctx: dict[str, Any] | None = None,
     progress_emit: Callable[..., Any],
     best_rmse_seen: float,
+    should_stop: Callable[[], bool] | None = None,
 ) -> tuple[np.ndarray, float, float]:
-    """Run the final 5-cycle refinement and return updated state."""
+    """Run the final 5-cycle refinement and return updated state.
+
+    ``should_stop`` (ALG-13): asked before each cycle, gradient step and coordinate sweep, where ``ep_current`` holds the
+    best point; True ends the refinement there. None asks nothing, as before.
+    """
     use_gradient = True
     cycle_no_gain = 0
     cycle_rel_gain_min = float(cfg.get("cycle_rel_gain_min", 2e-4))
@@ -753,6 +758,8 @@ def run_coord_descent_5cycles(
             logging.debug(f"Gauss-Newton refinement skipped: {gn_err}")
 
     for cycle in range(5):
+        if should_stop is not None and should_stop():
+            break
         cycle_start_best = float(best_cost)
         ep_current.copy()
         float_dtype = get_float_dtype()
@@ -763,6 +770,8 @@ def run_coord_descent_5cycles(
 
         if use_gradient:
             for _ in range(50):
+                if should_stop is not None and should_stop():
+                    return ep_current, best_cost, best_rmse_seen
                 try:
                     cost_curr, grad = get_gradient_analytic(
                         ep_current,
@@ -822,6 +831,8 @@ def run_coord_descent_5cycles(
 
         if not use_gradient:
             for _ in range(200):
+                if should_stop is not None and should_stop():
+                    return ep_current, best_cost, best_rmse_seen
                 improved = False
                 for i, v_idx in enumerate(var_idx):
                     if steps[i] < min_steps[i]:

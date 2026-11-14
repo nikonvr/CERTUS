@@ -851,12 +851,9 @@ class OptimizationManager(FinalCleanupMixin):
         try:
             import scipy.optimize
 
-            from certus.core.certus_core import get_complex_dtype, get_float_dtype
-            from certus.core.certus_design_worker_utils import (
-                optim_backside_flags_from_cfg,
-                optim_prepare_stack_nk_back,
-            )
-            from certus_physics import compute_gradient_all_layers_analytic, prepare_targets_vectorized
+            from certus.core.certus_design_cost_context import prepare_design_cost_context
+            from certus.core.certus_design_worker_utils import optim_backside_flags_from_cfg
+            from certus_physics import compute_gradient_all_layers_analytic
 
             stack = self.ui._get_front_stack()
             ep = np.asarray(self.ui.ep_current, dtype=np.float64) if self.ui.ep_current is not None else np.zeros(0)
@@ -877,17 +874,11 @@ class OptimizationManager(FinalCleanupMixin):
                 }
             )
             ep_back = np.asarray(self.ui.ep_back_current) if self.ui.ep_back_current is not None else np.array([])
-            _mats_nk, n_sub, n_layers_T, n_back_T, d_back = optim_prepare_stack_nk_back(
-                self.ui._get_materials(),
-                stack,
-                wls,
-                stack_back=back_stack,
-                ep_back=ep_back,
-                has_back_stack=has_back_stack,
-                complex_dtype=get_complex_dtype(),
-                float_dtype=get_float_dtype(),
+            context = prepare_design_cost_context(
+                self.ui._get_materials(), stack, wls, tgts,
+                stack_back=back_stack, ep_back=ep_back, has_back_stack=has_back_stack, has_back_calc=has_back_calc,
             )
-            tgt_vals, tgt_weights = prepare_targets_vectorized(wls, tgts)
+            tgt_vals, tgt_weights = context.normal_targets()
             floor = np.maximum(self._current_min_layer_thickness(len(ep)), 0.01)
             x0 = np.maximum(ep[var_idx], floor[var_idx])
             bounds = [(float(floor[i]), float(max(ep[i] * 2.0, 2000.0))) for i in var_idx]
@@ -896,7 +887,8 @@ class OptimizationManager(FinalCleanupMixin):
             def cost_and_grad(x_var: np.ndarray) -> tuple[float, np.ndarray]:
                 full[var_idx] = x_var
                 c, g = compute_gradient_all_layers_analytic(
-                    full, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, 0.01, has_back_calc, n_back_T, d_back, var_idx
+                    full, context.n_front, context.n_sub, context.wls, tgt_vals, tgt_weights, 0.01,
+                    context.has_back_calc, context.n_back, context.d_back, var_idx,
                 )
                 return float(c), np.asarray(g, dtype=np.float64)
 

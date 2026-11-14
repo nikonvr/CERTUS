@@ -60,8 +60,8 @@ DESIGN travaille à 10⁻⁴–10⁻⁵ de RMSE : à fort contraste, Fourier ne 
    et la cissoïde OIC 2016, les deux cas perdus de l'audit du 2026-10-28. **Non mesuré.**
 2. **Estimateur** de N et de la TOT (§2).
 3. **Grille** : limite de bande de `1/T` (§3).
-4. **Diagnostic** : la FFT en σ du résidu a pour abscisse un chemin optique ; de l'énergie au-delà de `2·TOT` ne se
-   corrige pas à TOT fixée. Piste, non mesurée.
+4. **Diagnostic** : la FFT en σ du résidu a pour abscisse un chemin optique. Le seuil `2·TOT` repère des
+   fréquences élevées, dont le contenu peut aussi baisser à TOT fixée (§14).
 
 ## 2. Deviner le nombre de couches et la TOT
 
@@ -472,3 +472,33 @@ performance 30 passent. Le premier passage unitaire est interrompu par xdist. À
 tests passent et deux échouent. Le test STRAT de bruit d'ancrage passe seul. Le registre des symboles
 est corrigé dans `e572dc7f`, puis ses 17 tests passent. Les journaux sont sous
 `artifacts/archives-20261114/validation-contexte-design/`.
+
+## 14. Diagnostic Fourier du résidu
+
+Le 14 novembre, [la sonde](../../scripts/probe_fourier_residual.py) échantillonne chaque bande à pas constant en
+nombre d'onde. Elle retire la moyenne pondérée et applique une fenêtre de Hann. La fréquence de la FFT, en nm,
+représente un chemin optique aller-retour. La fraction haute est mesurée au-delà de `2·TOT` plus deux intervalles
+de FFT pour limiter la fuite de la fenêtre. L'intervalle est fixé par la largeur de la bande en nombre d'onde.
+
+Les deux monocouches transparentes ont des chemins attendus de 23 500 et 5 875 nm. Les pics à 23 399 et
+6 000 nm tombent dans le demi-intervalle de 300 nm. La fraction haute reste sous 0,8 % pour chacune.
+Quand la couche fine vise le spectre de la couche épaisse, la fraction haute atteint 50,36 % et le pic correspond
+à la couche épaisse.
+
+Sur les trois empilements RICL de la section 10, à TOT de 14 171 nm, la bande 400–440 nm exige 262 144 points
+pour stabiliser la mesure. Doubler ce nombre change le RMS de moins de 0,001 % relatif. Les autres bandes
+sont relevées à 32 768 points. L'intervalle en chemin optique de la première bande est de 4 400 nm et le seuil
+de mesure est d'environ 37 142 nm.
+
+| Pile RICL | RMS de bande | Fraction haute | RMS haute fenêtrée |
+|---|---:|---:|---:|
+| Record | 0,0094964 | 98,65 % | 0,0016222 |
+| Grille fixe 0,1 nm | 0,0056394 | 98,69 % | 0,0008802 |
+| Grille adaptative | 0,0029619 | 96,91 % | 0,0003401 |
+
+La fraction haute reste proche de 100 % pendant que l'énergie haute absolue chute à TOT fixée. Le seuil fournit
+un indice de fréquence et la valeur absolue permet de suivre le résidu. Le résultat invalide son usage comme
+critère d'impossibilité de correction. Les réflexions multiples du TMM, la largeur des bandes et le fenêtrage
+limitent l'interprétation des pics. Sur les bandes étroites, un intervalle FFT atteint 20 à 41 µm, donc le chemin
+ne peut pas être localisé finement. Ce diagnostic reste un outil d'étude.
+[Mesures et contrôles](fourier_residual.json).

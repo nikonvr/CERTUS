@@ -447,13 +447,11 @@ OVERRIDES_OF = {
         "timerEvent",
     },
     "certus.ui.certus_metal_single_gui:CertusMetalSingleApp": {
-        "_on_numba_error_ui", "_on_numba_ready_ui", "_warmup_numba_thread_runner",
         "MODULE_ID", "_COMPUTATION_THREADS", "_LOCAL_OPTIM_PHASE", "__init__", "_add_material_specific_rows",
-        "_apply_config", "_apply_config_dict", "_apply_theme", "_collect_config",
+        "_apply_config", "_apply_config_dict", "_apply_theme", "_collect_config", "_compile_numba_kernels",
         "_do_export_results", "_get_config_dict", "_get_log_widget", "_post_load_config", "_post_save_config",
-        "_setup_parameter_grid", "_setup_plots", "_update_optim_progress_labels", "_warmup_numba", "closeEvent", "detach_current_plot",
-        "eventFilter", "load_target_file", "reattach_plot", "sig_numba_error", "sig_numba_ready",
-        "start_optimization",
+        "_setup_parameter_grid", "_setup_plots", "_update_optim_progress_labels", "_warmup_numba", "closeEvent",
+        "detach_current_plot", "eventFilter", "load_target_file", "reattach_plot", "start_optimization",
     },
     "certus.ui.certus_metal_bilayer_gui:CertusMetalBilayerApp": {
         "_on_numba_error_ui", "_on_numba_ready_ui", "_warmup_numba_thread_runner",

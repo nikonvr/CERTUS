@@ -287,7 +287,7 @@ def test_le_json_du_flux_survit_a_un_chemin_WINDOWS() -> None:
     __import__("os").environ.get("CERTUS_SKIP_GUI") == "1",
     reason="banc graphique desactive",
 )
-def test_le_pilotage_par_QProcess_remplit_reellement_le_tableau(qapp) -> None:
+def test_le_pilotage_par_QProcess_remplit_reellement_le_tableau(qapp, monkeypatch) -> None:
     """🔑 LE TEST QUI EPROUVE LE MAILLON QU'ON SUPPOSE TOUJOURS BON.
 
     Tout le reste de ce fichier teste des fonctions pures. Ici on demarre un VRAI processus,
@@ -308,6 +308,10 @@ def test_le_pilotage_par_QProcess_remplit_reellement_le_tableau(qapp) -> None:
 
     from certus.ui.certus_strat_ui import CertusStratApp
 
+    # The window's Numba warm-up thread compiles STRAT's kernels: 80 s cold alone (chantier 07 probe), longer
+    # under a 16-worker run. `qt_lifecycle` joins it at teardown and stops the session after 180 s, which xdist
+    # reports as a crashed worker. The run under test happens in the child process, so the window compiles nothing.
+    monkeypatch.setattr(CertusStratApp, "_compile_numba_kernels", lambda self: None)
     fen = CertusStratApp()
     args = construire_arguments(composant="r75x2", budget="2h", objectif="premier",
                                 seel_cible=None, slots=2)

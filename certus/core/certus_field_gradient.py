@@ -7,7 +7,10 @@ from certus.core.certus_field_core import _calculate_field_single_pol, get_layer
 
 
 @numba.njit(cache=True)
-def _field_trace_derivatives(indices, thickness, substrate, wavelength, superstrate, points, angle, is_p):
+def _field_trace_derivatives(
+    indices: np.ndarray, thickness: np.ndarray, substrate: float, wavelength: float, superstrate: float, points: int,
+    angle: float, is_p: bool,
+) -> tuple[float, np.ndarray, np.ndarray, np.ndarray]:
     reflectance, _, _, fields, cosines, admittances, peaks = _calculate_field_single_pol(
         indices, thickness, substrate, wavelength, superstrate, points, angle, is_p
     )
@@ -92,7 +95,10 @@ def _field_trace_derivatives(indices, thickness, substrate, wavelength, superstr
     return reflectance, gradient_r, peaks, gradient_peaks
 
 
-def field_metric_gradients(n1, n2, substrate, l0, factors, types, superstrate, points, angle, polarization, wavelength):
+def field_metric_gradients(
+    n1: float, n2: float, substrate: float, l0: float, factors: np.ndarray, types: list[int], superstrate: float,
+    points: int, angle: float, polarization: int, wavelength: float,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Return gradients of R and the two material peak maxima with respect to QWOT factors."""
     indices, thickness = get_layer_properties_from_list(n1, n2, factors, types, l0)
     indices, thickness = indices[::-1].copy(), thickness[::-1].copy()

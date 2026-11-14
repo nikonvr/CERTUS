@@ -88,8 +88,6 @@ from certus_physics import (
 
 
 class CertusMetalBilayerApp(MetalBaseApp):
-    sig_numba_ready = pyqtSignal()
-    sig_numba_error = pyqtSignal()
     """Main CERTUS-METAL Application (Bilayer: Metal + SiO2)"""
 
     MODULE_ID = "CERTUS_METAL_BILAYER"
@@ -208,41 +206,13 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
         layout.addWidget(w, 0, 0)
 
-    def _warmup_numba_thread_runner(self):
-        try:
-            wls = np.array([500.0, 600.0], dtype=np.float64)
-            get_nk_si(wls)
-            get_nk_cauchy_simple(wls, 1.45, 1000.0)
-            from certus.core._certus_physics_impl import calculate_reflectance_bilayer_vectorized
-            c_arr = np.array([1.5 + 0.0j, 1.5 + 0.0j], dtype=np.complex128)
-            calculate_reflectance_bilayer_vectorized(wls, c_arr, 10.0, 10.0, c_arr, c_arr)
-
-            try:
-                self.sig_numba_ready.emit()
-            except (RuntimeError, AttributeError):
-                return
-
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
-            self.logger.error(f"✗ Numba warmup failed: {e}", exc_info=True)
-            try:
-                self.sig_numba_error.emit()
-            except (RuntimeError, AttributeError):
-                return
-
-    @pyqtSlot()
-    def _on_numba_ready_ui(self) -> None:
-        if hasattr(self, "status_label"):
-            self.status_label.setText("Ready (JIT Compiled)")
-        self._on_numba_ready()  # Mark as ready
-        try:
-            show_toast(self, "System ready. JIT Warmup complete.", "success")
-        except Exception:
-            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
-
-    @pyqtSlot()
-    def _on_numba_error_ui(self) -> None:
-        if hasattr(self, "status_label"):
-            self.status_label.setText("JIT Init Error")
+    def _compile_numba_kernels(self) -> None:
+        wls = np.array([500.0, 600.0], dtype=np.float64)
+        get_nk_si(wls)
+        get_nk_cauchy_simple(wls, 1.45, 1000.0)
+        from certus.core._certus_physics_impl import calculate_reflectance_bilayer_vectorized
+        c_arr = np.array([1.5 + 0.0j, 1.5 + 0.0j], dtype=np.complex128)
+        calculate_reflectance_bilayer_vectorized(wls, c_arr, 10.0, 10.0, c_arr, c_arr)
 
     def _create_physical_params_group(self):
         return super()._create_physical_params_group((

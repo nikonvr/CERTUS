@@ -1,0 +1,15 @@
+rounds_lab_draws.npz : plans ['start', 'prod', 'S2', 'F2', 'S3', 'F3'], référence prod
+
+--- corridor search : 4000 tirages par niveau, SEEL de prod 0.1718 nm (écart-type bootstrap 0.0008) ---
+start          SEEL 0.2308 nm | écart +0.0590 nm (+34.3%) | sigma apparié 0.0014 | z = +42.3 | IC95 [+0.0561, +0.0614] | P(meilleur que prod) 0.000 | arrêts 0/12000
+S2             SEEL 0.1693 nm | écart -0.0026 nm (-1.5%) | sigma apparié 0.0008 | z = -3.2 | IC95 [-0.0044, -0.0012] | P(meilleur que prod) 0.998 | arrêts 0/12000
+F2             SEEL 0.1648 nm | écart -0.0070 nm (-4.1%) | sigma apparié 0.0012 | z = -6.0 | IC95 [-0.0092, -0.0045] | P(meilleur que prod) 1.000 | arrêts 2/12000
+S3             SEEL 0.1641 nm | écart -0.0078 nm (-4.5%) | sigma apparié 0.0009 | z = -8.4 | IC95 [-0.0096, -0.0060] | P(meilleur que prod) 1.000 | arrêts 0/12000
+F3             SEEL 0.1611 nm | écart -0.0108 nm (-6.3%) | sigma apparié 0.0010 | z = -11.0 | IC95 [-0.0129, -0.0089] | P(meilleur que prod) 1.000 | arrêts 0/12000
+
+--- corridor configured : 4000 tirages par niveau, SEEL de prod 0.1556 nm (écart-type bootstrap 0.0009) ---
+start          SEEL 0.1696 nm | écart +0.0140 nm (+9.0%) | sigma apparié 0.0013 | z = +10.7 | IC95 [+0.0118, +0.0168] | P(meilleur que prod) 0.000 | arrêts 0/12000
+S2             SEEL 0.1532 nm | écart -0.0024 nm (-1.5%) | sigma apparié 0.0008 | z = -2.8 | IC95 [-0.0040, -0.0006] | P(meilleur que prod) 0.997 | arrêts 0/12000
+F2             SEEL 0.1522 nm | écart -0.0033 nm (-2.2%) | sigma apparié 0.0011 | z = -3.0 | IC95 [-0.0056, -0.0013] | P(meilleur que prod) 0.999 | arrêts 0/12000
+S3             SEEL 0.1506 nm | écart -0.0050 nm (-3.2%) | sigma apparié 0.0012 | z = -4.3 | IC95 [-0.0070, -0.0026] | P(meilleur que prod) 1.000 | arrêts 0/12000
+F3             SEEL 0.1506 nm | écart -0.0050 nm (-3.2%) | sigma apparié 0.0011 | z = -4.7 | IC95 [-0.0072, -0.0030] | P(meilleur que prod) 1.000 | arrêts 0/12000

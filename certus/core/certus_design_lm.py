@@ -113,6 +113,7 @@ def build_memetic_lm_polisher(
     q_per_nm: np.ndarray | None = None,
     qwot_penalty: float = 0.0,
     after_lbfgs: bool = False,
+    robust_sigma_nm: float = 0.0,
 ) -> tuple[Polisher | None, str]:
     """The polisher of the memetic stage of DESIGN by Levenberg-Marquardt, or (None, why it cannot be used).
 
@@ -124,6 +125,11 @@ def build_memetic_lm_polisher(
     `after_lbfgs` (choice `lbfgs_then_lm`): L-BFGS-B first, as before, then Levenberg-Marquardt from its result. Never
     worse than L-BFGS-B alone; measured on 2026-11-13 it was the only choice at least as good as L-BFGS-B on both the
     50/50 beamsplitter and the three-line filter (audits 2026-11-13 §3.2).
+
+    `robust_sigma_nm` > 0 (2026-11-13, off by default): the cost a polish RETURNS, by which the population is judged, is
+    the memetic cost plus sigma^2 * sum_ij J_ij^2, the expected increase of the mean squared error under independent
+    thickness errors of standard deviation sigma (Gauss-Newton term of Tikhonravov et al., Proc. SPIE 4829, 1061, 2003).
+    The polish itself stays nominal: the selection prefers the wider valleys among the minima it finds.
     """
     from certus.physics.design_fast_gauss_newton import _res_jac_lossless_normal_kernel
 
@@ -175,6 +181,10 @@ def build_memetic_lm_polisher(
                                           options={"maxiter": int(maxiter), "ftol": 1e-15, "gtol": 1e-12})
             x = np.asarray(res.x, dtype=np.float64)
         xs, _f, _n = lm_nielsen(res_jac, x, lo, hi, max_iter=min(int(maxiter), MEMETIC_LM_MAX_ITER))
-        return xs, float(cost_and_grad(xs)[0])
+        cost = float(cost_and_grad(xs)[0])
+        if robust_sigma_nm > 0.0:
+            jac = res_jac(xs)[1][: len(tv)]
+            cost += float(robust_sigma_nm) ** 2 * float(np.sum(jac * jac))
+        return xs, cost
 
     return polisher, ""

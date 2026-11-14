@@ -276,6 +276,7 @@ class OptimWorker(QObject):
             logging.getLogger('CERTUS').info(f'[OPTIM] Memetic global stage: {workers} designs polished at once')
         polisher = None
         choice = self._optional_step('memetic_polisher')
+        robust_sigma = float(self._optional_step('memetic_robust_sigma_nm') or 0.0)
         if choice in ('lm', 'lbfgs_then_lm'):
             from certus.core.certus_design_lm import build_memetic_lm_polisher
 
@@ -285,7 +286,7 @@ class OptimWorker(QObject):
                 cost_and_grad, fast_ctx=getattr(self, '_normal_fast_ctx', None), ep_full=self._ep_buffer, var_idx=var_idx,
                 tgt_vals=self._tgt_vals, tgt_weights=self._tgt_weights, bounds=wide, min_d=min_d, probe=probe,
                 qwot_max=qwot_max, q_per_nm=q_per_nm, qwot_penalty=QWOT_EXCESS_PENALTY,
-                after_lbfgs=(choice == 'lbfgs_then_lm'))
+                after_lbfgs=(choice == 'lbfgs_then_lm'), robust_sigma_nm=robust_sigma)
             logging.getLogger('CERTUS').info(f'[OPTIM] Memetic polisher: {choice}' if polisher is not None
                                              else f'[OPTIM] Memetic polisher: L-BFGS-B kept, Levenberg-Marquardt not usable: {why}')
         try:
@@ -298,6 +299,11 @@ class OptimWorker(QObject):
             if pool is not None:
                 pool.shutdown(wait=True)
         result.x = np.where(result.x < min_d, 0.0, result.x)
+        if robust_sigma > 0.0:
+            if polisher is None:
+                logging.getLogger('CERTUS').warning('[OPTIM] memetic_robust_sigma_nm ignored: it needs the Levenberg-Marquardt polisher')
+            else:
+                result.y = float(cost_and_grad(result.x)[0])  # the nominal cost, from which the final refinement starts
         logging.getLogger('CERTUS').info(f'[OPTIM] Memetic global stage done: best cost={result.y:.6e}, cost calls={result.evaluations}')
         return result
 

@@ -55,6 +55,9 @@ DESIGN_OPTIONAL_STEPS: dict[str, Any] = {
     # then, after each global or local stage, points added where the quadrature of the merit is not resolved, to
     # `auto_grid_rel_tol` of the merit. Normal incidence only; off by default (C1): points per target, as before
     "auto_wavelength_grid": False,
+    # 2026-11-13: > 0 judges the memetic population by its cost plus sigma^2 sum |dr/dd|^2 (independent thickness
+    # errors of this standard deviation, nm): a robust selection, the polish staying nominal. Needs the LM polisher
+    "memetic_robust_sigma_nm": 0.0,
     "auto_grid_rel_tol": 0.01,
     # 2026-10-30: threads polishing memetic designs at once (1: one after another; 0: cores - 2, as PGLOBAL's pool)
     "memetic_workers": 1,

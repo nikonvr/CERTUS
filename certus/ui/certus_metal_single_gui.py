@@ -49,7 +49,6 @@ from certus.metal.certus_metal_common import (
     build_metal_startup_log_lines,
     build_metal_target_data,
     elevate_spline_knots,
-    normalize_metal_progress_payload,
     setup_beam_analysis_thread,
     teardown_beam_thread,
 )
@@ -68,7 +67,6 @@ from certus.metal.pglobal_adapter import run_pglobal_optimization
 from certus.ui.certus_overview_tab import CertusKpiBanner, build_synthesis_tab
 from certus.ui.certus_ui import (
     DATA_FILES_FILTER_EXTENDED,
-    CertusCard,
     CertusScientificPlot,
     CertusTheme,
     FlashyCard,
@@ -304,112 +302,16 @@ class CertusMetalSingleApp(MetalBaseApp):
 
             QMessageBox.warning(self, "Data Error", f"Could not parse data columns: {self.describe_error(e)}")
 
-    def _create_physical_params_group(self) -> CertusCard:
-        """Creates compact physical params group with Info Icons"""
-
-        c = CertusCard("Physical Parameters")
-
-        lay = c.body
-
-        lay.setSpacing(4)
-
-        lay.setContentsMargins(8, 12, 8, 8)
-
-        self.widgets["eM_min"] = QLineEdit(str(DEFAULT_EM_MIN))
-
-        self.widgets["eM_min"].setFixedHeight(24)
-
-        self.widgets["eM_max"] = QLineEdit(str(DEFAULT_EM_MAX))
-
-        self.widgets["eM_max"].setFixedHeight(24)
-
-        lay.addLayout(
-            self._create_labeled_input(
-                "eM min:",
-                self.widgets["eM_min"],
-                "Minimum expected thickness of the metal layer (nm).",
-            )
-        )
-
-        lay.addLayout(
-            self._create_labeled_input(
-                "eM max:",
-                self.widgets["eM_max"],
-                "Maximum expected thickness of the metal layer (nm).",
-            )
-        )
-
-        return c
-
-    def _create_material_params_group(self) -> CertusCard:
-        """Creates compact material params group with Info Icons"""
-
-        c = CertusCard("Material Parameters")
-
-        lay = c.body
-
-        lay.setSpacing(4)
-
-        lay.setContentsMargins(8, 12, 8, 8)
-
-        # substrate Selector
-
+    def _add_material_specific_rows(self, layout) -> None:
         from PyQt6.QtWidgets import QComboBox
 
         self.combo_substrate = QComboBox()
-
-        self.combo_substrate.setToolTip("Select the transparent substrate material.")
-
         self.combo_substrate.addItems(list(SUBSTRATE_CHOICES))
-
         self.combo_substrate.setFixedHeight(24)
-
-        lay.addLayout(self._create_labeled_input("substrate:", self.combo_substrate, "substrate Material (Transparent)."))
-
+        layout.addLayout(
+            self._create_labeled_input("substrate:", self.combo_substrate, "substrate Material (Transparent).")
+        )
         self.substrate_info_label = QLabel("")
-
-
-        # Metal Inputs
-
-        self.widgets["num_knots"] = QLineEdit(str(DEFAULT_NUM_KNOTS))
-
-        self.widgets["num_knots"].setFixedHeight(24)
-
-        self.widgets["nk_min"] = QLineEdit(str(DEFAULT_NK_MIN))
-
-        self.widgets["nk_min"].setFixedHeight(24)
-
-        self.widgets["nk_max"] = QLineEdit(str(DEFAULT_NK_MAX))
-
-        self.widgets["nk_max"].setFixedHeight(24)
-
-        self.widgets["min_knot_dist"] = QLineEdit(str(DEFAULT_MIN_KNOT_DISTANCE))
-
-        self.widgets["min_knot_dist"].setFixedHeight(24)
-
-        lay.addSpacing(10)
-
-        lay.addLayout(
-            self._create_labeled_input(
-                "Knots:",
-                self.widgets["num_knots"],
-                "Number of control points for B-Spline.",
-            )
-        )
-
-        lay.addLayout(self._create_labeled_input("n,k min:", self.widgets["nk_min"], "Lower bound for n and k."))
-
-        lay.addLayout(self._create_labeled_input("n,k max:", self.widgets["nk_max"], "Upper bound for n and k."))
-
-        lay.addLayout(
-            self._create_labeled_input(
-                "Knot Dist:",
-                self.widgets["min_knot_dist"],
-                "Minimum spectral distance between knots (nm).",
-            )
-        )
-
-        return c
 
     def load_target_file(self, filepath=None) -> bool:
         """Loads target file (robust CSV/Excel). Returns True once it is loaded."""
@@ -718,58 +620,14 @@ class CertusMetalSingleApp(MetalBaseApp):
             before_run_fn=before_run,
         )
 
-    def _on_optim_progress(self, data: dict) -> None:
-        """Updates progress widget with optimization progress"""
+    _LOCAL_OPTIM_PHASE = "DE"
 
-        data = normalize_metal_progress_payload(data)
-        iteration = int(data.get("iteration", 0))
-        mode = str(data.get("mode", "global")).lower()
-        progress_pct = int(data.get("progress_pct", min(100, int(100 * iteration / max(1, getattr(self, "_optim_max_iter", DEFAULT_MAXITER))))))
-        mse = float(data.get("mse", 0))
-        rmse = float(data.get("current_rmse", np.sqrt(mse) if mse > 0 else 0))
-        best_rmse = float(data.get("best_rmse", np.sqrt(float(data.get("best_cost", mse))) if float(data.get("best_cost", mse)) > 0 else 0))
-
-        xk = data.get("params", None)
-        eM = xk[0] if xk is not None else 0.0
-        best_cost = float(data.get("best_cost", mse))
-        evals = int(data.get("evaluation_count", self.stat_counters.get("SP", 0)))
-        elapsed_s = float(data.get("elapsed_s", 0.0))
-        max_iter = int(data.get("max_iteration", getattr(self, "_optim_max_iter", DEFAULT_MAXITER)))
-
-        # UI update only (console logging is handled by pglobal_adapter)
-
-        self._auto_batch_last_progress = {
-            "iteration": iteration,
-            "mse": mse,
-            "current_rmse": rmse,
-            "best_rmse": best_rmse,
-            "best_cost": best_cost,
-            "evaluation_count": evals,
-            "elapsed_s": elapsed_s,
-            "mode": mode,
-            "max_iteration": max_iter,
-            "params": xk,
-        }
-        if getattr(self, "_auto_batch_mode", False):
-            if best_rmse > 0 and np.isfinite(best_rmse):
-                current = getattr(self, "_auto_batch_best_rmse", None)
-                self._auto_batch_best_rmse = best_rmse if current is None else min(float(current), float(best_rmse))
-            if best_cost > 0 and np.isfinite(best_cost):
-                current_mse = getattr(self, "_auto_batch_best_mse", None)
-                self._auto_batch_best_mse = best_cost if current_mse is None else min(float(current_mse), float(best_cost))
-
+    def _update_optim_progress_labels(self, data: dict, rmse: float, iteration: int) -> None:
+        params = data.get("params")
+        eM = params[0] if params is not None else 0.0
         self.widgets["live_eM"].setText(f"{eM:.2f}")
         self.widgets["live_MSE"].setText(f"{rmse:.6e}")
         self.widgets["live_iter"].setText(str(iteration))
-
-        self.progress_widget.update(
-            iteration=iteration,
-            max_iter=max_iter,
-            evals=evals,
-            phase="PGLOBAL" if mode == "global" else "DE",
-            extra_info=f"RMSE: {rmse:.6f} | Best RMSE: {best_rmse:.6f} | Time {int(elapsed_s)}s",
-            progress_pct=progress_pct,
-        )
         if hasattr(self, "field_opt_status"):
             self.field_opt_status.setText(build_metal_progress_status_text(data))
 

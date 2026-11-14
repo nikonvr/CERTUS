@@ -42,6 +42,19 @@ def test_certus_metal_single_app_constructs_headless(monkeypatch, qapp) -> None:
         assert hasattr(window, "combo_substrate")
         assert hasattr(window, "substrate_info_label")
         assert window.combo_substrate.currentText()
+        assert "eL_nominal" not in window.widgets
+        for key in ("eM_min", "eM_max", "num_knots", "nk_min", "nk_max", "min_knot_dist"):
+            assert window.widgets[key].text()
+            assert window.widgets[key].toolTip()
+
+        window._auto_batch_mode = True
+        progress = {"mode": "local", "iteration": 2, "max_iteration": 10, "progress_pct": 20,
+                    "mse": 0.04, "best_cost": 0.01, "params": [12.0]}
+        window._on_optim_progress(progress)
+        assert window.widgets["live_eM"].text() == "12.00"
+        assert window.widgets["live_iter"].text() == "2"
+        assert window._auto_batch_best_rmse == pytest.approx(0.1)
+        window._auto_batch_mode = False
 
         # Run JIT warmup directly to guarantee it has executed in this test
         window._warmup_numba_thread_runner()

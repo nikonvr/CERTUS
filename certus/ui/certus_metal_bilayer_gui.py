@@ -59,7 +59,6 @@ from certus.metal.certus_metal_common import (
     build_metal_startup_log_lines,
     build_metal_target_data,
     elevate_spline_knots,
-    normalize_metal_progress_payload,
     setup_beam_analysis_thread,
     teardown_beam_thread,
 )
@@ -245,156 +244,18 @@ class CertusMetalBilayerApp(MetalBaseApp):
             self.status_label.setText("JIT Init Error")
 
     def _create_physical_params_group(self):
-        """Creates compact physical params group with Info Icons"""
+        return super()._create_physical_params_group((
+            ("eL_nominal", DEFAULT_EL_NOMINAL, "eL nom:", "Nominal thickness of the dielectric underlayer (SiO2)."),
+            ("eL_variation", DEFAULT_EL_VARIATION, "eL +/-:", "Allowed thickness variation range for eL optimization."),
+        ))
 
-        c = CertusCard("Physical Parameters")
-
-        lay = c.body
-
-        lay.setSpacing(4)
-
-        lay.setContentsMargins(8, 12, 8, 8)
-
-        self.widgets["eM_min"] = QLineEdit(str(DEFAULT_EM_MIN))
-
-        self.widgets["eM_min"].setFixedHeight(24)
-
-        self.widgets["eM_max"] = QLineEdit(str(DEFAULT_EM_MAX))
-
-        self.widgets["eM_max"].setFixedHeight(24)
-
-        self.widgets["eL_nominal"] = QLineEdit(DEFAULT_EL_NOMINAL)
-
-        self.widgets["eL_nominal"].setFixedHeight(24)
-
-        self.widgets["eL_variation"] = QLineEdit(DEFAULT_EL_VARIATION)
-
-        self.widgets["eL_variation"].setFixedHeight(24)
-
-        lay.addLayout(
-            self._create_labeled_input(
-                "eM min:",
-                self.widgets["eM_min"],
-                "Minimum expected thickness of the metal layer (nm).",
-            )
-        )
-
-        lay.addLayout(
-            self._create_labeled_input(
-                "eM max:",
-                self.widgets["eM_max"],
-                "Maximum expected thickness of the metal layer (nm).",
-            )
-        )
-
-        lay.addLayout(
-            self._create_labeled_input(
-                "eL nom:",
-                self.widgets["eL_nominal"],
-                "Nominal thickness of the dielectric underlayer (SiO2).",
-            )
-        )
-
-        lay.addLayout(
-            self._create_labeled_input(
-                "eL +/-:",
-                self.widgets["eL_variation"],
-                "Allowed thickness variation range for eL optimization.",
-            )
-        )
-
-        return c
-
-    def _create_material_params_group(self):
-        """Creates compact material params group with Info Icons"""
-
-        c = CertusCard("Material Parameters")
-
-        lay = c.body
-
-        lay.setSpacing(4)
-
-        lay.setContentsMargins(8, 12, 8, 8)
-
-        # SiO2 Inputs
-
-        self.widgets["n_infini_min"] = QLineEdit("1.42")
-
-        self.widgets["n_infini_min"].setFixedHeight(24)
-
-        self.widgets["n_infini_max"] = QLineEdit("1.44")
-
-        self.widgets["n_infini_max"].setFixedHeight(24)
-
-        self.widgets["A_diel_min"] = QLineEdit("0")
-
-        self.widgets["A_diel_min"].setFixedHeight(24)
-
-        self.widgets["A_diel_max"] = QLineEdit("10000")
-
-        self.widgets["A_diel_max"].setFixedHeight(24)
-
-        # Metal Inputs
-
-        self.widgets["num_knots"] = QLineEdit(str(DEFAULT_NUM_KNOTS))
-
-        self.widgets["num_knots"].setFixedHeight(24)
-
-        self.widgets["nk_min"] = QLineEdit(str(DEFAULT_NK_MIN))
-
-        self.widgets["nk_min"].setFixedHeight(24)
-
-        self.widgets["nk_max"] = QLineEdit(str(DEFAULT_NK_MAX))
-
-        self.widgets["nk_max"].setFixedHeight(24)
-
-        self.widgets["min_knot_dist"] = QLineEdit(str(DEFAULT_MIN_KNOT_DISTANCE))
-
-        self.widgets["min_knot_dist"].setFixedHeight(24)
-
-        lay.addLayout(
-            self._create_labeled_input(
-                "n∞ min:",
-                self.widgets["n_infini_min"],
-                "Min High-Frequency Index (SiO2).",
-            )
-        )
-
-        lay.addLayout(
-            self._create_labeled_input(
-                "n∞ max:",
-                self.widgets["n_infini_max"],
-                "Max High-Frequency Index (SiO2).",
-            )
-        )
-
-        lay.addLayout(self._create_labeled_input("A min:", self.widgets["A_diel_min"], "Min Cauchy Dispersion A term."))
-
-        lay.addLayout(self._create_labeled_input("A max:", self.widgets["A_diel_max"], "Max Cauchy Dispersion A term."))
-
-        lay.addSpacing(10)
-
-        lay.addLayout(
-            self._create_labeled_input(
-                "Knots:",
-                self.widgets["num_knots"],
-                "Number of control points for B-Spline.",
-            )
-        )
-
-        lay.addLayout(self._create_labeled_input("n,k min:", self.widgets["nk_min"], "Lower bound for n and k."))
-
-        lay.addLayout(self._create_labeled_input("n,k max:", self.widgets["nk_max"], "Upper bound for n and k."))
-
-        lay.addLayout(
-            self._create_labeled_input(
-                "Knot Dist:",
-                self.widgets["min_knot_dist"],
-                "Minimum spectral distance between knots (nm).",
-            )
-        )
-
-        return c
+    def _add_material_specific_rows(self, layout) -> None:
+        self._add_parameter_rows(layout, (
+            ("n_infini_min", "1.42", "n∞ min:", "Min High-Frequency Index (SiO2)."),
+            ("n_infini_max", "1.44", "n∞ max:", "Max High-Frequency Index (SiO2)."),
+            ("A_diel_min", "0", "A min:", "Min Cauchy Dispersion A term."),
+            ("A_diel_max", "10000", "A max:", "Max Cauchy Dispersion A term."),
+        ))
 
     def _create_live_params_group(self):
         """Creates compact live params group"""
@@ -594,53 +455,6 @@ class CertusMetalBilayerApp(MetalBaseApp):
             build_bounds_fn=build_bounds,
             build_params_fn=build_params,
             before_run_fn=before_run,
-        )
-
-    def _on_optim_progress(self, data):
-        """Updates progress widget with optimization progress"""
-
-        data = normalize_metal_progress_payload(data)
-        iteration = data.get("iteration", 0)
-        mse = data.get("mse", 0)
-        rmse = float(data.get("current_rmse", np.sqrt(mse) if mse > 0 else 0))
-        best_rmse = float(data.get("best_rmse", np.sqrt(float(data.get("best_cost", mse))) if float(data.get("best_cost", mse)) > 0 else 0.0))
-        xk = data.get("params", None)
-        progress_pct = data.get("progress_pct", None)
-        mode = str(data.get("mode", "global")).lower()
-        best_cost = float(data.get("best_cost", mse))
-        evals = int(data.get("evaluation_count", self.stat_counters.get("SP", 0)))
-        elapsed_s = float(data.get("elapsed_s", 0.0))
-        max_iter = int(data.get("max_iteration", getattr(self, "_optim_max_iter", DEFAULT_MAXITER)))
-        phase = "PGLOBAL" if mode == "global" else "local"
-
-        self._auto_batch_last_progress = {
-            "iteration": iteration,
-            "current_rmse": rmse,
-            "best_rmse": best_rmse,
-            "best_cost": best_cost,
-            "evaluation_count": evals,
-            "elapsed_s": elapsed_s,
-            "mode": mode,
-            "max_iteration": max_iter,
-            "params": xk,
-        }
-        if getattr(self, "_auto_batch_mode", False):
-            if best_rmse > 0 and np.isfinite(best_rmse):
-                current = getattr(self, "_auto_batch_best_rmse", None)
-                self._auto_batch_best_rmse = best_rmse if current is None else min(float(current), float(best_rmse))
-            if best_cost > 0 and np.isfinite(best_cost):
-                current_mse = getattr(self, "_auto_batch_best_mse", None)
-                self._auto_batch_best_mse = best_cost if current_mse is None else min(float(current_mse), float(best_cost))
-
-        # UI update only (console logging is handled by pglobal_adapter)
-
-        self.progress_widget.update(
-            iteration=iteration,
-            max_iter=max_iter,
-            evals=evals,
-            phase=phase,
-            extra_info=f"RMSE: {rmse:.6f} | Best RMSE: {best_rmse:.6f} | Time {int(elapsed_s)}s",
-            progress_pct=progress_pct if progress_pct is not None else -1,
         )
 
     def on_optimization_finished(self, results):

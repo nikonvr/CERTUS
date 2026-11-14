@@ -24,7 +24,6 @@ Les essais humains 33 suivent leur propre calendrier. Le profilage précède les
 |---:|---|---|---|---|---|
 | 05 | P3 | Faible à moyenne | Jacobiens Sellmeier manquants (D6) | Mesurer la part des ajustements concernés. Valider un éventuel gradient par différences finies et mesurer le gain à paramètres identiques. | A §4 |
 | 07 | P3 | Moyenne | Amorçage Numba (R2) | Le socle possède déjà le gestionnaire. Mutualiser les comportements communs en préservant signaux, erreurs et durée de vie des fils Qt. Vérifier le démarrage à froid des cinq fenêtres. | A §2.2 |
-| 08 | P2 | Moyenne | Mutualiser les fenêtres METAL simple/bicouche (R1) | Des groupes de paramètres et traitements de progression restent doublés malgré le socle existant. Préserver les différences physiques. | A §2.2 |
 | 11 | P2 | Moyenne | Gradient METAL dans PGLOBAL (D3) | Profiler les deux polissages. L'adaptateur reçoit un scalaire et le gradient monocouche disponible concerne les paramètres à eM fixé. Vérifier la couverture et l'accord coût/gradient avant branchement. | A §4 |
 | 12 | P2 | Moyenne | Gradient INDEX infrarouge, étapes 0 et 2 (D2) | D112 corrigé et vérifié par différences finies au centre de la bande. Profiler les deux étapes et mesurer une comparaison appariée avant activation. | A §4 |
 | 16 | P3 | Moyenne à forte | Graphes et détachement (R4/R5, ancien 09) | Après arbitrage du périmètre UI, préserver les interactions propres à STRAT, les mises à jour et le retour à la fenêtre source. | A §2.2–2.3 |

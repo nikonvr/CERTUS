@@ -15,7 +15,6 @@ import pyqtgraph as pg
 import scipy.optimize
 from PyQt6.QtCore import QEvent, QObject, Qt, QThread, QTimer, pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import (
-    QComboBox,
     QFrame,
     QGridLayout,
     QHBoxLayout,
@@ -37,6 +36,7 @@ from certus.core.certus_core import (
     get_resource_path,
 )
 from certus.core.certus_metrology import ValidationStatus
+from certus.metal.certus_metal_common import normalize_metal_progress_payload
 from certus.metal.certus_metal_defaults import (
     DEFAULT_EM_MAX,
     DEFAULT_EM_MIN,
@@ -155,6 +155,55 @@ class MetalBaseApp(CertusBaseApp):
     # Module ID for help (override in subclass)
 
     MODULE_ID = "METAL"
+
+    _LOCAL_OPTIM_PHASE = "local"
+
+    def _on_optim_progress(self, data: dict) -> None:
+        """Update the shared progress and keep the latest batch metrics."""
+        data = normalize_metal_progress_payload(data)
+        iteration = int(data["iteration"])
+        mse = float(data.get("mse", 0.0))
+        rmse = float(data.get("current_rmse", np.sqrt(mse) if mse > 0 else 0.0))
+        best_cost = float(data["best_cost"])
+        best_rmse = float(data.get("best_rmse", np.sqrt(best_cost) if best_cost > 0 else 0.0))
+        mode = str(data["mode"]).lower()
+        evals = int(data["evaluation_count"])
+        elapsed_s = float(data["elapsed_s"])
+        max_iter = int(data["max_iteration"])
+        progress_pct = int(data["progress_pct"])
+
+        self._auto_batch_last_progress = {
+            "iteration": iteration,
+            "mse": mse,
+            "current_rmse": rmse,
+            "best_rmse": best_rmse,
+            "best_cost": best_cost,
+            "evaluation_count": evals,
+            "elapsed_s": elapsed_s,
+            "mode": mode,
+            "max_iteration": max_iter,
+            "params": data.get("params"),
+        }
+        if getattr(self, "_auto_batch_mode", False):
+            if best_rmse > 0 and np.isfinite(best_rmse):
+                current = getattr(self, "_auto_batch_best_rmse", None)
+                self._auto_batch_best_rmse = best_rmse if current is None else min(float(current), best_rmse)
+            if best_cost > 0 and np.isfinite(best_cost):
+                current = getattr(self, "_auto_batch_best_mse", None)
+                self._auto_batch_best_mse = best_cost if current is None else min(float(current), best_cost)
+
+        self._update_optim_progress_labels(data, rmse, iteration)
+        self.progress_widget.update(
+            iteration=iteration,
+            max_iter=max_iter,
+            evals=evals,
+            phase="PGLOBAL" if mode == "global" else self._LOCAL_OPTIM_PHASE,
+            extra_info=f"RMSE: {rmse:.6f} | Best RMSE: {best_rmse:.6f} | Time {int(elapsed_s)}s",
+            progress_pct=progress_pct,
+        )
+
+    def _update_optim_progress_labels(self, data: dict, rmse: float, iteration: int) -> None:
+        """Update optional window-specific progress labels."""
 
     def _uninstall_all_skeletons(self) -> None:
         """Uninstall all skeleton overlays from plots."""
@@ -899,125 +948,40 @@ class MetalBaseApp(CertusBaseApp):
         lay.addWidget(self.widgets["excel_filename"], 0, 1)
         return c
 
-    def _create_physical_params_group(self, show_el: bool = False, el_defaults: tuple = ("900", "20")) -> CertusCard:
-        """
+    def _add_parameter_rows(self, layout, fields) -> None:
+        """Add the fields with the same dimensions, labels and tooltips in both windows."""
+        for key, default, label, tooltip in fields:
+            edit = QLineEdit(str(default))
+            edit.setFixedHeight(24)
+            self.widgets[key] = edit
+            layout.addLayout(self._create_labeled_input(label, edit, tooltip))
 
-        Creates standardized Physical Parameters group.
+    def _create_physical_params_group(self, dielectric_fields=()) -> CertusCard:
+        card, layout = self._create_group_box("Physical Parameters")
+        layout.setSpacing(4)
+        self._add_parameter_rows(layout, (
+            ("eM_min", DEFAULT_EM_MIN, "eM min:", "Minimum expected thickness of the metal layer (nm)."),
+            ("eM_max", DEFAULT_EM_MAX, "eM max:", "Maximum expected thickness of the metal layer (nm)."),
+            *dielectric_fields,
+        ))
+        return card
 
-        Args:
+    def _create_material_params_group(self) -> CertusCard:
+        card, layout = self._create_group_box("Material Parameters")
+        layout.setSpacing(4)
+        self._add_material_specific_rows(layout)
+        layout.addSpacing(10)
+        self._add_parameter_rows(layout, (
+            ("num_knots", DEFAULT_NUM_KNOTS, "Knots:", "Number of control points for B-Spline."),
+            ("nk_min", DEFAULT_NK_MIN, "n,k min:", "Lower bound for n and k."),
+            ("nk_max", DEFAULT_NK_MAX, "n,k max:", "Upper bound for n and k."),
+            ("min_knot_dist", DEFAULT_MIN_KNOT_DISTANCE, "Knot Dist:",
+             "Minimum spectral distance between knots (nm)."),
+        ))
+        return card
 
-            show_el: If True, includes eL (dielectric layer) parameters
-
-            el_defaults: Default values for (eL_nominal, eL_variation)
-
-        Returns:
-
-            CertusCard with configured inputs stored in self.widgets
-
-        """
-
-        c, lay = self._create_group_box("Physical Parameters")
-
-        self.widgets["eM_min"] = QLineEdit(str(DEFAULT_EM_MIN))
-        self.widgets["eM_max"] = QLineEdit(str(DEFAULT_EM_MAX))
-
-        row = QHBoxLayout()
-        row.addWidget(QLabel("Metal thickness range (nm)"))
-        row.addStretch()
-        row.addWidget(QLabel("Min"))
-        row.addWidget(self.widgets["eM_min"])
-        row.addWidget(QLabel("Max"))
-        row.addWidget(self.widgets["eM_max"])
-        lay.addLayout(row)
-
-        if show_el:
-            self.widgets["eL_nominal"] = QLineEdit(el_defaults[0])
-            self.widgets["eL_variation"] = QLineEdit(el_defaults[1])
-
-            row2 = QHBoxLayout()
-            row2.addWidget(QLabel("Dielectric layer (nm)"))
-            row2.addStretch()
-            row2.addWidget(QLabel("Nominal"))
-            row2.addWidget(self.widgets["eL_nominal"])
-            row2.addWidget(QLabel("±"))
-            row2.addWidget(self.widgets["eL_variation"])
-            lay.addLayout(row2)
-
-        return c
-
-    def _create_material_params_group(
-        self, show_diel_model: bool = False, substrate_options: list | None = None
-    ) -> CertusCard:
-        """
-
-        Creates standardized Material Parameters group (Spline knots).
-
-        Args:
-
-            show_diel_model: If True, includes dielectric model inputs (n_inf, A)
-
-            substrate_options: List of substrate names for combo box
-
-        Returns:
-
-            CertusCard with configured inputs stored in self.widgets
-
-        """
-
-        c, lay = self._create_group_box("Material Parameters")
-
-        row1 = QHBoxLayout()
-        row1.addWidget(QLabel("Spline knots"))
-        row1.addStretch()
-
-        self.widgets["num_knots"] = QLineEdit(str(DEFAULT_NUM_KNOTS))
-        self.widgets["num_knots"].setFixedWidth(50)
-        row1.addWidget(QLabel("Count"))
-        row1.addWidget(self.widgets["num_knots"])
-
-        self.widgets["nk_min"] = QLineEdit(str(DEFAULT_NK_MIN))
-        self.widgets["nk_min"].setFixedWidth(40)
-        self.widgets["nk_max"] = QLineEdit(str(DEFAULT_NK_MAX))
-        self.widgets["nk_max"].setFixedWidth(40)
-        row1.addSpacing(8)
-        row1.addWidget(QLabel("n/k"))
-        row1.addWidget(self.widgets["nk_min"])
-        row1.addWidget(QLabel("to"))
-        row1.addWidget(self.widgets["nk_max"])
-        lay.addLayout(row1)
-
-        row2 = QHBoxLayout()
-        row2.addWidget(QLabel("Minimum knot distance (nm)"))
-        row2.addStretch()
-        self.widgets["min_knot_dist"] = QLineEdit(str(DEFAULT_MIN_KNOT_DISTANCE))
-        self.widgets["min_knot_dist"].setFixedWidth(60)
-        row2.addWidget(self.widgets["min_knot_dist"])
-        lay.addLayout(row2)
-
-        if show_diel_model:
-            row3 = QHBoxLayout()
-            row3.addWidget(QLabel("Dielectric model"))
-            row3.addStretch()
-            row3.addWidget(QLabel("n∞"))
-            self.widgets["n_inf"] = QLineEdit("1.46")
-            self.widgets["n_inf"].setFixedWidth(50)
-            row3.addWidget(self.widgets["n_inf"])
-            row3.addWidget(QLabel("A"))
-            self.widgets["A_coeff"] = QLineEdit("3500")
-            self.widgets["A_coeff"].setFixedWidth(60)
-            row3.addWidget(self.widgets["A_coeff"])
-            lay.addLayout(row3)
-
-        if substrate_options:
-            row4 = QHBoxLayout()
-            row4.addWidget(QLabel("Substrate"))
-            row4.addStretch()
-            self.widgets["substrate"] = QComboBox()
-            self.widgets["substrate"].addItems(substrate_options)
-            row4.addWidget(self.widgets["substrate"])
-            lay.addLayout(row4)
-
-        return c
+    def _add_material_specific_rows(self, layout) -> None:
+        """Subclasses add the substrate selector or the dielectric underlayer fields."""
 
     def _create_live_params_group(self) -> CertusCard:
         """

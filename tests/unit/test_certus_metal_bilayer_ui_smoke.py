@@ -43,6 +43,18 @@ def test_certus_metal_bilayer_app_constructs_headless(monkeypatch, qapp) -> None
         assert "eM_min" in window.widgets
         assert "eL_nominal" in window.widgets
         assert window.widgets["eM_min"].text()
+        for key in ("eL_variation", "num_knots", "n_infini_min", "n_infini_max", "A_diel_min", "A_diel_max"):
+            assert window.widgets[key].text()
+            assert window.widgets[key].toolTip()
+
+        window._auto_batch_mode = True
+        progress = {"mode": "local", "iteration": 2, "max_iteration": 10, "progress_pct": 20,
+                    "mse": 0.04, "best_cost": 0.01, "params": [12.0, 100.0, 1.43, 3000.0]}
+        window._on_optim_progress(progress)
+        window._on_optim_progress({**progress, "best_cost": 0.09})
+        assert window._auto_batch_last_progress["params"] == progress["params"]
+        assert window._auto_batch_best_mse == pytest.approx(0.01)
+        window._auto_batch_mode = False
 
         # Run JIT warmup directly to guarantee it has executed in this test
         window._warmup_numba_thread_runner()

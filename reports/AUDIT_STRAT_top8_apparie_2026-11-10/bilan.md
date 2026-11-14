@@ -1,7 +1,7 @@
 # Audit STRAT — le haut du classement en différences appariées (2026-11-10)
 
-Les sorties brutes (`.npz`, métadonnées `.json` et journaux `capture.out`, `ls_lab.out`, `rounds_lab.out`) sont dans
-l'archive hors dépôt du 2026-11-13, sous le même chemin de rapport. Les scripts d'analyse attendent ces fichiers à côté d'eux.
+Les tirages `.npz` et métadonnées `.json` sont conservés localement à côté des scripts d'analyse. Les trois journaux
+bruts sont dans `artifacts/archives-20261114/journaux-strat-top8-20261110.zip`.
 
 **Question.** Les écarts entre les premiers plans sont-ils réels quand on compare les plans sur les mêmes tirages (C2),
 et où chercher un meilleur plan ?

@@ -358,7 +358,7 @@ Le 14 novembre, Python 3.15.2, validation complète sur `de52e01c`, 16 ouvriers 
 1 593 passés (12 ignorés, 2 xfail), reste 322 passés, performance 30 passés (2 ignorés).
 Unitaires : 6 099 passés, 7 ignorés et 1 xfail ; l'unique échec au premier passage,
 `test_the_slit_profile_is_inert_when_absent_or_zero`, passe au rejeu isolé. Le validateur le classe comme
-artefact d'ordre ou de charge. Les journaux sont archivés hors dépôt sous `validation-windows-20261114-livraison/`.
+artefact d'ordre ou de charge. Les journaux sont dans `artifacts/archives-20261114/validation-windows-20261114-livraison/`.
 
 Le 13 novembre, [C1 sur le corpus des noyaux](c1_windows.json) donne 9 092 tableaux identiques au bit.
 Le test de pondération couvre séparément le changement volontaire sur les bandes disjointes.
@@ -406,7 +406,8 @@ restent inactives par défaut. Ces trois graines sur un problème ne fondent auc
 Le test de sélection finale a révélé un score conservé sur l'ancienne grille automatique, susceptible de faire
 écarter le résultat du raffinement. Corrigé dans `20563e25`, test rouge avant, 39 tests ciblés verts après.
 Les trois essais automatiques ont été rejoués. Les six témoins suivent le même chemin de calcul qu'avant ce
-correctif. Les journaux et exports bruts sont dans l'archive hors dépôt, sous `mesures-design/`.
+correctif. Les configurations finales, journaux, données brutes et scripts de reproduction sont dans
+`artifacts/archives-20261114/mesures-design/`.
 
 ## 12. Consolidation documentaire et livraison du 14 novembre
 
@@ -414,10 +415,12 @@ Les [33 chantiers restants](../../docs/CHANTIERS_RESTANTS.md) sont classés par 
 La liste reste stable pendant le contre-audit externe. Les anciennes listes d'actions et passations ont été retirées.
 Le [manifeste du nettoyage](nettoyage_markdown_2026-11-14.json) recense 73 Markdown retirés, leur commit de référence
 et les sources anciennes conservées parce qu'elles servent encore aux documents actuels. Les données scientifiques
-et le code de calcul n'ont pas été supprimés. Les 36 exports générés par les mesures du 14 ont été rangés hors dépôt.
+et le code de calcul ont été conservés. Les exports HTML et Excel générés par les mesures du 14
+sont reproductibles à partir des configurations finales conservées.
 
 Après cette consolidation : les 10 tests des points d'entrée passent ; Ruff et les trois contrôles documentaires
 passent ; les deux guides ont zéro erreur de structure et d'ancre ; 153 documents Markdown/HTML ont zéro lien local
 manquant. En-têtes et sections d'usage des guides vérifiés à 1 440 px et dans une fenêtre de lecture de 390 px.
 La navigation mobile ne masque plus le titre visé ; les tableaux des sections défilent dans leur propre zone.
-Les captures et le journal de validation complète sont conservés hors dépôt.
+Les captures de contrôle et le journal de validation complète figurent dans l'inventaire de l'archive locale
+(`artifacts/archives-20261114/inventaire.json`).

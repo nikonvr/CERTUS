@@ -19,7 +19,8 @@ Le [guide DESIGN](../pages/CERTUS_DESIGN.html#design-robust-search) décrit l'ac
 Les anciennes passations, listes d'actions et audits remplacés ont été retirés du dépôt.
 
 **Branche de travail** : master local. Le sparse-checkout écarte les gros artefacts scientifiques suivis ;
-git sparse-checkout disable les restaure. Les exports hors Git sont répertoriés dans le manifeste du 2026-10-25.
+git sparse-checkout disable les restaure. Les sauvegardes et données locales de novembre sont répertoriées
+dans `artifacts/archives-20261114/inventaire.json`, dans `certus1111`.
 
 **Python de référence : 3.15.2**, dépendances de requirements.lock.
 
@@ -135,7 +136,7 @@ dépendant de T ou de λ, grenaille, bruit multiplicatif ou corrélé. Seul un r
   dans tous les noyaux (D52, D67) ; tolérance C1 de 10⁻¹⁰ pour retirer du code mort d'un noyau (D54) ; le hub ne lance pas l'échauffement JIT.
 - GPL-3.0 ; gel sur la couche OpenMP (D87), construit dans un environnement jetable depuis `requirements.lock`, toutes licences embarquées.
 - Publication : rien à purger dans l'historique ; les œuvres de tiers vont dans les avis de tiers ; `certus_re` sous CC BY 4.0.
-- Toute fusion dans `master` se redemande à 👤 ; le dépôt reste dans Google Drive ; sauvegarde des commits locaux en bundle hors dépôt.
+- Toute fusion dans `master` se redemande à 👤. Le dépôt reste dans Google Drive, avec les sauvegardes Git sous `artifacts/`.
 - Sobriété de lecture (2026-10-18) : plafonds dans `tests/unit/test_the_ai_entry_points_stay_small.py`, à baisser librement.
 - Comparaisons à Tikhonravov et Trubetskov (2026-10-30) : le miroir dispersif d'une octave de Trubetskov 2020 ne sera pas
   traité ; le miroir chaud et les antireflets sortent du champ de l'article ; la cissoïde OIC 2016 doit battre le

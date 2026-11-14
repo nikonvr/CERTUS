@@ -87,6 +87,9 @@ reports/exports/
 # ─────────────── Debug / scratch ───────────────
 scratch/
 artifacts/
+# Local raw inputs for the paired STRAT analyses. Summaries and scripts are tracked.
+/reports/AUDIT_STRAT_top8_apparie_2026-11-10/*_draws.npz
+/reports/AUDIT_STRAT_top8_apparie_2026-11-10/*_meta.json
 bottleneck_*.txt
 .benchmarks/
 .ast_analyzer_cache.json

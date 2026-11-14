@@ -1,15 +1,14 @@
 # Nettoyage du dossier certus1111 (2026-11-13). A lancer depuis la racine du depot :
 #   .\reports\questions_design_2026-11-13\nettoyer_certus1111.ps1         # apercu
 #   .\reports\questions_design_2026-11-13\nettoyer_certus1111.ps1 -Apply  # application
-# Rien de suivi par git n'est touche ; rien sous reports\ n'est touche. Ce qui n'est pas jetable est DEPLACE hors du
-# depot, dans ..\certus1111_hors_depot\2026-11-13\, jamais efface.
+# Les sauvegardes locales sont rangees sous artifacts/, ignore par Git.
 param([switch]$Apply)
 $ErrorActionPreference = 'Stop'
 
 $root = (git rev-parse --show-toplevel).Trim() -replace '/', '\'
 Set-Location $root
 if (-not (Test-Path (Join-Path $root 'CLAUDE.md'))) { throw "Pas a la racine de CERTUS : $root" }
-$outside = Join-Path (Split-Path $root -Parent) 'certus1111_hors_depot\2026-11-13'
+$archive = Join-Path $root ('artifacts\nettoyage-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
 
 function Do-It([string]$what, [scriptblock]$action) {
     if ($Apply) { & $action; Write-Host "FAIT    $what" } else { Write-Host "A FAIRE $what" }
@@ -20,13 +19,13 @@ function Same-Text([string]$a, [string]$b) {
     ((Get-Content -Raw $a) -replace "`r`n", "`n") -ceq ((Get-Content -Raw $b) -replace "`r`n", "`n")
 }
 
-function Move-Outside([string]$relativePath) {
+function Move-ToArchive([string]$relativePath) {
     $source = (Resolve-Path -LiteralPath (Join-Path $root $relativePath)).Path
     if (-not $source.StartsWith($root + '\', [StringComparison]::OrdinalIgnoreCase)) {
         throw "Chemin hors du depot : $source"
     }
-    $destination = [IO.Path]::GetFullPath((Join-Path $outside $relativePath))
-    if (-not $destination.StartsWith($outside + '\', [StringComparison]::OrdinalIgnoreCase) -or
+    $destination = [IO.Path]::GetFullPath((Join-Path $archive $relativePath))
+    if (-not $destination.StartsWith($archive + '\', [StringComparison]::OrdinalIgnoreCase) -or
         (Test-Path -LiteralPath $destination)) {
         throw "Destination invalide ou deja occupee : $destination"
     }
@@ -53,7 +52,7 @@ if (Test-Path $wt) {
             }
             $kept = @(git -C $wt -c core.quotepath=false ls-files --others --ignored --exclude-standard |
                 Where-Object { $_ -notmatch '(^|/)(__pycache__|\.pytest_cache|\.ruff_cache|\.hypothesis)(/|$)' })
-            foreach ($rel in $kept) { Move-Outside (Join-Path '.claude\worktrees\reprise-057fcd' $rel) }
+            foreach ($rel in $kept) { Move-ToArchive (Join-Path '.claude\worktrees\reprise-057fcd' $rel) }
             git worktree remove --force $resolvedWorktree
             if ($LASTEXITCODE -ne 0) { throw 'Impossible de retirer le worktree de reprise.' }
         }
@@ -68,7 +67,7 @@ if (Test-Path $wt) {
 }
 Do-It "git worktree prune (entrees de .git\worktrees dont le dossier n'existe plus)" { git worktree prune }
 
-# 2. Hors du depot, sans rien perdre : brouillons de session, copie de CLAUDE.md, documents du concours OIC 2016
+# 2. Archive locale : brouillons de session, copie de CLAUDE.md, documents du concours OIC 2016
 #    (oeuvres de tiers : jamais dans un depot public).
 $move = @('scratch', 'CLAUDE.md.bak', 'OIC 2016 Contest Description.pdf', 'OIC 2016 Manufacturing Contest.xls',
           'OIC_2016_Design_Problems.pdf', 'certus\physics\design_resonances.py.bak_lossy_20261107',
@@ -76,8 +75,8 @@ $move = @('scratch', 'CLAUDE.md.bak', 'OIC 2016 Contest Description.pdf', 'OIC 2
 foreach ($item in $move) {
     $src = Join-Path $root $item
     if ((Test-Path $src) -and -not (git ls-files -- $item)) {
-        Do-It "deplacer $item vers $outside" {
-            Move-Outside $item
+        Do-It "deplacer $item vers $archive" {
+            Move-ToArchive $item
         }
     }
 }
@@ -86,7 +85,7 @@ foreach ($item in $move) {
 $tracked = @(git ls-files) | ForEach-Object { $_ -replace '/', '\' }
 Get-ChildItem -LiteralPath $root -File | Where-Object {
     ($_.Extension -in '.log', '.jsonl' -or $_.Name -eq 'test_log') -and ($tracked -notcontains $_.Name)
-} | ForEach-Object { $name = $_.Name; Do-It "archiver $name" { Move-Outside $name } }
+} | ForEach-Object { $name = $_.Name; Do-It "archiver $name" { Move-ToArchive $name } }
 foreach ($dir in 'tmp', 'snom', 'bonne mere', 'invalid_dir') {
     $d = Join-Path $root $dir
     if ((Test-Path $d) -and -not (Get-ChildItem -LiteralPath $d -Force)) {

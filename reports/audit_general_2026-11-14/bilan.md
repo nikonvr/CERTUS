@@ -130,3 +130,7 @@ La règle est neutre sur `ui` et divise `unit` par 1,7.
   ([avant](../alg03_grille_oblique_2026-11-14/alg03.json)) ; après, 135 points et RMSE rapporté = RMSE dense = 0,17197
   ([après](../alg03_grille_oblique_2026-11-14/alg03_apres.json)). `c1_diff HEAD` : identique au bit (son corpus
   n'exerce pas le worker).
+
+Seconde validation, sur `3e047e5f` (C20 et ALG-03 compris) : `VALIDATION=GO` en 21 min 32 s, aucun échec au premier
+passage. oracle 1 209, unit 6 183 (6:31, cache Numba froid après le changement de `gradient_oblique.py`), ui 1 594,
+rest 322, performance 30.

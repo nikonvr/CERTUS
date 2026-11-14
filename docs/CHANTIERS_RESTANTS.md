@@ -8,7 +8,7 @@ mentions d'archivage dans des rapports anciens ne constituent pas de nouvelles s
 La liste initiale est suivie depuis `b6fb1939`. Les identifiants sont conservés pour la traçabilité du
 [contre-audit du 14 novembre](../reports/contre_audit_chantiers_2026-11-14/bilan.md).
 Les lignes 34 à 43 viennent de l'[audit général du 14 novembre](../reports/audit_general_2026-11-14/bilan.md) et ne sont pas
-classées par complexité. Les P1 sont 33, 35 et 36.
+classées par complexité. Les P1 sont 33 et 36.
 
 ## Ordre du plus simple au plus complexe
 
@@ -24,7 +24,7 @@ Le profilage précède les modifications de gradients.
 
 **Bloqués par une décision de 👤** : périmètre UI (16, 18) ; modèle de dépôt représentatif (24, 31, 32) ;
 reprise B, « plus tard » selon U12 (27, 28, 29) ; date des essais humains (33) ; reconstruction, dépendance
-tierce et publication (39, 40, 41). **Exécutables par une IA seule** : 05, 20, 21, 25, 34, 35, 36, 37, 38, 42, 43 et
+tierce et publication (39, 40, 41). **Exécutables par une IA seule** : 05, 20, 21, 25, 34, 36, 37, 38, 42, 43 et
 la mesure du 29.
 
 | Ordre | Priorité | Complexité | Chantier restant | État et critère de fin | Source |
@@ -35,7 +35,7 @@ la mesure du 29.
 | 18 | P3 | Moyenne à forte | Socle de SMOOTHER et SUBSTRATE (R7) | Après arbitrage du périmètre UI, préserver chargement, calcul et export en ajoutant thème et session communs. | A §2.2–2.3 |
 | 19 | P2 | Moyenne à forte | Éprouver le sélecteur de tests | Compléter l'audit d'appels et le rejeu historique avec comparaison aux mutations de la suite intégrale. La validation complète reste la référence. | Q §5.3 |
 | 20 | P3 | Forte | Raffinement en longueurs d'onde complexes | Le polissage adaptatif à TOT fixée laisse un MF résolu de 0,10983 %. Comparer le raffinement complexe à ce témoin et vérifier sa tenue sur des départs éloignés. | A §3.3–3.4 et Q §10 |
-| 21 | P3 | Forte | Dérivées SPLINE (D4/D5, ancien 13) | (a) fait : le polissage n, k, d par paquet de trois nœuds du Smart Init a quitté l'UI pour `spline_smart_init.py::optimize_smart_init_nkd_packet`, identique au bit ; il tourne encore sur le fil de l'interface. Reste, après le 36 (C20) : profiler nœuds libres et Smart Init, puis ajouter les gradients. Vérifier les dérivées des valeurs et positions aux cas limites, y compris les replis. | A §4 |
+| 21 | P3 | Forte | Dérivées SPLINE (D4/D5, ancien 13) | (a) fait : le polissage n, k, d par paquet de trois nœuds du Smart Init a quitté l'UI pour `spline_smart_init.py::optimize_smart_init_nkd_packet`, identique au bit ; il tourne encore sur le fil de l'interface. Reste : profiler nœuds libres et Smart Init, puis ajouter les gradients. Vérifier les dérivées des valeurs et positions aux cas limites, y compris les replis. | A §4 |
 | 24 | P2 | Forte | Mérite robuste (anciens 23, 24 et 30b) | Le mérite à 1 nm dégrade le RMS déposé des trois paires étudiées. Chiffrer le compromis nominal/robuste sous un modèle de dépôt représentatif avant de tester un nuage, la descente de sensibilité ou la covariance. Confirmer sur tirages disjoints. | Q §4.2–4.5 et campagne A |
 | 25 | P3 | Forte | Germes structurés Fourier pour le mémétique | Piste non mesurée : diversité de phases, conversion H/L compatible avec les contraintes, comparaison au tirage actuel sur trois-raies et cissoïde. | Q §1.3 |
 | 27 | P3 | Très forte | Reprise de calcul STRAT (U12 B) | Mesurer le coût des étapes du pipeline avant de choisir les points de reprise. Vérifier la compatibilité des réglages, graines, noyaux et ouvriers, ainsi que l'identité au bit. | U12 §4–5 |
@@ -45,8 +45,7 @@ la mesure du 29.
 | 32 | P3 | Très forte | Co-conception C : critère de contrôlabilité dans DESIGN | Corréler les marges et dynamiques aux résultats STRAT sur des plans avec une part de Rate représentative. La campagne A a retenu 31 à 32 couches Rate sur 34. | A §1.4 et campagne A |
 | 33 | P1 | Validation humaine | U13 : écran réel, Narrateur, cinq utilisateurs | Partie machine faite. Exécuter les essais humains et consigner les observations selon le protocole ; cette ligne requiert les personnes et le matériel. | U13 |
 | 34 | P2 | À instruire | Bits selon l'historique de compilation | Cause du POEM trouvée : un objet du cache Numba compilé dans un long processus lie d'autres routines complexes internes et change les derniers bits. Le validateur rejoue désormais sur cache vierge (`f350044d`). Reste : vérifier que les tests de fente et de paramètres neutres relèvent du même mécanisme, et décider s'il faut rendre les noyaux indépendants de l'historique (change les bits). | G §6 |
-| 35 | P1 | Moyenne | ALG-03 : grille oblique de DESIGN | Vérifier que la grille densifiée laisse le précalcul oblique sur l'ancienne grille. Si oui : test rouge d'abord, correction, oracle avant et après. Sinon, retirer la mention d'`ETAT.md` §1. | G §2.2 |
-| 36 | P1 | Faible | Registre des défauts ouverts | `docs/AUDITS.md` (une soixantaine d'entrées « ouvert » au 26 octobre) a été supprimé par `b6fb1939` ; il se relit par `git show b6fb1939^:docs/AUDITS.md`. C13 (D112) est corrigé ; C18 (D111) garde sa parade `cache=False`, cause ouverte ; C20 (D113) reste à confirmer par sa sonde. Trier les autres entrées : corrigée avec son test, ou chantier. | G §2.3 |
+| 36 | P1 | Faible | Registre des défauts ouverts | `docs/AUDITS.md` (une soixantaine d'entrées « ouvert » au 26 octobre) a été supprimé par `b6fb1939` ; il se relit par `git show b6fb1939^:docs/AUDITS.md`. C13 (D112), C20 (D113) et ALG-03 sont corrigés ; C18 (D111) garde sa parade `cache=False`, cause ouverte. Trier les autres entrées : corrigée avec son test, ou chantier. | G §2.3 et §8 |
 | 37 | P2 | Faible à moyenne | Contrôle local avant publication | Un script qui vérifie secrets, métadonnées des classeurs et œuvres de tiers sur les commits à pousser. Fin : il échoue sur un secret semé. | G §2.4 |
 | 38 | P2 | Moyenne | Algorithmes restants dans `certus.ui` | Descendre les deux optimisations de `certus_design_ui_optimization.py` hors de l'UI, identiques au bit, comme 21 (a). | G §2.5 |
 | 39 | P3 | Moyenne | Exécutable gelé et version | L'exécutable date de `dbec2fc1`. Reconstruire, essai de fumée, et vérifier que les exports portent une version qui distingue l'état du code. | G §2.6 |
@@ -75,7 +74,7 @@ consignées dans les bilans liés ci-dessus.
 U1–U11, refactoring des corridors, reprise des sessions U12 A, reprise STRAT multi-graines, partie machine
 d'U13, tours supplémentaires STRAT, aperçu INDEX TLU, rangement des journaux, contrôle des liens,
 polisseur hybride, poids des bandes disjointes, estimateur N/TOT, grille automatique et sélection robuste
-sont intégrés. Les mesures appariées et l'oracle sont dans les sources ci-dessus.
+sont intégrés, ainsi que les corrections de C20 et d'ALG-03 (35). Les mesures appariées et l'oracle sont dans les sources ci-dessus.
 
 L'imprécision de la docstring de `second_order_robust_rmse` est corrigée : il s'agit de l'approximation
 Gauss–Newton, qui omet le terme diagonal de courbure du résidu. Cette correction ne change aucun calcul.

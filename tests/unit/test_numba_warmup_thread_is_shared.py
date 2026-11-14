@@ -83,3 +83,21 @@ def test_the_slots_write_the_named_label_and_skip_a_missing_one(qapp) -> None:
     w.WARMUP_STATUS_LABEL = "lbl_status"
     w._on_numba_error_ui()
     assert w.status_label.text == "JIT Init Error"
+
+
+def test_one_warmup_runner_is_left_in_certus() -> None:
+    import ast
+    import subprocess
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    files = subprocess.run(
+        ["git", "ls-files", "certus/*.py", "CERTUS_*.py"], capture_output=True, text=True, cwd=root, check=True
+    ).stdout.splitlines()
+    owners = sorted(
+        f"{path}:{node.lineno}"
+        for path in files
+        for node in ast.walk(ast.parse((root / path).read_text(encoding="utf-8-sig")))
+        if isinstance(node, ast.FunctionDef) and node.name == "_warmup_numba_thread_runner"
+    )
+    assert [owner.split(":")[0] for owner in owners] == ["certus/ui/certus_base_app_engine_mixin.py"], owners

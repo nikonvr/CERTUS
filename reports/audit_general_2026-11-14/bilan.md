@@ -111,3 +111,22 @@ sur cache Numba vierge : POEM (§6), `test_the_automatic_export_is_off_under_tes
 | 2 fils, `OMP_NUM_THREADS=OPENBLAS_NUM_THREADS=1` | 10:44 |
 
 La règle est neutre sur `ui` et divise `unit` par 1,7.
+
+## 8. Deux défauts de calcul corrigés (chantiers 35 et 36)
+
+🔴 **Les deux correctifs changent des résultats de DESIGN.** Ils ont été décidés sous le mandat de nuit de 👤 du
+2026-11-14 ; chacun tient dans un commit qui s'annule par `git revert`.
+
+- **C20 (D113), `78515573`.** Couches absorbantes données en n − ik, substrat sans perte, sans face arrière :
+  `compute_gradient_all_layers_analytic` passait les indices à `_compute_gradient_analytic_kernel`, juste seulement
+  en n + ik. Sur le cas de `tests/oracle/test_absorbing_front_cost_matches_the_reference.py`, son coût dépassait la
+  référence indépendante de 343 % : L-BFGS-B minimisait un autre objectif, et le RMSE final, calculé par la TMM de
+  production (identique pour les deux signes), avait l'air juste. Correction : conjugaison à cette seule frontière.
+  `c1_diff HEAD` : 136 tableaux sur 9 092 changent, tous dans `normal.gradall0/1` ; les autres gardent leurs bits.
+  Non vérifié : un design réel de l'utilisateur dans ce mode.
+- **ALG-03, `4d634756`.** En incidence oblique, la grille densifiée avant l'affinage final n'atteignait pas les
+  configurations obliques du worker. Sonde [`probe_alg03.py`](../alg03_grille_oblique_2026-11-14/probe_alg03.py) :
+  avant, coût et gradient sur 2 points au lieu de 135, RMSE rapporté 0,026 pour 0,175 sur la grille dense
+  ([avant](../alg03_grille_oblique_2026-11-14/alg03.json)) ; après, 135 points et RMSE rapporté = RMSE dense = 0,17197
+  ([après](../alg03_grille_oblique_2026-11-14/alg03_apres.json)). `c1_diff HEAD` : identique au bit (son corpus
+  n'exerce pas le worker).

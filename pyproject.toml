@@ -29,7 +29,6 @@ dependencies = [
   "pydantic>=2.13.4",
   "XlsxWriter>=3.2.9",
   "joblib>=1.5.3",
-  "tbb>=2023.2.0 ; sys_platform == 'win32'",
 ]
 
 [project.optional-dependencies]

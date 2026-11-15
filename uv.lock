@@ -40,7 +40,6 @@ dependencies = [
     { name = "pyqt6" },
     { name = "pyqtgraph" },
     { name = "scipy" },
-    { name = "tbb", marker = "sys_platform == 'win32'" },
     { name = "xlsxwriter" },
 ]
 
@@ -72,7 +71,6 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.15.12" },
     { name = "scipy", specifier = ">=1.17.1" },
-    { name = "tbb", marker = "sys_platform == 'win32'", specifier = ">=2023.2.0" },
     { name = "xlsxwriter", specifier = ">=3.2.9" },
 ]
 provides-extras = ["dev", "freeze"]
@@ -825,25 +823,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/e8/c4/ba2f8066cceb6f23394729afe52f3bf7adec04bf9ed2c820b39e19299111/sortedcontainers-2.4.0.tar.gz", hash = "sha256:25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88", size = 30594, upload-time = "2021-05-16T22:03:42.897Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/32/46/9cb0e58b2deb7f82b84065f37f3bffeb12413f947f9388e4cac22c4621ce/sortedcontainers-2.4.0-py2.py3-none-any.whl", hash = "sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0", size = 29575, upload-time = "2021-05-16T22:03:41.177Z" },
-]
-
-[[package]]
-name = "tbb"
-version = "2023.2.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "tcmlib", marker = "sys_platform == 'win32'" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d0/41/2aeac799ab57e81898c8cc24f503fe301e12f19758bb1fe34d522764d3bb/tbb-2023.2.0-py3-none-win_amd64.whl", hash = "sha256:b39121cbdaff350fc61a448766cbb26807c523491d66e364838c9feeb3c6a0eb", size = 430857, upload-time = "2026-10-16T12:34:41.635Z" },
-]
-
-[[package]]
-name = "tcmlib"
-version = "1.6.0"
-source = { registry = "https://pypi.org/simple" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d7/a5/996458475dcc65f20ec20c0e3d4bbc175c87750ff9bb703908c373b2497a/tcmlib-1.6.0-py2.py3-none-win_amd64.whl", hash = "sha256:7f65c0a6d56f2b1383b3022e873175f5025db00a5c7d0aaeb019300c25f5d482", size = 371933, upload-time = "2026-10-16T12:34:53.372Z" },
 ]
 
 [[package]]

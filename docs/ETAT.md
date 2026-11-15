@@ -42,7 +42,7 @@ Pour un échec de comparaison au bit, rejouer sur [cache Numba vierge](../report
 | **Conception (DESIGN)** | étape globale mémétique, champion sans couche < 5 nm et relances par défaut depuis le 2026-10-23 ; séparatrice 400–1200 nm à 0,000135 depuis l'exemple ([bilan](../reports/DESIGN_bs5050_2026-10-22/bilan.md)) | robustesse et reprise ([chantiers](CHANTIERS_RESTANTS.md)) |
 | **RE** | indices tabulés lus en n − ik depuis R148 (2026-10-05) : un RE antérieur sur indices absorbants en incidence oblique est à refaire ; un indice demandé hors de sa table est prolongé par une constante, avec un avertissement | — |
 | **Base de dépôts** | 140 monocouches mesurées au Photon RT (`example/database_depots/`), chargées par INDEX (« Deposit database… ») ; la voie (T ou R) se lit dans la géométrie du détecteur. Onze ajustements certifiés servent de références (`references_index.json`, `scripts\bench_base_depots.py`) : neuf à moins de 2 % d'épaisseur, deux écarts documentés dans les références du banc. RE ne la lit pas (il lui faut un classeur complet) | IDX-01 ; §5 |
-| **Exécutable gelé** | couche OpenMP (D87), 411 Mo (D72), sans les outils de développement ; construit à `dbec2fc1`, « l'exécutable fonctionne » (👤). Licences embarquées dans `licenses/`. Le spec embarque désormais TBB pour STRAT et RE : la prochaine construction le prendra (39) | D72 |
+| **Exécutable gelé** | couche OpenMP (D87), 411 Mo (D72), sans les outils de développement ; construit à `dbec2fc1`, « l'exécutable fonctionne » (👤). Licences embarquées dans `licenses/`. L'exécutable reste sur OpenMP : la roue PyPI de TBB est sous licence Intel, hors GPL (oneTBB sous Apache-2.0 à trouver, décision de 👤) | D72 |
 | **Interface** | plan clos le 2026-09-08 : 12 critères de fin sur 13, le treizième démontré inatteignable (`xfail` strict) | §5 |
 | **Qualité** | CI : calcul sous Linux, interface et gel sous Windows, `pip-audit`, `gitleaks` ; tests isolés des préférences de 👤 ; aucune arête d'import montante (D26) | §5 |
 | **Validation externe** | 🔴 **aucune** : STRAT n'est validé que contre lui-même (👤, 2026-10-06 : les dépôts réels du dichroïque ne sont plus prévus) | — |
@@ -136,7 +136,8 @@ dépendant de T ou de λ, grenaille, bruit multiplicatif ou corrélé. Seul un r
 - Poste toujours à jour (CI en `uv sync --upgrade`) ; non-reproductibilité d'INDEX, RE et METAL_BILAYER acceptée ; **fastmath conservé**
   dans tous les noyaux (D52, D67) ; tolérance C1 de 10⁻¹⁰ pour retirer du code mort d'un noyau (D54) ; le hub ne lance pas l'échauffement JIT.
 - GPL-3.0 ; gel construit dans un environnement jetable depuis `requirements.lock`, toutes licences embarquées.
-- Couche de fils Numba : OpenMP (D87), sauf STRAT et RE sur TBB (`certus_core.TBB_THREADING_LAYER`, 👤 2026-11-15) :
+- Couche de fils Numba : OpenMP (D87), sauf STRAT et RE sur TBB quand `tbb` est installé (optionnel, hors dépendances :
+  licence Intel ; `certus_core.TBB_THREADING_LAYER`, 👤 2026-11-15) :
   recherche STRAT du juge de paix en 1 074 s contre 1 339 s, mêmes bits ; exemple RE en 17,5 s contre 28,2 s ; sous TBB,
   le coût et le gradient de DESIGN changent de bits d'un lancement à l'autre, INDEX ne gagne rien
   ([STRAT](../reports/audit_oms5100_2026-11-15/profil_strat_complet/bilan.md), [INDEX et RE](../reports/audit_oms5100_2026-11-15/tbb_index_re/bilan.md)).

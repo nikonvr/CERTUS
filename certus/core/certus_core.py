@@ -347,8 +347,10 @@ _TBB_REGISTERED = False
 def register_tbb_runtime() -> bool:
     """Put Intel TBB's runtime on the DLL search path, once per process; False when it is not installed.
 
-    pip's `tbb` wheel puts `tbb12.dll` in `<prefix>/Library/bin` (the frozen build: next to the executable), which is
-    not on the DLL search path of Python 3.8+, so Numba cannot load its TBB layer without this.
+    TBB is optional, not a dependency: Intel's PyPI wheel (`pip install tbb`) ships under the Intel Simplified Software
+    License, which the GPL policy refuses (`test_the_project_is_licensed_under_the_gpl`); without it, OpenMP. The wheel
+    puts `tbb12.dll` in `<prefix>/Library/bin` (a frozen build would put it next to the executable), which is not on the
+    DLL search path of Python 3.8+, so Numba cannot load its TBB layer without this.
 
     TBB is for STRAT and RE only (chantier 44, measured 2026-11-15, reports/audit_oms5100_2026-11-15/): a full STRAT
     search took 1074 s against 1339 s under OpenMP, the same ranking, and STRAT's kernels gave the same bits under both

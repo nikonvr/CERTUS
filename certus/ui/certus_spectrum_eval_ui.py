@@ -88,6 +88,50 @@ def spectrum_eval_n_vis_points(app: Any, variant: SpectrumEvalVariant) -> int:
     return 2000
 
 
+def spectrum_eval_settings_signature(cfg: dict[str, Any]) -> tuple:
+    """Everything an evaluation depends on, except the thicknesses of the design being evaluated.
+
+    Two evaluations with the same signature differ by their design only: their RMSE compare, and the better spectrum may
+    be kept on screen. With another signature (backside, substrate or material index, targets, wavelength grid, back
+    coating, RE index model) the previous "best" answers another question.
+    """
+
+    def _array(values: Any) -> tuple:
+        arr = np.asarray(values if values is not None else [], dtype=np.float64).ravel()
+        return (int(arr.size), arr.tobytes())
+
+    def _target(tgt: Any) -> tuple:
+        slots = getattr(type(tgt), "__slots__", None) or tuple(getattr(tgt, "__dict__", {}))
+        return tuple((name, repr(getattr(tgt, name, None))) for name in slots)
+
+    probe = np.asarray(cfg.get("wls_optim", []), dtype=np.float64).ravel()
+    if probe.size == 0:
+        probe = np.asarray(cfg.get("wls_vis", []), dtype=np.float64).ravel()
+
+    def _material(mat: Any) -> tuple:
+        if getattr(mat, "_is_tabular", False):
+            return ("tabular", _array(np.asarray(mat.get_nk(probe)).view(np.float64)))
+        return ("cauchy", repr(getattr(mat, "n4", None)), repr(getattr(mat, "n7", None)))
+
+    return (
+        str(cfg.get("variant", "")),
+        bool(cfg.get("back", False)),
+        bool(cfg.get("use_back_coat", False)),
+        tuple(str(getattr(layer, "mat", "")) for layer in cfg.get("stack_back", []) or []),
+        _array(cfg.get("ep_back")),
+        tuple((str(name), _material(mat)) for name, mat in sorted(cfg.get("mats", {}).items())),
+        bool(cfg.get("oblique_mode", False)),
+        tuple(_target(t) for t in cfg.get("tgts", []) or []),
+        tuple(_target(t) for t in cfg.get("oblique_tgts", []) or []),
+        _array(cfg.get("wls_optim")),
+        tuple(
+            (key, _array(cfg[key]) if isinstance(cfg[key], np.ndarray) else repr(cfg[key]))
+            for key in sorted(cfg)
+            if key.startswith(("re_", "spline_")) or key in ("a_pct", "b_pct", "f_pct")
+        ),
+    )
+
+
 def spectrum_eval_on_finished_prepare_display(
     app: Any,
     data: dict[str, Any],
@@ -122,6 +166,14 @@ def spectrum_eval_on_finished_prepare_display(
         app._set_busy(False)
 
         return None
+
+    # The "best" spectrum belongs to the settings that produced it: it was shown again, with its RMSE, after the
+    # backside, the substrate or the targets had changed (audit 2026-11-15, C-L6a). Other settings: start again.
+    settings = getattr(app, "_current_eval_settings", None)
+    if settings != getattr(app, "_best_eval_settings", None):
+        app._best_eval_result = None
+        app._best_eval_rmse = float("inf")
+        app._best_eval_settings = settings
 
     incoming_rmse = data.get("rmse")
 
@@ -362,6 +414,8 @@ def spectrum_eval_start_worker(app: Any, cfg: dict[str, Any], eval_start: float)
     eval_generation_id = app._current_eval_generation
 
     cfg["eval_generation_id"] = eval_generation_id
+
+    app._current_eval_settings = spectrum_eval_settings_signature(cfg)
     variant = cfg.get("variant", "design")
 
     logging.info(

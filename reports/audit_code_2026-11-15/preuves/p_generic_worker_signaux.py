@@ -32,8 +32,8 @@ def make(exc):
 for exc in (None, ValueError, RuntimeError, KeyError, IndexError, TypeError, AttributeError):
     got = {"finished": 0, "error": 0}
     w = GenericWorker(make(exc))
-    w.signals.finished.connect(lambda *_: got.__setitem__("finished", got["finished"] + 1))
-    w.signals.error.connect(lambda *_: got.__setitem__("error", got["error"] + 1))
+    w.signals.finished.connect(lambda *_, g=got: g.__setitem__("finished", g["finished"] + 1))
+    w.signals.error.connect(lambda *_, g=got: g.__setitem__("error", g["error"] + 1))
     w.start()
     w.wait(5000)
     for _ in range(5):

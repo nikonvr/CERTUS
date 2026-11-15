@@ -6,8 +6,8 @@
 
 ## 1. Démarrage et publication
 
-`preflight.py` vérifie aussi que l'interpréteur importe les dépendances ; aucun chemin d'interpréteur ni de racine n'est
-écrit en dur, délibérément : ils se périmaient à chaque déménagement.
+`preflight.py` vérifie aussi que l'interpréteur importe les dépendances ; aucun chemin n'y est écrit en dur : ils se
+périmaient.
 
 Committer ne publie **pas** par défaut : le hook `.githooks/post-commit` ne s'arme que par
 `git config core.hooksPath .githooks`, réglage local jamais hérité. Vérifie avec `git config --get core.hooksPath`
@@ -15,15 +15,15 @@ et `git status -sb`, ne le suppose pas. Les données de 👤 lui-même sont son 
 
 ## 2. Valider — pièges
 
-- Un échec au premier run dans un arbre neuf peut venir du cache Numba : relancer une fois. Un échec persistant est réel.
+- Un échec au premier run d'un arbre neuf peut venir du cache Numba : relancer une fois ; persistant, il est réel.
 - Un test Qt qui meurt sans traceback peut signaler un worker encore actif : relancer avec
   `QT_FORCE_STDERR_LOGGING=1` et `-s`. Un test isolé vert mais rouge en suite signale souvent un état partagé.
 - Un nouveau module typé dans `domain`, `physics` ou `core` suit le registre d'annotations `tests/architecture_debt.json`.
 - Itérer : `python scripts\verify_changed.py` joue les tests que touchent les symboles modifiés (`--list` dit
   pourquoi). `VERIF_CIBLEE=GO` ne remplace pas la validation complète avant de committer.
 - Après modification du gel ou d'un point d'entrée que STRAT importe : `powershell tools\build_frozen.ps1` et
-  `python tools\release_checks.py --check-frozen --check-frozen-run`. Le gel produit `dist/` et `build/` : les retirer
-  ensuite, sans toucher aux résultats scientifiques de `reports/`.
+  `python tools\release_checks.py --check-frozen --check-frozen-run`. Retirer ensuite `dist/` et `build/`,
+  jamais `reports/`.
 
 ## 5. C1 au bit — mode d'emploi de `c1_diff`
 
@@ -47,8 +47,7 @@ lui-même : `python scripts\c1_diff.py X --tete X --sans-cache` doit rendre 0.
   `tests/unit/test_the_cache_key_covers_what_the_kernels_read.py`.
 - Les tests partagent des caches de classe : les restaurer par fixture.
   Un test Qt prend la fixture `qapp`, jamais une `QApplication` locale.
-  `tests/headless/test_design.py` et `test_strat.py` simulent le calcul :
-  pour une mesure réelle, utiliser `scripts/bench_examples.py`.
+  `tests/headless/test_design.py` et `test_strat.py` simulent le calcul : mesurer avec `scripts/bench_examples.py`.
 - La Phase A se lit dans `reports/STRAT_observability_*.json`.
   Dans INDEX SPLINE, `d_lo`/`d_hi` désignent nominale/tolérance au widget,
   mais des bornes dans `SplineOptConfig` : vérifier le dialogue Smart Init.
@@ -60,16 +59,14 @@ lui-même : `python scripts\c1_diff.py X --tete X --sans-cache` doit rendre 0.
   hexadécimal. Une feuille locale de `create_styled_button` prime sur celle de
   l'application. L'encre d'un bouton plein est `CertusTheme.label_on`, une transparence
   `CertusTheme.tint(couleur, 0.18)`, jamais une concaténation ; `refresh_widget_sheets()` actualise les feuilles
-  au changement de thème. Vérifier les pixels (`widget.grab()`), pas la feuille déclarée : `scripts/audit_ux_certus.py`
+  au changement de thème. Vérifier les pixels (`widget.grab()`) : `scripts/audit_ux_certus.py`
   ne lit que les feuilles déclarées.
-- Outils des règles : un paramètre qui n'atteint pas le calcul se cherche avec `scripts/check_inert_params.py`
-  (posé jamais lu) puis `scripts/check_param_effect.py` (aucun effet mesuré) ; un nettoyage d'imports laisse
-  identique `scripts/lint_ns_snapshot.py` ; `tests/ui/ux_skeleton.json` se régénère par
-  `scripts/regenerer_squelette.py --ecrire`, dans le même commit que le libellé ; une fenêtre fermée qui reste en
-  mémoire se diagnostique avec `scripts/sonde_retenants_fenetre.py`.
+- Outils (`scripts/`) : paramètre inerte, `check_inert_params.py` (jamais lu) puis `check_param_effect.py` (sans
+  effet) ; nettoyage d'imports, `lint_ns_snapshot.py` inchangé ; `tests/ui/ux_skeleton.json`, `regenerer_squelette.py
+  --ecrire` dans le commit du libellé ; fenêtre fermée retenue, `sonde_retenants_fenetre.py`.
 - Le premier calcul compile Numba : chauffer avant un chronométrage.
   Ne pas citer dans le code le motif littéral qu'un garde-fou cherche
-  (couleur, règle QSS), au risque de déclencher le garde-fou lui-même.
+  (couleur, règle QSS) : il se déclencherait.
 
 ## 7. QWOT et point tournant
 

@@ -976,7 +976,8 @@ class CoreManager:
     def _update_busy_ui(self, busy_now: bool) -> None:
         """Updates Design-specific button states."""
 
-        for btn in [self.ui.local_btn, self.ui.global_btn, self.ui.color_btn, self.ui.eval_btn]:
+        # The spectral Monte Carlo too: it could be started again while it was running (audit 2026-11-15, M-L5f).
+        for btn in [self.ui.local_btn, self.ui.global_btn, self.ui.color_btn, self.ui.eval_btn, self.ui.spectral_mc_btn]:
             btn.setEnabled(not busy_now)
 
         self.ui.stop_btn.setEnabled(busy_now)

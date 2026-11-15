@@ -555,24 +555,14 @@ class EventsManager:
         # Ensure all workers are stopped to avoid "QThread: Destroyed while thread is still running"
 
         threads_to_stop = []
-        try:
-            optim_t = getattr(self.ui, "optim_thread", None)
-            if optim_t is not None:
-                threads_to_stop.append((optim_t, getattr(self.ui, "optim_worker", None)))
-        except RuntimeError:
-            pass
-        try:
-            needle_t = getattr(self.ui, "needle_thread", None)
-            if needle_t is not None:
-                threads_to_stop.append((needle_t, getattr(self.ui, "needle_worker", None)))
-        except RuntimeError:
-            pass
-        try:
-            col_t = getattr(self.ui, "col_thread", None)
-            if col_t is not None:
-                threads_to_stop.append((col_t, getattr(self.ui, "col_worker", None)))
-        except RuntimeError:
-            pass
+        # smc: the spectral Monte Carlo thread was left running at close (audit 2026-11-15, M-L5f).
+        for prefix in ("optim", "needle", "col", "smc"):
+            try:
+                thread = getattr(self.ui, f"{prefix}_thread", None)
+                if thread is not None:
+                    threads_to_stop.append((thread, getattr(self.ui, f"{prefix}_worker", None)))
+            except RuntimeError:
+                pass
 
         for thread, worker in threads_to_stop:
             try:

@@ -181,3 +181,40 @@ def design_cost_factory(context: DesignCostContext) -> Callable[[Sequence[str]],
         return cost_and_grad
 
     return make_cost
+
+
+def lbfgsb_polish(
+    ep_full: np.ndarray,
+    var_idx: np.ndarray,
+    x0: np.ndarray,
+    bounds: Sequence[tuple[float, float]],
+    context: DesignCostContext,
+    *,
+    maxiter: int,
+    ftol: float,
+) -> tuple[object, CostAndGrad]:
+    """L-BFGS-B on the thicknesses ``var_idx`` of ``ep_full`` with DESIGN's analytic gradient at normal incidence.
+
+    Moved out of the DESIGN window (CLAUDE.md section 8): the re-polish after the 5 nm rule and the trial polish of a
+    pruned layer. Returns the SciPy result and the cost function, whose ``(cost, gradient)`` the caller may evaluate
+    again (for the start point, say). ``ep_full`` is copied; the copy carries the fixed thicknesses.
+    """
+    import scipy.optimize
+
+    from certus.physics.gradient_oblique import compute_gradient_all_layers_analytic
+
+    tgt_vals, tgt_weights = context.normal_targets()
+    full = np.array(ep_full, dtype=np.float64, copy=True)
+
+    def cost_and_grad(x_var: np.ndarray) -> tuple[float, np.ndarray]:
+        full[var_idx] = x_var
+        c, g = compute_gradient_all_layers_analytic(
+            full, context.n_front, context.n_sub, context.wls, tgt_vals, tgt_weights, KERNEL_MIN_THICKNESS_NM,
+            context.has_back_calc, context.n_back, context.d_back, var_idx,
+        )
+        return float(c), np.asarray(g, dtype=np.float64)
+
+    res = scipy.optimize.minimize(
+        cost_and_grad, x0, method="L-BFGS-B", jac=True, bounds=bounds, options={"maxiter": maxiter, "ftol": ftol}
+    )
+    return res, cost_and_grad

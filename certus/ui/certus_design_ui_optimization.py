@@ -849,11 +849,9 @@ class OptimizationManager(FinalCleanupMixin):
         if not self._optional_step("polish_after_5nm_rule") or getattr(self.ui, "oblique_mode", False):
             return
         try:
-            import scipy.optimize
-
             from certus.core.certus_design_cost_context import prepare_design_cost_context
+            from certus.core.certus_design_final_cleanup import lbfgsb_polish
             from certus.core.certus_design_worker_utils import optim_backside_flags_from_cfg
-            from certus_physics import compute_gradient_all_layers_analytic
 
             stack = self.ui._get_front_stack()
             ep = np.asarray(self.ui.ep_current, dtype=np.float64) if self.ui.ep_current is not None else np.zeros(0)
@@ -878,25 +876,13 @@ class OptimizationManager(FinalCleanupMixin):
                 self.ui._get_materials(), stack, wls, tgts,
                 stack_back=back_stack, ep_back=ep_back, has_back_stack=has_back_stack, has_back_calc=has_back_calc,
             )
-            tgt_vals, tgt_weights = context.normal_targets()
             floor = np.maximum(self._current_min_layer_thickness(len(ep)), 0.01)
             x0 = np.maximum(ep[var_idx], floor[var_idx])
             bounds = [(float(floor[i]), float(max(ep[i] * 2.0, 2000.0))) for i in var_idx]
-            full = ep.copy()
-
-            def cost_and_grad(x_var: np.ndarray) -> tuple[float, np.ndarray]:
-                full[var_idx] = x_var
-                c, g = compute_gradient_all_layers_analytic(
-                    full, context.n_front, context.n_sub, context.wls, tgt_vals, tgt_weights, 0.01,
-                    context.has_back_calc, context.n_back, context.d_back, var_idx,
-                )
-                return float(c), np.asarray(g, dtype=np.float64)
-
+            res, cost_and_grad = lbfgsb_polish(ep, var_idx, x0, bounds, context, maxiter=150, ftol=1e-12)
             c0, _ = cost_and_grad(x0)
-            res = scipy.optimize.minimize(
-                cost_and_grad, x0, method="L-BFGS-B", jac=True, bounds=bounds, options={"maxiter": 150, "ftol": 1e-12}
-            )
             if res.fun < c0:
+                full = ep.copy()
                 full[var_idx] = res.x
                 self.ui._update_qwot_from_ep(full)
                 self.ui._update_thickness_display()
@@ -1134,11 +1120,9 @@ class OptimizationManager(FinalCleanupMixin):
         The inputs use DESIGN's shared cost context and the same analytic gradient as the optimizer.
         Raises when the stack cannot be evaluated: `_best_prune_candidate` reports that, it is not a bad merit.
         """
-        import scipy.optimize
-
         from certus.core.certus_design_cost_context import prepare_design_cost_context
+        from certus.core.certus_design_final_cleanup import lbfgsb_polish
         from certus.core.certus_design_worker_utils import optim_backside_flags_from_cfg
-        from certus_physics import compute_gradient_all_layers_analytic
 
         wls = self.ui._get_optim_wls()
         has_back_stack, has_back_calc, back_stack = optim_backside_flags_from_cfg(
@@ -1153,22 +1137,9 @@ class OptimizationManager(FinalCleanupMixin):
             self.ui._get_materials(), stack_test, wls, [t for t in self.ui._get_tgts() if t.valid()],
             stack_back=back_stack, ep_back=ep_back, has_back_stack=has_back_stack, has_back_calc=has_back_calc,
         )
-        tgt_vals, tgt_weights = context.normal_targets()
         var_idx = np.arange(len(ep_test), dtype=np.int64)
-
-        def cost_and_gradient(x):
-            return compute_gradient_all_layers_analytic(
-                x, context.n_front, context.n_sub, context.wls, tgt_vals, tgt_weights, 0.01,
-                context.has_back_calc, context.n_back, context.d_back, var_idx,
-            )
-
-        res = scipy.optimize.minimize(
-            cost_and_gradient,
-            ep_test,
-            method="L-BFGS-B",
-            jac=True,
-            bounds=[(0.01, 2000.0)] * len(ep_test),
-            options={"maxiter": 50, "ftol": 1e-6},
+        res, _ = lbfgsb_polish(
+            ep_test, var_idx, ep_test, [(0.01, 2000.0)] * len(ep_test), context, maxiter=50, ftol=1e-6
         )
         return float(np.sqrt(max(res.fun, 0.0))) if res.fun < 1e20 else float("inf")
 

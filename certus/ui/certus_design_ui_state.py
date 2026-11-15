@@ -197,6 +197,9 @@ class StateManager:
                 "max_iter": self.ui.global_cycles_spin.value(),
                 "mc_n": self.ui.mc_n_spin.value(),
                 "mc_sigma": self.ui.mc_sigma_spin.value(),
+                "mc_sigma_rel": self.ui.mc_sigma_rel_spin.value(),
+                "mc_sigma_ot": self.ui.mc_sigma_ot_spin.value(),
+                "mc_rmse_threshold": self.ui.mc_rmse_threshold_spin.value(),
                 # Extra params
                 "pre_polish": (self.ui.pre_polish_check.isChecked() if hasattr(self.ui, "pre_polish_check") else False),
                 "allow_growth": (self.ui.allow_growth_check.isChecked() if hasattr(self.ui, "allow_growth_check") else True),
@@ -342,6 +345,10 @@ class StateManager:
         self.ui.global_cycles_spin.setValue(opt.get("max_iter", self.ui.global_cycles_spin.value()))
         self.ui.mc_n_spin.setValue(opt.get("mc_n", self.ui.mc_n_spin.value()))
         self.ui.mc_sigma_spin.setValue(opt.get("mc_sigma", self.ui.mc_sigma_spin.value()))
+        # The three other settings of the spectral Monte Carlo were not saved (audit 2026-11-15, M-L5b).
+        self.ui.mc_sigma_rel_spin.setValue(opt.get("mc_sigma_rel", self.ui.mc_sigma_rel_spin.value()))
+        self.ui.mc_sigma_ot_spin.setValue(opt.get("mc_sigma_ot", self.ui.mc_sigma_ot_spin.value()))
+        self.ui.mc_rmse_threshold_spin.setValue(opt.get("mc_rmse_threshold", self.ui.mc_rmse_threshold_spin.value()))
 
         if hasattr(self.ui, "pre_polish_check"):
             self.ui.pre_polish_check.setChecked(opt.get("pre_polish", self.ui.pre_polish_check.isChecked()))

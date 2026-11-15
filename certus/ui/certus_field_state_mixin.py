@@ -364,6 +364,7 @@ class CertusFieldStateMixin:
             "global_opt": bool(params.global_opt),
             "analytic_gradient": bool(params.analytic_gradient),
             "allow_growth": bool(self.chk_allow_growth.isChecked()),
+            "opt_dmin": float(self.opt_panel.edit_dmin.value()),
         }
 
     def _apply_config(self, data: dict) -> None:
@@ -395,6 +396,9 @@ class CertusFieldStateMixin:
         self.chk_min_field.setChecked(bool(data.get("min_field_active", False)))
         self.chk_global_opt.setChecked(bool(data.get("global_opt", False)))
         self.chk_allow_growth.setChecked(bool(data.get("allow_growth", False)))
+        # The minimal thickness of the optimiser was not saved (audit 2026-11-15, M-L5b); absent: left as it is.
+        if data.get("opt_dmin") is not None:
+            self.opt_panel.edit_dmin.setValue(float(data["opt_dmin"]))
 
         emp = data.get("emp_factors", [])
         layer_types = data.get("layer_types", [])

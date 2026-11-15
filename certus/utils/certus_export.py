@@ -68,7 +68,9 @@ def iter_plot_data_series(plot_item: pg.PlotItem | None) -> list[tuple[str, np.n
                 continue
 
             if hasattr(item, "getData"):
-                x, y = item.getData()
+                # The data the curve was given, not what the view shows: PlotDataItem.getData() returns the displayed
+                # set (log10 in log mode, clipped to the view, downsampled) (audit 2026-11-15, M-L4d).
+                x, y = item.getOriginalDataset() if isinstance(item, pg.PlotDataItem) else item.getData()
                 if x is None or y is None:
                     continue
                 x = np.asarray(x, dtype=float).reshape(-1)

@@ -207,6 +207,12 @@ def sigma_knots_decode(
 
     sk[-1] = s_hi
 
+    # Resetting the last knot to s_hi left the knot before it above (3.01 before 3.0) when the last intervals are
+    # tiny: cap each inner knot at eps_s per remaining interval below s_hi (audit 2026-11-15, M-L3a). A mesh that
+    # already keeps its separation is below the caps and comes back to the bit.
+    if m > 1:
+        np.minimum(sk[1:-1], s_hi - eps_s * np.arange(m - 1, 0, -1), out=sk[1:-1])
+
     if reuse_output and work is not None:
         return sk
     return sk.copy()

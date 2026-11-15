@@ -1,0 +1,6 @@
+ECHEC REEL (unit), rouge aussi seul en serie :
+    tests/unit/test_the_architecture_debt_only_shrinks.py::test_no_offender_has_grown[fichiers_longs]
+    tests/unit/test_the_project_is_licensed_under_the_gpl.py::test_no_runtime_dependency_is_under_a_licence_that_cannot_join_the_gpl[tbb]
+    tests/unit/test_the_ai_entry_points_stay_small.py::test_a_document_an_ai_reads_stays_under_its_cap[docs/REGLES_reference.md]
+VALIDATION=NO-GO
+La reference de CLAUDE.md section 2 reste la suite complete en serie.

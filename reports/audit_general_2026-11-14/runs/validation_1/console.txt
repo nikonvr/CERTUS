@@ -1,0 +1,21 @@
+VALIDATION PARALLELE -- 376baef1, 0 fichier(s) suivi(s) modifie(s)
+  python 3.15.2, 16 worker(s), ui 6, journaux : reports\audit_general_2026-11-14\runs\validation_1
+  ruff            PASS      0:00  
+  coherence_md    PASS      0:09  
+  check_claude_md PASS      0:00  
+  check_docs      PASS      0:00  
+  oracle          PASS      0:22  1205 passed
+  unit : 4 echec(s) en parallele, rejeu seul en serie...
+  unit            ARTEFACT  4:18  4 failed, 6176 passed, 7 skipped, 1 xfailed
+  ui              PASS      10:29  1594 passed, 12 skipped, 2 xfailed
+  rest            PASS      3:54  322 passed
+  performance     PASS      0:21  30 passed, 2 skipped
+
+ARTEFACT de charge ou d'ordre (unit), verts seuls en serie :
+    tests/unit/test_strat_poem_anchors_are_exact_on_request.py::test_without_the_flag_the_kernel_keeps_the_coarse_samples_bit_for_bit
+    tests/unit/test_user_preferences_are_isolated.py::test_the_automatic_export_is_off_under_test
+    tests/unit/test_the_default_pytest_run_is_quiet.py::test_a_bare_run_lists_no_test_and_measures_no_coverage
+    tests/unit/test_the_default_pytest_run_is_quiet.py::test_a_quiet_run_still_ends_on_the_summary_line
+VALIDATION=GO
+La reference de CLAUDE.md section 2 reste la suite complete en serie.
+EXIT=0 WALL=1241s HEAD=376baef1

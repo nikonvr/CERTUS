@@ -1,0 +1,19 @@
+VALIDATION PARALLELE -- 5a3b0171, 4 fichier(s) suivi(s) modifie(s)
+  python 3.15.2, 16 worker(s), ui 6, journaux : reports\audit_general_2026-11-14\runs\validation_3
+  ruff            PASS      0:00  
+  coherence_md    PASS      0:10  
+  check_claude_md PASS      0:00  
+  check_docs      PASS      0:00  
+  oracle          PASS      0:22  1209 passed
+  unit : 3 echec(s) en parallele, rejeu seul en serie...
+  unit            FAIL      11:23  3 failed, 6202 passed, 7 skipped, 1 xfailed
+  ui              PASS      11:16  1595 passed, 12 skipped, 2 xfailed
+  rest            PASS      4:26  322 passed
+  performance     PASS      0:21  30 passed, 2 skipped
+
+ECHEC REEL (unit), rouge aussi seul en serie :
+    tests/unit/test_the_architecture_debt_only_shrinks.py::test_no_offender_has_grown[fichiers_longs]
+    tests/unit/test_the_project_is_licensed_under_the_gpl.py::test_no_runtime_dependency_is_under_a_licence_that_cannot_join_the_gpl[tbb]
+    tests/unit/test_the_ai_entry_points_stay_small.py::test_a_document_an_ai_reads_stays_under_its_cap[docs/REGLES_reference.md]
+VALIDATION=NO-GO
+La reference de CLAUDE.md section 2 reste la suite complete en serie.

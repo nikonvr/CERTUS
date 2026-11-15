@@ -1,0 +1,8 @@
+=== START re ===
+dialogues: reponse automatique OUI
+2026-11-15 14:15:08 ✦ WARNING [certus_re_extrapolation.warn_once_if_extrapolating:15] ➔ Tabulated index covers 1000.0-5200.0 nm; 800.0-4794.0 nm requested: the edge values are held constant
+2026-11-15 14:15:08 ✦ WARNING [certus_re_extrapolation.warn_once_if_extrapolating:15] ➔ Tabulated index covers 1000.0-5200.0 nm; 800.0-4794.0 nm requested: the edge values are held constant
+MODULE=re
+SETUP_S=0.783
+RUN_S=28.247
+RESULT=0.01440698258079255

@@ -1,0 +1,15 @@
+VALIDATION PARALLELE -- 3e047e5f, 0 fichier(s) suivi(s) modifie(s)
+  python 3.15.2, 16 worker(s), ui 6, journaux : reports\audit_general_2026-11-14\runs\validation_2
+  ruff            PASS      0:00  
+  coherence_md    PASS      0:10  
+  check_claude_md PASS      0:00  
+  check_docs      PASS      0:00  
+  oracle          PASS      0:22  1209 passed
+  unit            PASS      6:31  6183 passed, 7 skipped, 1 xfailed
+  ui              PASS      10:13  1594 passed, 12 skipped, 2 xfailed
+  rest            PASS      3:52  322 passed
+  performance     PASS      0:21  30 passed, 2 skipped
+
+VALIDATION=GO
+La reference de CLAUDE.md section 2 reste la suite complete en serie.
+EXIT=0 WALL=1292s HEAD=3e047e5f

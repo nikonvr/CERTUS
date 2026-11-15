@@ -142,6 +142,9 @@ class IndexOptimizationStrategy:
             )
         else:
             n_sub = _get_substrate_n_array_index(sub_id, wls)
+        # k_sub_data lives on the full file grid: keep the same points as wls, or the objective
+        # reads k_sub[i] of another wavelength (audit 2026-11-15, M-L5a).
+        k_sub = None if c.k_sub_data is None else np.asarray(c.k_sub_data, dtype=np.float64)[mask.to_numpy()]
         worker.logger.info(f"substrate: {c.substrate}")
         if c.is_frosted_glass:
             worker.logger.info("Mode: Frosted Glass (Reflection only)")
@@ -162,6 +165,8 @@ class IndexOptimizationStrategy:
             valid &= np.isfinite(target_R)
         wls = wls[valid]
         n_sub = n_sub[valid]
+        if k_sub is not None:
+            k_sub = k_sub[valid]
         if target_T is not None:
             target_T = target_T[valid]
         if target_R is not None:
@@ -182,7 +187,7 @@ class IndexOptimizationStrategy:
             exclude_range=exclude_range,
             is_frosted_glass=c.is_frosted_glass,
             has_absorbing_substrate=c.has_absorbing_substrate,
-            k_sub_data=c.k_sub_data,
+            k_sub_data=k_sub,
             substrate_thickness_nm=c.substrate_thickness_nm,
         )
         return (wls, n_sub, target_T, target_R, exclude_range, obj)

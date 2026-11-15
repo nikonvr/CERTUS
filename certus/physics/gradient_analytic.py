@@ -513,24 +513,24 @@ def _compute_epsilon1_gradient_kernel(
             d_term5_mid_dE0 = (-d_gamma2_dE0 * inv_zeta4) + (E_sq - gamma_sq) * (-(inv_zeta4**2) * d_zeta4_dE0)
 
             dT5_dE0 = d_K5_dE0 * term5_mid * brack5 + K5 * d_term5_mid_dE0 * brack5 + K5 * term5_mid * d_brack5_dE0
-
             d_K5_dC = -K5 / alpha * d_alpha_dC
-
             d_term5_mid_dC = (-d_gamma2_dC * inv_zeta4) + (E_sq - gamma_sq) * (-(inv_zeta4**2) * d_zeta4_dC)
-
             dT5_dC = d_K5_dC * term5_mid * brack5 + K5 * d_term5_mid_dC * brack5 + K5 * term5_mid * d_brack5_dC
-
-        result[0, i] = eps_inf + T1 + T2 + T3 + T4 + T5
-
-        result[1, i] = dT1_dEg + dT2_dEg + dT3_dEg + dT4_dEg + dT5_dEg
-
-        result[2, i] = dT1_dA + dT2_dA + dT3_dA + dT4_dA + dT5_dA
-
-        result[3, i] = dT1_dE0 + dT2_dE0 + dT3_dE0 + dT4_dE0 + dT5_dE0
-
-        result[4, i] = dT1_dC + dT2_dC + dT3_dC + dT4_dC + dT5_dC
-
-        result[6, i] = 1.0  # deps_inf
+        val = eps_inf + T1 + T2 + T3 + T4 + T5
+        # Same floor as epsilon1_TL_analytic, which the cost uses: where epsilon1 is held at 1.0 (or falls back to
+        # eps_inf when not finite) it is flat, so every other derivative is zero (audit 2026-11-15, M-L1).
+        if not np.isfinite(val):
+            result[0, i] = eps_inf
+            result[6, i] = 1.0
+        elif val < 1.0:
+            result[0, i] = 1.0
+        else:
+            result[0, i] = val
+            result[1, i] = dT1_dEg + dT2_dEg + dT3_dEg + dT4_dEg + dT5_dEg
+            result[2, i] = dT1_dA + dT2_dA + dT3_dA + dT4_dA + dT5_dA
+            result[3, i] = dT1_dE0 + dT2_dE0 + dT3_dE0 + dT4_dE0 + dT5_dE0
+            result[4, i] = dT1_dC + dT2_dC + dT3_dC + dT4_dC + dT5_dC
+            result[6, i] = 1.0  # deps_inf
 
     return result
 

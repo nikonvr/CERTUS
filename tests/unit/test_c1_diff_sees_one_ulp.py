@@ -113,7 +113,7 @@ def test_the_default_corpus_reaches_the_strat_kernels_without_a_refusal() -> Non
 
     assert rec.erreurs == {}, rec.erreurs
     entries = {key.split("#")[0] for key in rec.tableaux}
-    assert entries == {"strat.growth", "strat.states", "strat.turning", "strat.next", "strat.margins", "strat.scan", "strat.tprofile", "strat.detailed"}
+    assert entries == {"strat.growth", "strat.states", "strat.turning", "strat.next", "strat.margins", "strat.scan", "strat.tprofile", "strat.detailed", "strat.batch"}
     assert len(rec.tableaux) > 1500
 
 

@@ -1,0 +1,14 @@
+C1 - bits compares : base HEAD (38ee417)  contre  tete HEAD (38ee417)  (462 s)
+point d entree             tableaux differents   ulp max  relatif max
+---------------------------------------------------------------------
+strat.batch                      80          0         -            -
+strat.detailed                    3          0         -            -
+strat.growth                   2000          0         -            -
+strat.margins                   120          0         -            -
+strat.next                       60          0         -            -
+strat.scan                       90          0         -            -
+strat.states                     20          0         -            -
+strat.tprofile                   30          0         -            -
+strat.turning                   180          0         -            -
+
+C1 TENU : 2583 tableaux, tous identiques au bit

@@ -1,0 +1,5 @@
+cpu=16 pool=8 tasks=32 runs=150 layer=omp default_threads=16
+inner=16: 0.65 s for 32 tasks, bit-identical to the first: True
+inner= 4: 0.53 s for 32 tasks, bit-identical to the first: True
+inner= 2: 0.41 s for 32 tasks, bit-identical to the first: True
+inner= 1: 0.67 s for 32 tasks, bit-identical to the first: True

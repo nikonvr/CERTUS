@@ -1,0 +1,19 @@
+layers=48 runs=2000 threads=1 A=0.0005 h=1.66 corridor=0.005 curvature=0.00375
+level 0.5: carry off 0.954 s, on 0.654 s, x1.46 | crash off 1.0000 on 1.0000, flipped runs 0
+    thick     differing=  22478 max_ulp=2553449 max_rel=4.14e-10
+    dyn       differing=     46 max_ulp=4403 max_rel=8.82e-13
+    m_level   differing=  81298 max_ulp=176345600 max_rel=2.68e-08
+    m_missed  differing=  76038 max_ulp=105848832 max_rel=2.17e-08
+    m_fab     differing=    888 max_ulp=7634944 max_rel=9.92e-10
+level 1: carry off 0.948 s, on 0.656 s, x1.44 | crash off 1.0000 on 1.0000, flipped runs 0
+    thick     differing=  22181 max_ulp=536364 max_rel=7.07e-11
+    dyn       differing=     46 max_ulp=1721 max_rel=2.66e-13
+    m_level   differing=  81177 max_ulp=150994944 max_rel=2.31e-08
+    m_missed  differing=  75389 max_ulp=74878976 max_rel=1.02e-08
+    m_fab     differing=   1149 max_ulp=12865536 max_rel=1.83e-09
+level 2: carry off 0.918 s, on 0.641 s, x1.43 | crash off 1.0000 on 1.0000, flipped runs 0
+    thick     differing=  21742 max_ulp=921804 max_rel=1.25e-10
+    dyn       differing=     46 max_ulp=3443 max_rel=5.49e-13
+    m_level   differing=  81187 max_ulp=196083712 max_rel=2.92e-08
+    m_missed  differing=  75398 max_ulp=738721792 max_rel=9.28e-08
+    m_fab     differing=   1877 max_ulp=108060672 max_rel=1.72e-08

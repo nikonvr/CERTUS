@@ -1,0 +1,93 @@
+=== START strat ===
+dialogues: reponse automatique OUI
+journal de l'application redirige vers la console (logger 'CERTUS-STRAT')
+DESIGN_JSON=JSON-strat-example.json
+WAIT_EXIT=finished
+STRAT_N_STRATEGIES=2653
+STRAT_CRASH_ELIMINATED=0/2653
+STRAT_CRASH_RATE_MIN=0.0000 MEDIAN=0.0000
+STRAT_RANK00 id=900250409 origin=LOCAL_SEARCH score=0.005862 crash=0.0000 elim=False nblocks=34 nwl=14 wl=[564,574,484,564,554,564,514,494,504,574,534,564,514,544,564,504,544,514,544,514,544,550,544,510,510,530,544,500,544,471,530,530,471,530]
+STRAT_RANK01 id=900250409 origin=ELITE score=0.007402 crash=0.0000 elim=False nblocks=2 nwl=2 wl=[544,471]
+STRAT_RANK02 id=900250410 origin=ELITE score=0.007483 crash=0.0000 elim=False nblocks=2 nwl=2 wl=[543,470]
+STRAT_RANK03 id=900250413 origin=ELITE score=0.007625 crash=0.0000 elim=False nblocks=2 nwl=2 wl=[543,471]
+STRAT_RANK04 id=900250412 origin=ELITE score=0.007625 crash=0.0000 elim=False nblocks=2 nwl=2 wl=[543,471]
+STRAT_RANK05 id=900250411 origin=ELITE score=0.007746 crash=0.0000 elim=False nblocks=2 nwl=2 wl=[543,472]
+STRAT_RANK06 id=900350487 origin=ELITE score=0.007758 crash=0.0000 elim=False nblocks=3 nwl=3 wl=[544,473,471]
+STRAT_RANK07 id=900350508 origin=ELITE score=0.007758 crash=0.0000 elim=False nblocks=3 nwl=3 wl=[544,473,471]
+STRAT_RANK08 id=900350509 origin=ELITE score=0.007758 crash=0.0000 elim=False nblocks=3 nwl=3 wl=[544,473,471]
+STRAT_RANK09 id=900350510 origin=ELITE score=0.007758 crash=0.0000 elim=False nblocks=3 nwl=3 wl=[544,473,471]
+MODULE=strat
+SETUP_S=1.229
+RUN_S=1783.459
+RESULT=0.005861922892702714
+
+--- echantillons: 103931 (intervalle 5 ms) ---
+TEMPS PROPRE (ou le processus est reellement occupe)
+  235.8 %  245106  [WORK] certus/core/certus_strat_robustness_task.py:96:_test_strategy_robustness_task
+  154.8 %  160914  [WORK] C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/threading.py:331:wait
+   97.0 %  100788  [MAIN] scripts/bench_examples.py:179:wait_for
+   89.7 %   93276  [WORK] C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/multiprocessing/connection.py:1052:_exhaustive_wait
+   55.5 %   57651  [WORK] C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/site-packages/numba/core/compiler_lock.py:11:acquire
+   39.1 %   40669  [WORK] C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/concurrent/futures/thread.py:97:_worker
+   32.2 %   33466  [WORK] certus/core/certus_strat_objectives.py:360:build_M_before_cache
+   23.0 %   23874  [WORK] C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/threading.py:1234:join
+   22.3 %   23223  [WORK] certus/physics/certus_tmm_hl.py:57:calculate_RT_vectorized_real_HL
+   13.0 %   13494  [WORK] C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/site-packages/llvmlite/binding/ffi.py:210:__call__
+    5.7 %    5879  [WORK] C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/site-packages/colorama/win32.py:108:_winapi_test
+    5.4 %    5641  [WORK] C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/multiprocessing/connection.py:1086:wait
+    2.8 %    2894  [WORK] certus/core/certus_strat_objectives.py:482:_compute_theoretical_layer_profile
+    1.2 %    1294  [WORK] C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/multiprocessing/connection.py:363:_poll
+    0.9 %     938  [WORK] C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/site-packages/numba/core/analysis.py:86:def_reach
+    0.8 %     788  [WORK] C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/site-packages/colorama/win32.py:114:winapi_test
+    0.7 %     759  [WORK] C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/logging/__init__.py:1142:emit
+    0.7 %     752  [WORK] C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/site-packages/numpy/lib/_arraysetops_impl.py:350:_unique1d
+    0.6 %     651  [MAIN] C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/site-packages/numpy/lib/_function_base_impl.py:4726:_quantile
+    0.6 %     580  [WORK] C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/site-packages/numpy/_core/fromnumeric.py:86:_wrapreduction_any_all
+    0.5 %     568  [MAIN] C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/site-packages/llvmlite/binding/ffi.py:210:__call__
+    0.5 %     566  [WORK] C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/multiprocessing/connection.py:295:_send_bytes
+LIGNES LES PLUS CHERES
+  114.9 %  119445  certus/core/certus_strat_robustness_task.py:661
+  113.1 %  117574  certus/core/certus_strat_robustness_task.py:531
+   97.0 %  100788  scripts/bench_examples.py:214
+   32.2 %   33464  certus/core/certus_strat_objectives.py:395
+   22.3 %   23223  certus/physics/certus_tmm_hl.py:114
+    6.3 %    6599  certus/core/certus_strat_robustness_task.py:217
+    1.4 %    1458  certus/core/certus_strat_objectives.py:508
+    1.4 %    1435  certus/core/certus_strat_objectives.py:516
+    0.4 %     391  certus/ui/certus_ui_utils.py:746
+    0.4 %     380  certus/core/certus_strat_robustness_task.py:627
+    0.3 %     300  certus/core/certus_strat_robustness_task.py:395
+    0.3 %     268  certus/core/certus_strat_robustness_task.py:593
+    0.2 %     257  certus/workers/certus_strat_workers.py:931
+    0.2 %     241  certus/core/certus_strat_robustness_task.py:630
+    0.2 %     175  certus/core/certus_strat_ranking.py:290
+    0.1 %     138  certus/utils/certus_strat_service.py:145
+    0.1 %     122  certus/ui/certus_strat_table_ui.py:274
+    0.1 %     113  certus/core/certus_strat_robustness_task.py:592
+    0.1 %      84  certus/core/certus_strat_robustness_task.py:608
+    0.1 %      76  certus/core/certus_strat_objectives.py:146
+    0.1 %      64  certus/core/certus_strat_local_search.py:529
+    0.1 %      55  certus/core/certus_strat_robustness_slit.py:210
+TEMPS CUMULE (qui declenche ce travail)
+  497.0 %  516571  C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/threading.py:1150:run
+  497.0 %  516571  C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/threading.py:1202:_bootstrap_inner
+  497.0 %  516571  C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/threading.py:1167:_bootstrap
+  398.5 %  414190  C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/concurrent/futures/thread.py:97:_worker
+  359.4 %  373517  C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/concurrent/futures/thread.py:71:run
+  359.4 %  373517  C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/concurrent/futures/thread.py:81:run
+  338.3 %  351564  certus/core/certus_strat_robustness_task.py:96:_test_strategy_robustness_task
+  154.8 %  160914  C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/threading.py:331:wait
+  142.0 %  147627  certus/core/certus_strat_consensus.py:53:_test_strategy_robustness_task
+  100.0 %  103928  scripts/bench_examples.py:727:run_strat
+  100.0 %  103928  scripts/bench_examples.py:846:main
+  100.0 %  103928  scripts/bench_examples.py:1:<module>
+   98.7 %  102567  scripts/bench_examples.py:179:wait_for
+   97.9 %  101750  certus/workers/certus_strat_workers.py:1117:run
+   96.9 %  100707  certus/workers/certus_strat_workers_pipeline.py:18:execute
+   96.9 %  100707  certus/workers/certus_strat_workers.py:1249:_execute_full_pipeline
+   96.9 %  100704  certus/workers/certus_strat_workers.py:922:run
+   96.6 %  100447  C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/multiprocessing/queues.py:96:get
+   96.4 %  100211  C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/multiprocessing/connection.py:363:_poll
+   96.4 %  100211  C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/multiprocessing/connection.py:264:poll
+   95.2 %   98917  C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/multiprocessing/connection.py:1086:wait
+   93.8 %   97514  C:/Users/Fabien/AppData/Local/Programs/Python/Python315/Lib/multiprocessing/queues.py:229:_feed

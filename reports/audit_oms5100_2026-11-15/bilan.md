@@ -167,7 +167,7 @@ autre modèle : à comparer à la référence séquentielle, pas à l'actuel au 
 | bruit sur signal du signal brut | < 0,02 % efficace, « dépend du montage et du détecteur » | JCMO 2016, « Typical performance data OMS 5000/5100 » ; SVC 2006 | σ = A/3 = 0,0167 point : cohérent (§4.4) |
 | justesse en longueur d'onde | < 0,5 nm, « dépend de l'étalonnage du monochromateur » | JCMO 2016 | aucune erreur de λ dans le modèle (R8) |
 | bande passante | 0,5 à 15 nm selon la fente ; 0,5 à 8,8 nm **à mi-hauteur** pour l'OMS 5100 | JCMO 2016 ; brochure Bühler | la résolution est une largeur à mi-hauteur ; le modèle intègre un créneau (R3) |
-| cadence | une lecture par tour, 15 à 250 tr/min | JCMO 2016 | les 4 Hz du modèle sont en haut de la plage |
+| cadence | une lecture par tour, 15 à 250 tr/min | JCMO 2016 | la machine est un HELIOS 800 à 240 tr/min (👤, 2026-11-15) : les 4 Hz du modèle sont exacts |
 | dérive du signal | « négligeable par auto-compensation » | JCMO 2016 | rien à modéliser |
 | erreur d'étalonnage photométrique | < 1 %, « importance selon l'algorithme d'arrêt » | JCMO 2016 | `affine_scale_amp` vaut 0 en production : l'arrêt absolu y est jugé insensible à une erreur que le constructeur chiffre (R10) |
 | algorithmes d'arrêt | point tournant ; point de déclenchement absolu ou relatif ; « correction en ligne des points de déclenchement » | JCMO 2016 ; SVC 2006 | POEM est bien la famille « relative » |

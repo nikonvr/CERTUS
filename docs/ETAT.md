@@ -25,9 +25,9 @@ dans `artifacts/archives-20261114/inventaire.json`, dans `certus1111`.
 
 **Python de référence : 3.15.2**, dépendances de requirements.lock.
 
-**Dernière validation complète** : `VALIDATION=GO`, le 2026-11-14 sous Windows sur `3e047e5f` (branche
-`claude/claude-code-suije-bf4f1f`, corrections C20 et ALG-03 comprises), en 21 min 32 s, sans aucun échec au premier
-passage. [Détails](../reports/audit_general_2026-11-14/bilan.md#5-validation).
+**Dernière validation complète** : `VALIDATION=GO`, le 2026-11-15 sous Windows sur `3374b380` (branche
+`claude/claude-code-suije-bf4f1f`) avec les chantiers 37, 38 et le délai UX, commités ensuite tels quels.
+[Détails](../reports/audit_general_2026-11-14/runs/validation_4.console.txt).
 
 Pour un échec de comparaison au bit, rejouer sur [cache Numba vierge](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md).
 

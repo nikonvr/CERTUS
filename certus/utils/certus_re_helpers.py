@@ -1069,8 +1069,10 @@ def _re_header_normalize_for_tokens(raw: str) -> str:
 
     # Common FR -> tokens already handled by the parser
 
+    # [eèé]: the accented letters had been lost from this class, so "sans arrière" kept the backside
+    # (audit 2026-11-15, M-L4b).
     s = re.sub(
-        r"sans\s*[-_/]?\s*arri[eee]res?",
+        r"sans\s*[-_/]?\s*arri[eèé]res?",
         " noBK ",
         s,
         flags=re.IGNORECASE,
@@ -1084,22 +1086,18 @@ def _re_header_normalize_for_tokens(raw: str) -> str:
     )
 
     s = re.sub(
-        r"avec\s*[-_/]?\s*arri[eee]res?",
+        r"avec\s*[-_/]?\s*arri[eèé]res?",
         " withback ",
         s,
         flags=re.IGNORECASE,
     )
-
     s = re.sub(r"\bincidence\b", " aoi ", s, flags=re.IGNORECASE)
-
     s = re.sub(r"\bmoyenne\b", " Avg ", s, flags=re.IGNORECASE)
-
     s = re.sub(r"\bnon[\s-]*polaris", " unpol ", s, flags=re.IGNORECASE)
-
     # Detach 1f / 2f glued after a letter (e.g. ``Rs1f``, ``RnoBKs2f``)
-
     s = re.sub(r"(?<=[A-Za-z])(1f|2f)\b", r" \1 ", s, flags=re.IGNORECASE)
-
+    # Split a glued leading type+angle(+pol): "R45p" read as R at 0 deg, s (audit 2026-11-15, M-L4a).
+    s = re.sub(r"^\s*([RT])(\d+(?:\.\d+)?)([SPsp])?(?=\s|$)", r"\1 \2 \3 ", s)
     return s
 
 
@@ -1890,7 +1888,9 @@ def _re_measurement_values_are_percent(vals: list[float]) -> bool:
     if arr.size == 0:
         return True
 
-    return float(np.nanmax(np.abs(arr))) > 1.25
+    # R and T as fractions cannot exceed 1: above 1.05 (noise margin) the column can only be percent
+    # (was 1.25: an antireflection R in percent up to 1.25 was read x100; audit 2026-11-15, M-L4c).
+    return float(np.nanmax(np.abs(arr))) > 1.05
 
 
 

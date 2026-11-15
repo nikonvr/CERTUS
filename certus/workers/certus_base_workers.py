@@ -54,6 +54,11 @@ class WorkerSignals(QObject):
 
     live = pyqtSignal(object)
 
+# What a computed function can raise beyond the numerical faults: left uncaught, the thread ended without ``finished``
+# nor ``error`` and the window waiting for one of them stayed busy (audit 2026-11-15, M-L3b).
+_WORKER_FAULTS = (*NUMERICAL_FAULT_EXCEPTIONS, KeyError, IndexError, TypeError, AttributeError)
+
+
 class GenericWorker(QThread):
     """
 
@@ -90,7 +95,7 @@ class GenericWorker(QThread):
 
                 self.signals.finished.emit(res)
 
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
+        except _WORKER_FAULTS as e:
             # Send full traceback for better debugging
 
             tb_str = "".join(traceback.format_tb(e.__traceback__))

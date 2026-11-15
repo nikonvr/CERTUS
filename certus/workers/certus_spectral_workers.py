@@ -783,7 +783,10 @@ class EvalWorker(QThread):
                     n_sub_arr=n_sub_arr,
                     angle=angle,
                     pol=pol,
-                    has_back_calc=bool(has_back_calc),
+                    # The backside of each target group, not the global box alone: an RE workbook mixing BK and noBK
+                    # columns ticks the box, and the noBK curve was shown with a backside the fit never used
+                    # (audit 2026-11-15, M-L6a). DESIGN targets all carry include_backside=True: same path as before.
+                    has_back_calc=bool(has_back_calc) and bool(include_backside),
                     has_back_stack=bool(has_back_stack),
                     n_back_T_arr=n_back_T_arr,
                     d_back_arr=d_back_arr,

@@ -464,7 +464,8 @@ class ExportManager:
 
             df_stack = pd.DataFrame(stack_rows)
 
-            if ep:
+            # len(), not truth: after an optimisation ep_current is an array, whose truth value raises (M-L5c).
+            if len(ep):
                 df_stack = pd.concat(
                     [df_stack, pd.DataFrame([{"#": "TOTAL", "Thickness (nm)": float(np.sum(ep))}])],
                     ignore_index=True,

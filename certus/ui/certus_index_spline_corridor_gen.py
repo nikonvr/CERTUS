@@ -49,8 +49,13 @@ class _CorridorGenMixin:
 
         sel = np.isfinite(d_vals) & (d_vals >= d_lo - 1e-12) & (d_vals <= d_hi + 1e-12)
 
+        # The n, k of an emergency record (status 3) are the seed, not a fit: they stay out of the envelope (M-L3c).
+        status_codes = np.asarray(source.get("profile_d_manual_grid_point_status_code", []), dtype=np.int64).ravel()
+        fitted = status_codes != 3 if status_codes.size == d_vals.size else np.ones(d_vals.shape, dtype=bool)
+        sel &= fitted
+
         if not np.any(sel):
-            i_near = int(np.argmin(np.abs(d_vals - 0.5 * (d_lo + d_hi))))
+            i_near = int(np.argmin(np.where(fitted, np.abs(d_vals - 0.5 * (d_lo + d_hi)), np.inf)))
 
             sel = np.zeros_like(d_vals, dtype=bool)
 

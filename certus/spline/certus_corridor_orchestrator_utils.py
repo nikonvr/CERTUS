@@ -1147,7 +1147,7 @@ def _package_profile_grid_result(
         int(returned_base_points),
         int(missing_after_emergency),
     )
-    fg_curve = np.isfinite(d_out) & np.isfinite(r_out)
+    fg_curve = np.isfinite(d_out) & np.isfinite(r_out) & (point_status_out != 3)  # status 3 = emergency record (seed or invented RMSE): kept in the output, never decides the curve (M-L3c)
     if np.any(fg_curve):
         dc = d_out[fg_curve]
         rc = r_out[fg_curve]
@@ -1165,7 +1165,7 @@ def _package_profile_grid_result(
     curve_minimum_result: dict[str, Any] | None = None
     curve_beats_nominal = False
     curve_vs_nominal_delta_rmse = float("nan")
-    fg_min = np.isfinite(d_out) & np.isfinite(r_out)
+    fg_min = fg_curve
     if np.any(fg_min):
         j_curve = int(np.argmin(np.where(fg_min, r_out, np.inf)))
         r_cb = float(r_out[j_curve])

@@ -755,6 +755,10 @@ def _maybe_promote_best_corridor_refit(
         return
 
     finite_mask = np.isfinite(d_vals) & np.isfinite(rm_vals)
+    # An emergency record (status 3) is the seed, not a refit: it is never promoted (audit 2026-11-15, M-L3c).
+    status_codes = np.asarray(extra.get("profile_d_manual_grid_point_status_code", []), dtype=np.int64).ravel()
+    if status_codes.size == d_vals.size:
+        finite_mask &= status_codes != 3
     if not np.any(finite_mask):
         return
     idx_valid = np.flatnonzero(finite_mask)

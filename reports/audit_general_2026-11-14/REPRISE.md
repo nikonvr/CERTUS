@@ -176,7 +176,7 @@ PDF OMS5100_sources_resume.pdf : non commité (générateur %TEMP%\make_oms_pdf.
 - 12:37 : 👤 « suivons les recommandations » (1 fils par pool, 2 TBB, 3 algorithmique ; consensus = décision de 👤 sur chiffres).
   tbb 2023.2.0 installé (pip, wheel PyPI) dans Python315 ; DLL dans Python315\Library\bin, hors du chemin : il faut
   os.add_dll_directory + PATH avant numba (fait dans probe_threads.py si NUMBA_THREADING_LAYER=tbb). À lancer APRÈS la
-  recherche de contrôle : NUMBA_THREADING_LAYER=tbb python .../probe_threads.py --tasks 128 --inner 16,2,16,2.
+  recherche de contrôle : NUMBA_THREADING_LAYER=tbb python reports/audit_oms5100_2026-11-15/profil_strat_complet/probe_threads.py --tasks 128 --inner 16,2,16,2.
 - Préfixe en recherche locale (lu) : un candidat qui change la couche i laisse les couches < i identiques au bit (C2, blocs
   causaux) → réutiliser la croissance du plan courant. Gain estimé ~10 % du total (croissance ≈ moitié de la recherche locale).
 - 12:53 : RÉGLAGE DES POOLS RETIRÉ (git checkout des 3 fichiers). Recherche de contrôle : RUN_S=1783 (contre 1339), classement
@@ -233,3 +233,5 @@ PDF OMS5100_sources_resume.pdf : non commité (générateur %TEMP%\make_oms_pdf.
 - 16:56 : 👤 : substrat SiO2 de STRAT = effet réel mais pas catastrophique (STRAT robustes à l'indice du substrat) → C-L4 classé MAJEUR au bilan ; la correction reste (Sellmeier partout) et se chiffre par le juge de paix avant/après (SEEL, classement).
 - 17:05 : contre-vérification FINIE (contre_verification.md) : 0 réfuté sur 14 ; critiques selon lui : C-L6a, C-L6b, M-L6a, M-L6b, M-L6e, M-L6g ; les autres majeurs. Suivant : preuves par la mesure des critiques lot6 si possible, puis bilan.md.
 - 17:07 : M-L6g CONFIRMÉ-M ; C-L6b CONFIRMÉ-L (3). bilan.md ÉCRIT et commité. Suivant : corrections, ordre §6 du bilan, en commençant par C-L3 (SPLINE ratio R).
+- 17:19 : C-L3 CORRIGÉ (commit e8cef838) : test rouge→vert, oracle 1209, spline 375, c1_diff 9172 identiques. Suivant : M-L5a (k_sub masqué comme wls).
+- 17:25 : M-L5a CORRIGÉ (4711e35b) : test rouge→vert, oracle 1209, index 791. Suivant : M-L6g (cellule n illisible → 1,5).

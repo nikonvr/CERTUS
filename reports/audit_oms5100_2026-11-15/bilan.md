@@ -5,6 +5,10 @@ occupait la machine). Chaque constat porte son statut : **[lu]** dans le code, *
 **[rapport]** chiffre d'un rapport existant, **[avis]** jugement d'expert non vérifiable sans la machine. Rien n'est
 **mesuré** par cet audit ; les gains de vitesse sont des comptages d'opérations, à confirmer par un profil.
 
+**Révision du même jour** : 👤 n'a pas accès à la salle avant plusieurs mois. Les essais en salle sortent du plan ; ils
+sont remplacés par les données publiées du constructeur (§6, **[constructeur]**), par les journaux de dépôts passés
+s'il en existe, et par une analyse de sensibilité. Le plan concret est au §8.
+
 Code lu : `certus/physics/certus_strat_growth.py` (`simulate_growth_kernel`, `detect_turning_points`,
 `_read_poem_anchors`, `_level_reachability`), `certus/physics/certus_strat_readings.py` (signal, grille machine,
 inversion, ancres exactes, armement), `certus/physics/certus_strat_math.py` (`_seeded_noise_sample`),
@@ -95,26 +99,31 @@ change donc de nature à 4 %, ce qui crée une marche dans le score en fonction 
   de secours (quartz, épaisseur maximale) : une couche ne dure jamais indéfiniment, elle finit fausse. L'attente sans
   fin est donc la **borne pessimiste**, l'arrêt tardif le comportement le plus plausible. Le rapport chiffre l'enjeu :
   0 plan optique pur déposable contre 101, et le Rate devient une nécessité.
-- **Un essai en salle de trente minutes tranche** : une couche sur substrat nu, arrêt demandé juste après un point
-  tournant (à moins de 0,08 % de T). Trois issues lisibles : arrêt juste, arrêt tardif de quelques nm, arrêt par le
-  secours. C'est l'action de plus forte valeur de tout cet audit, et ce n'est pas du code.
+- [constructeur] Bühler présente le choix d'une stratégie avec des critères paramétrables de *swing-in* et de
+  *swing-out* (distance de l'arrêt aux points tournants). Un arrêt collé à un extremum s'évite donc **à la conception**,
+  ce que fait déjà la porte de plantage de STRAT. Sans salle, la question « tardif ou sans fin » ne se tranche pas :
+  elle se **borne**. Noter chaque plan sous les deux comportements (§8, étape 3) dit si le classement en dépend.
 
 ### 4.3 Deux approximations de sens opposé, sans solde
 
 `ETAT.md` l'écrit : la grille de production (≈ 21 points par couche) est **optimiste** sur les faux points tournants,
 la machine lisant ~800 fois une couche de 100 nm. À l'inverse, chaque ancre et la lecture d'arrêt portent le bruit
 d'**une** lecture, alors qu'à 4 Hz une cinquantaine de lectures entourent un extremum : un contrôleur qui lisse ou
-ajuste connaît ses ancres 3 à 5 fois mieux [calcul : σ/√N sur la zone plate]. Le modèle est donc **pessimiste** sur le
-bruit des ancres. `scripts/probe_oms_sequentiel.py` est la référence causale faite pour arbitrer ; je n'ai trouvé
-aucun bilan de ses résultats dans `reports/` (seulement des chiffres dans des commentaires du 2026-10-10).
+ajuste connaît ses ancres 3 à 5 fois mieux [calcul : σ/√N sur la zone plate] ; le constructeur parle d'un « traitement
+du signal par algorithme étendu ». Le modèle est donc **pessimiste** sur le bruit des ancres. Le modèle figé (grille
+machine, lissage 8) s'accorde avec la machine séquentielle d'après la docstring de `scripts/probe_modele_lecture.py` ;
+je n'ai pas trouvé de bilan qui chiffre l'écart de **classement** entre ce modèle et celui de production.
 
-### 4.4 L'étalonnage du bruit [lu + avis]
+### 4.4 L'étalonnage du bruit : cohérent avec le constructeur, reste sa dépendance en T et en λ
 
-La docstring part d'une observation « le signal fluctue de 45,5 à 45,55 % » et pose un tirage borné à **±0,05** point
-avec σ = A/3. Si 0,05 point est l'excursion **crête à crête** observée, une gaussienne de σ = 0,0167 point donne
-~0,083 point crête à crête sur 100 lectures : le modèle serait ~1,7 fois plus bruité que l'observation. Si c'est la
-résolution de l'affichage, l'observation ne borne que par le haut. Mille lectures brutes sur un signal stable donnent
-σ directement.
+Correction de la première version de cet audit, qui soupçonnait un bruit 1,7 fois trop fort. Le constructeur annonce
+un rapport bruit sur signal **inférieur à 0,02 % efficace** sur le signal brut. Le modèle tire σ = A/3 = 0,0167 point
+de transmission : à haute transmission c'est exactement cet ordre. L'étalonnage de A tient.
+
+Ce que la phrase du constructeur laisse ouvert : un rapport bruit **sur signal** constant donne un bruit absolu
+proportionnel à T (quatre fois plus faible à T = 20 % qu'à 80 %), alors que le modèle le garde constant. Le modèle est
+alors pessimiste dans les bandes de réjection et juste en bande passante. Le constructeur ajoute « dépend du montage
+et du détecteur » : la dépendance en λ (R1) est réelle, sa forme n'est pas publiée.
 
 ## 5. Levier 1 — aussi bien, plus vite
 
@@ -149,41 +158,95 @@ d'arrêt) et dans deux tests (compte, atteignabilité). Les extrema d'une couche
 O(nombre d'extrema), n'aurait plus d'artefact d'indice (réserve 2) et rendrait les ancres exactes sans D96. C'est un
 autre modèle : à comparer à la référence séquentielle, pas à l'actuel au bit.
 
-## 6. Levier 2 — coller à un OMS 5100 réel
+## 6. Levier 2 — coller à un OMS 5100 réel, sans la salle
 
-Classé par effet attendu sur **ce que STRAT décide** (le choix des λ et des blocs). Tous inactifs par défaut (C1).
+### 6.1 Ce que le constructeur a publié
 
-| | écart au réel | pourquoi il compte | ce qui le règle | coût |
+| donnée | valeur publiée | source | ce qu'elle dit du modèle |
+|---|---|---|---|
+| bruit sur signal du signal brut | < 0,02 % efficace, « dépend du montage et du détecteur » | JCMO 2016, « Typical performance data OMS 5000/5100 » ; SVC 2006 | σ = A/3 = 0,0167 point : cohérent (§4.4) |
+| justesse en longueur d'onde | < 0,5 nm, « dépend de l'étalonnage du monochromateur » | JCMO 2016 | aucune erreur de λ dans le modèle (R8) |
+| bande passante | 0,5 à 15 nm selon la fente ; 0,5 à 8,8 nm **à mi-hauteur** pour l'OMS 5100 | JCMO 2016 ; brochure Bühler | la résolution est une largeur à mi-hauteur ; le modèle intègre un créneau (R3) |
+| cadence | une lecture par tour, 15 à 250 tr/min | JCMO 2016 | les 4 Hz du modèle sont en haut de la plage |
+| dérive du signal | « négligeable par auto-compensation » | JCMO 2016 | rien à modéliser |
+| erreur d'étalonnage photométrique | < 1 %, « importance selon l'algorithme d'arrêt » | JCMO 2016 | `affine_scale_amp` vaut 0 en production : l'arrêt absolu y est jugé insensible à une erreur que le constructeur chiffre (R10) |
+| algorithmes d'arrêt | point tournant ; point de déclenchement absolu ou relatif ; « correction en ligne des points de déclenchement » | JCMO 2016 ; SVC 2006 | POEM est bien la famille « relative » |
+| retard de coupure | 0,5 s en moyenne, écart-type 0,1 (unité à lire dans le texte intégral), entre le signal d'arrêt et l'arrêt réel du dépôt | SPIE 2008 (résumé) | le modèle n'a aucun retard (R6) |
+| vitesses de dépôt | 0,5 nm/s (TiO2) et 0,8 nm/s (SiO2) dans les essais publiés | SVC 2006 | une seule vitesse dans le modèle (R7) |
+| optique | lampe quartz-halogène, monochromateur à réseau à fentes d'entrée et de sortie, détecteur Si ou InGaAs (400 à 1 700 nm), incidence normale | SVC 2006 | fonde R1 et R3 |
+
+Sources : Zöller, « Direct optical monitoring in intermittent mode »,
+[JCMO 2016](http://www.sfoptique.org/medias/files/jcmo2016-alfons-zoeller.pdf) ; Zöller et al.,
+[SVC 2006](https://www.svc.org/clientuploads/directory/resource_library/06_229.pdf) ;
+[brochure Bühler « Precision optics »](https://dam.buhlergroup.com/asset/5a2a255493ef47d49158daae54c1f037/Brochure_LO_Optics_Precision%20Optics.pdf) ;
+Zöller, Boos, Hagedorn, Romanov,
+[SPIE 2008](https://www.researchgate.net/publication/253589981_Computer_simulation_of_coating_processes_with_monochromatic_monitoring)
+(résumé seulement : je n'ai pu lire ni le texte intégral ni son tableau de paramètres).
+
+### 6.2 Les écarts, reclassés
+
+Classé par effet attendu sur **ce que STRAT décide**. Tous inactifs par défaut (C1).
+
+| | écart au réel | ordre de grandeur | fondé sur | réglable sans salle ? |
 |---|---|---|---|---|
-| R1 | **Le bruit ne dépend pas de λ** (figé, `ETAT.md` section 3) | STRAT *choisit* λ. Lampe halogène, réseau et détecteur donnent un rapport signal sur bruit très inégal entre 400 et 1 000 nm ; un bruit plat rend toutes les λ équivalentes et autorise des λ qui seraient bruitées en salle | une courbe A(λ) : σ de 200 lectures sur substrat nu, tous les 50 nm. Table multiplicative, comme le facteur de fente (C2 conservée) | 10 min de machine, code faible |
-| R2 | **D98** (§4.2) | décide si un plan optique pur est déposable | l'essai d'une couche | 30 min de machine, aucun code |
-| R3 | **Fente en créneau** : `<T>_B` est intégré sur un rectangle de largeur B [lu] | un monochromateur à fentes égales a une fonction **triangulaire** de largeur à mi-hauteur B, de variance B²/6 contre B²/12 : le biais de fente, déjà mesuré à 62 A dans une couche, serait **doublé** au premier ordre [calcul] | la définition de la « résolution » dans la notice, ou le profil d'une raie ; puis des poids de quadrature | faible |
-| R4 | **Face arrière du témoin absente** : le noyau lit `T_front` [lu] | l'instrument lit `T = T_f T_b / (T_b + R_b T_f)` ; les extrema ne bougent pas, mais le swing mesuré est réduit du facteur `T_b² / (T_b + R_b T_f)²` : 0,92 sur verre et **0,85 sur saphir** à haute transmission [calcul]. Bruit, hystérésis et `SWING_MIN` étant en unités mesurées, le modèle est optimiste de 9 à 17 % sur le rapport signal sur bruit | appliquer cette fonction aux deux signaux avant le bruit : une division par point | faible |
-| R5 | **Étalonnage de A** (§4.4) | toute l'échelle du bruit | 1 000 lectures brutes | 5 min de machine |
-| R6 | **Arrêt sans retard** (figé) | couper à la première lecture passée le niveau ajoute en moyenne dd/2 = 0,06 nm, plus la fermeture du cache : un excès **systématique**, de même signe sur toutes les couches optiques, que les couches suivantes ne compensent qu'en partie | le journal d'un dépôt : instant de consigne contre instant de coupure | une lecture de journal |
-| R7 | **Vitesse unique** : `RATE_TURN_NM = 0,125` suppose 0,5 nm/s pour H et L [lu] | une silice déposée deux fois plus vite est lue deux fois moins dense, et sa quantification Rate double | une vitesse par matériau | faible |
-| R8 | **Erreur de calage de λ** : aucune [lu] | un écart de ±0,2 nm à chaque changement de λ vaut une erreur d'échelle de 0,04 % sur tout le bloc, de signe tiré par bloc ; le corridor d'indice (±0,005) couvre l'ordre de grandeur mais reste constant sur le dépôt | un tirage par bloc | faible |
-| R9 | **Même lecture, deux bruits** : un point lu comme couche courante puis rejoué en historique reçoit deux tirages (admis dans le code) | deux couches voisines qui partagent une ancre devraient partager son erreur | index physique commun aux deux grilles | moyen |
+| R6 | **Aucun retard de coupure** | [calcul] si l'automate compense la moyenne, il reste la gigue : 0,1 s × 0,5 nm/s = **0,05 nm efficace par couche**, du même ordre que tout le bruit d'arrêt modélisé (σ / pente ≈ 1,7e-4 / 4e-3 par nm = 0,04 nm). S'il ne compense pas : +0,25 nm systématique | constructeur (résumé) | oui : un tirage par couche, borné |
+| R10 | **Étalonnage photométrique supposé parfait** (`affine_scale_amp = 0`) | 1 % d'échelle ; POEM l'absorbe, l'arrêt absolu (sous `SWING_MIN`, ou sans deux ancres) non | constructeur | oui : le paramètre existe déjà |
+| R4 | **Face arrière du témoin absente** | swing mesuré × 0,92 sur verre, × **0,85 sur saphir** à haute transmission ; modèle optimiste de 9 à 17 % sur le rapport signal sur bruit [calcul, couches sans pertes] | physique | oui : une division par point |
+| R3 | **Fente en créneau** de largeur B | une fonction triangulaire de largeur à mi-hauteur B a une variance double : biais de fente × 2 au premier ordre [calcul] | constructeur (résolution à mi-hauteur) ; forme réelle inconnue | à borner : créneau et triangle |
+| R8 | **Aucune erreur de calage de λ** | ±0,5 nm par changement de λ = 0,1 % d'échelle sur tout le bloc à 500 nm | constructeur | oui : un tirage par bloc |
+| R1 | **Bruit indépendant de λ et de T** (figé) | forme inconnue ; pèse sur le choix des λ courtes (halogène faible, silicium moins sensible) | constructeur (« dépend du détecteur ») | à borner : modèle lampe × détecteur, déclaré comme hypothèse |
+| R2 | **D98** : attente sans fin ou arrêt tardif | 0 ou 101 plans optiques purs déposables [rapport] | inconnu | à borner : noter sous les deux |
+| R7 | **Vitesse unique** pour H et L | lectures deux fois moins denses sur la couche rapide | constructeur | oui |
+| R9 | **Même lecture, deux bruits** (courante puis historique) | second ordre | code | oui, coût moyen |
 
-Hors d'atteinte sans la machine, et à y laisser comme l'écrit `ETAT.md` : bruit dépendant de T, grenaille, dérive lente
-corrélée. La référence prise à chaque tour par le trou libre du plateau annule la dérive commune de la lampe et des
-hublots [avis] ; je ne recommande pas de la modéliser sans un journal qui la montre.
+Hors modèle, et à y laisser : la dérive lente, que le constructeur dit négligeable ; la grenaille, tant que rien ne la
+chiffre.
 
-## 7. Ordre proposé
+## 7. Trois façons de remplacer la salle
 
-1. **Trois mesures en salle, une heure en tout** : R2 (D98), R1 (A selon λ), R5 (σ sur 1 000 lectures). Elles fixent
-   les trois paramètres qui pèsent le plus et qu'aucun code ne peut deviner.
-2. **V2 puis V1** : plus vite, mêmes résultats, un commit chacun avec `c1_diff`.
-3. **R4 et R3** : deux corrections de physique bon marché, chacune derrière un paramètre inactif, effet mesuré sur le
-   juge de paix avant toute activation.
-4. **§4.1** : remplacer `SWING_MIN` par un seuil en multiples de A, balayé.
-5. **§3, réserves 1 et 2** : mesurer leur fréquence avec `probe_oms_sequentiel.py` avant de toucher au détecteur, et
-   consigner enfin ses résultats dans un bilan.
+1. **Les journaux de dépôts passés**, s'ils existent sur un disque : un export de l'OMS (signal en fonction du temps,
+   instants de coupure, λ, fente) donne σ, sa dépendance en T et en λ, le retard de coupure et, avec de la chance, un
+   arrêt proche d'un extremum. C'est la seule source de **mesures** accessible ; aucun journal n'est suivi dans le dépôt.
+2. **Les documents** : le manuel de l'OMS (définition de la résolution, algorithmes de déclenchement, *swing-in* et
+   *swing-out*) et le texte intégral de SPIE 2008 (les paramètres de simulation du constructeur lui-même).
+3. **La sensibilité** : pour chaque écart non mesurable, noter la même population de plans sous les deux hypothèses
+   extrêmes. Si le gagnant et le SEEL ne bougent pas plus que la dispersion Monte-Carlo, l'inconnue ne compte pas et se
+   ferme avec un chiffre ; sinon elle devient une contrainte de robustesse, comme le sont déjà les trois niveaux de bruit.
 
-## 8. Ce que cet audit ne dit pas
+## 8. Plan concret
+
+Une étape, un commit (C3). « Fin » est le critère vérifiable.
+
+| n° | étape | fichiers | fin | bits |
+|---|---|---|---|---|
+| 0 | 👤 cherche journaux OMS et manuel ; à défaut, on continue sans | hors dépôt | réponse oui ou non | — |
+| 1 | **Sonde de profil du noyau STRAT par poste** (matrices, balayage, bruit, inversion, détection) sur le juge de paix | `scripts/probe_strat_kernel_profile.py`, sortie dans ce dossier | un tableau en µs par appel selon la profondeur de couche, qui confirme ou infirme le §5 | aucun code de calcul touché |
+| 2a | **V2** : le nominal sort de la boucle Monte-Carlo | `certus_strat_growth.py`, `certus_strat_readings.py`, appelants | `c1_diff --corpus strat` identique au bit, oracle vert, gain mesuré par la sonde 1 | identiques |
+| 2b | **V1** : matrices portées d'une couche à la suivante, table nominale | idem | idem ; si `fastmath` bouge des bits, arrêt et rapport de l'écart en ulp | identiques ou signalés |
+| 2c | **V3 + V4** : indices d'ancres rendus, marges dans la passe de détection, bissection à sortie anticipée | idem | idem | identiques |
+| 3 | **Sonde de sensibilité** : `probe_modele_lecture.py` reçoit les variantes R2 (tardif ou sans fin), R10 (échelle 1 %), `SWING_MIN` en multiples de A, bruit proportionnel à T | `scripts/probe_modele_lecture.py` | pour les 120 premiers plans du juge de paix : SEEL, plans déposables et corrélation de rang par variante, dans un bilan | noyau intact (paramètres existants) |
+| 4a | **R6** retard de coupure : tirage par couche (moyenne, écart-type, vitesse), inactif par défaut | noyau, tâche de robustesse | test rouge d'abord ; inactif = mêmes bits ; effet mesuré par la sonde 3 | C1 |
+| 4b | **R4** face arrière du témoin, inactif par défaut | noyau | recoupé contre `tests/oracle/tmm_reference.py` ; idem | C1 |
+| 4c | **R3** fente triangulaire en option | `certus_strat_robustness_slit.py` | intégrale recoupée contre une quadrature fine ; idem | C1 |
+| 4d | **R8** erreur de λ par bloc, **R7** vitesse par matériau | noyau, tâche | idem | C1 |
+| 5 | **§4.1** : `SWING_MIN` remplacé par k × A, k balayé par la sonde 3 | noyau | la marche à 4 % disparaît du score en fonction de λ ; choix de k consigné | C1 (k par défaut = seuil actuel) |
+| 6 | **§3, réserves 1 et 2** : fréquence mesurée contre `probe_oms_sequentiel.py`, puis correction si elle compte | sonde, puis noyau | un chiffre par réserve dans un bilan | C1 |
+| 7 | **Décision de 👤** sur chiffres : quels leviers de l'étape 4 s'activent, et si le classement final prend le pire des hypothèses bornées (R2, R3, R1) | `ETAT.md` section 3 | modèle de lecture révisé, daté | changement voulu |
+| 8 | **Fiche d'essais** prête pour le retour en salle : D98, σ selon λ et T, retard de coupure, profil de fente | ce dossier | une page, une heure de machine | — |
+
+Ordre et dépendances : 1 avant 2 (il faut la mesure de départ) ; 3 avant 4 à 6 (elle dit quels leviers méritent le
+code) ; 2 et 3 sont indépendants. Les étapes 1 à 3 ne changent aucun résultat de STRAT : elles peuvent partir tout de
+suite. Rien ne s'active par défaut avant l'étape 7.
+
+Ce que le plan ne fera pas : inventer une courbe de bruit en λ et l'activer. Sans mesure, R1 reste une hypothèse
+bornée par la sonde 3, jamais un réglage de production.
+
+## 9. Ce que cet audit ne dit pas
 
 - Aucun chiffre de gain n'est mesuré ; le poste « matrices » domine d'après un comptage, pas d'après un profil.
-- Je ne connais pas l'algorithme d'arrêt de l'OMS 5100 (breveté, `ETAT.md` le dit aussi) : §4.2 est un raisonnement
-  d'automaticien, pas un fait sur la machine.
+- Je ne connais pas l'algorithme d'arrêt de l'OMS 5100 : §4.2 est un raisonnement d'automaticien.
+- Les données du constructeur sont des plafonds de fiche technique (« < 0,02 % », « < 0,5 nm », « < 1 % »), pas des
+  mesures de la machine de 👤. Le retard de 0,5 s vient d'un résumé de 2008 sur l'OMS 5000 ; je n'ai pas lu l'unité de
+  son écart-type ni vérifié que l'automate le compense.
 - R3 suppose des fentes d'entrée et de sortie égales ; R4 suppose des couches sans pertes (`R' = 1 − T`).
 - La grille machine (`machine_sampling_dd`, lissage) n'est pas en production : je l'ai lue, pas auditée en détail.

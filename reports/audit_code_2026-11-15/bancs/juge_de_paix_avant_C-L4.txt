@@ -1,0 +1,7 @@
+juge de paix (JSON-strat-example.json), banc STRAT, avant la correction C-L4 du substrat SiO2
+commande : python scripts/bench_examples.py strat --auto-yes ; code : 31971c6c Bring back a METAL configuration's substrate and wavelength window (audit M-L6e)
+SETUP_S=7.318
+RUN_S=1750.489
+RESULT=0.005861922892702714
+SEEL = 2*sqrt(RESULT) = 0.1531 nm
+journal complet (11 Mo) hors dépôt : CERTUS/certus1111_hors_git_2026-11-15/juge_de_paix_avant_C-L4_complet.txt

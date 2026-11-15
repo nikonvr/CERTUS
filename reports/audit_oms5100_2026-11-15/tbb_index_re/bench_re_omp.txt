@@ -1,0 +1,6 @@
+=== START re ===
+dialogues: reponse automatique OUI
+MODULE=re
+SETUP_S=0.783
+RUN_S=28.247
+RESULT=0.01440698258079255

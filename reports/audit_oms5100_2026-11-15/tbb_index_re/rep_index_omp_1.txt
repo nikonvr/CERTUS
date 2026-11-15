@@ -1,0 +1,7 @@
+=== START index ===
+dialogues: reponse automatique OUI
+WAIT_EXIT=finished
+MODULE=index
+SETUP_S=0.934
+RUN_S=5.782
+RESULT=0.0025586232985910493

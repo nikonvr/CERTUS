@@ -480,53 +480,36 @@ class CertusREWorkersMixin:
 
         re_was_running = rw is not None and rw.isRunning()
 
-        re_joined_ok = False
-
         if re_was_running:
             if hasattr(rw, "request_stop"):
                 rw.request_stop()
 
             rw.requestInterruption()
 
-            # Wait for cooperative finish: ``finished`` -> ``_on_re_done`` (best TRF known).
-
-            re_joined_ok = rw.wait(300000)
-
-            if not re_joined_ok:
-                logging.critical(
-                    "REWorker did not finish within timeout - skipping terminate() to avoid unsafe thread kill."
-                )
-
-                self.log("REWorker: stop timeout - skipping terminate() (see log).", "ERROR")
-
-            self._re_worker = None
-
-        if not re_joined_ok and getattr(self, "_re_mode_active", False):
-            self._re_mode_active = False
-
-            self._re_clear_re_nk_preview()
-
-            self._plot_nk()
-
-            if hasattr(self, "launch_re_btn"):
-                self.launch_re_btn.setEnabled(True)
-
-        if hasattr(self, "progress_widget") and (not re_was_running or not re_joined_ok):
-            try:
-                self.progress_widget.stop("Cancelled")
-
-            except NUMERICAL_FAULT_EXCEPTIONS:
-                pass
+            # A request, never a wait on the GUI thread (was rw.wait(300000): the window froze for up to five minutes,
+            # then the reference of a QThread still running was dropped; audit 2026-11-15, M-L6c). The worker ends
+            # cooperatively: ``finished`` -> ``_on_re_done`` (best TRF known) releases the busy state and the progress
+            # widget, exactly like a normal end. ``_re_worker`` keeps the thread alive until then.
+            self.log("RE: the worker finishes its current step, then returns its best result.", "INFO")
 
         if self.eval_worker and self.eval_worker.isRunning():
             self.eval_worker.requestInterruption()
 
             self.eval_worker.wait(2000)
 
+        if re_was_running:
+            return
+
+        if hasattr(self, "progress_widget"):
+            try:
+                self.progress_widget.stop("Cancelled")
+
+            except NUMERICAL_FAULT_EXCEPTIONS:
+                pass
+
         self._force_idle()
 
-        if not re_was_running or not re_joined_ok:
-            self.log("Calculation stopped.", "WARNING")
+        self.log("Calculation stopped.", "WARNING")
 
     def _on_re_worker_progress_snapshot(self, snapshot) -> None:
         """Forward progress snapshot to progress widget and logs panel."""

@@ -1254,20 +1254,17 @@ class MetalBaseApp(CertusBaseApp):
         self._apply_config_dict(config)
 
         filt = config.get("filters", {})
-
-        if "lmin_filter" in self.widgets:
-            self.widgets["lmin_filter"].setText(str(filt.get("lmin_filter", 400)))
-
-        if "lmax_filter" in self.widgets:
-            self.widgets["lmax_filter"].setText(str(filt.get("lmax_filter", 1000)))
-
+        for key, default in (("lmin_filter", 400), ("lmax_filter", 1000)):
+            if key in self.widgets:
+                self.widgets[key].setText(str(filt.get(key, default)))
         self.update_lambda_filters()
-
         target_file = config.get("target_file", "")
-
         if target_file and Path(target_file).exists():
             self.load_target_file(target_file)
-
+            # Loading resets the window to the target's full range: the saved one wins (audit 2026-11-15, M-L6e).
+            for key in ("lmin_filter", "lmax_filter"):
+                if key in filt and key in self.widgets:
+                    self.widgets[key].setText(str(filt[key]))
         elif target_file:
             self.logger.warning(f"Target file from config not found: {target_file}")
 

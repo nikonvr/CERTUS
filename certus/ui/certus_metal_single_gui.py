@@ -851,6 +851,7 @@ class CertusMetalSingleApp(MetalBaseApp):
         return {
             "version": "1.0.0",
             "excel_filename": self.widgets["excel_filename"].text(),
+            "substrate": self.combo_substrate.currentText(),
             "physical_params": {
                 "eM_min": self.widgets["eM_min"].text(),
                 "eM_max": self.widgets["eM_max"].text(),
@@ -1297,6 +1298,16 @@ class CertusMetalSingleApp(MetalBaseApp):
         self.widgets["nk_max"].setText(str(mat.get("nk_max", DEFAULT_NK_MAX)))
 
         self.widgets["min_knot_dist"].setText(str(mat.get("min_knot_dist", DEFAULT_MIN_KNOT_DISTANCE)))
+
+        # The substrate was not saved: a reload computed on the default one (audit 2026-11-15, M-L6e).
+        # An older file without the key keeps the current choice.
+        sub = config.get("substrate")
+        if sub is not None:
+            if self.combo_substrate.findText(str(sub)) >= 0:
+                self.combo_substrate.setCurrentText(str(sub))
+            else:
+                self.logger.warning("Configuration substrate %r is not offered here; kept %r", sub,
+                                    self.combo_substrate.currentText())
 
     def _resolve_config_target_file(self, config_path: str) -> str | None:
         try:

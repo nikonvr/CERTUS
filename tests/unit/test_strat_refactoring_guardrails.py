@@ -197,19 +197,24 @@ def test_robust_material_database_refactoring_guardrails():
         assert "IR-H800-SiO2" in db.materials
         assert "H800-Nb2O5" in db.materials
 
-        # Test MergedMaterialDict lookup and blending for 'SiO2'
-        # SiO2 query matches both "H800-SiO2" and "IR-H800-SiO2"
-        sio2_data = db.materials["SiO2"]
+        # Test MergedMaterialDict lookup and blending for the H800 SiO2 layer
+        # The query matches both "H800-SiO2" and "IR-H800-SiO2"
+        sio2_data = db.materials["H800 SiO2"]
         assert sio2_data is not None
         assert np.allclose(sio2_data["wl"], [400.0, 500.0, 600.0, 700.0, 800.0])
 
         # Test get_refractive_index (direct/blended interpolation)
-        idx_500 = db.get_refractive_index("SiO2", 500.0)
+        idx_500 = db.get_refractive_index("H800 SiO2", 500.0)
         assert idx_500.real == pytest.approx(1.45)
 
         # Test get_refractive_clues_vectorized
-        clues = db.get_refractive_clues_vectorized("SiO2", np.array([400.0, 800.0]))
+        clues = db.get_refractive_clues_vectorized("H800 SiO2", np.array([400.0, 800.0]))
         assert np.allclose(clues, [1.46 + 0j, 1.42 + 0j])
+
+        # The bare "SiO2" is the built-in fused silica substrate, never a blend of the SiO2 layer sheets
+        # (audit 2026-11-15, C-L4: this test used to require the blend, 1.45 at 500 nm).
+        assert "SiO2" not in db.materials
+        assert db.get_refractive_index("SiO2", 500.0).real == pytest.approx(1.46233, abs=1e-5)
 
         # Test Nb alias resolution
         nb_data = db.materials["Nb"]

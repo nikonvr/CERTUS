@@ -232,20 +232,31 @@ class MergedMaterialDict(dict):
     the underlying dict (``super().keys()``).  They are set once at
     construction from ``list(self.materials.keys())`` and are not updated
     if the dict is mutated after construction.
+
+    ``exact_keys``: names served only by a sheet of exactly that name, never by
+    approximate matching. The STRAT database passes its built-in substrates:
+    "SiO2" matched the five SiO2 *layer* sheets by substring, and their blend
+    (n = 1.48625 at 550 nm) was served as the substrate instead of fused silica
+    (1.45991; audit 2026-11-15, C-L4). Empty by default: matching as before.
     """
-    def __init__(self, raw_data, sheet_names, logger=None):
+    def __init__(self, raw_data, sheet_names, logger=None, exact_keys=frozenset()):
         super().__init__(raw_data)
         self.sheet_names = sheet_names
         self.logger = logger or logging.getLogger("ThinFilm")
         self._merged_cache = {}
+        self.exact_keys = frozenset(exact_keys)
 
     def __contains__(self, key):
         if super().__contains__(key):
             return True
+        if key in self.exact_keys:
+            return False
         matches = find_matching_sheets(key, self.sheet_names)
         return len(matches) > 0
 
     def __getitem__(self, key):
+        if key in self.exact_keys:
+            return super().__getitem__(key)
         if super().__contains__(key):
             matches = find_matching_sheets(key, self.sheet_names)
             if len(matches) <= 1:

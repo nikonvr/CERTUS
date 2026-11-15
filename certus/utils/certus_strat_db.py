@@ -70,7 +70,10 @@ class RobustMaterialDatabase:
         self._load_database()
 
         if not isinstance(self.materials, MergedMaterialDict):
-            self.materials = MergedMaterialDict(self.materials, list(self.materials.keys()), self.logger)
+            # A built-in substrate ("SiO2") is its Sellmeier law unless a sheet has exactly that name: see exact_keys.
+            self.materials = MergedMaterialDict(
+                self.materials, list(self.materials.keys()), self.logger, exact_keys=frozenset(self.SELLMEIER_COEFFS)
+            )
 
     def _load_database(self):
 

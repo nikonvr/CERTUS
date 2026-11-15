@@ -65,9 +65,9 @@ SEEL du `RESULT` officiel ; taux de plantage de `RANK00`.
 
 **Lire ces chiffres :**
 
-- 🔴 **Substrat** : STRAT calcule un substrat « SiO2 » à n = 1,48625 au lieu du Sellmeier de la silice fondue,
-  1,45991 à 550 nm (C-L4, à corriger) ; le juge de paix et les composants sur « SiO2 » sont touchés
-  ([recensement](../reports/audit_code_2026-11-15/recensement_sio2.md)). Effet réel mais modéré selon 👤 ; à chiffrer.
+- 🔴 **Substrat** : les repères sur substrat « SiO2 » sont antérieurs à la correction C-L4 (`5be9f704`) : substrat calculé à
+  n = 1,48625 au lieu de 1,45991 à 550 nm ([recensement](../reports/audit_code_2026-11-15/recensement_sio2.md)). Au juge de
+  paix, la correction porte le SEEL de 0,1531 à 0,1713 nm (+11,9 %) et change le gagnant ([acquis](ETAT_acquis.md)).
 - 🔴 **Les SEEL ne se comparent pas d'un composant à l'autre** (domaines de notation différents, §7) ; à composant fixé, oui.
 - 🔴 **Un score seul ne départage rien** : à 150 tirages σ ≈ 6 %, deux runs à moins de ~8 % sont indiscernables ; sur `r75x2`,
   σ ≈ 1,8 % en changeant le triplet de graines de consensus. On compare des classes d'équivalence SEEL.

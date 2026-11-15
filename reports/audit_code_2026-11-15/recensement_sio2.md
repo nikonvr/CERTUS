@@ -37,5 +37,24 @@ Gravité ramenée à **majeur** au bilan ; l'écart se chiffre par le juge de pa
 
 - **Faux en absolu** : RMSE, SEEL, épaisseurs, rendements de ces campagnes.
 - **Comparaisons internes** (stratégie A contre B, même campagne) : même substrat faux des deux côtés ; l'ordre peut
-  tenir quand les écarts sont grands. **Non mesuré** : à remesurer sur le juge de paix après correction.
-- **Non touchés** : INDEX, RE, DESIGN, SPLINE (autre résolution du substrat) — à confirmer à la correction.
+  tenir quand les écarts sont grands. Au juge de paix l'ordre ne tient pas : le gagnant change (ci-dessous).
+- **Non touchés** : INDEX, RE, DESIGN, SPLINE (autre résolution du substrat) : `c1_diff` de la correction, 9 172 tableaux
+  identiques au bit ; oracle 1 210 passés.
+
+## Mesure après correction (C-L4, `5be9f704`)
+
+Juge de paix, `python scripts/bench_examples.py strat --auto-yes`, seul processus (`bancs/juge_de_paix_avant_C-L4.txt`,
+`bancs/juge_de_paix_apres_C-L4.txt`). Entre les deux codes (`31971c6c`, `5be9f704`), seule C-L4 touche STRAT.
+
+| | avant | après |
+|---|---|---|
+| n du substrat à 550 nm | 1,48625 | 1,45991 |
+| RESULT | 0,0058619 | 0,0073399 |
+| **SEEL** | **0,1531 nm** | **0,1713 nm** (+11,9 %) |
+| gagnant avant recherche locale (ELITE) | 2 blocs [544, 471], 0,007402 | 4 blocs [544, 469, 454, 471], 0,007335 |
+| après recherche locale | 0,005862 (34 blocs) | 0,007340 (33 blocs) |
+| plantage | 0 | 0 / 2 519 |
+
+Le score avant recherche locale bouge de −0,9 % ; l'écart de SEEL vient de la recherche locale, qui ne gagne plus rien
+sur le score de consensus (sa propre vérification sur 2 graines neuves annonce pourtant dRMSE² −72,8 %, « kept »).
+**Non expliqué, non instruit.**

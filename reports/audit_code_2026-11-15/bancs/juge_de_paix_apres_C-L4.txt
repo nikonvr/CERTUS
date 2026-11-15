@@ -1,0 +1,19 @@
+juge de paix (JSON-strat-example.json), banc STRAT, après la correction C-L4 du substrat SiO2
+commande : python scripts/bench_examples.py strat --auto-yes ; code : 5be9f704 Give the STRAT "SiO2" substrate the index of fused silica (audit 2026-11-15, C-L4)
+SETUP_S=0.822
+RUN_S=1414.549
+RESULT=0.007339897197149749
+SEEL = 2*sqrt(RESULT) = 0.1713 nm
+WAIT_EXIT=finished ; aucun WAIT_TIMEOUT ; STRAT_CRASH_ELIMINATED=0/2519
+classement (140 premiers caractères de chaque ligne) :
+STRAT_RANK00 id=900450561 origin=LOCAL_SEARCH score=0.007340 crash=0.0000 elim=False nblocks=33 nwl=15 wl=[564,544,544,554,584,564,534,594,5
+STRAT_RANK01 id=900450561 origin=ELITE score=0.007335 crash=0.0000 elim=False nblocks=4 nwl=4 wl=[544,469,454,471]
+STRAT_RANK02 id=900350505 origin=ELITE score=0.007689 crash=0.0000 elim=False nblocks=3 nwl=3 wl=[545,455,471]
+STRAT_RANK03 id=900450557 origin=ELITE score=0.007727 crash=0.0000 elim=False nblocks=4 nwl=4 wl=[543,469,455,471]
+STRAT_RANK04 id=900350511 origin=ELITE score=0.007752 crash=0.0000 elim=False nblocks=3 nwl=3 wl=[544,455,471]
+STRAT_RANK05 id=900350512 origin=ELITE score=0.007752 crash=0.0000 elim=False nblocks=3 nwl=3 wl=[544,455,471]
+STRAT_RANK06 id=900350513 origin=ELITE score=0.007752 crash=0.0000 elim=False nblocks=3 nwl=3 wl=[544,455,471]
+STRAT_RANK07 id=900350510 origin=ELITE score=0.007752 crash=0.0000 elim=False nblocks=3 nwl=3 wl=[544,455,471]
+STRAT_RANK08 id=900350506 origin=ELITE score=0.007752 crash=0.0000 elim=False nblocks=3 nwl=3 wl=[544,454,471]
+STRAT_RANK09 id=900350507 origin=ELITE score=0.007752 crash=0.0000 elim=False nblocks=3 nwl=3 wl=[544,456,471]
+journal complet (11 Mo) hors dépôt : CERTUS/certus1111_hors_git_2026-11-15/juge_de_paix_apres_C-L4_complet.txt

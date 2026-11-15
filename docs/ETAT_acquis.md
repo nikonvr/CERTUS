@@ -30,3 +30,7 @@ mode. Les indices de couche des artefacts commencent à 0 ; l'interface et les r
 - D106 (`6fcdd56a`) : les enfants d'ELITE étaient notés sans biais de fente. À `r75x2` sans rampes (graine 101, ancien modèle d'arrêt, sans secours Rate) : 706 déposables sur 6 042
   stratégies sans la correction, 0 sur 4 821 avec ; sans rampes, `r75x2` n'est pas fabricable en optique pure. Au juge de paix, le meilleur SEEL passe de 0,1776 à 0,1927 nm (+8,5 %) :
   les repères d'avant la correction sont optimistes d'autant.
+- C-L4 (`5be9f704`, 2026-11-15) : depuis `c2b10301` (2026-05-27), STRAT calculait le substrat « SiO2 » avec le mélange des feuilles de couches SiO2, n = 1,48625 à 550 nm au lieu de
+  1,45991 (silice fondue) ; tout résultat STRAT sur « SiO2 » d'avant est touché ([recensement](../reports/audit_code_2026-11-15/recensement_sio2.md)). Au juge de paix, entre deux
+  bancs que seule C-L4 sépare pour STRAT : SEEL 0,1531 → 0,1713 nm (+11,9 %) ; le gagnant passe de 2 blocs [544, 471] à 4 blocs [544, 469, 454, 471] ; la recherche locale finale, qui
+  portait le score de 0,007402 à 0,005862, le laisse à 0,007340 (parent 0,007335) ([banc](../reports/audit_code_2026-11-15/bancs/juge_de_paix_apres_C-L4.txt)).

@@ -21,7 +21,7 @@ s'arrêter si ruff est rouge. Une seule exécution à la fois (banc, tests).
 
 ## 2. Fait
 
-C-L3 `e8cef838` · M-L5a `4711e35b` · M-L6g `d6d28437` · C-L6b `3735ec1f` · M-L6e `31971c6c` (+ plafond `0942633e`) · M-L4a, b, c `203f9e13`. Groupe RE : M-L4c suite `23fc49a5` · M-L6a `7837c5d3` · M-L6b `50d00fd1` · M-L6c `d7c5a30a`.
+C-L3 `e8cef838` · M-L5a `4711e35b` · M-L6g `d6d28437` · C-L6b `3735ec1f` · M-L6e `31971c6c` (+ plafond `0942633e`) · M-L4a, b, c `203f9e13`. Groupe RE : M-L4c suite `23fc49a5` · M-L6a `7837c5d3` · M-L6b `50d00fd1` · M-L6c `d7c5a30a`. C-L4 `5be9f704` ; banc **après** : RESULT 0,0073399, **SEEL 0,1713 nm** (+11,9 %), gagnant différent (`recensement_sio2.md`).
 Banc juge de paix **avant** C-L4 (code `31971c6c`) : RESULT 0,0058619, **SEEL 0,1531 nm**, RUN_S 1 750 s (`bancs/juge_de_paix_avant_C-L4.txt`).
 
 ## 3. À faire, dans cet ordre
@@ -35,10 +35,10 @@ Décision 👤 = imposée ; décision par défaut = la mienne, à garder sauf ra
 | M-L4a, b, c | `certus/utils/certus_re_helpers.py` : `_re_header_normalize_for_tokens`, `_re_measurement_values_are_percent` | « R45p » lu 0° s ; `arri[eee]res?` a perdu ses accents ; seuil % à 1,25 | **fait (`203f9e13`)** : regex `^([RT])(\d+)([SPsp])?` éclatée ; `[eèé]` ; seuil 1,05 | `tests/unit/test_re_headers_and_units_are_read_as_written.py` |
 | M-L4c (suite) | `certus/ui/certus_re_excel_mixin.py` ≈ l. 559-591 (`_parse_re_measurement`) ; INDEX/METAL : seuil 1,5 de `load_spectrum_columns` (`certus/utils/certus_data.py`) | décision % **par colonne** : un R d'antireflet en % (max < 1) à côté d'un T en % est lu en fraction | par défaut : **une unité par feuille** — si une colonne non vide dépasse 1,05, toutes en % ; même seuil 1,05 dans `load_spectrum_columns` | feuille R max 0,8 + T max 92 → R / 100 |
 | M-L6a | `certus_re_excel_mixin.py:1188-1190` (`back_check` coché si une colonne est BK) → `certus_spectrum_eval_ui.py:297` `cfg["back"]` → `certus_spectral_workers.py:779-790, 503-530` | l'évaluation affichée applique la face arrière globale à toutes les colonnes ; le REWorker respecte chaque colonne (`certus_re_workers_context.py:134-139`) | passer `include_backside` de chaque colonne au noyau d'évaluation, comme le chemin phase 4 (`:752-777`) | classeur BK + noBK : courbe évaluée noBK = calcul sans face arrière |
-| M-L6b | `certus/ui/certus_re_workers_mixin.py:969-975` | `_re_loaded_exact_ep` (épaisseurs chargées) prioritaire après `_on_re_done` (`:765-771`) → RMSE du titre (`:908`), méta d'export (`certus_re_excel_mixin.py:2200`) sur le design initial | effacer `_re_loaded_exact_ep` dans `_on_re_done` (ou y écrire les épaisseurs optimisées) | après un faux `_on_re_done`, `_compute_re_rmse` utilise les épaisseurs optimisées |
+| M-L6b | `certus/ui/certus_re_workers_mixin.py::_on_re_done`, `_compute_re_rmse` | `_re_loaded_exact_ep` (épaisseurs chargées) prioritaire après la fin du calcul → RMSE du titre et méta d'export sur le design initial | **fait (`50d00fd1`)** : `_on_re_done` efface `_re_loaded_exact_ep` | `tests/ui/test_re_rmse_follows_the_optimised_thicknesses.py` |
 | M-L6c | `certus_re_workers_mixin.py:492` `rw.wait(300000)`, `:511`, `:526` | gèle l'UI 5 min ; puis lâche la référence d'un QThread en marche | arrêt non bloquant : drapeau stop + `finished` → `_force_idle` ; garder la référence jusqu'à `finished` | `stop_optim` rend la main sans attendre ; la référence reste jusqu'à la fin |
 
-### Groupe STRAT, première partie
+### Groupe STRAT, première partie (fait)
 
 | id | où | correction | test / mesure |
 |---|---|---|---|
@@ -78,7 +78,7 @@ Décision 👤 = imposée ; décision par défaut = la mienne, à garder sauf ra
 |---|---|---|---|
 | M-L2 | `certus/core/certus_strat_consensus.py::_store_and_consume_consensus_score`, `certus/core/certus_strat_robustness.py::_apply_consensus_ranking_inplace` | 👤 : une graine rejetée (score infini) → consensus infini, stratégie classée derrière toute stratégie stable | `preuves/p_consensus_graine_rejetee.py` : [0,007 ; inf ; 0,0071] → inf |
 | M-L6d | `certus/ui/certus_strat_ui_state.py:580-627` | sauver et relire `thickness_tolerance_nm` | aller-retour : la valeur revient |
-| M-L6f | `certus/ui/certus_strat_ui_export.py:385, 532, 633` ; clés réelles `nH_id`, `nL_id`, `nSub_id` (`certus_strat_ui_state.py:1124-1131`) ; « Best RMSE » `certus_strat_service.py:1436` | écrire les vrais indices, substrat, nombre de couches, statut de graine ; écrire le **SEEL** ; ne pas étiqueter le score de robustesse « RMSE » | export : plus de « N/A », SEEL présent |
+| M-L6f | `certus/ui/certus_strat_ui_export.py:385, 532, 633` ; clés réelles `nH_id`, `nL_id`, `nSub_id` (`certus_strat_ui_state.py:1124-1131`) ; « Best RMSE » dans `certus_strat_service.py` | écrire les vrais indices, substrat, nombre de couches, statut de graine ; écrire le **SEEL** ; ne pas étiqueter le score de robustesse « RMSE » | export : plus de « N/A », SEEL présent |
 
 ## 4. Fin
 

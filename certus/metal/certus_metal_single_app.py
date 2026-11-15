@@ -412,9 +412,17 @@ class BeamAnalysisWorker(QObject):
                 "p_spline_buffer": np.empty(2 * num_knots, dtype=np.float64),
             }
 
-            # Smart MSE threshold
+            # Smart MSE threshold. The scan refits on R alone, so its reference is the R-only cost of the optimum,
+            # not optimal_mse (the main fit's mean over R, T and Rback): audit 2026-11-15, C-L6b.
 
-            mse_threshold = max(self.optimal_mse * 1.5 + 1e-5, 5e-5)
+            reference_mse = objective_function_fixed_eM(
+                x0_optimal_reduced, eM_optimal, num_knots, l_array, r_tgt_array, min_knot_dist, precomputed,
+                lambda_internes_fixed=lambda_internes_fixed,
+            )
+            if not np.isfinite(reference_mse):
+                reference_mse = self.optimal_mse
+
+            mse_threshold = max(reference_mse * 1.5 + 1e-5, 5e-5)
 
             all_solutions = []
 
@@ -442,7 +450,7 @@ class BeamAnalysisWorker(QObject):
 
             all_solutions.append(
                 {
-                    "mse": self.optimal_mse,
+                    "mse": reference_mse,
                     "n": n_calc_opt,
                     "k": k_calc_opt,
                     "eM": eM_optimal,

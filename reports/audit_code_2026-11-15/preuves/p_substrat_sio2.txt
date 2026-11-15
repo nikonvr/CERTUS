@@ -1,0 +1,11 @@
+nSub_id = 'SiO2' | db type: MaterialDatabase
+SiO2 sheets in the database: ['IR-H400-SiO2', 'IR-Syrus-SiO2', 'H800-SiO2', 'SiO2-Helios', 'SiO2-Syrus'] | exact 'SiO2': False
+sheets matched for 'SiO2': ['IR-H400-SiO2', 'IR-Syrus-SiO2', 'H800-SiO2', 'SiO2-Helios', 'SiO2-Syrus']
+'SiO2' in MergedMaterialDict : True | Sellmeier SiO2 at 550 nm: 1.45991
+  400 nm  STRAT n_sub = 1.49967+0.00e+00j   Malitson = 1.47012   diff = +0.02956
+  450 nm  STRAT n_sub = 1.49361+0.00e+00j   Malitson = 1.46557   diff = +0.02805
+  500 nm  STRAT n_sub = 1.48935+0.00e+00j   Malitson = 1.46233   diff = +0.02702
+  550 nm  STRAT n_sub = 1.48625+0.00e+00j   Malitson = 1.45991   diff = +0.02634
+  600 nm  STRAT n_sub = 1.48393+0.00e+00j   Malitson = 1.45804   diff = +0.02589
+  650 nm  STRAT n_sub = 1.48214+0.00e+00j   Malitson = 1.45653   diff = +0.02560
+  700 nm  STRAT n_sub = 1.48073+0.00e+00j   Malitson = 1.45529   diff = +0.02543

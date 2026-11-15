@@ -1,0 +1,12 @@
+M-L4a: parse_re_column_header
+  'R45p'     -> ParsedREColumn(target_type='R', angle_deg=0.0, pol='s', include_backside=True, raw_header='R45p', interpretation_notes=())
+  'R 45 p'   -> ParsedREColumn(target_type='R', angle_deg=45.0, pol='p', include_backside=True, raw_header='R 45 p', interpretation_notes=())
+  'R45s1f'   -> ParsedREColumn(target_type='R', angle_deg=0.0, pol='s', include_backside=False, raw_header='R45s1f', interpretation_notes=())
+  'T0'       -> ParsedREColumn(target_type='T', angle_deg=0.0, pol='s', include_backside=True, raw_header='T0', interpretation_notes=())
+M-L4b: _re_header_normalize_for_tokens and the parsed header
+  'R 45 s sans arriere'    -> normalized 'R 45 s  noBK ' -> ParsedREColumn(target_type='R', angle_deg=45.0, pol='s', include_backside=False, raw_header='R 45 s sans arriere', interpretation_notes=())
+  'R 45 s sans arrière'    -> normalized 'R 45 s sans arrière' -> ParsedREColumn(target_type='R', angle_deg=45.0, pol='s', include_backside=True, raw_header='R 45 s sans arrière', interpretation_notes=("Unrecognized label segments (ignored by the parser): 'sans', 'arrière'.", 'No explicit rear-face marker (noBK, 1f, sans arriere, plate, 2f, back...): model **with** incoherent rear face on substrate (**default behaviour**).'))
+M-L4c: _re_measurement_values_are_percent
+  AR coating R in %, max 1.2   -> read as percent: False
+  R in %, max 4.5              -> read as percent: True
+  R as fraction, max 0.045     -> read as percent: False

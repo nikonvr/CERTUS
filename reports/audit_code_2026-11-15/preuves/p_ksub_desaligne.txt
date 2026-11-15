@@ -1,0 +1,6 @@
+file grid 250-1000 nm (751 pts), lambda_min raised to 400 nm -> 601 fitted pts; k_sub passed: 751 pts (worker) vs 601 (aligned)
+  lambda= 400 nm : k_sub read 1.00e-03 (that of 250 nm) instead of 1.53e-04 | T 0.0000 instead of 0.0768
+  lambda= 500 nm : k_sub read 2.87e-04 (that of 350 nm) instead of 4.39e-05 | T 0.0216 instead of 0.4568
+  lambda= 600 nm : k_sub read 8.21e-05 (that of 450 nm) instead of 1.26e-05 | T 0.3619 instead of 0.7519
+  lambda= 800 nm : k_sub read 6.74e-06 (that of 650 nm) instead of 1.03e-06 | T 0.7517 instead of 0.7869
+max |dT| = 0.4978, max |dR| = 0.0390

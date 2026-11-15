@@ -1,0 +1,4 @@
+SiO2  n=1.46 d=   500 nm on Si   (picked: Si  ) | d_hat=  190.4 nm = 0.381 d | bounds [100, 380] nm | true d inside: False
+SiO2  n=1.46 d=  1000 nm on Si   (picked: Si  ) | d_hat=  380.9 nm = 0.381 d | bounds [190, 760] nm | true d inside: False
+Ta2O5 n=2.10 d=   500 nm on Si   (picked: Si  ) | d_hat=  285.6 nm = 0.571 d | bounds [140, 570] nm | true d inside: True
+TiO2  n=2.30 d=   500 nm on SiO2 (picked: SiO2) | d_hat=  666.5 nm = 1.333 d | bounds [350, 1350] nm | true d inside: True

@@ -1,0 +1,4 @@
+points where epsilon1_TL_analytic returns its floor 1.0: 86 of 161
+kernel epsilon1 at those points: min -6.3908, max 0.8838
+d eps1 / dA where floored: finite difference max |.| 0.000e+00, kernel max |.| 2.464e-02
+d eps1 / dA elsewhere (74 finite points): max |kernel - finite difference| = 3.755e-08 (scale 6.743e-02); non-finite points: 1

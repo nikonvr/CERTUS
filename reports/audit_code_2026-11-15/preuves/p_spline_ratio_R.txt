@@ -1,0 +1,3 @@
+ratio mode, T only: MSE at the TRUE film = 3.231e-32  (RMS 1.797e-16)
+ratio mode, R only: MSE at the TRUE film = 3.211e-04  (RMS 1.792e-02)
+for scale: mean R/T_sub = 0.2088, mean T_sub = 0.9183

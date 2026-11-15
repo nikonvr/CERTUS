@@ -1,0 +1,11 @@
+no exception    finished=1 error=0  -> UI released
+ValueError      finished=0 error=1  -> UI released
+RuntimeError    finished=0 error=1  -> UI released
+    excepthook: KeyError
+KeyError        finished=0 error=0  -> NO SIGNAL: UI stays busy
+    excepthook: IndexError
+IndexError      finished=0 error=0  -> NO SIGNAL: UI stays busy
+    excepthook: TypeError
+TypeError       finished=0 error=0  -> NO SIGNAL: UI stays busy
+    excepthook: AttributeError
+AttributeError  finished=0 error=0  -> NO SIGNAL: UI stays busy

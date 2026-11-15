@@ -1,0 +1,14 @@
+M-L3a: sigma_knots_decode on raw log-proportions whose last two intervals are tiny
+  tail   -2.0 eps_s None  : knots [1.       1.468311 1.936621 2.404932 2.873242 2.936621 3.      ] strictly increasing: True
+  tail   -2.0 eps_s 0.001 : knots [1.       1.468311 1.936621 2.404932 2.873242 2.936621 3.      ] strictly increasing: True
+  tail   -2.0 eps_s 0.01  : knots [1.       1.468311 1.936621 2.404932 2.873242 2.936621 3.      ] strictly increasing: True
+  tail   -8.0 eps_s None  : knots [1.       1.499916 1.999832 2.499748 2.999665 3.009665 3.      ] strictly increasing: False
+  tail   -8.0 eps_s 0.001 : knots [1.       1.499916 1.999832 2.499748 2.999665 3.000665 3.      ] strictly increasing: False
+  tail   -8.0 eps_s 0.01  : knots [1.       1.499916 1.999832 2.499748 2.999665 3.009665 3.      ] strictly increasing: False
+  tail  -20.0 eps_s None  : knots [1.   1.5  2.   2.5  3.   3.01 3.  ] strictly increasing: False
+  tail  -20.0 eps_s 0.001 : knots [1.    1.5   2.    2.5   3.    3.001 3.   ] strictly increasing: False
+  tail  -20.0 eps_s 0.01  : knots [1.   1.5  2.   2.5  3.   3.01 3.  ] strictly increasing: False
+M-L5c: the guard of ExportManager.export_excel, `if ep:`, on what a stopped run leaves in ep_current
+  ep = []                           -> bool(ep) = False
+  ep = [12.5, 80.1]                 -> bool(ep) = True
+  ep = array([12.5, 80.1])          -> ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()

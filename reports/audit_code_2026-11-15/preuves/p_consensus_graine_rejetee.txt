@@ -1,0 +1,9 @@
+stable, 3 seeds kept       seeds=[0.008, 0.0081, 0.0082] -> kept=[0.008, 0.0081, 0.0082] skip_registration=False (mean, std, worst)=(0.008100000000000001, 8.164965809277283e-05, 0.0082)
+one seed rejected (inf)    seeds=[0.007, inf, 0.0071] -> kept=[0.007, 0.0071] skip_registration=False (mean, std, worst)=(0.007050000000000001, 5.000000000000013e-05, 0.0071)
+all seeds rejected         seeds=[inf, inf, inf] -> kept=[] skip_registration=True (mean, std, worst)=None
+
+_should_skip_consensus_registration source:
+def _should_skip_consensus_registration(seed_scores: list[float]) -> bool:
+    """Return True when candidate has no consensus scores to register."""
+    return not _has_consensus_seed_scores(seed_scores)
+

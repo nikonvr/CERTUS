@@ -51,7 +51,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 
 #: A monter a chaque changement du corpus : il fait partie de la cle du cache de la base.
-VERSION_CORPUS = 3
+VERSION_CORPUS = 4
 
 #: Ce qu'on exporte d'une revision : le paquet de calcul et ses voisins, pas `reports/` (592 Mo).
 PAQUETS = ("certus", "certus_physics")
@@ -302,6 +302,36 @@ def corpus_strat(rec: Enregistreur) -> None:
         np.full(len(nominal), n_h), np.full(len(nominal), n_l), np.full(len(nominal), n_sub),
         np.full(len(nominal), 20, dtype=np.int64),
     )  # fmt: skip
+
+    # Le batch de production (chantier 44) : tirages en parallele, blocs de longueurs d'onde, couches au debit, temoins
+    # changes. Son propre generateur, pour que les cas ci-dessus gardent leurs tirages.
+    f_batch = rec.resoudre("strat.batch", "certus.physics.certus_strat_batch:simulate_stack_robustness_batch")
+    rng_b = np.random.default_rng(20261115)
+    pile = np.tile(nominal, 2)
+    n_c = len(pile)
+    for cas in range(16):
+        wls_b = np.empty(n_c)
+        debut = 0
+        while debut < n_c:  # des blocs de 1 a 7 couches, plus longs que la memoire de 4 couches du balayage
+            fin = min(n_c, debut + int(rng_b.integers(1, 8)))
+            wls_b[debut:fin] = float(rng_b.choice([500.0, 540.0, 600.0]))
+            debut = fin
+        disp = (wls_b - 540.0) * 1e-4
+        n_runs = int(rng_b.integers(2, 7))
+        couloir = float(rng_b.choice([0.0, 0.005]))
+        rec.appeler(
+            "strat.batch", cas, f_batch, pile, wls_b, (n_h + disp).astype(np.complex128),
+            (n_l + disp).astype(np.complex128), np.full(n_c, n_sub), rng_b.normal(0.0, 1e-3, (n_runs, n_c)),
+            float(rng_b.choice([1.0, 3.0])), 2.0, int(rng_b.integers(0, 2)),
+            np.full(n_c, 1e-3) if rng_b.random() < 0.6 else None, int(rng_b.integers(0, 5)),
+            float(rng_b.choice([0.0, 1.66e-3])), float(rng_b.choice([0.0, 0.01])), float(rng_b.choice([0.0, 0.01])),
+            float(rng_b.choice([0.0, 0.5])), int(rng_b.integers(0, 5)), bool(rng_b.random() < 0.8),
+            int(rng_b.choice([1, 1, 3])), couloir, int(rng_b.integers(0, 5)), 450.0 if couloir else 0.0,
+            650.0 if couloir else 0.0, (rng_b.random(n_c) < 0.15) if rng_b.random() < 0.3 else None,
+            rng_b.normal(0.0, 1e-3, (n_c, nodes)) if rng_b.random() < 0.3 else None,
+            (rng_b.random(n_c) < 0.1) if rng_b.random() < 0.3 else None, bool(rng_b.random() < 0.3),
+            bool(rng_b.random() < 0.3), int(rng_b.integers(0, 3)),
+        )  # fmt: skip
 
 
 def corpus_appelants(rec: Enregistreur) -> None:

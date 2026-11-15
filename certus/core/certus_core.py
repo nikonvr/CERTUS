@@ -336,7 +336,49 @@ def get_materials_db_hash() -> str | None:
     return None
 
 
-def configure_numba_env() -> None:
+
+
+#: The layer STRAT asks for (chantier 44): TBB when its runtime loads, OpenMP otherwise, never workqueue.
+STRAT_THREADING_LAYER = "threadsafe"
+
+_TBB_REGISTERED = False
+
+
+def register_tbb_runtime() -> bool:
+    """Put Intel TBB's runtime on the DLL search path, once per process; False when it is not installed.
+
+    pip's `tbb` wheel puts `tbb12.dll` in `<prefix>/Library/bin` (the frozen build: next to the executable), which is
+    not on the DLL search path of Python 3.8+, so Numba cannot load its TBB layer without this.
+
+    TBB is for STRAT only (chantier 44, measured 2026-11-15, reports/audit_oms5100_2026-11-15/profil_strat_complet):
+    a full STRAT search took 1074 s against 1339 s under OpenMP, the same ranking, and STRAT's kernels gave the same
+    bits under both layers and from one TBB run to the next. DESIGN's cost and gradient did not: their parallel sums
+    change order from one TBB run to the next (53 of 2985 corpus arrays, up to 3 ulp), so the other modules stay on
+    OpenMP.
+    """
+    global _TBB_REGISTERED
+    if _TBB_REGISTERED:
+        return True
+    for base in (getattr(sys, "_MEIPASS", None), str(Path(sys.prefix) / "Library" / "bin")):
+        if base and (Path(base) / "tbb12.dll").is_file() and hasattr(os, "add_dll_directory"):
+            try:
+                os.add_dll_directory(base)
+            except OSError:
+                continue
+            if base not in os.environ.get("PATH", "").split(os.pathsep):
+                os.environ["PATH"] = base + os.pathsep + os.environ.get("PATH", "")
+            _TBB_REGISTERED = True
+            return True
+    return False
+
+
+# A process started by STRAT (its process pools) inherits the layer it asked for, not the DLL directory: register it here,
+# where every such process passes.
+if os.environ.get("NUMBA_THREADING_LAYER") in ("tbb", STRAT_THREADING_LAYER):
+    register_tbb_runtime()
+
+
+def configure_numba_env(threading_layer: str = "omp") -> None:
     """
 
     Configure Numba environment variables for safe operation in frozen executables.
@@ -345,8 +387,8 @@ def configure_numba_env() -> None:
 
     This function is idempotent - safe to call multiple times.
 
-    Configuration, the same frozen or not: the OpenMP threading layer, multi-threaded with cores reserved
-    for the OS and the GUI.
+    Configuration, the same frozen or not: the OpenMP threading layer (TBB for STRAT, see `register_tbb_runtime`),
+    multi-threaded with cores reserved for the OS and the GUI.
 
     Environment variables set:
 
@@ -354,7 +396,7 @@ def configure_numba_env() -> None:
 
     - NUMBA_NUM_THREADS: Number of threads for Numba
 
-    - NUMBA_THREADING_LAYER: Threading layer ('omp')
+    - NUMBA_THREADING_LAYER: `threading_layer`, 'omp' by default; STRAT asks for `STRAT_THREADING_LAYER` (TBB)
 
     - OMP_NUM_THREADS, OPENBLAS_NUM_THREADS, MKL_NUM_THREADS: Thread limits
 
@@ -365,7 +407,7 @@ def configure_numba_env() -> None:
     if getattr(sys, "_certus_numba_configured", False) and os.environ.get("_CERTUS_NUMBA_CONFIGURED") == "1":
         ensure_numba_cache_dir()
         if "NUMBA_THREADING_LAYER" not in os.environ:
-            os.environ["NUMBA_THREADING_LAYER"] = "omp"
+            os.environ["NUMBA_THREADING_LAYER"] = threading_layer
         return
 
     if os.environ.get("_CERTUS_NUMBA_CONFIGURED") == "1":
@@ -389,7 +431,7 @@ def configure_numba_env() -> None:
             ]:
                 os.environ.setdefault(env_var, cur)
             os.environ["NUMBA_NUM_THREADS"] = cur
-            os.environ.setdefault("NUMBA_THREADING_LAYER", "omp")
+            os.environ.setdefault("NUMBA_THREADING_LAYER", threading_layer)
             os.environ["_CERTUS_NUMBA_CONFIGURED"] = "1"
             sys._certus_numba_configured = True  # type: ignore[attr-defined]
             return
@@ -411,7 +453,9 @@ def configure_numba_env() -> None:
     n_cores = max(1, _get_cpu_count() - _RESERVED_CORES_FOR_NUMBA)
     s_cores = str(n_cores)
     if "NUMBA_THREADING_LAYER" not in os.environ:
-        os.environ["NUMBA_THREADING_LAYER"] = "omp"
+        os.environ["NUMBA_THREADING_LAYER"] = threading_layer
+    if os.environ["NUMBA_THREADING_LAYER"] in ("tbb", STRAT_THREADING_LAYER):
+        register_tbb_runtime()
     for env_var in [
         "NUMBA_NUM_THREADS",
         "OMP_NUM_THREADS",

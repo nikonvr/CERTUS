@@ -64,10 +64,19 @@ datas = [
     ("certus_physics/structures.py", "certus_physics"),
 ]
 
+# Chantier 44: Numba's TBB layer (`certus_core.numba_threading_layer`) loads Intel TBB's runtime, which pip's `tbb` and
+# `tcmlib` wheels put in <prefix>/Library/bin, where PyInstaller does not look. Without them the build falls back to OpenMP.
+_TBB_DIR = Path(sys.prefix) / "Library" / "bin"
+tbb_binaries = [
+    (str(_TBB_DIR / name), ".")
+    for name in ("tbb12.dll", "tbbmalloc.dll", "tcm.dll", "libhwloc-15.dll")
+    if (_TBB_DIR / name).is_file()
+]
+
 a = Analysis(
     [str(ROOT / "tools" / "frozen_entry.py")],
     pathex=[str(ROOT)],
-    binaries=[],
+    binaries=tbb_binaries,
     datas=datas,
     hiddenimports=hiddenimports,
     hookspath=[],

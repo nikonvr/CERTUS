@@ -21,7 +21,7 @@ s'arrêter si ruff est rouge. Une seule exécution à la fois (banc, tests).
 
 ## 2. Fait
 
-C-L3 `e8cef838` · M-L5a `4711e35b` · M-L6g `d6d28437` · C-L6b `3735ec1f` · M-L6e `31971c6c` (+ plafond `0942633e`) · M-L4a, b, c `203f9e13`. Groupe RE : M-L4c suite `23fc49a5` · M-L6a `7837c5d3` · M-L6b `50d00fd1` · M-L6c `d7c5a30a`. C-L4 `5be9f704` ; banc **après** : RESULT 0,0073399, **SEEL 0,1713 nm** (+11,9 %), gagnant différent (`recensement_sio2.md`).
+C-L3 `e8cef838` · M-L5a `4711e35b` · M-L6g `d6d28437` · C-L6b `3735ec1f` · M-L6e `31971c6c` (+ plafond `0942633e`) · M-L4a, b, c `203f9e13`. Groupe RE : M-L4c suite `23fc49a5` · M-L6a `7837c5d3` · M-L6b `50d00fd1` · M-L6c `d7c5a30a`. C-L4 `5be9f704` ; banc **après** : RESULT 0,0073399, **SEEL 0,1713 nm** (+11,9 %), gagnant différent (`recensement_sio2.md`). Groupe INDEX : M-L1 `cf8f7020` · M-L5g `1696cfa0` · M-L5b `12ab3eb1`. Groupe SPLINE : M-L3a `c9022195` · M-L3b `56c4fd08` · M-L3c `50dadceb`. Groupe DESIGN : C-L6a `98ae5ef4` · M-L5c `55d716ad` · M-L5d `c3b1bb82` · M-L5f `cea43f60` · M-L5b `e7062fa9` · M-L5e `7c649893` · M-L4d `396329e4`.
 Banc juge de paix **avant** C-L4 (code `31971c6c`) : RESULT 0,0058619, **SEEL 0,1531 nm**, RUN_S 1 750 s (`bancs/juge_de_paix_avant_C-L4.txt`).
 
 ## 3. À faire, dans cet ordre
@@ -44,7 +44,7 @@ Décision 👤 = imposée ; décision par défaut = la mienne, à garder sauf ra
 |---|---|---|---|
 | C-L4 | `certus/utils/certus_strat_db.py::get_refractive_index`, `MergedMaterialDict.__contains__` (correspondance approximative), `certus/utils/certus_db_helpers.py::find_matching_sheets` ; preuve `preuves/p_substrat_sio2.*` | 👤 : le substrat « SiO2 » prend le Sellmeier de la silice fondue **partout** ; `__contains__` ne doit plus répondre oui par sous-chaîne pour un substrat | n(550) = 1,45991 (pas 1,48625) ; puis **banc juge de paix après** (`python scripts\bench_examples.py strat --auto-yes > reports\audit_code_2026-11-15\bancs\juge_de_paix_apres_C-L4.txt`), seul processus ; écrire l'écart (SEEL, classement) dans `recensement_sio2.md` et `docs/ETAT_acquis.md` |
 
-### Groupe INDEX
+### Groupe INDEX (fait)
 
 | id | où | correction | test |
 |---|---|---|---|
@@ -52,7 +52,7 @@ Décision 👤 = imposée ; décision par défaut = la mienne, à garder sauf ra
 | M-L5g | `certus/ui/certus_index_ui_events.py:278-291` (`n_approx` du substrat) | 👤 : diviser par le **n initial du film à 550 nm** (paramètres de départ du modèle) ; bornes [0,5 ; 2] d̂ | `preuves/p_epaisseur_fft_indice.py` : SiO2 500 nm sur Si → vraie épaisseur dans les bornes |
 | M-L5b (INDEX) | `certus/ui/certus_index_ui_state.py:158-247` | relire `exclude_min/max` ; sauver et relire `sb_lmin/lmax`, `sb_sub_thickness_mm`, `chk_high_precision`, `chk_oh_band` | aller-retour `_collect_config` → `_apply_config` sur une fenêtre neuve, widgets non défaut |
 
-### Groupe SPLINE et fils
+### Groupe SPLINE et fils (fait)
 
 | id | où | correction | test |
 |---|---|---|---|
@@ -60,7 +60,7 @@ Décision 👤 = imposée ; décision par défaut = la mienne, à garder sauf ra
 | M-L3c | `certus/spline/certus_corridor_orchestrator_utils.py:808-827`, courbe l. 1150-1175 | par défaut : exclure `point_status_code == 3` de la courbe qui fixe le corridor (les garder dans la sortie, marqués) | un point de secours n'entre pas dans le minimum ni dans le seuil |
 | M-L3b | `certus/workers/certus_base_workers.py:93` | ajouter `KeyError, IndexError, TypeError, AttributeError` au tuple attrapé (pas un `except Exception` muet) | `preuves/p_generic_worker_signaux.py` : toute exception → `error` |
 
-### Groupe DESIGN et interface
+### Groupe DESIGN et interface (fait)
 
 | id | où | correction | test |
 |---|---|---|---|

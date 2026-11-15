@@ -1,0 +1,79 @@
+{
+  "head": "df36593fb6d90a28586090df9dbfe9eb2ae95e40",
+  "source_digest": "b5fd975d64499a580ac6c5d4e3f9b9b7252aa08e107f6d292b2fbf26eaeaf27b",
+  "green": true,
+  "stages": [
+    {
+      "stage": "oracle",
+      "returncode": 0,
+      "seconds": 70.33564339999975,
+      "counts": {
+        "passed": 1209
+      },
+      "failed": [],
+      "persistent": [],
+      "replayed": [],
+      "status": "PASS"
+    },
+    {
+      "stage": "unit",
+      "returncode": 1,
+      "seconds": 721.3938464000003,
+      "counts": {
+        "failed": 1,
+        "passed": 6185,
+        "skipped": 7,
+        "xfailed": 1
+      },
+      "failed": [
+        "tests/unit/test_strat_phase_a_state_coherence.py::test_the_slit_profile_is_inert_when_absent_or_zero"
+      ],
+      "persistent": [],
+      "replayed": [
+        "tests/unit/test_strat_phase_a_state_coherence.py::test_the_slit_profile_is_inert_when_absent_or_zero"
+      ],
+      "status": "ARTEFACT"
+    },
+    {
+      "stage": "ui",
+      "returncode": 0,
+      "seconds": 643.0219983999996,
+      "counts": {
+        "passed": 1594,
+        "skipped": 12,
+        "xfailed": 2
+      },
+      "failed": [],
+      "persistent": [],
+      "replayed": [],
+      "status": "PASS"
+    },
+    {
+      "stage": "rest",
+      "returncode": 0,
+      "seconds": 299.96088860000054,
+      "counts": {
+        "passed": 322,
+        "warning": 25
+      },
+      "failed": [],
+      "persistent": [],
+      "replayed": [],
+      "status": "PASS"
+    },
+    {
+      "stage": "performance",
+      "returncode": 0,
+      "seconds": 21.35472429999936,
+      "counts": {
+        "passed": 30,
+        "skipped": 2
+      },
+      "failed": [],
+      "persistent": [],
+      "replayed": [],
+      "status": "PASS"
+    }
+  ],
+  "failed": []
+}

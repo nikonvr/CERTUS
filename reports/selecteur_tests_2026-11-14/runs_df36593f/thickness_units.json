@@ -1,0 +1,188 @@
+{
+  "head": "df36593fb6d90a28586090df9dbfe9eb2ae95e40",
+  "source_digest": "b5fd975d64499a580ac6c5d4e3f9b9b7252aa08e107f6d292b2fbf26eaeaf27b",
+  "kind": "mutation",
+  "name": "thickness_units",
+  "paths": [
+    "certus/domain/optical/value_objects/thickness.py"
+  ],
+  "fault": [
+    "return self.nm * 1e-9",
+    "*",
+    "/"
+  ],
+  "selected_files": [
+    "tests/domain/test_optical_entities.py",
+    "tests/domain/test_optical_value_objects.py",
+    "tests/headless/test_code_duplication.py",
+    "tests/oracle/test_tmm_formula_has_one_source.py",
+    "tests/performance/test_architecture_guard.py",
+    "tests/ui/test_ux_alpha_is_written_the_way_qt_reads_it.py",
+    "tests/ui/test_ux_brand_colors.py",
+    "tests/ui/test_ux_design_system.py",
+    "tests/ui/test_ux_information_is_a_toast.py",
+    "tests/ui/test_ux_ink_follows_the_fill.py",
+    "tests/ui/test_ux_no_startup_network.py",
+    "tests/ui/test_ux_no_technical_identifiers.py",
+    "tests/ui/test_ux_no_undo_state_is_written_that_nothing_reads.py",
+    "tests/unit/test_a_module_that_was_in_an_import_cycle_imports_first_and_alone.py",
+    "tests/unit/test_an_empty_rmse_curve_leaves_no_minimum_index.py",
+    "tests/unit/test_an_error_dialog_says_the_cause_and_what_to_do.py",
+    "tests/unit/test_certus_data_coverage_boost.py",
+    "tests/unit/test_certus_data_coverage_boost_extra.py",
+    "tests/unit/test_certus_physics_structures.py",
+    "tests/unit/test_certus_ui.py",
+    "tests/unit/test_ci_dead_symbol_audit.py",
+    "tests/unit/test_computation_imports_no_qt.py",
+    "tests/unit/test_coverage_boost_96.py",
+    "tests/unit/test_elite_children_are_judged_with_the_slit_bias.py",
+    "tests/unit/test_exports_are_written_atomically.py",
+    "tests/unit/test_library_modules_leave_sys_path_alone.py",
+    "tests/unit/test_managers_guard_only_what_they_hold.py",
+    "tests/unit/test_metrics_reads_the_plan_indicators.py",
+    "tests/unit/test_no_broad_exception_is_swallowed_in_silence.py",
+    "tests/unit/test_no_module_shadows_the_standard_library.py",
+    "tests/unit/test_one_workflow_hint_component.py",
+    "tests/unit/test_only_widgets_are_qt_parents.py",
+    "tests/unit/test_progress_imports.py",
+    "tests/unit/test_project_imports_resolve.py",
+    "tests/unit/test_provenance_travels_with_the_results.py",
+    "tests/unit/test_requirements_lock_follows_uv_lock.py",
+    "tests/unit/test_seed_contract_global.py",
+    "tests/unit/test_self_attributes_are_defined.py",
+    "tests/unit/test_source_has_no_invalid_escape.py",
+    "tests/unit/test_strat_config_routing.py",
+    "tests/unit/test_strat_leviers.py",
+    "tests/unit/test_strat_leviers_ui_route.py",
+    "tests/unit/test_strat_local_search.py",
+    "tests/unit/test_strat_stop_model_is_the_decided_one.py",
+    "tests/unit/test_the_base_app_split_keeps_every_window_method_where_it_resolves.py",
+    "tests/unit/test_the_cached_callers_of_parallel_kernels_survive_a_reload.py",
+    "tests/unit/test_the_corridor_mixins_declare_what_they_read_on_the_window.py",
+    "tests/unit/test_the_corridor_slices_hold_the_methods_they_were_given.py",
+    "tests/unit/test_the_corridors_split_keeps_every_name_and_the_layering_where_it_was.py",
+    "tests/unit/test_the_default_pytest_run_is_quiet.py",
+    "tests/unit/test_the_field_window_imports_nothing_of_strat.py",
+    "tests/unit/test_the_frozen_spec_bundles_the_suite.py",
+    "tests/unit/test_the_hub_opens_without_the_scientific_stack.py",
+    "tests/unit/test_the_lambda_connect_audit_scans_the_package.py",
+    "tests/unit/test_the_project_is_licensed_under_the_gpl.py",
+    "tests/unit/test_the_robust_rmse_delta_has_a_name.py",
+    "tests/unit/test_the_robustness_split_keeps_every_name_and_the_cycle_where_it_was.py",
+    "tests/unit/test_the_small_modules_no_test_named_keep_their_contract.py",
+    "tests/unit/test_the_spectral_weights_live_under_the_programs_that_share_them.py",
+    "tests/unit/test_the_substrate_absorption_model_is_one.py",
+    "tests/unit/test_the_substrate_dialog_split_keeps_the_class_where_it_resolves.py",
+    "tests/unit/test_the_xdist_workers_get_their_own_preferences.py",
+    "tests/unit/test_user_preferences_are_isolated.py",
+    "tests/unit/test_visible_units_and_symbols_are_whole.py"
+  ],
+  "full_suite_reason": "",
+  "selected": {
+    "green": false,
+    "stages": [
+      {
+        "stage": "selected",
+        "returncode": 2,
+        "seconds": 294.5242494999984,
+        "counts": {
+          "failed": 1,
+          "passed": 934,
+          "xfailed": 3
+        },
+        "failed": [
+          "tests/domain/test_optical_value_objects.py::test_thickness_unit_conversions_roundtrip"
+        ],
+        "persistent": [
+          "tests/domain/test_optical_value_objects.py::test_thickness_unit_conversions_roundtrip"
+        ],
+        "replayed": [],
+        "status": "FAIL"
+      }
+    ],
+    "failed": [
+      "tests/domain/test_optical_value_objects.py::test_thickness_unit_conversions_roundtrip"
+    ]
+  },
+  "full": {
+    "green": false,
+    "stages": [
+      {
+        "stage": "oracle",
+        "returncode": 0,
+        "seconds": 19.080800999996427,
+        "counts": {
+          "passed": 1209
+        },
+        "failed": [],
+        "persistent": [],
+        "replayed": [],
+        "status": "PASS"
+      },
+      {
+        "stage": "unit",
+        "returncode": 0,
+        "seconds": 465.13146339999366,
+        "counts": {
+          "passed": 6186,
+          "skipped": 7,
+          "xfailed": 1
+        },
+        "failed": [],
+        "persistent": [],
+        "replayed": [],
+        "status": "PASS"
+      },
+      {
+        "stage": "ui",
+        "returncode": 0,
+        "seconds": 584.5797259999963,
+        "counts": {
+          "passed": 1594,
+          "skipped": 12,
+          "xfailed": 2
+        },
+        "failed": [],
+        "persistent": [],
+        "replayed": [],
+        "status": "PASS"
+      },
+      {
+        "stage": "rest",
+        "returncode": 1,
+        "seconds": 330.3381745000006,
+        "counts": {
+          "failed": 1,
+          "passed": 321,
+          "warning": 20
+        },
+        "failed": [
+          "tests/domain/test_optical_value_objects.py::test_thickness_unit_conversions_roundtrip"
+        ],
+        "persistent": [
+          "tests/domain/test_optical_value_objects.py::test_thickness_unit_conversions_roundtrip"
+        ],
+        "replayed": [],
+        "status": "FAIL"
+      },
+      {
+        "stage": "performance",
+        "returncode": 0,
+        "seconds": 20.441078100004233,
+        "counts": {
+          "passed": 30,
+          "skipped": 2
+        },
+        "failed": [],
+        "persistent": [],
+        "replayed": [],
+        "status": "PASS"
+      }
+    ],
+    "failed": [
+      "tests/domain/test_optical_value_objects.py::test_thickness_unit_conversions_roundtrip"
+    ]
+  },
+  "escaped": [],
+  "status": "OK"
+}

@@ -1,0 +1,3 @@
+08:22:10 KILLED pid=33868 age=20?770s windows=[V Qt6112QWindowIcon | Unsaved configuration] cmd=tests\ui\test_ux_no_horizontal_scroll.py --worker certus.ui.certus_design_ui CertusDesignApp 1366 768
+09:07:54 probe ended, watcher stops
+11:05:36 probe ended, watcher stops

@@ -1,0 +1,112 @@
+  oracle          PASS      1:10  1209 passed
+  unit : 1 echec(s) en parallele, rejeu seul en serie...
+  unit            ARTEFACT  12:01  1 failed, 6185 passed, 7 skipped, 1 xfailed
+  ui              PASS      10:43  1594 passed, 12 skipped, 2 xfailed
+  rest            PASS      4:59  322 passed
+  performance     PASS      0:21  30 passed, 2 skipped
+CONTROL_EXIT=0 WALL=1844s
+CASE=infrared_center (history)
+  selected : 1 echec(s) en parallele, rejeu seul en serie...
+  selected        FAIL      10:26  1 failed, 2245 passed, 5 skipped
+  oracle          PASS      0:33  1209 passed
+  unit : 2 echec(s) en parallele, rejeu seul en serie...
+  unit            FAIL      11:55  2 failed, 6184 passed, 7 skipped, 1 xfailed
+  ui              PASS      10:16  1594 passed, 12 skipped, 2 xfailed
+  rest            PASS      4:53  322 passed
+  performance     PASS      0:22  30 passed, 2 skipped
+COMPARISON=OK infrared_center
+CASE=empty_phase_a (history)
+  selected : 1 echec(s) en parallele, rejeu seul en serie...
+  selected        FAIL      12:14  1 failed, 1639 passed, 5 skipped
+  oracle          PASS      0:19  1209 passed
+  unit : 3 echec(s) en parallele, rejeu seul en serie...
+  unit            FAIL      7:58  3 failed, 6183 passed, 7 skipped, 1 xfailed
+  ui              PASS      9:24  1594 passed, 12 skipped, 2 xfailed
+  rest            PASS      5:11  322 passed
+  performance     PASS      0:22  30 passed, 2 skipped
+COMPARISON=OK empty_phase_a
+CASE=qwot_signal_state (history)
+  oracle          PASS      0:20  1209 passed
+  unit : 1 echec(s) en parallele, rejeu seul en serie...
+  unit            FAIL      3:47  1 failed, 4669 passed, 7 skipped
+  oracle          PASS      0:19  1209 passed
+  unit : 1 echec(s) en parallele, rejeu seul en serie...
+  unit            FAIL      7:48  1 failed, 6185 passed, 7 skipped, 1 xfailed
+  ui : 1 echec(s) en parallele, rejeu seul en serie...
+  ui              FAIL      10:37  1 failed, 1593 passed, 12 skipped, 2 xfailed
+  rest            PASS      5:21  322 passed
+  performance     PASS      0:19  30 passed, 2 skipped
+COMPARISON=OK qwot_signal_state
+CASE=angle_boundary (mutation)
+  selected : 1 echec(s) en parallele, rejeu seul en serie...
+  selected        FAIL      14:34  1 failed, 2231 passed, 5 skipped
+  oracle          PASS      0:18  1209 passed
+  unit : 5 echec(s) en parallele, rejeu seul en serie...
+  unit            FAIL      8:24  5 failed, 6181 passed, 7 skipped, 1 xfailed
+  ui              PASS      10:19  1594 passed, 12 skipped, 2 xfailed
+  rest            PASS      4:50  322 passed
+  performance     PASS      0:20  30 passed, 2 skipped
+COMPARISON=OK angle_boundary
+CASE=spectral_width (mutation)
+  selected : 1 echec(s) en parallele, rejeu seul en serie...
+  selected        FAIL      368:01  1 failed, 3151 passed, 17 skipped
+  oracle          PASS      0:20  1209 passed
+  unit : 5 echec(s) en parallele, rejeu seul en serie...
+  unit            FAIL      8:24  5 failed, 6181 passed, 7 skipped, 1 xfailed
+  ui              PASS      10:41  1594 passed, 12 skipped, 2 xfailed
+  rest : 1 echec(s) en parallele, rejeu seul en serie...
+  rest            FAIL      4:59  1 failed, 321 passed
+  performance     PASS      0:21  30 passed, 2 skipped
+COMPARISON=ESCAPED spectral_width
+CASE=thickness_units (mutation)
+  selected : 1 echec(s) en parallele, rejeu seul en serie...
+  selected        FAIL      4:49  1 failed, 946 passed, 3 xfailed
+  oracle          PASS      0:18  1209 passed
+  unit : 3 echec(s) en parallele, rejeu seul en serie...
+  unit            ARTEFACT  8:50  3 failed, 6183 passed, 7 skipped, 1 xfailed
+  ui              FAIL      3:26  223 failed, 1322 passed, 2 xfailed, 61 error
+  rest            FAIL      0:00  
+Traceback (most recent call last):
+  File "D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus1111\.claude\worktrees\claude-code-suije-bf4f1f\scripts\probe_test_selector.py", line 205, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus1111\.claude\worktrees\claude-code-suije-bf4f1f\scripts\probe_test_selector.py", line 188, in main
+    full = full_suite(out / name / "full", args.workers, stop_on_failure=False)
+  File "D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus1111\.claude\worktrees\claude-code-suije-bf4f1f\scripts\probe_test_selector.py", line 69, in full_suite
+    raise RuntimeError(f"{stage.name} exited without a usable test result; see {result.log}")
+RuntimeError: rest exited without a usable test result; see D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus1111\.claude\worktrees\claude-code-suije-bf4f1f\reports\selecteur_tests_2026-11-14\runs_df36593f\thickness_units\full\rest.log
+=== relance 2026-11-15 09:09:43 après passation (thickness_units invalide : 0xc0000142, dossier renommé) ===
+COMPARISON=OK infrared_center (resumed)
+COMPARISON=OK empty_phase_a (resumed)
+COMPARISON=OK qwot_signal_state (resumed)
+COMPARISON=OK angle_boundary (resumed)
+COMPARISON=ESCAPED spectral_width (resumed)
+CASE=thickness_units (mutation)
+  selected : 1 echec(s) en parallele, rejeu seul en serie...
+  selected        FAIL      4:54  1 failed, 934 passed, 3 xfailed
+  oracle          PASS      0:19  1209 passed
+  unit            PASS      7:45  6186 passed, 7 skipped, 1 xfailed
+  ui              PASS      9:44  1594 passed, 12 skipped, 2 xfailed
+  rest : 1 echec(s) en parallele, rejeu seul en serie...
+  rest            FAIL      5:30  1 failed, 321 passed
+  performance     PASS      0:20  30 passed, 2 skipped
+COMPARISON=OK thickness_units
+CASE=field_chain (mutation)
+  selected : 1 echec(s) en parallele, rejeu seul en serie...
+  selected        FAIL      10:14  1 failed, 2233 passed, 5 skipped
+  oracle          PASS      0:34  1209 passed
+  unit            FAIL      11:19  45 failed, 6141 passed, 7 skipped, 1 xfailed
+  ui              PASS      10:36  1594 passed, 12 skipped, 2 xfailed
+  rest            PASS      4:54  322 passed
+  performance     PASS      0:21  30 passed, 2 skipped
+COMPARISON=ESCAPED field_chain
+CASE=overflow_boundary (mutation)
+  selected : 4 echec(s) en parallele, rejeu seul en serie...
+  selected        ARTEFACT  21:35  4 failed, 3811 passed, 17 skipped
+  oracle          PASS      0:19  1209 passed
+  unit : 1 echec(s) en parallele, rejeu seul en serie...
+  unit            FAIL      8:38  1 failed, 6185 passed, 7 skipped, 1 xfailed
+  ui              PASS      11:04  1594 passed, 12 skipped, 2 xfailed
+  rest            PASS      4:59  322 passed
+  performance     PASS      0:21  30 passed, 2 skipped
+COMPARISON=ESCAPED overflow_boundary

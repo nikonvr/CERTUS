@@ -151,6 +151,22 @@ class CoreManager:
         # disappeared simply by checking "Oblique".
         targets_from_table = self.ui._get_oblique_tgts() if self.ui.oblique_mode else self.ui._get_tgts()
 
+        # The normal mode only holds T targets at normal incidence: leaving the oblique mode turned an R target at
+        # 45 degrees into a T target at 0 degree, silently (audit 2026-11-15, M-L5d). Refuse, and say why.
+        if not new_mode:
+            lost = [t for t in targets_from_table if isinstance(t, ObliqueTarget) and (t.target_type != "T" or t.angle != 0.0)]
+            if lost:
+                self.ui.oblique_check.blockSignals(True)
+                self.ui.oblique_check.setChecked(True)
+                self.ui.oblique_check.blockSignals(False)
+                message = (
+                    f"Oblique mode kept: {len(lost)} target(s) in R or at a non-zero angle cannot be expressed at "
+                    "normal incidence. Remove or change them first."
+                )
+                self.ui.log(message, "WARNING")
+                self.ui.status_label.setText(message)
+                return
+
         self.ui.oblique_mode = new_mode
 
         self.ui._update_target_table_headers()

@@ -446,7 +446,7 @@ class CertusREExcelMixin:
 
         `parse_re_column_header` (`interpretation_notes` if uncertain).
 
-        Values taken as **percent** if magnitudes exceed ~1.25.
+        The whole sheet is taken as **percent** as soon as one column exceeds 1.05.
 
         """
 
@@ -554,41 +554,25 @@ class CertusREExcelMixin:
 
         n_rows = min(n_rows, len(wls_arr))
 
-        spectra_columns: list[tuple[ParsedREColumn, np.ndarray]] = []
+        raw_columns: list[np.ndarray] = []
 
-        for col_idx, spec in col_specs:
-            raw_nums: list[float] = []
+        for col_idx, _spec in col_specs:
+            cells = [row[col_idx] if len(row) > col_idx else None for row in data_rows[:n_rows]]
 
-            for i in range(n_rows):
-                row = data_rows[i]
+            nums = np.array([float(v) if isinstance(v, (int, float)) else np.nan for v in cells], dtype=np.float64)
 
-                if len(row) <= col_idx:
-                    raw_nums.append(np.nan)
+            raw_columns.append(np.where(np.isfinite(nums), nums, np.nan))
 
-                    continue
+        # One unit for the whole sheet: decided per column, an antireflection R in percent (maximum below 1) next to
+        # a T in percent was kept as a fraction, 100 times too large (audit 2026-11-15, M-L4c).
+        use_pct = any(bool(np.isfinite(c).any()) and _re_measurement_values_are_percent(list(c)) for c in raw_columns)
 
-                v = row[col_idx]
+        if use_pct:
+            self.log("RE measurement: sheet interpreted as **percent** -> every spectral column scaled /100.", "INFO")
 
-                raw_nums.append(float(v) if isinstance(v, (int, float)) else np.nan)
-
-            use_pct = _re_measurement_values_are_percent(raw_nums)
-
-            out: list[float] = []
-
-            for x in raw_nums:
-                if not np.isfinite(x):
-                    out.append(np.nan)
-
-                else:
-                    out.append(x / 100.0 if use_pct else x)
-
-            if use_pct:
-                self.log(
-                    f"RE measurement: column {col_idx} ({spec.raw_header}) interpreted as **percent** -> scale /100.",
-                    "INFO",
-                )
-
-            spectra_columns.append((spec, np.asarray(out, dtype=np.float64)))
+        spectra_columns: list[tuple[ParsedREColumn, np.ndarray]] = [
+            (spec, col / 100.0 if use_pct else col) for (_i, spec), col in zip(col_specs, raw_columns, strict=True)
+        ]
 
         return (
             np.asarray(wls_arr[:n_rows], dtype=np.float64),

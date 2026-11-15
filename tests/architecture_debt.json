@@ -74,7 +74,7 @@
     "certus/spline/certus_index_spline_core.py": 2108,
     "certus/spline/spline_workers.py": 1997,
     "certus/ui/certus_metal_base_app.py": 1758,
-    "certus/ui/certus_re_excel_mixin.py": 2210,
+    "certus/ui/certus_re_excel_mixin.py": 2194,
     "certus/ui/certus_re_layout_mixin.py": 1743,
     "certus/ui/certus_strat_ui_state.py": 1722,
     "certus/utils/certus_re_helpers.py": 1972,

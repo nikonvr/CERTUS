@@ -1210,7 +1210,7 @@ class SpectrumLoadResult:
     x_unit : str
         Detected or forced unit for ``x`` (``"nm"`` or ``"um"``).
     normalised_to_fraction : bool
-        True if any ``y`` column had values > 1.5 and was divided by 100
+        True if any ``y`` column had values > 1.05: every ``y`` column was divided by 100
         (percentage → fraction heuristic).
     n_rows : int
         Number of rows after dropping non-numeric entries.
@@ -1260,7 +1260,7 @@ def load_spectrum_columns(
     2. Keep only the first ``max_columns`` columns.
     3. Coerce every cell to numeric, drop rows with NaN.
     4. Sort ascending (by default) on the first column, reset index.
-    5. Normalise ``%`` values (>1.5 in any ``y`` column) to fractions.
+    5. Normalise ``%`` values (>1.05 in any ``y`` column: the whole file) to fractions.
     6. Convert ``x`` from µm to nm when ``to_nm=True`` and the unit is ``um``.
     7. Rename columns using ``column_roles`` (default: ``{0:"lambda", 1:"T", 2:"R"}``).
 
@@ -1271,7 +1271,7 @@ def load_spectrum_columns(
     max_columns : int, default 3
         Keep only the first ``max_columns`` numeric columns.
     normalise_percent : bool, default True
-        If True, any ``y`` column whose max > 1.5 is divided by 100 (percent
+        If True and one ``y`` column has a max > 1.05, all are divided by 100 (percent
         → fraction heuristic).
     sort_ascending : bool, default True
         Sort rows by the first column in ascending order.
@@ -1338,18 +1338,22 @@ def load_spectrum_columns(
     else:
         result_unit = detected_unit
 
-    # Percent → fraction heuristic on y columns
+    # Percent → fraction heuristic on y columns. One unit for the whole file: decided per column, a small R or T in
+    # percent (maximum below the threshold) next to a column in percent stayed a fraction, 100 times too large. R and
+    # T as fractions cannot exceed 1: above 1.05 (noise margin) the file can only be percent (was 1.5; audit
+    # 2026-11-15, M-L4c).
     normalised = False
     if normalise_percent and len(df.columns) > 1:
-        for i in range(1, len(df.columns)):
-            values = as_float64_1d(df.iloc[:, i].to_numpy(dtype=float, copy=True), copy=True)
-            col_max = float(np.nanmax(values))
-            if col_max > 1.5:
+        y_values = [
+            as_float64_1d(df.iloc[:, i].to_numpy(dtype=float, copy=True), copy=True) for i in range(1, len(df.columns))
+        ]
+        normalised = any(float(np.nanmax(values)) > 1.05 for values in y_values)
+        if normalised:
+            for i, values in enumerate(y_values, start=1):
                 # ``isetitem`` replaces the column in-place regardless of dtype,
                 # avoiding FutureWarning on int->float promotion and working
                 # even when two source columns share a name.
                 df.isetitem(i, values / 100.0)
-                normalised = True
 
     # y_columns dict (everything after x)
     y_columns: dict[str, np.ndarray] = {}

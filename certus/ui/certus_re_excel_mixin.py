@@ -363,7 +363,9 @@ class CertusREExcelMixin:
 
         four data columns (left-to-right) are n1,k1,n2,k2. Missing k columns
 
-        default to zero; missing n to 1.5.
+        default to zero; missing n to 1.5. Within a present column, a decimal comma is read and an
+
+        unreadable cell, or an empty n cell, raises ValueError (an empty k cell means k = 0).
 
         """
 
@@ -424,27 +426,12 @@ class CertusREExcelMixin:
 
         n_rows = min(n_rows, len(wls_arr))
 
-        def _col_arr(col_idx: int | None, default: float) -> np.ndarray:
+        from certus.utils.certus_re_index_cells import index_column_values
 
-            if col_idx is None:
-                return np.full(n_rows, default, dtype=np.float64)
-
-            out = np.empty(n_rows, dtype=np.float64)
-
-            for i in range(n_rows):
-                v = _get(data_rows[i], col_idx, default)
-
-                out[i] = default if v is None else v
-
-            return out
-
-        n1 = _col_arr(i1, 1.5)
-
-        k1 = _col_arr(i2, 0.0)
-
-        n2 = _col_arr(i3, 1.5)
-
-        k2 = _col_arr(i4, 0.0)
+        n1 = index_column_values(data_rows, i1, n_rows, 1.5, "n1", empty_ok=False)
+        k1 = index_column_values(data_rows, i2, n_rows, 0.0, "k1", empty_ok=True)
+        n2 = index_column_values(data_rows, i3, n_rows, 1.5, "n2", empty_ok=False)
+        k2 = index_column_values(data_rows, i4, n_rows, 0.0, "k2", empty_ok=True)
 
         # Keep workbook order unless the sheet headers explicitly request a swap.
         # The reverse-engineering sample relies on a stable H/L mapping from the file itself.

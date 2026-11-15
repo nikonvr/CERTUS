@@ -770,6 +770,10 @@ class CertusREWorkersMixin:
 
         self._use_exact_ep = True
 
+        # The thicknesses read from the workbook are no longer the design: _compute_re_rmse reads them first, so the
+        # title and the export metadata kept the RMSE of the initial design (audit 2026-11-15, M-L6b).
+        self._re_loaded_exact_ep = None
+
         # Do not call run_eval immediately: it would set the UI to "Computing..."
 
         # and the (non-modal) results window often ended up behind other windows.

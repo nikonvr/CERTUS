@@ -41,6 +41,7 @@ from certus.ui.certus_ui import (
     wrap_scientific_plot_with_toolbar,
 )
 from certus.ui.certus_ui_utils import notify
+from certus.utils.certus_atomic_io import atomic_open
 from certus.utils.certus_qsettings import certus_settings
 from certus.utils.certus_spectral_preproc import smooth_dataframe_auto, smooth_spectrum_auto
 from certus.utils.errors import describe_error
@@ -408,47 +409,25 @@ class CurveSmootherGUI(QMainWindow):
                 "INFO",
             )
             src_p = Path(self.file_path)
-            default_target = src_p.with_name(f"{src_p.stem}_clean.xlsx")
+            # The source workbook is never rewritten (audit 2026-11-15, M-L5e): saving into it added the sheet in place, not
+            # atomically, and through pandas, which loses its charts and shapes. The smoothed data go to another file,
+            # "<name>_lisse.xlsx" next to the source by default, written through a temporary file.
+            beside_source = src_p.with_name(f"{src_p.stem}_lisse.xlsx")
             save_path, _ = QFileDialog.getSaveFileName(
                 self,
                 "Save Clean Data",
-                str(default_target),
+                str(beside_source),
                 "Excel Files (*.xlsx);;All Files (*)",
             )
             if not save_path:
                 return
-
             target_p = Path(save_path).resolve()
-            is_same_file = (target_p == src_p.resolve())
-
-            if is_same_file:
-                ans = QMessageBox.question(
-                    self,
-                    "Confirm Overwrite",
-                    f"You are about to modify the original file:\n{src_p.name}\n\n"
-                    "This will add/update the 'clean_measurements' sheet. Continue?",
-                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                    QMessageBox.StandardButton.No,
-                )
-                if ans != QMessageBox.StandardButton.Yes:
-                    return
-
-            if is_same_file:
-                if self.file_path.endswith(".xls"):
-                    save_path = str(target_p.with_suffix(".xlsx"))
-                    all_sheets = pd.read_excel(self.file_path, sheet_name=None)
-                    with pd.ExcelWriter(save_path, engine="openpyxl") as writer:
-                        for s_name, s_df in all_sheets.items():
-                            if s_name.lower() != "clean_measurements":
-                                s_df.to_excel(writer, sheet_name=s_name, index=False)
-                        df_clean.to_excel(writer, sheet_name="clean_measurements", index=False)
-                else:
-                    with pd.ExcelWriter(save_path, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
-                        df_clean.to_excel(writer, sheet_name="clean_measurements", index=False)
-            else:
-                with pd.ExcelWriter(save_path, engine="openpyxl") as writer:
-                    df_clean.to_excel(writer, sheet_name="clean_measurements", index=False)
-
+            if target_p == src_p.resolve():
+                target_p = beside_source.resolve()
+                self.log(f"The source workbook is never rewritten: saving to {target_p.name} next to it.", "WARNING")
+            save_path = str(target_p)
+            with atomic_open(target_p, "wb") as handle, pd.ExcelWriter(handle, engine="openpyxl") as writer:
+                df_clean.to_excel(writer, sheet_name="clean_measurements", index=False)
             notify(
                 self,
                 "Success",

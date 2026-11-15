@@ -21,14 +21,14 @@ s'arrêter si ruff est rouge. Une seule exécution à la fois (banc, tests).
 
 ## 2. Fait
 
-C-L3 `e8cef838` · M-L5a `4711e35b` · M-L6g `d6d28437` · C-L6b `3735ec1f` · M-L6e `31971c6c` (+ plafond `0942633e`) · M-L4a, b, c `203f9e13`.
+C-L3 `e8cef838` · M-L5a `4711e35b` · M-L6g `d6d28437` · C-L6b `3735ec1f` · M-L6e `31971c6c` (+ plafond `0942633e`) · M-L4a, b, c `203f9e13`. Groupe RE : M-L4c suite `23fc49a5` · M-L6a `7837c5d3` · M-L6b `50d00fd1` · M-L6c `d7c5a30a`.
 Banc juge de paix **avant** C-L4 (code `31971c6c`) : RESULT 0,0058619, **SEEL 0,1531 nm**, RUN_S 1 750 s (`bancs/juge_de_paix_avant_C-L4.txt`).
 
 ## 3. À faire, dans cet ordre
 
 Décision 👤 = imposée ; décision par défaut = la mienne, à garder sauf raison mesurée.
 
-### Groupe RE (en cours)
+### Groupe RE (fait)
 
 | id | où | mécanisme | correction | test |
 |---|---|---|---|---|

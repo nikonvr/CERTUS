@@ -182,6 +182,13 @@ class CertusIndexStateMixin:
             "exclude_oh": self.chk_exclude.isChecked() if hasattr(self, "chk_exclude") else False,
             "exclude_min": self.sb_ex_min.value() if hasattr(self, "sb_ex_min") else None,
             "exclude_max": self.sb_ex_max.value() if hasattr(self, "sb_ex_max") else None,
+            "oh_band": self.chk_oh_band.isChecked() if hasattr(self, "chk_oh_band") else False,
+            "fit_lambda_min": self.sb_lmin.value() if hasattr(self, "sb_lmin") else None,
+            "fit_lambda_max": self.sb_lmax.value() if hasattr(self, "sb_lmax") else None,
+            "substrate_thickness_mm": (
+                self.sb_sub_thickness_mm.value() if hasattr(self, "sb_sub_thickness_mm") else None
+            ),
+            "high_precision": self.chk_high_precision.isChecked() if hasattr(self, "chk_high_precision") else False,
             "model_type": (self.model_combo.currentText() if hasattr(self, "model_combo") else "TLU"),
             "params": params_values,
             "optimization": opt_block,
@@ -232,6 +239,23 @@ class CertusIndexStateMixin:
         self.chk_normalized.setChecked(cfg.get("normalized", False))
 
         self.chk_exclude.setChecked(cfg.get("exclude_oh", False))
+
+        # Settings of the fit that a configuration lost (audit 2026-11-15, M-L5b): the excluded range was written but
+        # never read back; the fit window, the substrate thickness and the two boxes below were not written at all.
+        # A configuration saved before them leaves the widgets as they are.
+        for key, spin_name in (
+            ("exclude_min", "sb_ex_min"),
+            ("exclude_max", "sb_ex_max"),
+            ("fit_lambda_min", "sb_lmin"),
+            ("fit_lambda_max", "sb_lmax"),
+            ("substrate_thickness_mm", "sb_sub_thickness_mm"),
+        ):
+            if cfg.get(key) is not None and hasattr(self, spin_name):
+                getattr(self, spin_name).setValue(float(cfg[key]))
+
+        for key, box_name in (("oh_band", "chk_oh_band"), ("high_precision", "chk_high_precision")):
+            if key in cfg and hasattr(self, box_name):
+                getattr(self, box_name).setChecked(bool(cfg[key]))
 
         if not cfg.get("frosted", False):
             wt = cfg.get("weight_T")

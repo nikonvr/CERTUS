@@ -1085,7 +1085,6 @@ def simulate_growth_kernel(
     exact_inversion: bool = False,
     exact_anchors: bool = False,
     arming: int = 0,
-    stack_mats: np.ndarray | None = None,
 ) -> tuple[float, float, float, float, float]:
     """Fast TMM Simulation for robustness heuristics.
 
@@ -1134,12 +1133,6 @@ def simulate_growth_kernel(
         arming: D98 -- no stop before the last extremum is declared: a level crossed before the signal has come back from it
             by `tp_hysteresis`. 0 (or False) = the path from before it, the stop at the level; 1 (or True) = the stop gives way to
             the declaration (`_armed_level`); 2 = the controller waits for ever, the layer never ends (`CRASH_NOT_ARMED`).
-
-        stack_mats: chantier 44 -- the four characteristic matrices the kernel would build, supplied by a caller that
-            carries them from one layer to the next (`simulate_stack_robustness_batch`, `stack_carry`): 16 complex
-            values, the real stack up to the layer (`M_before`), the nominal one (`M_nom`), then the real and the
-            nominal stacks under the replayed window (`R`, `Q`), each as (00, 01, 10, 11). None = the kernel builds them,
-            the path from before it, bit for bit.
     """
     if wl < 0.1:
         # No monitoring wavelength: nothing is read, so neither margin is constrained.
@@ -1161,16 +1154,12 @@ def simulate_growth_kernel(
     n_H_r = n_H if n_H_real.real < 0.0 else n_H_real
     n_L_r = n_L if n_L_real.real < 0.0 else n_L_real
 
-    if stack_mats is None:
-        # Both stacks start at `witness_base_layer`, not at 0 (multiple testglass): see the notes above `_stack_matrix`.
-        M_before_00, M_before_01, M_before_10, M_before_11 = _stack_matrix(
-            wl, n_H_r, n_L_r, prev_thicknesses_sim, witness_base_layer, i_layer
-        )
-        # The NOMINAL stack is accumulated in parallel with the real one (the trigger level is computed on it).
-        M_nom_00, M_nom_01, M_nom_10, M_nom_11 = _stack_matrix(wl, n_H, n_L, p_thick_nominal, witness_base_layer, i_layer)
-    else:  # carried by the caller (chantier 44): the same products, not rebuilt from the witness for every layer
-        M_before_00, M_before_01, M_before_10, M_before_11 = stack_mats[0], stack_mats[1], stack_mats[2], stack_mats[3]
-        M_nom_00, M_nom_01, M_nom_10, M_nom_11 = stack_mats[4], stack_mats[5], stack_mats[6], stack_mats[7]
+    # Both stacks start at `witness_base_layer`, not at 0 (multiple testglass): see the notes above `_stack_matrix`.
+    M_before_00, M_before_01, M_before_10, M_before_11 = _stack_matrix(
+        wl, n_H_r, n_L_r, prev_thicknesses_sim, witness_base_layer, i_layer
+    )
+    # The NOMINAL stack is accumulated in parallel with the real one (the trigger level is computed on it).
+    M_nom_00, M_nom_01, M_nom_10, M_nom_11 = _stack_matrix(wl, n_H, n_L, p_thick_nominal, witness_base_layer, i_layer)
 
     nominal_th = p_thick_nominal[i_layer]
     n_current = n_H if i_layer % 2 == 0 else n_L
@@ -1206,13 +1195,9 @@ def simulate_growth_kernel(
         Ts_n = np.zeros(n_tot, dtype=np.float64)
         # Same cut as the two matrices above: the stack UNDER the replayed window is the
         # witness's, not the part's.
-        if stack_mats is None:
-            R00, R01, R10, R11, Q00, Q01, Q10, Q11 = _stack_matrix_pair(
-                wl, n_H_r, n_L_r, prev_thicknesses_sim, n_H, n_L, p_thick_nominal, witness_base_layer, j0
-            )
-        else:
-            R00, R01, R10, R11 = stack_mats[8], stack_mats[9], stack_mats[10], stack_mats[11]
-            Q00, Q01, Q10, Q11 = stack_mats[12], stack_mats[13], stack_mats[14], stack_mats[15]
+        R00, R01, R10, R11, Q00, Q01, Q10, Q11 = _stack_matrix_pair(
+            wl, n_H_r, n_L_r, prev_thicknesses_sim, n_H, n_L, p_thick_nominal, witness_base_layer, j0
+        )
         idx, R00, R01, R10, R11, Q00, Q01, Q10, Q11 = _fill_history_signal(
             wl, n_Sub, n_H_r, n_L_r, n_H, n_L, prev_thicknesses_sim, p_thick_nominal, j0, i_layer,
             R00, R01, R10, R11, Q00, Q01, Q10, Q11, Ts_r, Ts_n,

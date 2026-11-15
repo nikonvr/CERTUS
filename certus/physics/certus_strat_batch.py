@@ -9,9 +9,8 @@ NON_MONOTONIC_MODE_ATTENUATE = 0
 NON_MONOTONIC_MODE_REJECT = 1
 from certus.physics.certus_substrate_absorption import K_MAX_LAYER_BACKSIDE, K_MAX_SUBSTRATE_BACKSIDE
 
-from .certus_strat_growth import _scan_window, simulate_growth_kernel
+from .certus_strat_growth import simulate_growth_kernel
 from .certus_strat_math import _seeded_noise_sample
-from .certus_strat_readings import _advance_matrix, _stack_matrix
 
 # Number of reading noise points consumed per (run, layer) in `simulate_growth_kernel`:
 # NPTS_PREV for historical re-scan + NPTS for current layer scan.
@@ -372,7 +371,6 @@ def simulate_stack_robustness_batch(
     exact_inversion: bool = False,
     exact_anchors: bool = False,
     arming: int = 0,
-    stack_carry: bool = False,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
 
@@ -468,20 +466,6 @@ def simulate_stack_robustness_batch(
             "the envelope must come from the single caller-side computation"
         )
     wl_min, wl_max = corridor_lo, corridor_hi
-    # Chantier 44 (`stack_carry`): the kernel no longer rebuilds its stacks from the witness for every (run, layer). The
-    # NOMINAL ones depend on the layer alone: built once here, for every run. The REAL ones are carried per run from one
-    # layer to the next inside a block (below). False = the path from before it, bit for bit.
-    nom_mats = np.zeros((n_layers if stack_carry else 0, 8), dtype=np.complex128)
-    if stack_carry:
-        for i in range(n_layers):
-            wl_i = layer_wavelengths[i]
-            if wl_i < 0.1:
-                continue
-            j0_i = _scan_window(block_start[i], i, witness_base[i], p_thick_nominal[i])[0]
-            a00, a01, a10, a11 = _stack_matrix(wl_i, n_H_vals[i], n_L_vals[i], p_thick_nominal, witness_base[i], i)
-            b00, b01, b10, b11 = _stack_matrix(wl_i, n_H_vals[i], n_L_vals[i], p_thick_nominal, witness_base[i], j0_i)
-            nom_mats[i, 0], nom_mats[i, 1], nom_mats[i, 2], nom_mats[i, 3] = a00, a01, a10, a11
-            nom_mats[i, 4], nom_mats[i, 5], nom_mats[i, 6], nom_mats[i, 7] = b00, b01, b10, b11
     for r in prange(n_runs):
         if affine_scale_amp != 0.0 or affine_offset_amp != 0.0 or photo_curvature_amp != 0.0:
             z_a = _seeded_noise_sample(affine_seed, 0, r, 0, True)
@@ -510,13 +494,6 @@ def simulate_stack_robustness_batch(
         else:
             a_h, b_h, a_l, b_l = 0.0, 0.0, 0.0, 0.0
 
-        # The real stack below each layer of the current block, at the block's wavelength (chantier 44).
-        carried = np.zeros((n_layers if stack_carry else 0, 4), dtype=np.complex128)
-        mats = np.zeros(16 if stack_carry else 0, dtype=np.complex128)
-        carry_valid = False
-        carry_wl = 0.0
-        carry_nH = 0j
-        carry_nL = 0j
         for i_layer in range(n_layers):
             wl = layer_wavelengths[i_layer]
             n_H, n_L, n_Sub = (n_H_vals[i_layer], n_L_vals[i_layer], n_Sub_vals[i_layer])
@@ -535,86 +512,52 @@ def simulate_stack_robustness_batch(
             # Out of the call: past 30 arguments Python packs them into a tuple, which Numba cannot build around a
             # branch (`UnsupportedBytecodeError: CALL_FUNCTION_EX`).
             rate_layer = rate_flags is not None and rate_flags[i_layer]
-            if stack_carry and wl >= 0.1:
-                bs = block_start[i_layer]
-                wb = witness_base[i_layer]
-                if carry_valid and i_layer > bs and wl == carry_wl and nH_real == carry_nH and nL_real == carry_nL:
-                    k_from = i_layer - 1  # the block goes on: one layer more on the stack carried so far
-                else:  # a new block, or the first layer of the run: the stack below the block, from the witness
-                    c00, c01, c10, c11 = _stack_matrix(wl, nH_real, nL_real, current_run_th_buffer[r], wb, bs)
-                    carried[bs, 0], carried[bs, 1], carried[bs, 2], carried[bs, 3] = c00, c01, c10, c11
-                    k_from = bs
-                for k in range(k_from, i_layer):
-                    n_k = nH_real if k % 2 == 0 else nL_real
-                    d00, d01, d10, d11 = _advance_matrix(
-                        wl, n_k, current_run_th_buffer[r, k], carried[k, 0], carried[k, 1], carried[k, 2], carried[k, 3]
-                    )
-                    carried[k + 1, 0], carried[k + 1, 1], carried[k + 1, 2], carried[k + 1, 3] = d00, d01, d10, d11
-                j0 = _scan_window(bs, i_layer, wb, p_thick_nominal[i_layer])[0]
-                for q in range(4):
-                    mats[q] = carried[i_layer, q]
-                    mats[4 + q] = nom_mats[i_layer, q]
-                    mats[8 + q] = carried[j0, q]
-                    mats[12 + q] = nom_mats[i_layer, 4 + q]
-                carry_valid = True
-                carry_wl = wl
-                carry_nH = nH_real
-                carry_nL = nL_real
-                val, dyn, m_lvl, m_mis, m_fab = simulate_growth_kernel(
-                    p_thick_nominal, i_layer, current_run_th_buffer[r, :i_layer], wl, n_H, n_L, n_Sub, probe_offset,
-                    noise_val, non_monotonic_factor, non_monotonic_mode, block_start[i_layer], sig_scale,
-                    signal_noise_seed, r, tp_hysteresis, aff_s, aff_o, photo_curv, poem_enabled, smoothing_window,
-                    nH_real, nL_real, rate_layer, slit_profiles, witness_base[i_layer], 0.0, rate_flags,
-                    exact_inversion, exact_anchors, arming, mats,
-                )
-            else:
-                carry_valid = False
-                val, dyn, m_lvl, m_mis, m_fab = simulate_growth_kernel(
-                    p_thick_nominal,
-                    i_layer,
-                    current_run_th_buffer[r, :i_layer],
-                    wl,
-                    n_H,
-                    n_L,
-                    n_Sub,
-                    probe_offset,
-                    noise_val,
-                    non_monotonic_factor,
-                    non_monotonic_mode,
-                    block_start[i_layer],
-                    sig_scale,
-                    signal_noise_seed,
-                    r,
-                    tp_hysteresis,
-                    aff_s,
-                    aff_o,
-                    photo_curv,
-                    poem_enabled,
-                    smoothing_window,
-                    nH_real,
-                    nL_real,
-                    rate_layer,
-                    # The WHOLE matrix, not the row: the kernel replays the block history and
-                    # each replayed layer must carry its own bias profile, not this layer's.
-                    slit_profiles,
-                    witness_base[i_layer],
-                    # ⚠️ The kernel's default, repeated as it is in order to reach the next
-                    # parameter by position. `machine_sampling_dd` therefore stays at 0.0 -- it is
-                    # defect A8, documented as UNREACHABLE, and this is not the place to repair it:
-                    # repeating it changes nothing, omitting it neither.
-                    0.0,
-                    # 👤 2026-08-19: the rate is computed ONLY on the optically deposited layers.
-                    # The kernel only received the flag of the current layer and therefore took the
-                    # earlier Rate layers as references, although they carry no measurement. It is
-                    # given the whole array.
-                    rate_flags,
-                    # D97: the stop solved on the exact signal instead of the parabola of three probes. Off by default.
-                    exact_inversion,
-                    # D96: POEM's anchors read at the extremum of their layer, not at the coarse sample. Off by default.
-                    exact_anchors,
-                    # D98: no stop before the last extremum is declared. Off by default.
-                    arming,
-                )
+            val, dyn, m_lvl, m_mis, m_fab = simulate_growth_kernel(
+                p_thick_nominal,
+                i_layer,
+                current_run_th_buffer[r, :i_layer],
+                wl,
+                n_H,
+                n_L,
+                n_Sub,
+                probe_offset,
+                noise_val,
+                non_monotonic_factor,
+                non_monotonic_mode,
+                block_start[i_layer],
+                sig_scale,
+                signal_noise_seed,
+                r,
+                tp_hysteresis,
+                aff_s,
+                aff_o,
+                photo_curv,
+                poem_enabled,
+                smoothing_window,
+                nH_real,
+                nL_real,
+                rate_layer,
+                # The WHOLE matrix, not the row: the kernel replays the block history and
+                # each replayed layer must carry its own bias profile, not this layer's.
+                slit_profiles,
+                witness_base[i_layer],
+                # ⚠️ The kernel's default, repeated as it is in order to reach the next
+                # parameter by position. `machine_sampling_dd` therefore stays at 0.0 -- it is
+                # defect A8, documented as UNREACHABLE, and this is not the place to repair it:
+                # repeating it changes nothing, omitting it neither.
+                0.0,
+                # 👤 2026-08-19: the rate is computed ONLY on the optically deposited layers.
+                # The kernel only received the flag of the current layer and therefore took the
+                # earlier Rate layers as references, although they carry no measurement. It is
+                # given the whole array.
+                rate_flags,
+                # D97: the stop solved on the exact signal instead of the parabola of three probes. Off by default.
+                exact_inversion,
+                # D96: POEM's anchors read at the extremum of their layer, not at the coarse sample. Off by default.
+                exact_anchors,
+                # D98: no stop before the last extremum is declared. Off by default.
+                arming,
+            )
             current_run_th_buffer[r, i_layer] = val
             results[r, i_layer] = val
             all_dyns[r, i_layer] = dyn

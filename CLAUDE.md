@@ -4,9 +4,9 @@ Suite de **couches minces optiques** (PyQt6, NumPy/SciPy, Numba) : indice, desig
 de la **physique réelle** qui sert à fabriquer des filtres : une erreur silencieuse ne plante pas, elle donne un
 **résultat faux qui a l'air juste**, et quelqu'un fabrique une pièce avec.
 
-**Trois documents vivants**, mêmes numéros de section : les règles qui annulent un travail, ici ; la référence, lue en
-touchant le sujet, [`docs/REGLES_reference.md`](docs/REGLES_reference.md) ; l'état, [`docs/ETAT.md`](docs/ETAT.md) (lire
-sa section 0 avant de travailler et la tenir à jour). `reports/` : mesures datées. Un « CLAUDE.md §N » cité par le code
+**Trois documents vivants** : les règles qui annulent un travail, ici ; la référence, lue en touchant le sujet, sous les
+mêmes numéros de section, [`docs/REGLES_reference.md`](docs/REGLES_reference.md) ; l'état, [`docs/ETAT.md`](docs/ETAT.md)
+(lire sa section 0 avant de travailler et la tenir à jour). `reports/` : mesures datées. Un « CLAUDE.md §N » cité par le code
 peut venir d'une ancienne version : chercher la règle par son sujet.
 
 Sobriété de lecture, pour toute IA : @AGENTS.md
@@ -36,7 +36,9 @@ Itérer : `-m "not slow"` (liste dans `tests/slow_tests.json`) ; la validation f
 rouge avant toute modification : arrête-toi et signale-le. Calcul optique : oracle avant et après ; noyau :
 `python scripts\c1_diff.py HEAD` avant commit. Échecs ambigus, annotations, gel : référence §2.
 
-## 3. Les onze interdits — aucune exception
+## 3. Les onze interdits — aucune exception sans ordre de 👤
+
+Une IA ne s'en accorde jamais : elle s'arrête et demande (§11). Pour 6, 7 et 9, une exception exige en plus une mesure.
 
 1. **Jamais `ruff check --fix`** : beaucoup d'imports « inutilisés » sont des ré-exports volontaires.
 2. **Jamais agrandir `extend-ignore`** dans `pyproject.toml` ; un cliquet le surveille.
@@ -115,6 +117,9 @@ rouge avant toute modification : arrête-toi et signale-le. Calcul optique : ora
 Une instruction ambiguë · un test dont tu ne sais pas s'il a tort · une mesure qui s'écarte nettement de l'annoncé · la
 tentation de violer un interdit · plus de trois fichiers pour une seule action · **un résultat meilleur que prévu** — le
 plus souvent, on mesure la mauvaise chose. S'arrêter n'est jamais un échec ; inventer, si.
+
+Une exception s'accorde par 👤, pour un cas nommé, et s'inscrit dans `docs/ETAT.md` §3 avec sa date, sa portée et sa
+raison. Elle n'élargit pas la règle ; si elle se répète, c'est la règle qu'il faut changer.
 
 ## 12. Vérifier le travail d'un autre agent
 

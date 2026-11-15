@@ -20,7 +20,7 @@ et `git status -sb`, ne le suppose pas. Les données de 👤 lui-même sont son 
   `QT_FORCE_STDERR_LOGGING=1` et `-s`. Un test isolé vert mais rouge en suite signale souvent un état partagé.
 - Un nouveau module typé dans `domain`, `physics` ou `core` suit le registre d'annotations `tests/architecture_debt.json`.
 - Itérer : `python scripts\verify_changed.py` joue les tests que touchent les symboles modifiés (`--list` dit
-  pourquoi). `VERIF_CIBLEE=GO` ne remplace pas la validation complète avant de committer.
+  pourquoi). `VERIF_CIBLEE=GO` suffit à un commit local ; la suite complète, à une fusion.
 - Après modification du gel ou d'un point d'entrée que STRAT importe : `powershell tools\build_frozen.ps1` et
   `python tools\release_checks.py --check-frozen --check-frozen-run`. Retirer ensuite `dist/` et `build/`,
   jamais `reports/`.

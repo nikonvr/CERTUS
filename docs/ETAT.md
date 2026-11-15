@@ -5,28 +5,29 @@
 > [`CLAUDE.md`](../CLAUDE.md). Il se tient **en place** : un fait change, on corrige sa ligne,
 > on ne raconte pas la correction (`git log` s'en charge). Toute mesure porte sa date.
 > Le détail et l'historique sont dans `git`, sans autorité (CLAUDE.md, en-tête).
-> Mis à jour le 2026-11-14.
+> Mis à jour le 2026-11-15.
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
 > L'état présent seulement ; l'historique est dans `git log` et `reports/`. À la demande : actions ouvertes et protocole de mesure
 > ([`CHANTIERS_RESTANTS.md`](CHANTIERS_RESTANTS.md)), acquis ([`ETAT_acquis.md`](ETAT_acquis.md)), preuves dans `reports/`.
 
-**Liste active** : [chantiers des 12–14 novembre, révisés après contre-audit](CHANTIERS_RESTANTS.md).
+**Liste active** : [chantiers](CHANTIERS_RESTANTS.md). **En cours** : le chantier 45, corrections de l'audit du code
+du 15 novembre, reprise prête à exécuter dans son [plan](../reports/audit_code_2026-11-15/plan_corrections.md).
 Le polisseur hybride et la pondération par bande sont intégrés. La grille automatique et la sélection robuste
 restent optionnelles. Mesures terminées dans le [bilan DESIGN](../reports/questions_design_2026-11-13/bilan.md).
 Le [guide DESIGN](../pages/CERTUS_DESIGN.html#design-robust-search) décrit l'activation et les limites de la recherche robuste.
 La [campagne DESIGN–STRAT](../reports/codesign_2026-11-14/bilan.md) mesure trois paires du séparateur 50/50. Avec les plans retenus, le mérite robuste à 1 nm augmente la RMSE déposée de 52 à 82 %.
-Les anciennes passations, listes d'actions et audits remplacés ont été retirés du dépôt.
 
-**Branche de travail** : master local. Le sparse-checkout écarte les gros artefacts scientifiques suivis ;
-git sparse-checkout disable les restaure. Les sauvegardes et données locales de novembre sont répertoriées
+**Branche de travail** : `claude/claude-code-question-0aa978`, en avance sur `master`, ni fusionnée ni poussée.
+Le sparse-checkout écarte les gros artefacts scientifiques suivis ; git sparse-checkout disable les restaure. Les sauvegardes et données locales de novembre sont répertoriées
 dans `artifacts/archives-20261114/inventaire.json`, dans `certus1111`.
 
 **Python de référence : 3.15.2**, dépendances de requirements.lock.
 
-**Dernière validation complète** : `VALIDATION=GO`, le 2026-11-15 sous Windows sur `3374b380` (branche
-`claude/claude-code-suije-bf4f1f`) avec les chantiers 37, 38 et le délai UX, commités ensuite tels quels.
+**Dernière validation complète** : `VALIDATION=GO`, le 2026-11-15 sous Windows sur `3374b380`, avec les
+chantiers 37, 38 et le délai UX, commités ensuite tels quels. Les corrections de l'audit qui suivent n'ont que des
+tests ciblés (référence §2).
 [Détails](../reports/audit_general_2026-11-14/runs/validation_4.console.txt).
 
 Pour un échec de comparaison au bit, rejouer sur [cache Numba vierge](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md).
@@ -64,6 +65,9 @@ SEEL du `RESULT` officiel ; taux de plantage de `RANK00`.
 
 **Lire ces chiffres :**
 
+- 🔴 **Substrat** : STRAT calcule un substrat « SiO2 » à n = 1,48625 au lieu du Sellmeier de la silice fondue,
+  1,45991 à 550 nm (C-L4, à corriger) ; le juge de paix et les composants sur « SiO2 » sont touchés
+  ([recensement](../reports/audit_code_2026-11-15/recensement_sio2.md)). Effet réel mais modéré selon 👤 ; à chiffrer.
 - 🔴 **Les SEEL ne se comparent pas d'un composant à l'autre** (domaines de notation différents, §7) ; à composant fixé, oui.
 - 🔴 **Un score seul ne départage rien** : à 150 tirages σ ≈ 6 %, deux runs à moins de ~8 % sont indiscernables ; sur `r75x2`,
   σ ≈ 1,8 % en changeant le triplet de graines de consensus. On compare des classes d'équivalence SEEL.
@@ -113,10 +117,17 @@ dépendant de T ou de λ, grenaille, bruit multiplicatif ou corrélé. Seul un r
 - Le multi-témoins est un outil de faisabilité (champ « New test glass at layers: », `witness_reset_layers`, vide par défaut).
 - Un seul indice de saphir : le Sellmeier d'id 3, partout (2026-10-12).
 
+### Exceptions accordées (CLAUDE.md §11)
+
+| date | règle | portée | raison |
+|---|---|---|---|
+| 2026-11-15 | interdit 3 (`reports/`) | retrait des `.md` réimportés par `20bd199d` (revert `e0c1fe70`) | déjà jugés obsolètes par `b6fb1939` ; copie hors dépôt dans `CERTUS/certus1111_hors_git_2026-11-15/` |
+
 ### STRAT
 
 - `RESULT` est le score du premier classé : P95 du RMSE au pire des trois niveaux de bruit, **tirages plantés compris** ; le consensus
-  le remplace par moyenne + `consensus_std_weight` écarts-types sur ses graines (scores finis seulement) (D7, D6).
+  le remplace par moyenne + `consensus_std_weight` écarts-types sur ses graines (D7, D6). Le code n'y garde que les
+  scores finis ; 👤 a décidé le 2026-11-15 qu'une graine rejetée rejette la stratégie (consensus infini, correction M-L2).
 - D73 corrigé (marge au sommet interpolé) ; D70 retiré ; D17 conservé (gain négatif) ; D15 : quatre couches d'historique POEM ;
   D14 : 16 points d'historique ; D9 : sous un nombre minimal de blocs la DP ne rend que les graines structurées, et le journal le dit ;
   D8 : les quatre intervalles retenus du 99c restent déposables avec la recherche de fente ; sans changement : D12, D13, D16, D18, D19, D22.
@@ -197,5 +208,5 @@ Une règle n'est acquise que si elle survit sur un empilement **sans structure**
 
 **×0,5 avec un seul verre témoin** : sans secours Rate, aucun déposable aux graines 42, 101 et 202 (niveau d'arrêt hors d'atteinte) ;
 avec le secours Rate, toutes les listes sont déposables (meilleur 0,50 nm) ; avec ELITE qui déplace les couches Rate, **0,4347 / 0,3967 /
-0,3967 nm** (mesure du 2026-10-12, dossier retiré de `reports/` au ménage du 2026-10-18, restaurable par git). **Le modèle de Rate de STRAT** fige l'estimation de la vitesse
+0,3967 nm** (mesure du 2026-10-12). **Le modèle de Rate de STRAT** fige l'estimation de la vitesse
 à l'entrée de la queue (erreur relative commune à ses couches) et la source ne dérive pas : ces SEEL sont ceux de ce modèle.

@@ -1,14 +1,8 @@
-# Chantiers restants — revue du 14 novembre 2026
+# Chantiers restants — 15 novembre 2026
 
-Périmètre demandé : suggestions formulées ou actualisées les **12, 13 et 14 novembre 2026**.
-Revue des Markdown présents et suivis, des fichiers non suivis (aucun Markdown), des dates et des
-changements Git récents. Le seul Markdown ignoré est celui du cache pytest. Les corrections de liens et les
-mentions d'archivage dans des rapports anciens ne constituent pas de nouvelles suggestions.
-
-La liste initiale est suivie depuis `b6fb1939`. Les identifiants sont conservés pour la traçabilité du
-[contre-audit du 14 novembre](../reports/contre_audit_chantiers_2026-11-14/bilan.md).
-Les lignes 34 à 43 viennent de l'[audit général du 14 novembre](../reports/audit_general_2026-11-14/bilan.md) et ne sont pas
-classées par complexité. Le P1 restant est le 33.
+Identifiants du [contre-audit du 14 novembre](../reports/contre_audit_chantiers_2026-11-14/bilan.md) ; 34 à 44 viennent
+de l'[audit général du 14 novembre](../reports/audit_general_2026-11-14/bilan.md), 45 de l'audit du code du 15, et ne
+sont pas classés par complexité.
 
 ## Ordre du plus simple au plus complexe
 
@@ -27,8 +21,8 @@ restent tels quels (16 sort de la table) ; le modèle de dépôt de référence 
 `example/example_strat/JSON-strat-example.json` (24, 31, 32) ; reprise B : mesurer le coût des étapes d'abord,
 sans toucher au calcul (27, 28, 29) ; 39 se reconstruit en local sans publier, 40 peut installer un code TMM tiers
 dans un environnement à part, 41 se trie en local (liste fusionner/fermer pour 👤, rien sur GitHub).
-**Ordre de traitement validé par 👤 le 15 novembre** : 44 jusqu'à sa décision (étape 7 du plan) ; ensuite 40, puis
-34. Les chantiers 24 et 31 se traitent chacun dans une session dédiée.
+**Ordre de traitement validé par 👤 le 15 novembre** : 45 d'abord ; puis 44 jusqu'à sa décision (étape 7 de son
+plan) ; ensuite 40, puis 34. Les chantiers 24 et 31 se traitent chacun dans une session dédiée.
 **Bloqué** : la date des essais humains (33).
 
 | Ordre | Priorité | Complexité | Chantier restant | État et critère de fin | Source |
@@ -53,6 +47,7 @@ dans un environnement à part, 41 se trie en local (liste fusionner/fermer pour 
 | 41 | P3 | Faible | Branches Dependabot | Douze mises à jour en attente depuis le 30 septembre : fusionner ou fermer. | G §2.8 |
 | 43 | P2 | Faible | Durée de la validation | `376baef1` : fils Numba = cœurs ÷ workers ; `unit` passe de 512 à 299 s, `ui` est inchangé (~10 min). Mesurer `ui` hors du disque `D:` et, s'il le faut, son nombre de workers. | G §7 |
 | 44 | P2 | Moyenne à forte | Signal OMS 5100 de STRAT | Plan en neuf étapes de l'audit (§8). Étape 1 faite : le [profil du noyau](../reports/audit_oms5100_2026-11-15/profil_noyau/bilan.md) surestimait les matrices ; leur portage d'une couche à l'autre ne gagnait que 2 à 15 % sur un plan ELITE réel : retiré. 👤 accepte un écart au dernier bit pour ces accélérations. [Recherche complète profilée](../reports/audit_oms5100_2026-11-15/profil_strat_complet/bilan.md) : STRAT et RE passent sur la couche TBB quand elle est installée (1 074 s contre 1 339 s, mêmes bits ; DESIGN reste sur OpenMP, non reproductible sous TBB ; TBB hors dépendances, licence Intel) ; la recherche locale fait désormais la moitié du temps (réutiliser la croissance du plan courant, ~10 % estimés). Puis sonde de sensibilité aux hypothèses non mesurables (D98, étalonnage, `SWING_MIN`) et options physiques inactives (retard de coupure, face arrière, fente triangulaire) avant décision de 👤. Sans accès à la salle. | O §8 |
+| 45 | P1 | Forte | Corrections de l'audit du code | 27 défauts confirmés (8 critiques, 19 majeurs) ; 5 corrigés. Les 22 restants, groupés par module, avec emplacement, correction décidée et test, dans le [plan des corrections](../reports/audit_code_2026-11-15/plan_corrections.md). Fin : validation complète, `ETAT.md` et `ETAT_acquis.md` à jour, fusion sur ordre de 👤. | C |
 
 ## Sources conservées
 
@@ -63,6 +58,7 @@ dans un environnement à part, 41 se trie en local (liste fusionner/fermer pour 
 - **G** : [audit général du 14 novembre](../reports/audit_general_2026-11-14/bilan.md).
 - **O** : [audit du signal OMS 5100 de STRAT, 15 novembre](../reports/audit_oms5100_2026-11-15/bilan.md).
 - **S** : [sélecteur de tests face à la suite complète, 15 novembre](../reports/selecteur_tests_2026-11-14/bilan.md).
+- **C** : [audit du code du 15 novembre](../reports/audit_code_2026-11-15/bilan.md).
 - [Audit des chantiers du 14 novembre](../reports/audit_chantiers_2026-11-14/bilan.md) et
   [chantier 07, démarrage à froid des cinq fenêtres](../reports/chantier07_amorcage_2026-11-14/bilan.md).
 
@@ -79,6 +75,3 @@ U1–U11, refactoring des corridors, reprise des sessions U12 A, reprise STRAT m
 d'U13, tours supplémentaires STRAT, aperçu INDEX TLU, rangement des journaux, contrôle des liens,
 polisseur hybride, poids des bandes disjointes, estimateur N/TOT, grille automatique et sélection robuste
 sont intégrés, ainsi que les corrections de C20, d'ALG-03 (35) et d'ALG-13, l'amorçage Numba mutualisé (07), le contrôle avant publication (37) et les polissages de DESIGN descendus dans `certus.core` (38). Chantier 42 : sur les 90 scripts Python suivis, 22 ne sont cités que dans `reports/` ; les cinq qui outillent une règle sont cités dans la référence (§6), les sondes restent en place, leur rapport donne la commande. Les mesures appariées et l'oracle sont dans les sources ci-dessus.
-
-L'imprécision de la docstring de `second_order_robust_rmse` est corrigée : il s'agit de l'approximation
-Gauss–Newton, qui omet le terme diagonal de courbure du résidu. Cette correction ne change aucun calcul.

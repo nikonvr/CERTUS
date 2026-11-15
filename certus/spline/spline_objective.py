@@ -97,9 +97,11 @@ def _njit_single_layer_mse_fused(
         )
         
         if t_is_ratio:
+            # The file holds T_film/T_sub AND R_film/T_sub (prepare_exp_TR_for_fit): divide both.
             # Prevent division by zero
             sub_t = t_sub_cache[j]
             t_th = t_th / sub_t if sub_t > 1e-12 else 0.0
+            r_th = r_th / sub_t if sub_t > 1e-12 else 0.0
             
         wj = w[j]
         if need_t:

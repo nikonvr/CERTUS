@@ -1,9 +1,10 @@
-"""Chantier 44: STRAT runs Numba on TBB when it is installed; every other module stays on OpenMP.
+"""Chantier 44: STRAT and RE run Numba on TBB when it is installed; every other module stays on OpenMP.
 
-TBB took a full STRAT search on the reference from 1339 s to 1074 s with the same bits, but DESIGN's parallel sums
-change order from one TBB run to the next, so only STRAT asks for it. Two ways in, both checked in a fresh interpreter
-(the layer is chosen once per process): STRAT's entry point configures it, and a process STRAT starts inherits the
-request through the environment and needs Intel TBB's DLL directory registered again.
+TBB took a full STRAT search on the reference from 1339 s to 1074 s with the same bits and RE's example from 28.2 s to
+17.5 s, but DESIGN's parallel sums change order from one TBB run to the next and INDEX gained nothing, so only STRAT and
+RE ask for it. Two ways in, both checked in a fresh interpreter (the layer is chosen once per process): the entry point
+configures it, and a process it starts inherits the request through the environment and needs Intel TBB's DLL directory
+registered again.
 """
 
 from __future__ import annotations
@@ -44,18 +45,24 @@ def _layer(code: str, env_layer: str | None) -> str:
 
 
 @pytest.mark.skipif(not TBB_INSTALLED, reason="Intel TBB (pip `tbb`) is not installed")
-def test_strat_configuration_runs_on_tbb():
-    code = ("from certus.core.certus_core import STRAT_THREADING_LAYER, configure_numba_env\n"
-            "configure_numba_env(threading_layer=STRAT_THREADING_LAYER)\n")
+def test_the_tbb_configuration_runs_on_tbb():
+    code = ("from certus.core.certus_core import TBB_THREADING_LAYER, configure_numba_env\n"
+            "configure_numba_env(threading_layer=TBB_THREADING_LAYER)\n")
     assert _layer(code, None) == "tbb"
 
 
 @pytest.mark.skipif(not TBB_INSTALLED, reason="Intel TBB (pip `tbb`) is not installed")
-def test_a_process_started_by_strat_stays_on_tbb():
-    """What a STRAT pool process sees: the request in its environment, and only `certus_core` imported."""
+def test_a_process_started_by_strat_or_re_stays_on_tbb():
+    """What a pool process sees: the request in its environment, and only `certus_core` imported."""
     assert _layer("import certus.core.certus_core\n", "threadsafe") == "tbb"
 
 
 def test_the_other_modules_stay_on_openmp():
     code = "from certus.core.certus_core import configure_numba_env\nconfigure_numba_env()\n"
     assert _layer(code, None) == "omp"
+
+
+def test_only_strat_and_re_ask_for_tbb():
+    asking = sorted(p.name for p in ROOT.glob("CERTUS_*.py")
+                    if "threading_layer=TBB_THREADING_LAYER" in p.read_text(encoding="utf-8"))
+    assert asking == ["CERTUS_RE.py", "CERTUS_STRAT.py"]

@@ -37,9 +37,11 @@ from __future__ import annotations
 # Numba configuration BEFORE any import pulling @njit (see CERTUS_HUB.py).
 # Without this call, NUMBA_CACHE_DIR is not defined and the JIT cache is written next to it
 # sources, in the cloud synchronized folder -> repeated recompilations.
+from certus.core.certus_core import TBB_THREADING_LAYER
 from certus.core.certus_core import configure_numba_env as _configure_numba_env
 
-_configure_numba_env()
+# RE runs on TBB when it is installed (chantier 44: -38 % on its example, results varying from run to run as before).
+_configure_numba_env(threading_layer=TBB_THREADING_LAYER)
 
 # RE: +/-% thickness search radius for L-BFGS-B (no toolbar control; fixed default).
 # Keeping this module tight: prefer helpers/tests over broad structural moves.

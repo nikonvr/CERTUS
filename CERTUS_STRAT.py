@@ -5,11 +5,11 @@
 #Numba configuration BEFORE any import pulling @njit (see CERTUS_HUB.py).
 #Without this call, NUMBA_CACHE_DIR is not defined and the JIT cache is written next to it
 #sources, in the cloud synchronized folder -> repeated recompilations.
-from certus.core.certus_core import STRAT_THREADING_LAYER
+from certus.core.certus_core import TBB_THREADING_LAYER
 from certus.core.certus_core import configure_numba_env as _configure_numba_env
 
 # STRAT runs on TBB when it is installed (chantier 44: -20 % on the reference search, the same bits).
-_configure_numba_env(threading_layer=STRAT_THREADING_LAYER)
+_configure_numba_env(threading_layer=TBB_THREADING_LAYER)
 
 import ctypes
 import logging

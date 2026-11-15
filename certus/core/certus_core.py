@@ -338,8 +338,8 @@ def get_materials_db_hash() -> str | None:
 
 
 
-#: The layer STRAT asks for (chantier 44): TBB when its runtime loads, OpenMP otherwise, never workqueue.
-STRAT_THREADING_LAYER = "threadsafe"
+#: The layer STRAT and RE ask for (chantier 44): TBB when its runtime loads, OpenMP otherwise, never workqueue.
+TBB_THREADING_LAYER = "threadsafe"
 
 _TBB_REGISTERED = False
 
@@ -350,11 +350,12 @@ def register_tbb_runtime() -> bool:
     pip's `tbb` wheel puts `tbb12.dll` in `<prefix>/Library/bin` (the frozen build: next to the executable), which is
     not on the DLL search path of Python 3.8+, so Numba cannot load its TBB layer without this.
 
-    TBB is for STRAT only (chantier 44, measured 2026-11-15, reports/audit_oms5100_2026-11-15/profil_strat_complet):
-    a full STRAT search took 1074 s against 1339 s under OpenMP, the same ranking, and STRAT's kernels gave the same
-    bits under both layers and from one TBB run to the next. DESIGN's cost and gradient did not: their parallel sums
-    change order from one TBB run to the next (53 of 2985 corpus arrays, up to 3 ulp), so the other modules stay on
-    OpenMP.
+    TBB is for STRAT and RE only (chantier 44, measured 2026-11-15, reports/audit_oms5100_2026-11-15/): a full STRAT
+    search took 1074 s against 1339 s under OpenMP, the same ranking, and STRAT's kernels gave the same bits under both
+    layers and from one TBB run to the next; RE's example took 17.5 s against 28.2 s, its results varying from run to
+    run as they already did. DESIGN's cost and gradient do not keep their bits from one TBB run to the next (their
+    parallel sums change order: 53 of 2985 corpus arrays, up to 3 ulp), and INDEX gained nothing: the other modules
+    stay on OpenMP.
     """
     global _TBB_REGISTERED
     if _TBB_REGISTERED:
@@ -372,9 +373,9 @@ def register_tbb_runtime() -> bool:
     return False
 
 
-# A process started by STRAT (its process pools) inherits the layer it asked for, not the DLL directory: register it here,
+# A process started by STRAT or RE (their process pools) inherits the layer it asked for, not the DLL directory: register it here,
 # where every such process passes.
-if os.environ.get("NUMBA_THREADING_LAYER") in ("tbb", STRAT_THREADING_LAYER):
+if os.environ.get("NUMBA_THREADING_LAYER") in ("tbb", TBB_THREADING_LAYER):
     register_tbb_runtime()
 
 
@@ -396,7 +397,7 @@ def configure_numba_env(threading_layer: str = "omp") -> None:
 
     - NUMBA_NUM_THREADS: Number of threads for Numba
 
-    - NUMBA_THREADING_LAYER: `threading_layer`, 'omp' by default; STRAT asks for `STRAT_THREADING_LAYER` (TBB)
+    - NUMBA_THREADING_LAYER: `threading_layer`, 'omp' by default; STRAT and RE ask for `TBB_THREADING_LAYER` (TBB)
 
     - OMP_NUM_THREADS, OPENBLAS_NUM_THREADS, MKL_NUM_THREADS: Thread limits
 
@@ -454,7 +455,7 @@ def configure_numba_env(threading_layer: str = "omp") -> None:
     s_cores = str(n_cores)
     if "NUMBA_THREADING_LAYER" not in os.environ:
         os.environ["NUMBA_THREADING_LAYER"] = threading_layer
-    if os.environ["NUMBA_THREADING_LAYER"] in ("tbb", STRAT_THREADING_LAYER):
+    if os.environ["NUMBA_THREADING_LAYER"] in ("tbb", TBB_THREADING_LAYER):
         register_tbb_runtime()
     for env_var in [
         "NUMBA_NUM_THREADS",

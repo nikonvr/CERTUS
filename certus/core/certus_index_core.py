@@ -452,6 +452,20 @@ def estimate_initial_params(
 
     return np.array([d_init, Eg_init, A_init, E0_init, C_init, Eu_init, eps_init], dtype=np.float64)
 
+
+def initial_film_index(wavelengths: np.ndarray, at_nm: float = 550.0) -> float:
+    """Index of the film at ``at_nm`` for the starting TLU parameters of a fit on ``wavelengths``.
+
+    The fringes of a spectrum give the optical path 2 n d of the film: this is the n to divide it by before any fit.
+    Computed on the wavelength window alone: with the measured T the starting index moves by 4 % at most.
+    """
+    p = estimate_initial_params(np.asarray(wavelengths, dtype=np.float64), None, np.zeros(0))
+    energy = np.array([float(HC_EV_NM) / float(at_nm)], dtype=np.float64)
+    eps1 = epsilon1_TL_analytic(energy, p[1], p[2], p[3], p[4], p[6])
+    eps2 = epsilon2_TLU_array(energy, p[1], p[2], p[3], p[4], p[5])
+    n_film, _k, _ok = epsilon_to_nk(eps1, eps2, 0.5, 15.0, 15.0)
+    return float(n_film[0])
+
 # =============================================================================
 
 # SILICON SUBSTRATE  tabulated nk data from clues.xlsx -> Si-substrate

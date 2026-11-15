@@ -21,6 +21,7 @@ from certus.core.certus_core import (
 )
 from certus.core.certus_index_core import (
     _SILICON_WLS,
+    initial_film_index,
 )
 from certus.ui.certus_index_ui_utils import (
     KLogAxisItem,
@@ -275,20 +276,11 @@ class CertusIndexEventsMixin:
 
             lmin, lmax = wls.min(), wls.max()
 
-            # Approx n from detected substrate
+            # The fringes carry the optical path of the FILM: divide by the index of the film at 550 nm for the starting
+            # parameters of the model, not by the index of the substrate (SiO2 500 nm on Si was estimated at 190 nm and
+            # the bounds excluded the true thickness; audit 2026-11-15, M-L5g).
 
-            n_approx = 2.0
-
-            sub_text = self.cb_sub.currentText() if hasattr(self, "cb_sub") else ""
-
-            if "SiO2" in sub_text or "fused" in sub_text.lower():
-                n_approx = 1.5
-
-            elif "Al2O3" in sub_text or "sapphire" in sub_text.lower():
-                n_approx = 2.1
-
-            elif "Si" in sub_text and "SiO2" not in sub_text:
-                n_approx = 3.5
+            n_approx = round(initial_film_index(wls), 2)
 
             #  Method 1: FFT on uniformly sampled 1/lambda axis
 

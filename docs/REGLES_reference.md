@@ -62,6 +62,11 @@ lui-même : `python scripts\c1_diff.py X --tete X --sans-cache` doit rendre 0.
   `CertusTheme.tint(couleur, 0.18)`, jamais une concaténation ; `refresh_widget_sheets()` actualise les feuilles
   au changement de thème. Vérifier les pixels (`widget.grab()`), pas la feuille déclarée : `scripts/audit_ux_certus.py`
   ne lit que les feuilles déclarées.
+- Outils des règles : un paramètre qui n'atteint pas le calcul se cherche avec `scripts/check_inert_params.py`
+  (posé jamais lu) puis `scripts/check_param_effect.py` (aucun effet mesuré) ; un nettoyage d'imports laisse
+  identique `scripts/lint_ns_snapshot.py` ; `tests/ui/ux_skeleton.json` se régénère par
+  `scripts/regenerer_squelette.py --ecrire`, dans le même commit que le libellé ; une fenêtre fermée qui reste en
+  mémoire se diagnostique avec `scripts/sonde_retenants_fenetre.py`.
 - Le premier calcul compile Numba : chauffer avant un chronométrage.
   Ne pas citer dans le code le motif littéral qu'un garde-fou cherche
   (couleur, règle QSS), au risque de déclencher le garde-fou lui-même.

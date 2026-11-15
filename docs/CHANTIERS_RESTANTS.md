@@ -52,7 +52,6 @@ dans un environnement à part, 41 se trie en local (liste fusionner/fermer pour 
 | 39 | P3 | Moyenne | Exécutable gelé et version | L'exécutable date de `dbec2fc1`. Reconstruire, essai de fumée, et vérifier que les exports portent une version qui distingue l'état du code. | G §2.6 |
 | 40 | P2 | Moyenne | Recoupement du TMM par un code tiers | Sonde hors noyau comparant R et T à un code externe sur des empilements absorbants et obliques. | G §2.7 |
 | 41 | P3 | Faible | Branches Dependabot | Douze mises à jour en attente depuis le 30 septembre : fusionner ou fermer. | G §2.8 |
-| 42 | P3 | Faible | Scripts introuvables | 30 scripts sur 106 ne sont cités nulle part hors `reports/`. Citer dans la référence ceux qui appliquent une règle, archiver les sondes à usage unique. | G §2.9 |
 | 43 | P2 | Faible | Durée de la validation | `376baef1` : fils Numba = cœurs ÷ workers ; `unit` passe de 512 à 299 s, `ui` est inchangé (~10 min). Mesurer `ui` hors du disque `D:` et, s'il le faut, son nombre de workers. | G §7 |
 
 ## Sources conservées
@@ -75,7 +74,7 @@ consignées dans les bilans liés ci-dessus.
 U1–U11, refactoring des corridors, reprise des sessions U12 A, reprise STRAT multi-graines, partie machine
 d'U13, tours supplémentaires STRAT, aperçu INDEX TLU, rangement des journaux, contrôle des liens,
 polisseur hybride, poids des bandes disjointes, estimateur N/TOT, grille automatique et sélection robuste
-sont intégrés, ainsi que les corrections de C20, d'ALG-03 (35) et d'ALG-13. Les mesures appariées et l'oracle sont dans les sources ci-dessus.
+sont intégrés, ainsi que les corrections de C20, d'ALG-03 (35) et d'ALG-13. Chantier 42 : sur les 90 scripts Python suivis, 22 ne sont cités que dans `reports/` ; les cinq qui outillent une règle sont cités dans la référence (§6), les sondes restent en place, leur rapport donne la commande. Les mesures appariées et l'oracle sont dans les sources ci-dessus.
 
 L'imprécision de la docstring de `second_order_robust_rmse` est corrigée : il s'agit de l'approximation
 Gauss–Newton, qui omet le terme diagonal de courbure du résidu. Cette correction ne change aucun calcul.

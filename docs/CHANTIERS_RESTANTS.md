@@ -53,6 +53,7 @@ dans un environnement à part, 41 se trie en local (liste fusionner/fermer pour 
 | 40 | P2 | Moyenne | Recoupement du TMM par un code tiers | Sonde hors noyau comparant R et T à un code externe sur des empilements absorbants et obliques. | G §2.7 |
 | 41 | P3 | Faible | Branches Dependabot | Douze mises à jour en attente depuis le 30 septembre : fusionner ou fermer. | G §2.8 |
 | 43 | P2 | Faible | Durée de la validation | `376baef1` : fils Numba = cœurs ÷ workers ; `unit` passe de 512 à 299 s, `ui` est inchangé (~10 min). Mesurer `ui` hors du disque `D:` et, s'il le faut, son nombre de workers. | G §7 |
+| 44 | P2 | Moyenne à forte | Signal OMS 5100 de STRAT | Plan en neuf étapes de l'audit (§8) : profil du noyau, accélérations identiques au bit (V1, V2), sonde de sensibilité aux hypothèses non mesurables (D98, étalonnage, `SWING_MIN`), puis options physiques inactives (retard de coupure, face arrière, fente triangulaire) avant décision de 👤. Sans accès à la salle. | O §8 |
 
 ## Sources conservées
 
@@ -61,6 +62,7 @@ dans un environnement à part, 41 se trie en local (liste fusionner/fermer pour 
 - **U12** : [spécification de reprise, actualisée le 13 novembre](../reports/refactor_corridors_2026-11-11/U12_specification.md).
 - **U13** : [protocole des essais humains](../reports/refactor_corridors_2026-11-11/U13_protocole.md).
 - **G** : [audit général du 14 novembre](../reports/audit_general_2026-11-14/bilan.md).
+- **O** : [audit du signal OMS 5100 de STRAT, 15 novembre](../reports/audit_oms5100_2026-11-15/bilan.md).
 
 Les chantiers 03, 06 et 17 sortent de la liste active pour rendement insuffisant. Le 26 est gelé
 tant que les écarts et plantages du cache Numba restent ouverts. Les regroupements conservent les

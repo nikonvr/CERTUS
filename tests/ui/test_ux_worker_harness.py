@@ -118,6 +118,28 @@ def test_a_transient_abort_is_retried_and_reported(tmp_path):
     assert "Fatal Python error: Aborted" in warning, warning
 
 
+def test_a_worker_that_never_ends_is_killed_and_fails_without_a_retry(tmp_path):
+    """A modal dialog in a worker used to block the suite for hours: the launcher had no timeout.
+
+    Measured 2026-11-15 (chantier 19): DESIGN's "Unsaved configuration" box kept a worker of
+    ``test_ux_no_horizontal_scroll.py`` alive for almost six hours. A hang is not transient, so it is not retried.
+    """
+    starts = tmp_path / "starts"
+    script = _write_worker(
+        tmp_path,
+        "import time\n"
+        f"open(r'{starts}', 'a').write('x')\n"
+        "time.sleep(60)\n",
+    )
+
+    with pytest.raises(AssertionError) as excinfo:
+        run_ux_worker([sys.executable, script], MARKER, context="hung", timeout_s=1)
+
+    message = str(excinfo.value)
+    assert "killed" in message, message
+    assert starts.read_text() == "x", "a hung worker must not be started a second time"
+
+
 def test_a_healthy_worker_does_not_warn(tmp_path):
     script = _write_worker(
         tmp_path,

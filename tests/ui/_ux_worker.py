@@ -31,6 +31,11 @@ This module makes the two cases distinguishable:
 
 The retry cannot hide a real defect: a worker that aborts every time still
 fails, and says so with its exit status.
+
+A worker that never ends is killed after ``timeout_s`` and fails at once, without a retry: a hang is not
+transient. Measured 2026-11-15, chantier 19: under a mutation of ``spectral_weights.py``, DESIGN's
+``win.close()`` raised its modal "Unsaved configuration" box in the worker, and the test suite waited for
+it from 02:40 until a watcher killed the worker at 08:22.
 """
 
 from __future__ import annotations
@@ -67,6 +72,7 @@ def run_ux_worker(
     env: dict[str, str] | None = None,
     cwd: str | None = None,
     attempts: int = 2,
+    timeout_s: float = 600.0,
 ) -> dict:
     """Run ``cmd`` and return the payload carried by its marker line.
 
@@ -77,15 +83,23 @@ def run_ux_worker(
     env.setdefault("PYTHONFAULTHANDLER", "1")
     failed_status, failed_stderr = "no attempt", ""
     for attempt in range(1, attempts + 1):
-        proc = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            cwd=cwd,
-            env=env,
-            encoding="utf-8",
-            errors="replace",
-        )
+        try:
+            proc = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                cwd=cwd,
+                env=env,
+                encoding="utf-8",
+                errors="replace",
+                timeout=timeout_s,
+            )
+        except subprocess.TimeoutExpired as hung:
+            stderr = hung.stderr.decode("utf-8", "replace") if isinstance(hung.stderr, bytes) else hung.stderr
+            raise AssertionError(
+                f"{context}: worker still running after {timeout_s:g} s, killed (a modal dialog or a deadlock)."
+                f"\n{_stderr_tail(stderr)}"
+            ) from None
         for line in (proc.stdout or "").splitlines():
             if line.startswith(marker):
                 if attempt > 1:

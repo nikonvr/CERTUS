@@ -22,17 +22,18 @@ La priorité est indépendante de la difficulté : un P1 complexe peut attendre 
 La [campagne de co-conception A](../reports/codesign_2026-11-14/bilan.md) est terminée.
 Le profilage précède les modifications de gradients.
 
-**Bloqués par une décision de 👤** : périmètre UI (16, 18) ; modèle de dépôt représentatif (24, 31, 32) ;
-reprise B, « plus tard » selon U12 (27, 28, 29) ; date des essais humains (33) ; reconstruction, dépendance
-tierce et publication (39, 40, 41). **Exécutables par une IA seule** : 05, 20, 21, 25, 34, 36, 37, 38, 42, 43 et
-la mesure du 29.
+**Décisions de 👤 du 15 novembre** : le socle UI commun se limite au thème et à la session (18), les graphes
+restent tels quels (16 sort de la table) ; le modèle de dépôt de référence est celui de
+`example/example_strat/JSON-strat-example.json` (24, 31, 32) ; reprise B : mesurer le coût des étapes d'abord,
+sans toucher au calcul (27, 28, 29) ; 39 se reconstruit en local sans publier, 40 peut installer un code TMM tiers
+dans un environnement à part, 41 se trie en local (liste fusionner/fermer pour 👤, rien sur GitHub).
+**Bloqué** : la date des essais humains (33).
 
 | Ordre | Priorité | Complexité | Chantier restant | État et critère de fin | Source |
 |---:|---|---|---|---|---|
 | 05 | P3 | Faible à moyenne | Jacobiens Sellmeier manquants (D6) | Mesurer la part des ajustements concernés. Valider un éventuel gradient par différences finies et mesurer le gain à paramètres identiques. | A §4 |
 | 07 | P3 | Moyenne | Amorçage Numba (R2) | Le socle possède déjà le gestionnaire. Mutualiser les comportements communs en préservant signaux, erreurs et durée de vie des fils Qt. Vérifier le démarrage à froid des cinq fenêtres. | A §2.2 |
-| 16 | P3 | Moyenne à forte | Graphes et détachement (R4/R5, ancien 09) | Après arbitrage du périmètre UI, préserver les interactions propres à STRAT, les mises à jour et le retour à la fenêtre source. | A §2.2–2.3 |
-| 18 | P3 | Moyenne à forte | Socle de SMOOTHER et SUBSTRATE (R7) | Après arbitrage du périmètre UI, préserver chargement, calcul et export en ajoutant thème et session communs. | A §2.2–2.3 |
+| 18 | P3 | Moyenne | Socle de SMOOTHER et SUBSTRATE (R7) | Ajouter thème et session communs, rien d'autre (décision du 15 novembre) ; préserver chargement, calcul et export. | A §2.2–2.3 |
 | 19 | P2 | Moyenne à forte | Éprouver le sélecteur de tests | Compléter l'audit d'appels et le rejeu historique avec comparaison aux mutations de la suite intégrale. La validation complète reste la référence. | Q §5.3 |
 | 20 | P3 | Forte | Raffinement en longueurs d'onde complexes | Le polissage adaptatif à TOT fixée laisse un MF résolu de 0,10983 %. Comparer le raffinement complexe à ce témoin et vérifier sa tenue sur des départs éloignés. | A §3.3–3.4 et Q §10 |
 | 21 | P3 | Forte | Dérivées SPLINE (D4/D5, ancien 13) | (a) fait : le polissage n, k, d par paquet de trois nœuds du Smart Init a quitté l'UI pour `spline_smart_init.py::optimize_smart_init_nkd_packet`, identique au bit ; il tourne encore sur le fil de l'interface. Reste : profiler nœuds libres et Smart Init, puis ajouter les gradients. Vérifier les dérivées des valeurs et positions aux cas limites, y compris les replis. | A §4 |

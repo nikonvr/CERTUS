@@ -1,0 +1,8 @@
+config=JSON-strat-example.json layers=48 A=0.0005 h=1.66 probe_offset=4.583 nm blocks=8 reps=2000 repeat=5 python=3.15.2
+  layer=3 wl=550.00 block_start=0 matrices=0.39 niveau=0.78 balayage=4.13 bruit=1.98 detection=0.39 inversion=0.30 inversion_exacte=0.81 ancres=0.29 noyau=6.08 somme_production=7.99
+  layer=12 wl=550.00 block_start=12 matrices=3.14 niveau=0.76 balayage=2.11 bruit=0.99 detection=0.26 inversion=0.30 inversion_exacte=0.81 ancres=1.78 noyau=5.27 somme_production=7.57
+  layer=24 wl=550.00 block_start=24 matrices=6.48 niveau=0.76 balayage=2.07 bruit=1.02 detection=0.25 inversion=0.30 inversion_exacte=0.86 ancres=0.01 noyau=6.83 somme_production=10.88
+  layer=36 wl=550.00 block_start=36 matrices=9.60 niveau=0.76 balayage=2.05 bruit=1.03 detection=0.24 inversion=0.30 inversion_exacte=0.89 ancres=0.21 noyau=8.61 somme_production=13.99
+  layer=47 wl=600.00 block_start=42 matrices=12.16 niveau=0.77 balayage=4.36 bruit=1.99 detection=0.58 inversion=0.30 inversion_exacte=1.44 ancres=0.01 noyau=13.09 somme_production=20.15
+  batch: 200 runs x 48 layers, 0.019 s wall on 16 threads, 1.95 us/call wall, 31.27 us/call x threads
+JSON=D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus1111\.claude\worktrees\claude-code-suije-bf4f1f\reports\audit_oms5100_2026-11-15\profil_noyau\profil.json

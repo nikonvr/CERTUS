@@ -134,3 +134,17 @@ def test_every_editable_field_setting_is_saved_or_left_out_by_name(qapp) -> None
     from certus.ui.certus_field_ui import CertusFieldApp
 
     assert_every_setting_is_in_the_table(CertusFieldApp(), FIELD_CONFIG_TABLE, FIELD_CONFIG_OUTSIDE_TABLE)
+
+
+def test_field_keeps_its_thresholds_when_the_configuration_has_none(qapp) -> None:
+    """L5-m5 (audit 2026-11-15): a file without seuil1/seuil2 set both to 0.5, not the values of a new window."""
+    from certus.ui.certus_field_ui import CertusFieldApp
+
+    source, fresh = CertusFieldApp(), CertusFieldApp()
+    expected = (fresh.edit_seuil1.value(), fresh.edit_seuil2.value())
+    assert expected != (0.5, 0.5)
+    old = {k: v for k, v in source._collect_config().items() if k not in {"seuil1", "seuil2"}}
+
+    fresh._apply_config(old)
+
+    assert (fresh.edit_seuil1.value(), fresh.edit_seuil2.value()) == expected

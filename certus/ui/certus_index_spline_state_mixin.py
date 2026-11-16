@@ -5,6 +5,7 @@ import logging
 import numpy as np
 
 from certus.spline.certus_index_spline_core import SPLINE_PERF_PRESETS
+from certus.ui.certus_config_table import ConfigField, apply_table, collect_table
 from certus.ui.certus_index_spline_common import (
     _QS_SPLINE_APP,
     _QS_SPLINE_ORG,
@@ -16,6 +17,46 @@ from certus.ui.certus_index_spline_common import (
 )
 from certus.utils.certus_qsettings import certus_settings
 
+# The fit settings an INDEX SPLINE configuration saves and loads back, in the order they are loaded; the fit window
+# of the RMSE (rmse_fit_lambda_*) is held by the window, not by a widget, and is saved beside them.
+INDEX_SPLINE_CONFIG_TABLE = (
+    ConfigField("fit_t", "chk_t", "bool"),
+    ConfigField("fit_t_ratio", "chk_trel", "bool"),
+    ConfigField("fit_r", "chk_r", "bool"),
+    ConfigField("weight_t", "w_t", "float"),
+    ConfigField("weight_r", "w_r", "float"),
+    ConfigField("d_nominal_nm", "d_lo", "float"),
+    ConfigField("d_tolerance_nm", "d_hi", "float"),
+    ConfigField("mesh_min_dlambda_over_lambda", "sp_mesh_min_dlam", "float"),
+    ConfigField("substrate", "cb_sub", "data"),
+    ConfigField("profile", "cb_profilee", "data"),
+)
+
+# The editable widgets the table does not carry, with the reason (owner's decision of 2026-11-16: the configuration
+# keeps the fit settings only).
+_CORRIDOR_WIDGETS = (
+    "cb_corr_boot_mode", "cb_corr_mode", "chk_corr_boot", "chk_corr_boot_refit", "chk_corr_reg_sens",
+    "chk_corr_scientific_nominal", "chk_corr_sigma_hetero", "chk_corridor_d", "chk_corridor_rmse_envelope_only",
+    "chk_corridor_rmse_live_parabola", "chk_corridor_rmse_lock_scale", "chk_corridor_rmse_show_advanced",
+    "sl_corridor_manual_half", "sp_corr_alpha", "sp_corr_boot_block", "sp_corr_boot_maxfun", "sp_corr_boot_n",
+    "sp_corr_boot_p", "sp_corr_boot_seed", "sp_corr_boot_workers", "sp_corr_conf", "sp_corr_hetero_scale",
+    "sp_corr_jL", "sp_corr_jn", "sp_corr_prof_maxfun", "sp_corr_reg_dec", "sp_corr_reg_pts", "sp_corr_rmse_delta",
+    "sp_corr_seed", "sp_corr_sigma", "sp_corr_span", "sp_corr_starts", "sp_corr_step",
+    "sp_corridor_breakpoint_lookback", "sp_corridor_grid_d_step_nm", "sp_corridor_grid_n_points",
+    "sp_corridor_partial_delta_nm", "sp_corridor_rmse_delta", "sp_corridor_rmse_win",
+)
+_AUTO_CLEAN_WIDGETS = (
+    "chk_auto_clean_neighbor_pull", "chk_auto_clean_neighbor_pull_local_refine", "sp_auto_clean_cand_maxfun",
+    "sp_auto_clean_neighbor_pull_local_refine_step", "sp_auto_clean_pull_r1", "sp_auto_clean_pull_r2",
+    "sp_auto_clean_pull_r3", "sp_auto_clean_tol", "sp_auto_clean_top_n",
+)
+INDEX_SPLINE_CONFIG_OUTSIDE_TABLE = {
+    **{name: "corridor analysis, run after the fit" for name in _CORRIDOR_WIDGETS},
+    **{name: "automatic cleanup of the mesh, a tool run after the fit" for name in _AUTO_CLEAN_WIDGETS},
+    "sp_pg_iter": "inactive in local-only mode; follows the profile",
+    "cb_spectrum_xmode": "display: abscissa of the spectrum plot",
+}
+
 
 class CertusIndexSplineStateMixin:
     _COMPUTATION_THREADS = ("_worker",)
@@ -24,16 +65,7 @@ class CertusIndexSplineStateMixin:
     def _collect_config(self) -> dict:
         """Collect the fit controls restored by ``_apply_config``."""
         return {
-            "fit_t": self.chk_t.isChecked(),
-            "fit_t_ratio": self.chk_trel.isChecked(),
-            "fit_r": self.chk_r.isChecked(),
-            "weight_t": float(self.w_t.value()),
-            "weight_r": float(self.w_r.value()),
-            "substrate": self.cb_sub.currentData(),
-            "profile": self.cb_profilee.currentData(),
-            "d_nominal_nm": float(self.d_lo.value()),
-            "d_tolerance_nm": float(self.d_hi.value()),
-            "mesh_min_dlambda_over_lambda": float(self.sp_mesh_min_dlam.value()),
+            **collect_table(self, INDEX_SPLINE_CONFIG_TABLE),
             "rmse_fit_lambda_enabled": bool(self._rmse_fit_lambda_enabled),
             "rmse_fit_lambda_lo_nm": float(self._rmse_fit_lambda_lo),
             "rmse_fit_lambda_hi_nm": float(self._rmse_fit_lambda_hi),
@@ -41,32 +73,11 @@ class CertusIndexSplineStateMixin:
 
     def _apply_config(self, config: dict) -> None:
         """Restore the controls saved in an INDEX SPLINE settings JSON."""
-        toggles = {
-            "fit_t": self.chk_t,
-            "fit_t_ratio": self.chk_trel,
-            "fit_r": self.chk_r,
-        }
-        for key, widget in toggles.items():
-            if key in config:
-                widget.setChecked(bool(config[key]))
-
-        numbers = {
-            "weight_t": self.w_t,
-            "weight_r": self.w_r,
-            "d_nominal_nm": self.d_lo,
-            "d_tolerance_nm": self.d_hi,
-            "mesh_min_dlambda_over_lambda": self.sp_mesh_min_dlam,
-        }
-        for key, widget in numbers.items():
-            if key in config:
-                widget.setValue(float(config[key]))
-
         for key, widget in (("substrate", self.cb_sub), ("profile", self.cb_profilee)):
-            if key in config:
-                index = widget.findData(config[key])
-                if index < 0:
-                    raise ValueError(f"Unknown INDEX SPLINE {key}: {config[key]!r}")
-                widget.setCurrentIndex(index)
+            # A substrate or profile this window does not offer is refused, not replaced by the one shown.
+            if config.get(key) is not None and widget.findData(config[key]) < 0:
+                raise ValueError(f"Unknown INDEX SPLINE {key}: {config[key]!r}")
+        apply_table(self, INDEX_SPLINE_CONFIG_TABLE, config)
 
         if "rmse_fit_lambda_enabled" in config:
             self._rmse_fit_lambda_enabled = bool(config["rmse_fit_lambda_enabled"])

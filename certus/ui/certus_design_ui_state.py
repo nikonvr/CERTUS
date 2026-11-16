@@ -9,10 +9,50 @@ import numpy as np
 
 from certus.core.certus_core import APP_SUITE_VERSION, CFG
 from certus.core.certus_design_workers_dto import DESIGN_OPTIONAL_STEPS
+from certus.ui.certus_config_table import ConfigField, apply_table, collect_table
 from certus.ui.certus_qt_widgets import QCheckBox
 from certus.ui.certus_ui import show_toast
 from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
 from certus_physics import init_thickness
+
+# The settings a DESIGN configuration saves and loads back at its top level; the materials, stacks and targets are
+# rows of tables, saved and loaded by `_collect_config` and `_apply_config` themselves.
+DESIGN_CONFIG_TABLE = (
+    ConfigField("l0", "l0_spin", "float", 500.0),
+    ConfigField("back_en", "back_check", "bool", False),
+    ConfigField("back_coat", "back_coat_check", "bool", False),
+)
+
+# The settings of the "optimization" block (the files of example/example_design name it "optim").
+DESIGN_OPTIMIZATION_TABLE = (
+    ConfigField("points_per_target", "points_per_target_spin", "int"),
+    ConfigField("n100", "n100_spin", "int"),
+    ConfigField("max_clusters", "max_clusters_spin", "int"),
+    ConfigField("max_iter", "global_cycles_spin", "int"),
+    ConfigField("mc_n", "mc_n_spin", "int"),
+    ConfigField("mc_sigma", "mc_sigma_spin", "float"),
+    ConfigField("mc_sigma_rel", "mc_sigma_rel_spin", "float"),
+    ConfigField("mc_sigma_ot", "mc_sigma_ot_spin", "float"),
+    ConfigField("mc_rmse_threshold", "mc_rmse_threshold_spin", "float"),
+    ConfigField("pre_polish", "pre_polish_check", "bool", False),
+    ConfigField("allow_growth", "allow_growth_check", "bool", True),
+    ConfigField("auto_scale_y", "auto_scale_y_check", "bool", True),
+    # Least thickness of a final layer, in nm: a file without it is a file at 5 nm, the value before the field existed.
+    ConfigField("min_layer_nm", "min_layer_spin", "float", missing=5.0),
+)
+
+# The editable widgets the two tables do not carry, with the reason.
+DESIGN_CONFIG_OUTSIDE_TABLE = {
+    "oblique_check": "saved as oblique_mode with the targets, whose columns it sets",
+    "auto_grid_check": "saved among the optional steps of the optimization block (auto_wavelength_grid)",
+    # The Compare tab measures the barrier between two designs of this session (the current one, the Pareto records),
+    # which a configuration does not hold: its choices and its path settings belong to that analysis.
+    "compare_a_combo": "Compare tab: a design of this session",
+    "compare_b_combo": "Compare tab: a design of this session",
+    "compare_free_spin": "Compare tab: setting of the barrier analysis",
+    "compare_iter_spin": "Compare tab: setting of the barrier analysis",
+    "compare_images_spin": "Compare tab: setting of the barrier analysis",
+}
 
 
 class StateManager:
@@ -148,7 +188,7 @@ class StateManager:
 
         cfg = {
             "version": APP_SUITE_VERSION,
-            "l0": self.ui.l0_spin.value(),
+            **collect_table(self.ui, DESIGN_CONFIG_TABLE),
             "materials": {
                 n: {
                     "n4": w["n4"].value(),
@@ -158,8 +198,6 @@ class StateManager:
                 for n, w in self.ui.mat_widgets.items()
             },
             "front": [{"mat": layer.mat, "qw": layer.qwot, "var": layer.var} for layer in self.ui._get_front_stack()],
-            "back_en": self.ui.back_check.isChecked(),
-            "back_coat": self.ui.back_coat_check.isChecked(),
             "back": [{"mat": layer.mat, "qw": layer.qwot} for layer in self.ui._get_back_stack()],
             "targets": (
                 [
@@ -190,29 +228,12 @@ class StateManager:
                 ]
             ),
             "oblique_mode": self.ui.oblique_mode,
-            "optimization": {
-                "points_per_target": self.ui.points_per_target_spin.value(),
-                "n100": self.ui.n100_spin.value(),
-                "max_clusters": self.ui.max_clusters_spin.value(),
-                "max_iter": self.ui.global_cycles_spin.value(),
-                "mc_n": self.ui.mc_n_spin.value(),
-                "mc_sigma": self.ui.mc_sigma_spin.value(),
-                "mc_sigma_rel": self.ui.mc_sigma_rel_spin.value(),
-                "mc_sigma_ot": self.ui.mc_sigma_ot_spin.value(),
-                "mc_rmse_threshold": self.ui.mc_rmse_threshold_spin.value(),
-                # Extra params
-                "pre_polish": (self.ui.pre_polish_check.isChecked() if hasattr(self.ui, "pre_polish_check") else False),
-                "allow_growth": (self.ui.allow_growth_check.isChecked() if hasattr(self.ui, "allow_growth_check") else True),
-                "auto_scale_y": (self.ui.auto_scale_y_check.isChecked() if hasattr(self.ui, "auto_scale_y_check") else True),
-            },
+            "optimization": collect_table(self.ui, DESIGN_OPTIMIZATION_TABLE),
         }
         for key, attr in (("max_layers", "_max_layers_cap"), ("max_total_qwot", "_max_total_qwot"),
                           ("min_layer_ot_nm", "_min_layer_ot_nm"), ("floor_at_end", "_floor_at_end")):
             if getattr(self.ui, attr, None):
                 cfg["optimization"][key] = getattr(self.ui, attr)
-        # Written only when it is not the 5 nm every file had before the field existed.
-        if hasattr(self.ui, "min_layer_spin") and self.ui.min_layer_spin.value() != 5.0:
-            cfg["optimization"]["min_layer_nm"] = self.ui.min_layer_spin.value()
         cfg["optimization"].update(getattr(self.ui, "_design_optional_steps", None) or {})
 
         return cfg
@@ -258,7 +279,7 @@ class StateManager:
         if hasattr(self.ui, "mse_data"):
             self.ui.mse_data = {"iterations": [], "errors": []}
         
-        self.ui.l0_spin.setValue(c.get("l0", 500))
+        apply_table(self.ui, DESIGN_CONFIG_TABLE, c)
 
         self._apply_material_config(materials)
         self.ui.log(f"[LOAD] Materials applied | count={len(materials)} | keys={list(materials.keys())}", "INFO")
@@ -269,8 +290,6 @@ class StateManager:
             "INFO",
         )
 
-        self.ui.back_check.setChecked(back_enabled)
-        self.ui.back_coat_check.setChecked(back_coat_enabled)
         self._apply_stack_rows(back_rows, back=True)
         self.ui.log(
             f"[LOAD] Back stack applied | rows={len(back_rows)} | table_rows={self.ui.back_table.rowCount()} | rebuilt_stack_len={len(self.ui._get_back_stack())}",
@@ -339,25 +358,7 @@ class StateManager:
     def _apply_optimization_config(self, opt: dict) -> None:
         """Apply optimization controls from a config dict."""
 
-        self.ui.points_per_target_spin.setValue(opt.get("points_per_target", self.ui.points_per_target_spin.value()))
-        self.ui.n100_spin.setValue(opt.get("n100", self.ui.n100_spin.value()))
-        self.ui.max_clusters_spin.setValue(opt.get("max_clusters", self.ui.max_clusters_spin.value()))
-        self.ui.global_cycles_spin.setValue(opt.get("max_iter", self.ui.global_cycles_spin.value()))
-        self.ui.mc_n_spin.setValue(opt.get("mc_n", self.ui.mc_n_spin.value()))
-        self.ui.mc_sigma_spin.setValue(opt.get("mc_sigma", self.ui.mc_sigma_spin.value()))
-        # The three other settings of the spectral Monte Carlo were not saved (audit 2026-11-15, M-L5b).
-        self.ui.mc_sigma_rel_spin.setValue(opt.get("mc_sigma_rel", self.ui.mc_sigma_rel_spin.value()))
-        self.ui.mc_sigma_ot_spin.setValue(opt.get("mc_sigma_ot", self.ui.mc_sigma_ot_spin.value()))
-        self.ui.mc_rmse_threshold_spin.setValue(opt.get("mc_rmse_threshold", self.ui.mc_rmse_threshold_spin.value()))
-
-        if hasattr(self.ui, "pre_polish_check"):
-            self.ui.pre_polish_check.setChecked(opt.get("pre_polish", self.ui.pre_polish_check.isChecked()))
-
-        if hasattr(self.ui, "allow_growth_check"):
-            self.ui.allow_growth_check.setChecked(opt.get("allow_growth", self.ui.allow_growth_check.isChecked()))
-
-        if hasattr(self.ui, "auto_scale_y_check"):
-            self.ui.auto_scale_y_check.setChecked(opt.get("auto_scale_y", self.ui.auto_scale_y_check.isChecked()))
+        apply_table(self.ui, DESIGN_OPTIMIZATION_TABLE, opt)
 
         # Limits of the design, absent from most files: the most layers the workflow may grow to, and the most
         # total optical thickness (QWOT at l0, n4 convention) of the global stage. A file without them clears them.
@@ -365,9 +366,6 @@ class StateManager:
         self.ui._max_total_qwot = float(opt["max_total_qwot"]) if opt.get("max_total_qwot") else None
         # Least optical thickness n4 * d of a final layer, in nm; without it every final layer keeps 5 nm.
         self.ui._min_layer_ot_nm = float(opt["min_layer_ot_nm"]) if opt.get("min_layer_ot_nm") else None
-        # Least thickness of a final layer, in nm; a file without it is a file at 5 nm.
-        if hasattr(self.ui, "min_layer_spin"):
-            self.ui.min_layer_spin.setValue(float(opt.get("min_layer_nm") or 5.0))
         # Apply the thickness floor only at the end of the workflow (owner's practice); off unless the file asks.
         self.ui._floor_at_end = bool(opt.get("floor_at_end", False))
         # Optional steps of 2026-10-26, off unless the file names them (DESIGN_OPTIONAL_STEPS).

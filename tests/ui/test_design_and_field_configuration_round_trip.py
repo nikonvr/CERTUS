@@ -52,3 +52,54 @@ def test_field_keeps_its_minimal_thickness_when_the_configuration_has_none(qapp)
     fresh._apply_config(old)
 
     assert fresh.opt_panel.edit_dmin.value() == 12.5
+
+
+# DESIGN saves and loads its settings through two tables (certus/ui/certus_config_table.py).
+
+
+def test_the_design_configuration_keeps_its_keys(qapp) -> None:
+    from certus.ui.certus_design_ui import CertusDesignApp
+
+    cfg = CertusDesignApp()._collect_config()
+
+    assert set(cfg) == {"version", "l0", "materials", "front", "back_en", "back_coat", "back", "targets", "oblique_mode", "optimization"}
+    assert {
+        "points_per_target", "n100", "max_clusters", "max_iter", "mc_n", "mc_sigma", "mc_sigma_rel", "mc_sigma_ot",
+        "mc_rmse_threshold", "pre_polish", "allow_growth", "auto_scale_y",
+    } <= set(cfg["optimization"])
+    assert "min_layer_nm" not in cfg["optimization"]  # written only away from the 5 nm of the files before it
+
+
+def test_every_setting_of_the_design_tables_comes_back(qapp) -> None:
+    from config_table_checks import assert_round_trip
+
+    from certus.ui.certus_design_ui import CertusDesignApp
+    from certus.ui.certus_design_ui_state import DESIGN_CONFIG_TABLE, DESIGN_OPTIMIZATION_TABLE
+
+    assert_round_trip(CertusDesignApp(), CertusDesignApp(), DESIGN_CONFIG_TABLE + DESIGN_OPTIMIZATION_TABLE)
+
+
+def test_a_design_file_without_a_least_layer_thickness_is_a_file_at_5_nm(qapp) -> None:
+    from certus.ui.certus_design_ui import CertusDesignApp
+
+    win = CertusDesignApp()
+    cfg = win._collect_config()
+    win.min_layer_spin.setValue(7.0)
+
+    win._apply_config(cfg)
+
+    assert win.min_layer_spin.value() == 5.0
+
+
+def test_every_editable_design_setting_is_saved_or_left_out_by_name(qapp) -> None:
+    from config_table_checks import assert_every_setting_is_in_the_table
+
+    from certus.ui.certus_design_ui import CertusDesignApp
+    from certus.ui.certus_design_ui_state import (
+        DESIGN_CONFIG_OUTSIDE_TABLE,
+        DESIGN_CONFIG_TABLE,
+        DESIGN_OPTIMIZATION_TABLE,
+    )
+
+    tables = DESIGN_CONFIG_TABLE + DESIGN_OPTIMIZATION_TABLE
+    assert_every_setting_is_in_the_table(CertusDesignApp(), tables, DESIGN_CONFIG_OUTSIDE_TABLE)

@@ -6,7 +6,9 @@ how the value is read and written, and the value saved when the window has no su
 being saved: the four defects of that class found by the audit of 2026-11-15 (M-L5b, M-L6d) came from two hand-written
 lists that drifted apart.
 
-A key missing from a loaded file, or saved as ``None``, leaves its widget as it is.
+A key missing from a loaded file, or saved as ``None``, leaves its widget as it is, unless its row gives ``missing``:
+the value a file without the key stands for. Such a key is written only when the value differs from it, so the files
+saved before the setting existed keep their meaning.
 """
 
 from __future__ import annotations
@@ -35,6 +37,7 @@ class ConfigField:
     default: Any = None
     off_widget: str | None = None
     applies: Callable[[Mapping[str, Any]], bool] | None = None
+    missing: Any = None
 
     def __post_init__(self) -> None:
         if self.kind not in KINDS:
@@ -101,8 +104,14 @@ def write_field(owner: object, field: ConfigField, value: Any) -> bool:
 
 
 def collect_table(owner: object, table: Iterable[ConfigField]) -> dict[str, Any]:
-    """The saved values of every row, in the order of the table."""
-    return {field.key: read_field(owner, field) for field in table}
+    """The saved values of every row, in the order of the table; a row at its ``missing`` value is left out."""
+    out: dict[str, Any] = {}
+    for field in table:
+        value = read_field(owner, field)
+        if field.missing is not None and (value is None or value == field.missing):
+            continue
+        out[field.key] = value
+    return out
 
 
 def apply_table(owner: object, table: Iterable[ConfigField], config: Mapping[str, Any]) -> None:
@@ -110,7 +119,9 @@ def apply_table(owner: object, table: Iterable[ConfigField], config: Mapping[str
     for field in table:
         value = config.get(field.key)
         if value is None:
-            continue
+            if field.missing is None:
+                continue
+            value = field.missing
         if field.applies is not None and not field.applies(config):
             continue
         write_field(owner, field, value)

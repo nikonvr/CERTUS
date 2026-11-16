@@ -1,0 +1,12 @@
+ARTEFACT de charge ou d'ordre (unit), verts seuls en serie :
+    tests/unit/test_strat_rate_and_resolution.py::test_no_profile_is_bit_identical_to_a_zero_profile
+    tests/unit/test_the_default_pytest_run_is_quiet.py::test_a_bare_run_lists_no_test_and_measures_no_coverage
+    tests/unit/test_the_default_pytest_run_is_quiet.py::test_a_quiet_run_still_ends_on_the_summary_line
+ARTEFACT de charge ou d'ordre (ui), verts seuls en serie :
+    tests/ui/test_ux_window_titles_have_one_format.py::test_the_nine_windows_are_measured
+    tests/ui/test_ux_window_titles_have_one_format.py::test_every_title_is_the_name_of_the_program_a_dash_and_what_it_does
+    tests/ui/test_ux_window_titles_have_one_format.py::test_no_title_has_two_spaces_an_underscore_or_the_name_twice
+    tests/ui/test_ux_window_titles_have_one_format.py::test_only_the_hub_carries_the_motto_of_the_suite
+    tests/ui/test_ux_window_titles_have_one_format.py::test_no_two_windows_share_a_title
+VALIDATION=GO
+La reference de CLAUDE.md section 2 reste la suite complete en serie.

@@ -26,7 +26,9 @@ from typing import Any
 #   data       : a combo box by its item data; an unknown value leaves the combo as it is
 #   index      : a combo box by its position
 #   line       : a line edit, text() / setText()
-KINDS = ("float", "int", "bool", "text", "loose_text", "data", "index", "line")
+#   choice     : a group of radio buttons, ``choices`` = ((value, widget), ...); the value of the checked one, else the
+#                default; a value no button stands for checks the button of the default
+KINDS = ("float", "int", "bool", "text", "loose_text", "data", "index", "line", "choice")
 
 
 @dataclass(frozen=True)
@@ -45,6 +47,7 @@ class ConfigField:
     applies: Callable[[Mapping[str, Any]], bool] | None = None
     missing: Any = None
     saved_if: Callable[[Any], bool] | None = None
+    choices: tuple[tuple[str, str], ...] = ()
 
     def __post_init__(self) -> None:
         if self.kind not in KINDS:
@@ -68,6 +71,8 @@ def read_field(owner: object, field: ConfigField) -> Any:
     if w is None:
         return field.default
     kind = field.kind
+    if kind == "choice":
+        return next((v for v, path in field.choices if resolve_widget(owner, path).isChecked()), field.default)
     if kind == "float":
         return float(w.value())
     if kind == "int":
@@ -99,6 +104,9 @@ def write_field(owner: object, field: ConfigField, value: Any) -> bool:
             off.setChecked(not value)
     elif kind == "loose_text":
         return _set_loose_text(w, str(value))
+    elif kind == "choice":
+        paths = dict(field.choices)
+        resolve_widget(owner, paths.get(str(value).strip().lower(), paths[field.default])).setChecked(True)
     elif kind in ("text", "data"):
         idx = w.findText(str(value)) if kind == "text" else w.findData(value)
         if idx < 0:
@@ -162,4 +170,5 @@ def table_widgets(table: Iterable[ConfigField]) -> set[str]:
         out.add(field.widget)
         if field.off_widget:
             out.add(field.off_widget)
+        out.update(path for _, path in field.choices)
     return out

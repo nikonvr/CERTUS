@@ -80,6 +80,10 @@ def perturb(window, field: ConfigField) -> bool:
             resolve_widget(window, field.off_widget).setChecked(True)
         else:
             w.setChecked(not w.isChecked())
+    elif field.kind == "choice":
+        values = [v for v, _ in field.choices]
+        nxt = values[(values.index(read_field(window, field)) + 1) % len(values)]
+        resolve_widget(window, dict(field.choices)[nxt]).setChecked(True)
     elif field.kind in ("text", "loose_text", "data", "index"):
         if w.count() < 2:
             return False

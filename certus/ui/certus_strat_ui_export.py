@@ -147,6 +147,28 @@ class CertusStratExportMixin:
             )
         return problems
 
+    def _export_params_are_unseeded(self, params: Any) -> bool:
+        """True when no seed at all is in the exported parameters. A STRAT run is seeded by ``robustness_seed``: testing
+        ``seed`` and ``random_seed`` only declared every run unseeded (audit 2026-11-15, M-L6f)."""
+        return self._resolve_manifest_seed(params) is None
+
+    def _export_summary_facts(self, params: dict, strats: list, score: float) -> dict[str, str]:
+        """What the export says of the run, read from the keys the parameters really have (``nH_id``, ``nL_id``,
+        ``nSub_id``, ``stack_string``): the summary read ``nH``, ``nL``, ``substrate`` and ``n_target_layers``, which
+        never existed, and wrote "N/A". The score of robustness is not an RMSE; the SEEL is the figure to report."""
+        layers = [m for m in str(params.get("stack_string", "")).split(",") if m.strip()]
+        from certus.ui.certus_strat_ui_worker import _format_seel  # the SEEL of the headline, one derivation
+
+        best = strats[0] if strats and isinstance(strats[0], dict) else {}
+        return {
+            "high": str(params.get("nH_id", "N/A")),
+            "low": str(params.get("nL_id", "N/A")),
+            "substrate": str(params.get("nSub_id", "N/A")),
+            "layers": str(len(layers)) if layers else "N/A",
+            "score": f"{score:.6f}",
+            "seel": _format_seel(best),
+        }
+
     def _resolve_manifest_seed(self, seed_container: Any) -> int | None:
         if not isinstance(seed_container, dict):
             return None
@@ -208,7 +230,7 @@ class CertusStratExportMixin:
         try:
             try:
                 params_for_status = metadata.get("params", {}) if isinstance(metadata, dict) else {}
-                if params_for_status.get("seed") is None and params_for_status.get("random_seed") is None:
+                if self._export_params_are_unseeded(params_for_status):
                     self.set_validation_status("WARNING_UNSEEDED_STOCHASTIC")
                     self.add_validation_warning(
                         "STRAT run uses stochastic stages without explicit seed in exported params."
@@ -324,9 +346,9 @@ class CertusStratExportMixin:
                     "type": "kv",
                     "content": {
                         "Strategies Found": str(metadata.get("strategies_count", 0)),
-                        "Best RMSE": f"{rmse_val:.5f}",
+                        "Best robustness score": f"{rmse_val:.5f}",
                         "Wavelength Range": f"{params.get('scan_wl_min', 0)}-{params.get('scan_wl_max', 0)} nm",
-                        "Target Layers": f"{params.get('n_target_layers', '?')}",
+                        "Target Layers": self._export_summary_facts(params, [], rmse_val)["layers"],
                     },
                 }
             ]
@@ -390,6 +412,8 @@ class CertusStratExportMixin:
 
         n_iter = "N/A"
 
+        facts = self._export_summary_facts(params, strats, rmse_val)
+
         df_summary = pd.DataFrame(
             {
                 "Parameter": [
@@ -403,20 +427,22 @@ class CertusStratExportMixin:
                     "Execution Time (s)",
                     "Processors",
                     "Iterations",
-                    "Best RMSE",
+                    "Best robustness score",
+                    "Best SEEL (nm)",
                 ],
                 "Value": [
                     certus_timestamp_display(),
-                    params.get("nH", "N/A"),
-                    params.get("nL", "N/A"),
-                    params.get("substrate", "N/A"),
-                    str(params.get("n_target_layers", "N/A")),
+                    facts["high"],
+                    facts["low"],
+                    facts["substrate"],
+                    facts["layers"],
                     f"{params.get('scan_wl_min', 0)}-{params.get('scan_wl_max', 0)} nm",
                     f"{params.get('l0', 'N/A')} nm",
                     t_exec,
                     n_cores,
                     n_iter,
-                    f"{rmse_val:.6f}",
+                    facts["score"],
+                    facts["seel"],
                 ],
             }
         )
@@ -530,19 +556,21 @@ class CertusStratExportMixin:
         strategies and inline figures) and write it to ``html_path``. Behavior
         is preserved bit-for-bit from the legacy inline implementation."""
         params = self.collect_params()
+        facts = self._export_summary_facts(params, strats, rmse_val)
 
         sections = [
             {
                 "title": "Strategy Optimization Summary",
                 "type": "kv",
                 "content": {
-                    "Best RMSE": f"{rmse_val:.5f}",
-                    "Target Layers": str(params.get("n_target_layers", "N/A")),
+                    "Best robustness score": facts["score"],
+                    "Best SEEL (nm)": facts["seel"],
+                    "Target Layers": facts["layers"],
                     "Wavelength Range": f"{params.get('scan_wl_min', 0)}-{params.get('scan_wl_max', 0)} nm",
                     "Nucleation WL": f"{params.get('l0', 'N/A')} nm",
-                    "High Index Material": params.get("nH", "N/A"),
-                    "Low Index Material": params.get("nL", "N/A"),
-                    "substrate": params.get("substrate", "N/A"),
+                    "High Index Material": facts["high"],
+                    "Low Index Material": facts["low"],
+                    "substrate": facts["substrate"],
                     "Execution Time": (
                         f"{self.opti_results.get('execution_time', 0):.2f} s"
                         if "execution_time" in self.opti_results
@@ -631,7 +659,7 @@ class CertusStratExportMixin:
         try:
             try:
                 params_for_status = self.collect_params()
-                if params_for_status.get("seed") is None and params_for_status.get("random_seed") is None:
+                if self._export_params_are_unseeded(params_for_status):
                     self.set_validation_status("WARNING_UNSEEDED_STOCHASTIC")
                     self.add_validation_warning("STRAT auto-export run uses stochastic stages without explicit seed.")
                 else:

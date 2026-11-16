@@ -783,27 +783,33 @@ class CertusIndexEventsMixin:
             self.logger.warning("[INDEX.LOAD] smoothing failed: %s", e)
 
     def _ask_keep_raw_or_smoothed(self) -> bool:
-        """Return True when user explicitly keeps raw traces."""
+        """Return True unless the user explicitly keeps the smoothed traces.
+
+        Without an answer in 5 s the smoothed traces were kept: an absent operator had the measurement replaced, with no
+        trace. Now the measurement is kept as measured, and the choice is logged (audit 2026-11-15, L5-m6).
+        """
         msg_box = QMessageBox(self)
         msg_box.setWindowTitle("Noise Filtering")
         msg_box.setText(
             "IR Noise detected in 4000-5200nm band.\n"
             "Do you want to keep the smoothed response or the raw response?\n\n"
-            "If no selection is made, the smoothed response will be kept after 5 seconds."
+            "If no selection is made, the raw response (the measurement as it is) will be kept after 5 seconds."
         )
         btn_smooth = msg_box.addButton(
             "Keep Smoothed",
             QMessageBox.ButtonRole.AcceptRole,
         )
         btn_raw = msg_box.addButton("Keep Raw", QMessageBox.ButtonRole.RejectRole)
-        msg_box.setDefaultButton(btn_smooth)
+        msg_box.setDefaultButton(btn_raw)
 
         timer = QTimer(msg_box)
         timer.timeout.connect(msg_box.accept)
         timer.start(5000)
         msg_box.exec()
         timer.stop()
-        return msg_box.clickedButton() == btn_raw
+        keep_raw = msg_box.clickedButton() is not btn_smooth
+        self.logger.info("[INDEX.LOAD] 4000-5200 nm band: %s traces kept", "raw" if keep_raw else "smoothed")
+        return keep_raw
 
     def detach_current_plot(self) -> None:
         """Detach current plot or data table in a separate window"""

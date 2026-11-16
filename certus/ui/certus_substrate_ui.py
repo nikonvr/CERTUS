@@ -21,6 +21,7 @@ import pyqtgraph as pg
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QBrush, QColor
 from PyQt6.QtWidgets import (
+    QApplication,
     QCheckBox,
     QComboBox,
     QDoubleSpinBox,
@@ -131,6 +132,8 @@ class SubstrateIndexGUI(QMainWindow):
     def update_progress(self, current: int, total: int, phase: str, extra_info: str = "") -> None:
         if hasattr(self, "progress_widget"):
             self.progress_widget.update(current, total, phase=phase, extra_info=extra_info)
+        # The fit runs in the GUI thread: without this the bar never redrew and Cancel was read only at the end (L6-m3).
+        QApplication.processEvents()
 
     def stop_progress(self, message: str) -> None:
         if hasattr(self, "progress_widget"):
@@ -893,34 +896,18 @@ class SubstrateIndexGUI(QMainWindow):
 
         self.plot_widget.autoRange()
 
-    def _get_clean_fraction_column(self, x: np.ndarray, col_name) -> np.ndarray:
-
-        y_raw = np.asarray(pd.to_numeric(self.df[col_name], errors="coerce").values, dtype=np.float64)
-        x, y_raw = _align_xy_lengths(x, y_raw, label=str(col_name))
-
-        m = np.isfinite(x) & np.isfinite(y_raw)
-
-        if int(np.count_nonzero(m)) < 5:
-            raise ValueError(f"Not enough finite points in column: {col_name}")
-
-        if not np.all(m):
-            y_raw = np.interp(x, x[m], y_raw[m])
-
-        y_clean = IndexCore.apply_dynamic_filtering(
-            x, y_raw, self.current_window, self.current_poly, self.current_heavy
-        )
-
-        y_clean = np.asarray(y_clean, dtype=np.float64)
-        if y_clean.ndim > 1:
-            y_clean = np.squeeze(y_clean)
-        y_clean = np.asarray(y_clean, dtype=np.float64).reshape(-1)
-
-        return IndexCore.to_fraction(y_clean)
-
-
     def calculate_index(self):
-        if self.df is None:
+        # It runs in the GUI thread: update_progress pumps the events so that the window redraws and Cancel is read.
+        # A second click during a computation is ignored rather than nested (audit 2026-11-15, L6-m3).
+        if self.df is None or getattr(self, "_calculating", False):
             return
+        self._calculating = True
+        try:
+            self._calculate_index_now()
+        finally:
+            self._calculating = False
+
+    def _calculate_index_now(self) -> None:
 
         self.progress_widget.start()
         if hasattr(self.progress_widget, "enable_cancel"):

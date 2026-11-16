@@ -589,7 +589,7 @@ class CertusStratStateMixin:
             "mc_runs_block",
             "iter_divider_start",
             "iter_divider_end",
-            "trigger_tolerance",
+            "trigger_tolerance", "thickness_tolerance_nm",  # the second: read by phase B, not saved before M-L6d
             "sim_thickness_probe_offset_ratio",
             "non_monotonic_error_factor",
             "wavelength_change_penalty",

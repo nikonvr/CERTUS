@@ -505,15 +505,7 @@ def calculate_reflectance_bilayer_vectorized(
         if nS.imag > 0.0:
             nS = nS.real - 1j * nS.imag
 
-        term1 = n0 * (Mt00 + nS * Mt01)
-
-        term2 = Mt10 + nS * Mt11
-
-        num = term1 - term2
-
-        den = term1 + term2
-
-        r = num / den if abs(den) > 1e-20 else 0j
+        _, r, _ = reflection_amplitudes(n0, Mt00 + nS * Mt01, Mt10 + nS * Mt11)
 
         R = (r.real * r.real) + (r.imag * r.imag)  # |r|^2
 

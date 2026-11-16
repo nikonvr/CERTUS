@@ -40,7 +40,6 @@ ALLOWED = {
     # Copies of the stack formula, to delegate to `reflection_amplitudes` (chantier 46):
     "certus/core/certus_field_core.py::_calculate_field_single_pol": "copy (admittance recursion, r from Y_eff)",
     "certus/physics/certus_opt_needle.py::needle_scan_cached": "copy (needle scan, n_inc = 1)",
-    "certus/physics/certus_opt_tmm.py::calculate_reflectance_bilayer_vectorized": "copy (METAL bilayer)",
     # Not the stack formula: the Fresnel coefficient of ONE interface (bare substrate, back face), (n - 1)/(n + 1)
     # with no matrix, which compute_RT_from_matrix does not compute.
     "certus/domain/optical/value_objects/refractive_index.py::RefractiveIndex.reflectance_normal_incidence": "not TMM (one interface)",

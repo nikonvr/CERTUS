@@ -378,7 +378,7 @@ def _result_item_strategy_id(item: dict[str, Any]) -> str:
     return str(item.get("strategy", {}).get("strategy_id", ""))
 
 def _has_consensus_seed_scores(seed_scores: list[float]) -> bool:
-    """Return True when at least one finite seed score was collected."""
+    """Return True when at least one seed score was collected."""
     return bool(seed_scores)
 
 def _should_skip_consensus_registration(seed_scores: list[float]) -> bool:
@@ -458,9 +458,7 @@ def _consume_cached_consensus_score(
     """Consume cached consensus score if available; return True on cache hit."""
     if cache_key not in robustness_score_cache:
         return False
-    score_c = robustness_score_cache[cache_key]
-    if np.isfinite(score_c):
-        seed_scores.append(score_c)
+    seed_scores.append(robustness_score_cache[cache_key])  # a rejection (inf) is a score too: see below (M-L2)
     return True
 
 def _store_and_consume_consensus_score(
@@ -470,10 +468,9 @@ def _store_and_consume_consensus_score(
     score_c: float,
     seed_scores: list[float],
 ) -> None:
-    """Store computed consensus score then append it if finite."""
+    """Store computed consensus score then append it, finite or not: a rejected seed (inf) used to vanish (M-L2)."""
     robustness_score_cache[cache_key] = float(score_c)
-    if np.isfinite(score_c):
-        seed_scores.append(score_c)
+    seed_scores.append(score_c)
 
 def _should_apply_consensus_ranking(
     *,
@@ -485,7 +482,10 @@ def _should_apply_consensus_ranking(
     return bool(consensus_enabled and len(consensus_seeds) > 1 and results_in)
 
 def _consensus_seed_score_stats(seed_scores: list[float]) -> tuple[float, float, float]:
-    """Return (mean, std, worst) for consensus seed scores."""
+    """Return (mean, std, worst) for consensus seed scores; (inf, 0, inf) as soon as one seed is not finite."""
+    if not np.all(np.isfinite(seed_scores)):
+        # One rejected seed rejects the strategy: it ranks behind any stable one. std 0: inf - inf would be NaN (M-L2).
+        return (float("inf"), 0.0, float("inf"))
     return (
         float(np.mean(seed_scores)),
         float(np.std(seed_scores)),

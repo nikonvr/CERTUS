@@ -963,10 +963,27 @@ class CertusMetalSingleApp(MetalBaseApp):
         p_spline = np.concatenate((n_knots, k_knots))
         n_calc, k_calc = get_nk_from_spline(p_spline, knot_l, l_array)
 
+        # The computed spectra next to the targets, as BILAYER exports them: the file held R Target, n and k only, so the
+        # fit could not be checked from it (audit 2026-11-15, L6-m6). Same model as _single_RTRback_mse.
+        n_sub = get_n_substrate_array_by_id(int(p["substrate_id"]), np.asarray(l_array)).astype(np.complex128)
+        r_calc, t_calc, rb_calc = calculate_RTRback_incoherent_vectorized(
+            np.array([float(xk[0])]), (n_calc - 1j * k_calc).reshape(-1, 1), n_sub, np.asarray(l_array, dtype=np.float64)
+        )
+        missing = np.full(len(l_array), np.nan)
+
+        def _target(key: str) -> np.ndarray:
+            values = np.asarray(p.get(key, missing), dtype=np.float64).ravel()
+            return values if values.size == len(l_array) else missing
+
         return pd.DataFrame(
             {
                 "Wavelength (nm)": l_array,
                 "R Target": target_r,
+                "R Calc": r_calc,
+                "T Target": _target("target_t"),
+                "T Calc": t_calc,
+                "Rback Target": _target("target_rb"),
+                "Rback Calc": rb_calc,
                 "n (Metal)": n_calc,
                 "k (Metal)": k_calc,
             }

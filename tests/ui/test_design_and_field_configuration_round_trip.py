@@ -103,3 +103,34 @@ def test_every_editable_design_setting_is_saved_or_left_out_by_name(qapp) -> Non
 
     tables = DESIGN_CONFIG_TABLE + DESIGN_OPTIMIZATION_TABLE
     assert_every_setting_is_in_the_table(CertusDesignApp(), tables, DESIGN_CONFIG_OUTSIDE_TABLE)
+
+
+# FIELD saves and loads its settings through one table.
+
+
+def test_the_field_configuration_keeps_its_keys(qapp) -> None:
+    from certus.ui.certus_field_ui import CertusFieldApp
+
+    assert set(CertusFieldApp()._collect_config()) == {
+        "mat_H", "mat_L", "mat_Sub", "mat_Sup", "l0", "lcalc", "emp_factors", "layer_types", "seuil1", "seuil2",
+        "alpha", "theta_inc_deg", "pol_idx", "mc_error", "mc_iter", "rmin", "rmax", "min_field_active", "global_opt",
+        "analytic_gradient", "allow_growth", "opt_dmin",
+    }
+
+
+def test_every_setting_of_the_field_table_comes_back(qapp) -> None:
+    from config_table_checks import assert_round_trip
+
+    from certus.ui.certus_field_state_mixin import FIELD_CONFIG_TABLE
+    from certus.ui.certus_field_ui import CertusFieldApp
+
+    assert_round_trip(CertusFieldApp(), CertusFieldApp(), FIELD_CONFIG_TABLE)
+
+
+def test_every_editable_field_setting_is_saved_or_left_out_by_name(qapp) -> None:
+    from config_table_checks import assert_every_setting_is_in_the_table
+
+    from certus.ui.certus_field_state_mixin import FIELD_CONFIG_OUTSIDE_TABLE, FIELD_CONFIG_TABLE
+    from certus.ui.certus_field_ui import CertusFieldApp
+
+    assert_every_setting_is_in_the_table(CertusFieldApp(), FIELD_CONFIG_TABLE, FIELD_CONFIG_OUTSIDE_TABLE)

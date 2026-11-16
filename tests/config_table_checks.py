@@ -1,6 +1,6 @@
 """Checks shared by the configuration-table tests of the five windows (``certus/ui/certus_config_table.py``).
 
-``editable_widget_paths`` lists the settings a user can edit on a window, so a test fails when one of them is neither in
+``editable_widgets`` lists the settings a user can edit on a window, so a test fails when one of them is neither in
 the window's table nor in its list of widgets deliberately left out. ``assert_round_trip`` gives every row of a table a
 value that is not the one of a new window, saves, loads into another new window and compares.
 """
@@ -31,10 +31,10 @@ def _is_editable(obj: object) -> bool:
     return True
 
 
-def editable_widget_paths(owner: object, depth: int = 2) -> set[str]:
-    """The attribute paths of the editable widgets of ``owner`` and of its CERTUS panels, ``depth`` levels down."""
+def editable_widgets(owner: object, depth: int = 2) -> dict[int, str]:
+    """The editable widgets of ``owner`` and of its CERTUS panels, ``depth`` levels down: identity -> one path to it."""
     seen: set[int] = set()
-    out: set[str] = set()
+    out: dict[int, str] = {}
 
     def walk(obj: object, prefix: str, level: int) -> None:
         for name, value in list(vars(obj).items()):
@@ -43,7 +43,7 @@ def editable_widget_paths(owner: object, depth: int = 2) -> set[str]:
             seen.add(id(value))
             path = prefix + name
             if _is_editable(value):
-                out.add(path)
+                out[id(value)] = path
             elif level < depth and isinstance(value, QWidget) and type(value).__module__.startswith("certus."):
                 walk(value, path + ".", level + 1)
 
@@ -54,12 +54,12 @@ def editable_widget_paths(owner: object, depth: int = 2) -> set[str]:
 
 def assert_every_setting_is_in_the_table(window, table, outside: dict[str, str]) -> None:
     """Every editable widget is saved by ``table`` or named in ``outside``; both name existing widgets only."""
-    saved = table_widgets(table)
-    found = editable_widget_paths(window)
-    missing = sorted(found - saved - set(outside))
-    assert not missing, f"editable widgets neither saved nor listed as left out: {missing}"
-    absent = sorted(p for p in saved | set(outside) if resolve_widget(window, p) is None)
+    named = table_widgets(table) | set(outside)
+    absent = sorted(p for p in named if resolve_widget(window, p) is None)
     assert not absent, f"the table names widgets the window does not have: {absent}"
+    known = {id(resolve_widget(window, p)) for p in named}
+    missing = sorted(path for ident, path in editable_widgets(window).items() if ident not in known)
+    assert not missing, f"editable widgets neither saved nor listed as left out: {missing}"
 
 
 def perturb(window, field: ConfigField) -> None:
@@ -67,7 +67,7 @@ def perturb(window, field: ConfigField) -> None:
     w = resolve_widget(window, field.widget)
     if field.kind in ("float", "int"):
         v = w.value()
-        step = w.singleStep() or 1
+        step = max(w.singleStep(), 10.0 ** -w.decimals()) if hasattr(w, "decimals") else max(w.singleStep(), 1)
         w.setValue(v + step if v + step <= w.maximum() else v - step)
     elif field.kind == "bool":
         if field.off_widget and w.isChecked():

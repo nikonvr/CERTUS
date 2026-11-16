@@ -113,11 +113,11 @@ def _log_corridor_base_geometry(
 
     log.info(
         "%s ━━━ Profiling base (geometry) ━━━ x_encoding=%s | sigma_knots_n key=%s | "
-        "n remesh (sigma_n->sigma_L)=%s | max|sigma_n-sigma_L|=%s mean|…|=%s (atol=%.3e) | sigma_grids_match=%s",
+        "L remesh (sigma_L->sigma_n)=%s | max|sigma_n-sigma_L|=%s mean|…|=%s (atol=%.3e) | sigma_grids_match=%s",
         _LOG_PREFIX,
         str(diag.get("x_encoding", "-")),
         "yes" if diag.get("sigma_knots_n_key_present") else "no",
-        "yes" if diag.get("remeshed_n_sigma_n_to_sigma_L") else "no",
+        "yes" if diag.get("remeshed_L_sigma_L_to_sigma_n") else "no",
         f"{float(diag.get('max_abs_sigma_n_minus_L', float('nan'))):.6e}"
         if np.isfinite(float(diag.get("max_abs_sigma_n_minus_L", float("nan"))))
         else "n/a",

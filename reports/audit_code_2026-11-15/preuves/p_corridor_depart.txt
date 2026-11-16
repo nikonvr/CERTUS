@@ -1,0 +1,8 @@
+x_encoding: xi_n_mono | K_n: 0 | K_L: 14 | max |sigma_n - sigma_L|: sizes differ
+Traceback (most recent call last):
+  File "D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus1111\reports\audit_code_2026-11-15\preuves\p_corridor_depart.py", line 38, in <module>
+    n_disp = np.asarray(res["n_lam"], dtype=float)
+    
+  File "D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus1111\certus\spline\certus_index_spline_config.py", line 284, in __getattr__
+    raise AttributeError(f"'SplineOptConfig' object has no attribute '{name}'")
+AttributeError: 'SplineOptConfig' object has no attribute 'lam_exp'

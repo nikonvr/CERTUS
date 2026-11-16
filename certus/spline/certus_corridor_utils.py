@@ -599,15 +599,16 @@ def _extract_knots_and_nodes_from_result(
     remeshed = False
 
     if not grids_coincide:
+        # The projection of the display (_snap_nk_mesh_sol3_split): L onto the mesh of n. This projected n onto the mesh
+        # of L, so the corridor started from another model than the one shown (audit 2026-11-15, L3-m3).
         try:
-            n_nodes = np.interp(sk_L, sk_n, n_nodes)
-
+            L_nodes = np.interp(sk_n, sk_L, L_nodes)
+            sk_L = np.asarray(sk_n, dtype=np.float64).copy()
             remeshed = True
-
         except (TypeError, ValueError) as exc:
-            raise ValueError("profile corridors: n_nodes remesh failed (sigma_knots_n -> sigma_knots_L).") from exc
+            raise ValueError("profile corridors: L_nodes remesh failed (sigma_knots_L -> sigma_knots_n).") from exc
 
-    meta["remeshed_n_sigma_n_to_sigma_L"] = bool(remeshed)
+    meta["remeshed_L_sigma_L_to_sigma_n"] = bool(remeshed)
 
     if n_nodes.size != sk_L.size:
         # Ultimate guard: coerce by index-space remap so corridor path never crashes.

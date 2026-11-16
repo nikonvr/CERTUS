@@ -1,6 +1,8 @@
 import numba
 import numpy as np
 
+from certus.physics.certus_opt_tmm import reflection_amplitudes
+
 
 def _default_layer_types(n_layers: int) -> np.ndarray:
     return np.asarray([i % 2 for i in range(n_layers)], dtype=np.int32)
@@ -93,7 +95,7 @@ def _calculate_field_single_pol(indices_c1_cn: np.ndarray, ep_c1_cn: np.ndarray,
         else:
             Y_eff = 1e30 + 0j
             
-    r = (Y0 - Y_eff) / (Y0 + Y_eff)
+    _, r, _ = reflection_amplitudes(Y0, 1.0, Y_eff)  # [B; C] = [1; Y_eff]
     R = np.abs(r)**2
     t = 1 + r
     

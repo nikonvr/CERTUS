@@ -257,7 +257,15 @@ def compute_gradient_lossless_front_fast(
     var_idx: np.ndarray,
     min_d: float = 0.0,
 ) -> tuple[float, np.ndarray]:
-    """Wrapper adding the minimum-thickness penalty to `_compute_gradient_lossless_front_kernel`."""
+    """Wrapper adding the minimum-thickness penalty to `_compute_gradient_lossless_front_kernel`.
+
+    The admissible points are those of `cost_lossless_front_fast` (weight > 0, finite target, at least 5): the two
+    paths judged a narrow target, a laser line of fewer than 5 points, differently, 1e12 for the cost alone and its
+    true value with the gradient (audit 2026-11-15, L1-m2). With 5 admissible points or more, nothing changes.
+    """
+    admissible = (tgt_weights > 0.0) & np.isfinite(tgt_vals)
+    if int(np.count_nonzero(admissible)) < 5 or float(np.sum(tgt_weights[admissible])) <= 1e-18:
+        return 1e12, np.zeros(len(var_idx), dtype=np.float64)
     cost, grad = _compute_gradient_lossless_front_kernel(
         ep, n_layers_real, inv_n_layers_real, n_sub_real, k0_wls, tgt_vals, tgt_weights, var_idx
     )

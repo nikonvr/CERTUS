@@ -267,6 +267,27 @@ def spectrum_eval_run_preamble(app: Any, run_eval_cb: Any) -> bool:
     return True
 
 
+def overlapping_target_ranges(tgts: list[Any]) -> list[tuple[int, int, float, float]]:
+    """Pairs of targets (row i, row j, from, to in nm) whose wavelength ranges overlap."""
+    out = []
+    for i, a in enumerate(tgts):
+        for j in range(i + 1, len(tgts)):
+            lo, hi = max(a.lmin, tgts[j].lmin), min(a.lmax, tgts[j].lmax)
+            if lo <= hi:
+                out.append((i + 1, j + 1, float(lo), float(hi)))
+    return out
+
+
+def _warn_overlapping_targets(app: Any, tgts: list[Any]) -> None:
+    """In normal incidence, where two targets overlap the last row replaces the other, silently; the oblique path sums
+    them. Said once per set of overlaps, as the owner decided (audit 2026-11-15, L1-m3); the cost is unchanged."""
+    overlaps = overlapping_target_ranges(tgts)
+    if overlaps and overlaps != getattr(app, "_warned_target_overlaps", None):
+        detail = "; ".join(f"rows {i} and {j} on {lo:g}-{hi:g} nm" for i, j, lo, hi in overlaps)
+        app.log(f"Targets overlap ({detail}): there, only the last row counts.", "WARNING")
+    app._warned_target_overlaps = overlaps
+
+
 def spectrum_eval_build_worker_cfg(
     app: Any,
     variant: SpectrumEvalVariant,
@@ -304,6 +325,9 @@ def spectrum_eval_build_worker_cfg(
 
     if not active:
         return None
+
+    if not app.oblique_mode:
+        _warn_overlapping_targets(app, active)
 
     if getattr(app, "_use_exact_ep", False) and app.ep_current is not None and len(app.ep_current) == len(stack):
         ep = app.ep_current

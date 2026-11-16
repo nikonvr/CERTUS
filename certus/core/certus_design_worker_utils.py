@@ -537,6 +537,10 @@ def build_pglobal_config_from_cfg(
             pg_conf = pg_conf.with_overrides(**overrides)
         max_iter_run = cfg.get("max_iter", 50)
 
+    # A seed for every mode: unseeded, two identical DESIGN runs returned two designs (audit 2026-11-15, L1-m5, owner's
+    # decision of 2026-11-16). 0 when the run has none.
+    pg_conf = pg_conf.with_overrides(random_seed=int(cfg.get("run_seed", 0) or 0))
+
     return pg_conf, int(max_iter_run)
 
 

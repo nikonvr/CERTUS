@@ -840,7 +840,7 @@ class PGlobalOptimizer:
 
         Run all local-search tasks in parallel, process results as they
 
-        complete (as_completed) for better load balancing and earlier
+        complete, consumed in the order of the tasks (reproducible) for earlier
 
         best-ever updates.
 
@@ -850,13 +850,13 @@ class PGlobalOptimizer:
 
         """
 
-        from concurrent.futures import as_completed
-
         pool = self._get_pool()
 
         futures = {pool.submit(self._run_local_search, t): t for t in tasks}
 
-        for future in as_completed(futures):
+        # In the order of the tasks, not of their completion: the order of add_cluster_result changes the clusters and
+        # the best at equal value, so a run depended on the threads (audit 2026-11-15, L1-m5).
+        for future in list(futures):
             if self._is_stopped():
                 break
 

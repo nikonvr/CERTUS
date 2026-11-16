@@ -21,7 +21,7 @@ s'arrêter si ruff est rouge. Une seule exécution à la fois (banc, tests).
 
 ## 2. Fait
 
-C-L3 `e8cef838` · M-L5a `4711e35b` · M-L6g `d6d28437` · C-L6b `3735ec1f` · M-L6e `31971c6c` (+ plafond `0942633e`) · M-L4a, b, c `203f9e13`. Groupe RE : M-L4c suite `23fc49a5` · M-L6a `7837c5d3` · M-L6b `50d00fd1` · M-L6c `d7c5a30a`. C-L4 `5be9f704` ; banc **après** : RESULT 0,0073399, **SEEL 0,1713 nm** (+11,9 %), gagnant différent (`recensement_sio2.md`). Groupe INDEX : M-L1 `cf8f7020` · M-L5g `1696cfa0` · M-L5b `12ab3eb1`. Groupe SPLINE : M-L3a `c9022195` · M-L3b `56c4fd08` · M-L3c `50dadceb`. Groupe DESIGN : C-L6a `98ae5ef4` · M-L5c `55d716ad` · M-L5d `c3b1bb82` · M-L5f `cea43f60` · M-L5b `e7062fa9` · M-L5e `7c649893` · M-L4d `396329e4`.
+C-L3 `e8cef838` · M-L5a `4711e35b` · M-L6g `d6d28437` · C-L6b `3735ec1f` · M-L6e `31971c6c` (+ plafond `0942633e`) · M-L4a, b, c `203f9e13`. Groupe RE : M-L4c suite `23fc49a5` · M-L6a `7837c5d3` · M-L6b `50d00fd1` · M-L6c `d7c5a30a`. C-L4 `5be9f704` ; banc **après** : RESULT 0,0073399, **SEEL 0,1713 nm** (+11,9 %), gagnant différent (`recensement_sio2.md`). Groupe INDEX : M-L1 `cf8f7020` · M-L5g `1696cfa0` · M-L5b `12ab3eb1`. Groupe SPLINE : M-L3a `c9022195` · M-L3b `56c4fd08` · M-L3c `50dadceb`. Groupe DESIGN : C-L6a `98ae5ef4` · M-L5c `55d716ad` · M-L5d `c3b1bb82` · M-L5f `cea43f60` · M-L5b `e7062fa9` · M-L5e `7c649893` · M-L4d `396329e4`. Groupe STRAT, fin : M-L2 `23459079` · M-L6d `29bc357b` · M-L6f `52e5a3a2` ; banc après M-L2 : RESULT 0,0062170, **SEEL 0,1577 nm** (`bancs/juge_de_paix_apres_M-L2.txt`). **Les 27 défauts sont corrigés.**
 Banc juge de paix **avant** C-L4 (code `31971c6c`) : RESULT 0,0058619, **SEEL 0,1531 nm**, RUN_S 1 750 s (`bancs/juge_de_paix_avant_C-L4.txt`).
 
 ## 3. À faire, dans cet ordre
@@ -34,7 +34,7 @@ Décision 👤 = imposée ; décision par défaut = la mienne, à garder sauf ra
 |---|---|---|---|---|
 | M-L4a, b, c | `certus/utils/certus_re_helpers.py` : `_re_header_normalize_for_tokens`, `_re_measurement_values_are_percent` | « R45p » lu 0° s ; `arri[eee]res?` a perdu ses accents ; seuil % à 1,25 | **fait (`203f9e13`)** : regex `^([RT])(\d+)([SPsp])?` éclatée ; `[eèé]` ; seuil 1,05 | `tests/unit/test_re_headers_and_units_are_read_as_written.py` |
 | M-L4c (suite) | `certus/ui/certus_re_excel_mixin.py` ≈ l. 559-591 (`_parse_re_measurement`) ; INDEX/METAL : seuil 1,5 de `load_spectrum_columns` (`certus/utils/certus_data.py`) | décision % **par colonne** : un R d'antireflet en % (max < 1) à côté d'un T en % est lu en fraction | par défaut : **une unité par feuille** — si une colonne non vide dépasse 1,05, toutes en % ; même seuil 1,05 dans `load_spectrum_columns` | feuille R max 0,8 + T max 92 → R / 100 |
-| M-L6a | `certus_re_excel_mixin.py:1188-1190` (`back_check` coché si une colonne est BK) → `certus_spectrum_eval_ui.py:297` `cfg["back"]` → `certus_spectral_workers.py:779-790, 503-530` | l'évaluation affichée applique la face arrière globale à toutes les colonnes ; le REWorker respecte chaque colonne (`certus_re_workers_context.py:134-139`) | passer `include_backside` de chaque colonne au noyau d'évaluation, comme le chemin phase 4 (`:752-777`) | classeur BK + noBK : courbe évaluée noBK = calcul sans face arrière |
+| M-L6a | `certus/workers/certus_spectral_workers.py::EvalWorker.run` (`_oblique_spectrum_for_eval`) | l'évaluation affichée appliquait la face arrière globale à toutes les colonnes ; le REWorker respecte chaque colonne | **fait (`7837c5d3`)** : `include_backside` de chaque groupe passé au noyau d'évaluation | `tests/unit/test_re_evaluation_honours_each_column_backside.py` |
 | M-L6b | `certus/ui/certus_re_workers_mixin.py::_on_re_done`, `_compute_re_rmse` | `_re_loaded_exact_ep` (épaisseurs chargées) prioritaire après la fin du calcul → RMSE du titre et méta d'export sur le design initial | **fait (`50d00fd1`)** : `_on_re_done` efface `_re_loaded_exact_ep` | `tests/ui/test_re_rmse_follows_the_optimised_thicknesses.py` |
 | M-L6c | `certus_re_workers_mixin.py:492` `rw.wait(300000)`, `:511`, `:526` | gèle l'UI 5 min ; puis lâche la référence d'un QThread en marche | arrêt non bloquant : drapeau stop + `finished` → `_force_idle` ; garder la référence jusqu'à `finished` | `stop_optim` rend la main sans attendre ; la référence reste jusqu'à la fin |
 
@@ -69,10 +69,10 @@ Décision 👤 = imposée ; décision par défaut = la mienne, à garder sauf ra
 | M-L5d | `certus/ui/certus_design_ui_core.py:183-200` | 👤 : refuser le retour en mode normal s'il existe des cibles R ou d'angle ≠ 0, avec un message ; convertir seulement les cibles T à 0° | cible R 45° → bascule refusée, cibles intactes |
 | M-L5b (DESIGN, FIELD) | `certus_design_ui_state.py:141-369`, `certus_field_state_mixin.py:342-407` | sauver `mc_sigma_rel_spin`, `mc_sigma_ot_spin`, `mc_rmse_threshold_spin` ; FIELD `opt_panel.edit_dmin` | aller-retour de configuration |
 | M-L5e | `certus/ui/certus_curve_smoother.py:437-446` | 👤 : ne jamais réécrire le classeur source ; écrire `<nom>_lisse.xlsx` à côté, par fichier temporaire + `os.replace` | le fichier source est inchangé (octets) |
-| M-L5f | `certus_design_ui_worker.py:782-827`, `certus_design_ui_core.py:963`, `certus_design_ui.py:286`, `certus_design_ui_events.py:557-575` | désactiver le bouton MC pendant le calcul ; `smc_thread` dans `_COMPUTATION_THREADS` et dans `closeEvent` | bouton désactivé ; fermeture demande/arrête |
+| M-L5f | `certus_design_ui_worker.py:782-827`, `certus_design_ui_core.py::_update_busy_ui`, `certus_design_ui.py:286`, `certus_design_ui_events.py:557-575` | désactiver le bouton MC pendant le calcul ; `smc_thread` dans `_COMPUTATION_THREADS` et dans `closeEvent` | bouton désactivé ; fermeture demande/arrête |
 | M-L4d | `certus/utils/certus_export.py:70-71` (`getData()`) | exporter les données d'origine (`xData`/`yData` de l'item), pas l'affiché | graphe zoomé + log → CSV complet, linéaire |
 
-### Groupe STRAT, fin
+### Groupe STRAT, fin (fait)
 
 | id | où | correction | test |
 |---|---|---|---|

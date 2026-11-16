@@ -66,8 +66,9 @@ SEEL du `RESULT` officiel ; taux de plantage de `RANK00`.
 **Lire ces chiffres :**
 
 - 🔴 **Substrat** : les repères sur substrat « SiO2 » sont antérieurs à la correction C-L4 (`5be9f704`) : substrat calculé à
-  n = 1,48625 au lieu de 1,45991 à 550 nm ([recensement](../reports/audit_code_2026-11-15/recensement_sio2.md)). Au juge de
-  paix, la correction porte le SEEL de 0,1531 à 0,1713 nm (+11,9 %) et change le gagnant ([acquis](ETAT_acquis.md)).
+  n = 1,48625 au lieu de 1,45991 à 550 nm ([recensement](../reports/audit_code_2026-11-15/recensement_sio2.md)), et à la
+  correction M-L2 du consensus (`23459079`). Juge de paix : SEEL 0,1531 nm avant, 0,1713 nm avec C-L4, **0,1577 nm** avec
+  C-L4 et M-L2 ; le gagnant change à chaque fois ([acquis](ETAT_acquis.md)).
 - 🔴 **Les SEEL ne se comparent pas d'un composant à l'autre** (domaines de notation différents, §7) ; à composant fixé, oui.
 - 🔴 **Un score seul ne départage rien** : à 150 tirages σ ≈ 6 %, deux runs à moins de ~8 % sont indiscernables ; sur `r75x2`,
   σ ≈ 1,8 % en changeant le triplet de graines de consensus. On compare des classes d'équivalence SEEL.
@@ -126,8 +127,8 @@ dépendant de T ou de λ, grenaille, bruit multiplicatif ou corrélé. Seul un r
 ### STRAT
 
 - `RESULT` est le score du premier classé : P95 du RMSE au pire des trois niveaux de bruit, **tirages plantés compris** ; le consensus
-  le remplace par moyenne + `consensus_std_weight` écarts-types sur ses graines (D7, D6). Le code n'y garde que les
-  scores finis ; 👤 a décidé le 2026-11-15 qu'une graine rejetée rejette la stratégie (consensus infini, correction M-L2).
+  le remplace par moyenne + `consensus_std_weight` écarts-types sur ses graines (D7, D6). Une graine rejetée (score
+  infini) rejette la stratégie : consensus infini (décision de 👤 du 2026-11-15, M-L2, `23459079`).
 - D73 corrigé (marge au sommet interpolé) ; D70 retiré ; D17 conservé (gain négatif) ; D15 : quatre couches d'historique POEM ;
   D14 : 16 points d'historique ; D9 : sous un nombre minimal de blocs la DP ne rend que les graines structurées, et le journal le dit ;
   D8 : les quatre intervalles retenus du 99c restent déposables avec la recherche de fente ; sans changement : D12, D13, D16, D18, D19, D22.

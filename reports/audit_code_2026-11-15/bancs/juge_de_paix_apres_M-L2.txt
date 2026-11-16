@@ -1,0 +1,49 @@
+juge de paix (JSON-strat-example.json), banc STRAT, après la correction M-L2 du consensus (et C-L4 du substrat)
+commande : python scripts/bench_examples.py strat --auto-yes ; code : 52e5a3a2 Name what ran in the STRAT export (audit 2026-11-15, M-L6f)
+SETUP_S=0.746
+RUN_S=1292.972
+RESULT=0.006216961561735543
+SEEL = 2*sqrt(RESULT) = 0.1577 nm
+WAIT_EXIT=finished ; aucun WAIT_TIMEOUT ; STRAT_CRASH_ELIMINATED=0/2496 ; 0 « Consensus re-score failed »
+classement (140 premiers caractères de chaque ligne) :
+STRAT_RANK00 id=900250444 origin=LOCAL_SEARCH score=0.006217 crash=0.0000 elim=False nblocks=33 nwl=15 wl=[584,504,534,604,584,564,544,604,5
+STRAT_RANK01 id=900250444 origin=ELITE score=0.007776 crash=0.0000 elim=False nblocks=2 nwl=2 wl=[544,497]
+STRAT_RANK02 id=900450716 origin=ELITE score=0.008282 crash=0.0000 elim=False nblocks=4 nwl=4 wl=[544,471,453,473]
+STRAT_RANK03 id=900450717 origin=ELITE score=0.008282 crash=0.0000 elim=False nblocks=4 nwl=4 wl=[544,471,453,473]
+STRAT_RANK04 id=900450718 origin=ELITE score=0.008282 crash=0.0000 elim=False nblocks=4 nwl=4 wl=[544,471,453,473]
+STRAT_RANK05 id=900250434 origin=ELITE score=0.008322 crash=0.0000 elim=False nblocks=2 nwl=2 wl=[543,497]
+STRAT_RANK06 id=900450736 origin=ELITE score=0.008457 crash=0.0000 elim=False nblocks=4 nwl=4 wl=[544,471,453,473]
+STRAT_RANK07 id=900450737 origin=ELITE score=0.008457 crash=0.0000 elim=False nblocks=4 nwl=4 wl=[544,471,453,473]
+STRAT_RANK08 id=900450738 origin=ELITE score=0.008457 crash=0.0000 elim=False nblocks=4 nwl=4 wl=[544,471,453,473]
+STRAT_RANK09 id=900450326 origin=ELITE score=0.008543 crash=0.0000 elim=False nblocks=4 nwl=4 wl=[543,471,453,473]
+meilleur par étape (« Best Strategy ID »), 29 étapes : 6 à « Score: inf » (aucune avant M-L2) :
+01:08:38 | INFO | 🏆 Best Strategy ID: 48800 (STRUCTURED_REGULAR_PARTITION) - Score: 0.02599
+01:09:28 | INFO | 🏆 Best Strategy ID: 904850727 (ELITE) - Score: 0.01982
+01:09:46 | INFO | 🏆 Best Strategy ID: 9139 (THICKNESS²) - Score: 0.35961
+01:10:29 | INFO | 🏆 Best Strategy ID: 900950492 (ELITE) - Score: 0.01302
+01:10:47 | INFO | 🏆 Best Strategy ID: 8132 (THICKNESS²) - Score: 0.35988
+01:11:01 | INFO | 🏆 Best Strategy ID: 900900098 (SMART_MERGE_THICKNESS2 (from ID 9125)) - Score: 0.35776
+01:11:50 | INFO | 🏆 Best Strategy ID: 900850720 (ELITE) - Score: 0.01356
+01:12:08 | INFO | 🏆 Best Strategy ID: 7255 (SYM) - Score: 0.35282
+01:12:23 | INFO | 🏆 Best Strategy ID: 900800054 (SMART_MERGE_THICKNESS2 (from ID 900900036)) - Score: 0.348
+01:13:11 | INFO | 🏆 Best Strategy ID: 900750720 (ELITE) - Score: 0.01356
+01:13:26 | INFO | 🏆 Best Strategy ID: 6207 (SYM) - Score: 0.35224
+01:13:41 | INFO | 🏆 Best Strategy ID: 900700018 (SMART_MERGE_THICKNESS2 (from ID 900800072)) - Score: 0.339
+01:14:17 | INFO | 🏆 Best Strategy ID: 990650017 (RATE_RESCUE27(from 970120020)) - Score: 0.01183
+01:14:20 | INFO | 🏆 Best Strategy ID: 5800 (STRUCTURED_REGULAR_PARTITION) - Score: inf
+01:14:35 | INFO | 🏆 Best Strategy ID: 900600043 (SMART_MERGE_THICKNESS2 (from ID 900700110)) - Score: 0.334
+01:15:10 | INFO | 🏆 Best Strategy ID: 900550406 (ELITE) - Score: 0.01183
+01:15:14 | INFO | 🏆 Best Strategy ID: 4801 (STRUCTURED_REGULAR_PARTITION) - Score: inf
+01:15:28 | INFO | 🏆 Best Strategy ID: 900500023 (SMART_MERGE_SYM (from ID 900600053)) - Score: 0.33649
+01:16:05 | INFO | 🏆 Best Strategy ID: 900450716 (ELITE) - Score: 0.00828
+01:16:09 | INFO | 🏆 Best Strategy ID: 3800 (STRUCTURED_MONO_WL) - Score: inf
+01:16:23 | INFO | 🏆 Best Strategy ID: 900400024 (SMART_MERGE_SYM (from ID 900500038)) - Score: 0.33203
+01:16:55 | INFO | 🏆 Best Strategy ID: 900350310 (ELITE) - Score: 0.00857
+01:17:00 | INFO | 🏆 Best Strategy ID: 2801 (STRUCTURED_REGULAR_PARTITION) - Score: inf
+01:17:14 | INFO | 🏆 Best Strategy ID: 900300027 (SMART_MERGE_MIXED (from ID 3801)) - Score: 0.36071
+01:17:44 | INFO | 🏆 Best Strategy ID: 900250444 (ELITE) - Score: 0.00778
+01:17:48 | INFO | 🏆 Best Strategy ID: 1800 (STRUCTURED_MONO_WL) - Score: inf
+01:17:58 | INFO | 🏆 Best Strategy ID: 900200002 (SMART_MERGE_MIXED (from ID 900300027)) - Score: inf
+01:18:28 | INFO | 🏆 Best Strategy ID: 900150294 (ELITE) - Score: 0.00860
+01:26:25 | INFO | 🏆 Best Strategy ID: 900250444 (LOCAL_SEARCH) - Score: 0.00622
+journal complet (11 Mo) hors dépôt : CERTUS/certus1111_hors_git_2026-11-15/juge_de_paix_apres_M-L2_complet.txt

@@ -34,3 +34,7 @@ mode. Les indices de couche des artefacts commencent à 0 ; l'interface et les r
   1,45991 (silice fondue) ; tout résultat STRAT sur « SiO2 » d'avant est touché ([recensement](../reports/audit_code_2026-11-15/recensement_sio2.md)). Au juge de paix, entre deux
   bancs que seule C-L4 sépare pour STRAT : SEEL 0,1531 → 0,1713 nm (+11,9 %) ; le gagnant passe de 2 blocs [544, 471] à 4 blocs [544, 469, 454, 471] ; la recherche locale finale, qui
   portait le score de 0,007402 à 0,005862, le laisse à 0,007340 (parent 0,007335) ([banc](../reports/audit_code_2026-11-15/bancs/juge_de_paix_apres_C-L4.txt)).
+- M-L2 (`23459079`, 2026-11-15) : le consensus ne gardait que les scores finis de ses graines ; une stratégie rejetée par une graine gardait la moyenne des autres. Tout classement
+  STRAT par consensus d'avant a pu retenir une telle stratégie. Au juge de paix (C-L4 déjà corrigé) : SEEL 0,1713 → 0,1577 nm (−8,0 %) ; 6 des 29 meilleurs d'étape passent à un
+  score infini ; le meilleur ELITE à 4 blocs passe de 0,00733 à 0,00828 et le gagnant redevient un 2 blocs, [544, 497] à 0,007776, que la recherche locale porte à 0,006217
+  ([banc](../reports/audit_code_2026-11-15/bancs/juge_de_paix_apres_M-L2.txt)). Non vérifié : que l'ancien gagnant à 4 blocs avait une graine rejetée (les scores par graine ne sont pas journalisés).

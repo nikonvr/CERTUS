@@ -240,6 +240,10 @@ class CertusStratExportMixin:
             except NUMERICAL_FAULT_EXCEPTIONS as exc:
                 self.logger.warning("Validation status update skipped during export: %s", exc)
 
+            failed_blocks = list((metadata.get("params") or {}).get("phase_b_failed_blocks") or []) if isinstance(metadata, dict) else []
+            if failed_blocks:  # the ranking misses these blocks: say it in the report (audit 2026-11-15, L3-m7)
+                self.logger.warning("STRAT ranking INCOMPLETE: phase B block(s) %s failed", failed_blocks)
+                self.add_validation_warning(f"Ranking incomplete: phase B block(s) {failed_blocks} failed and are absent.")
             report_dir = get_resource_path("reports")
 
             os.makedirs(report_dir, exist_ok=True)
@@ -346,6 +350,7 @@ class CertusStratExportMixin:
                     "type": "kv",
                     "content": {
                         "Strategies Found": str(metadata.get("strategies_count", 0)),
+                        "Ranking": f"INCOMPLETE, failed phase B blocks {failed_blocks}" if failed_blocks else "complete",
                         "Best robustness score": f"{rmse_val:.5f}",
                         "Wavelength Range": f"{params.get('scan_wl_min', 0)}-{params.get('scan_wl_max', 0)} nm",
                         "Target Layers": self._export_summary_facts(params, [], rmse_val)["layers"],

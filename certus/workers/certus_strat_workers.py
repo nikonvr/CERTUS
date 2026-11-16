@@ -72,6 +72,7 @@ from certus.utils.certus_strat_context import (
     StratContext,
     _build_layer_importance_map,
     _build_symmetry_bonus_map,
+    _note_failed_phase_b_block,
     _strategy_signature,
     _validate_strategy_blocks_contract,
 )
@@ -1273,10 +1274,8 @@ def _run_phaseB_parallel_execution(
     import concurrent.futures
     import gc
     import threading
-
     def stop_check():
         return params.get("stop_requested", False)
-
     # 1. Partition blocks_range into independent segments of consecutive integers
     segments = []
     if blocks_range:
@@ -1290,6 +1289,7 @@ def _run_phaseB_parallel_execution(
         segments.append(current_segment)
 
     accumulated_strategies_results = []
+    params["phase_b_failed_blocks"] = []  # filled by _note_failed_phase_b_block (L3-m7)
     completed_blocks_lock = threading.Lock()
     completed_blocks_count = [0]
     total_blocks = len(blocks_range)
@@ -1335,12 +1335,12 @@ def _run_phaseB_parallel_execution(
 
                 if int(result_batch.get("n_blk", n_blk)) != int(n_blk):
                     logger.error(f"    [Block {n_blk}] ❌ Worker returned wrong n_blk={result_batch.get('n_blk')}")
-                    inherited_strategies = []
+                    inherited_strategies = _note_failed_phase_b_block(params, n_blk)
                     continue
 
                 if "error" in result_batch and result_batch.get("strategies_results") == []:
                     logger.error(f"    [Block {n_blk}] ❌ Error: {result_batch['error']}")
-                    inherited_strategies = []
+                    inherited_strategies = _note_failed_phase_b_block(params, n_blk)
                 else:
                     strategies_this_step_raw = result_batch.get("strategies_results", [])
                     strategies_this_step = []
@@ -1466,7 +1466,7 @@ def _run_phaseB_parallel_execution(
 
             except Exception as e:
                 logger.error(f"   [Block {n_blk}] ❌ Error: {e}")
-                inherited_strategies = []
+                inherited_strategies = _note_failed_phase_b_block(params, n_blk)
             finally:
                 with completed_blocks_lock:
                     completed_blocks_count[0] += 1

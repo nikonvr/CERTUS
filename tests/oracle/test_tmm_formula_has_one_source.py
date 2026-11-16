@@ -36,6 +36,29 @@ ALLOWED = {
     # Same shape, other physics: the Tauc-Lorentz epsilon_1 integral and its gradient.
     "certus/physics/certus_optical_models.py::epsilon1_TL_analytic": "not TMM (Tauc-Lorentz epsilon_1)",
     "certus/physics/gradient_analytic.py::_compute_epsilon1_gradient_kernel": "not TMM (its gradient)",
+    # Found on 2026-11-16 by the ratio form `(a - b) / (a + b)` (audit 2026-11-15, L1-m1), which the pair test missed.
+    # Single-interface Fresnel coefficients and stack copies mixed, NOT classified one by one: they may only go away.
+    "certus/core/certus_field_core.py::_calculate_field_single_pol": "ratio form, found 2026-11-16, not classified",
+    "certus/core/certus_substrate_index.py::IndexCore.n_from_r45p_single_face": "ratio form, found 2026-11-16, not classified",
+    "certus/core/certus_substrate_index.py::IndexCore.n_from_r45s_single_face": "ratio form, found 2026-11-16, not classified",
+    "certus/domain/optical/value_objects/refractive_index.py::RefractiveIndex.reflectance_normal_incidence": "ratio form, found 2026-11-16, not classified",
+    "certus/physics/certus_opt_needle.py::needle_scan_cached": "ratio form, found 2026-11-16, not classified",
+    "certus/physics/certus_opt_tmm.py::calculate_RTRback_incoherent_vectorized": "ratio form, found 2026-11-16, not classified",
+    "certus/physics/certus_opt_tmm.py::calculate_reflectance_bilayer_vectorized": "ratio form, found 2026-11-16, not classified",
+    "certus/physics/certus_strat_batch.py::_calculate_RT_HL_single_point": "ratio form, found 2026-11-16, not classified",
+    "certus/physics/certus_strat_batch.py::_compute_batch_rmse_kernel": "ratio form, found 2026-11-16, not classified",
+    "certus/physics/certus_strat_growth.py::calculate_detailed_growth": "ratio form, found 2026-11-16, not classified",
+    "certus/physics/certus_tmm_backside.py::_apply_exact_backside_generic": "ratio form, found 2026-11-16, not classified",
+    "certus/physics/certus_tmm_backside.py::apply_exact_backside_combination": "ratio form, found 2026-11-16, not classified",
+    "certus/physics/certus_tmm_matrix.py::calculate_RT_with_backside_fused": "ratio form, found 2026-11-16, not classified",
+    "certus/physics/certus_tmm_oblique.py::calc_spectrum_full_oblique_exact": "ratio form, found 2026-11-16, not classified",
+    "certus/physics/certus_tmm_single_layer.py::_calculate_RT_absorbing_sub_single": "ratio form, found 2026-11-16, not classified",
+    "certus/physics/certus_tmm_substrate.py::calculate_bare_substrate_R": "ratio form, found 2026-11-16, not classified",
+    "certus/physics/certus_tmm_substrate.py::calculate_bare_substrate_RT": "ratio form, found 2026-11-16, not classified",
+    "certus/physics/certus_tmm_substrate.py::calculate_bare_substrate_R_absorbing": "ratio form, found 2026-11-16, not classified",
+    "certus/physics/certus_tmm_substrate.py::calculate_bare_substrate_T_absorbing": "ratio form, found 2026-11-16, not classified",
+    "certus/physics/certus_tmm_substrate.py::calculate_single_interface_R": "ratio form, found 2026-11-16, not classified",
+    "certus/physics/gradient_analytic.py::_compute_single_layer_sensitivity_kernel": "ratio form, found 2026-11-16, not classified",
 }
 
 
@@ -56,6 +79,34 @@ def _own_binops(function: ast.FunctionDef | ast.AsyncFunctionDef):
         if isinstance(statement, ast.BinOp):
             yield statement
         yield from walk(statement)
+
+
+def _holds_the_ratio(function: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+    """`(a - b) / (a + b)` over any operands, written directly or through two names (`num = t1 - t2`, `den = t1 + t2`,
+    `num / den`): the products of the pair test are not needed for the ratio to be a reflection coefficient. Missed
+    before the audit of 2026-11-15 (L1-m1)."""
+
+    def key(op: ast.AST) -> tuple[str, str, str] | None:
+        if isinstance(op, ast.BinOp) and isinstance(op.op, ast.Add | ast.Sub):
+            return type(op.op).__name__, ast.dump(op.left), ast.dump(op.right)
+        return None
+
+    named: dict[str, tuple[str, str, str]] = {}
+    for statement in ast.walk(function):
+        if isinstance(statement, ast.Assign) and len(statement.targets) == 1 and isinstance(statement.targets[0], ast.Name):
+            k = key(statement.value)
+            if k is not None:
+                named[statement.targets[0].id] = k
+
+    def resolve(node: ast.AST) -> tuple[str, str, str] | None:
+        return named.get(node.id) if isinstance(node, ast.Name) else key(node)
+
+    for op in _own_binops(function):
+        if isinstance(op.op, ast.Div):
+            top, bottom = resolve(op.left), resolve(op.right)
+            if top and bottom and top[1:] == bottom[1:] and {top[0], bottom[0]} == {"Add", "Sub"}:
+                return True
+    return False
 
 
 def functions_with_the_reflection_pair(source: str) -> list[str]:
@@ -88,7 +139,7 @@ def functions_with_the_reflection_pair(source: str) -> list[str]:
                         minus.add(key)
                 if isinstance(op.op, ast.Sub) and (q := _twice(op.right)) is not None:
                     minus_twice.add(q)
-            if plus & minus or {q for _, q in plus} & minus_twice:
+            if plus & minus or {q for _, q in plus} & minus_twice or _holds_the_ratio(node):
                 found.append(".".join(stack))
             self.generic_visit(node)
             stack.pop()
@@ -128,6 +179,12 @@ def test_the_scanner_finds_a_copy_under_any_names_and_nothing_else() -> None:
     assert functions_with_the_reflection_pair(intermediate) == ["rt"]
     assert functions_with_the_reflection_pair(unrelated) == []
     assert functions_with_the_reflection_pair(nested) == ["outer.rt"]  # attributed to the inner function, not to `outer`
+    named = "def r(t1, t2):\n    num = t1 - t2\n    den = t1 + t2\n    return num / den\n"  # L1-m1
+    direct = "def r(a, b):\n    return (a - b) / (a + b)\n"
+    finite_difference = "def g(f, x, h):\n    return (f(x + h) - f(x - h)) / (2.0 * h)\n"
+    assert functions_with_the_reflection_pair(named) == ["r"]
+    assert functions_with_the_reflection_pair(direct) == ["r"]
+    assert functions_with_the_reflection_pair(finite_difference) == []
 
 
 def test_no_new_copy_of_the_reflection_formula() -> None:

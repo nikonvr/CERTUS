@@ -1,0 +1,6 @@
+ARTEFACT de charge ou d'ordre (unit), verts seuls en serie :
+    tests/unit/test_strat_rate_and_resolution.py::test_no_profile_is_bit_identical_to_a_zero_profile
+    tests/unit/test_strat_phase_a_state_coherence.py::test_neutral_parameters_are_bit_identical_to_the_legacy_call
+    tests/unit/test_strat_phase_a_state_coherence.py::test_the_slit_profile_is_inert_when_absent_or_zero
+VALIDATION=GO
+La reference de CLAUDE.md section 2 reste la suite complete en serie.

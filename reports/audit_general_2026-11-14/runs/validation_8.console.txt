@@ -1,0 +1,19 @@
+VALIDATION PARALLELE -- 1a0a12cf, 0 fichier(s) suivi(s) modifie(s)
+  python 3.15.2, 16 worker(s), ui 6, journaux : reports\audit_general_2026-11-14\runs\validation_8
+  ruff            PASS      0:00  
+  coherence_md    PASS      0:11  
+  check_claude_md PASS      0:00  
+  check_docs      PASS      0:00  
+  oracle          PASS      0:26  1212 passed
+  unit : 3 echec(s) en parallele, rejeu seul en serie...
+  unit            ARTEFACT  5:51  3 failed, 6330 passed, 7 skipped, 1 xfailed
+  ui              PASS      9:49  1665 passed, 12 skipped, 2 xfailed
+  rest            PASS      4:10  322 passed
+  performance     PASS      0:21  30 passed, 2 skipped
+
+ARTEFACT de charge ou d'ordre (unit), verts seuls en serie :
+    tests/unit/test_strat_rate_and_resolution.py::test_no_profile_is_bit_identical_to_a_zero_profile
+    tests/unit/test_strat_phase_a_state_coherence.py::test_neutral_parameters_are_bit_identical_to_the_legacy_call
+    tests/unit/test_strat_phase_a_state_coherence.py::test_the_slit_profile_is_inert_when_absent_or_zero
+VALIDATION=GO
+La reference de CLAUDE.md section 2 reste la suite complete en serie.

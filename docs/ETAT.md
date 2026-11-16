@@ -13,7 +13,8 @@
 > ([`CHANTIERS_RESTANTS.md`](CHANTIERS_RESTANTS.md)), acquis ([`ETAT_acquis.md`](ETAT_acquis.md)), preuves dans `reports/`.
 
 **Liste active** : [chantiers](CHANTIERS_RESTANTS.md). Le chantier 45 est corrigé : les 27 défauts de l'audit du code
-du 15 novembre, un commit chacun ([plan](../reports/audit_code_2026-11-15/plan_corrections.md)) ; trois points y attendent 👤 (§5).
+du 15 novembre, un commit chacun ([plan](../reports/audit_code_2026-11-15/plan_corrections.md)), puis 36 de ses 40 mineurs, double-vérifiés
+([synthèse](../reports/audit_code_2026-11-15/mineurs_synthese.md), [plan](../reports/audit_code_2026-11-15/plan_mineurs.md)) ; restent les chantiers 46 et 47.
 Le polisseur hybride et la pondération par bande sont intégrés. La grille automatique et la sélection robuste
 restent optionnelles. Mesures terminées dans le [bilan DESIGN](../reports/questions_design_2026-11-13/bilan.md).
 Le [guide DESIGN](../pages/CERTUS_DESIGN.html#design-robust-search) décrit l'activation et les limites de la recherche robuste.
@@ -26,9 +27,10 @@ dans `artifacts/archives-20261114/inventaire.json`, dans `certus1111`.
 
 **Python de référence : 3.15.2**, dépendances de requirements.lock.
 
-**Dernière validation complète** : `VALIDATION=GO`, le 2026-11-16 sous Windows sur `de22a521` (toutes les corrections du
-chantier 45) : oracle 1 210, unit 6 275, ui 1 627, reste 322, performance, ruff et les trois contrôles documentaires.
-[Détails](../reports/audit_general_2026-11-14/runs/validation_7.console.txt).
+**Dernière validation complète** : `VALIDATION=GO`, le 2026-11-16 sous Windows sur `1a0a12cf` (les 27 défauts et les mineurs de
+l'audit, les tables de configuration fusionnées) : oracle 1 212, unit 6 330, ui 1 665, reste 322, performance, ruff et les trois
+contrôles documentaires ; trois tests au bit de la phase A, rouges sous la charge parallèle, verts seuls.
+[Détails](../reports/audit_general_2026-11-14/runs/validation_8.console.txt).
 
 Pour un échec de comparaison au bit, rejouer sur [cache Numba vierge](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md).
 
@@ -171,7 +173,7 @@ Les précautions du cache Numba restent dans le [mode opératoire](../reports/re
 
 | sujet | ce qui est en jeu |
 |---|---|
-| **audit du code (45)** | ε1 d'INDEX : le modèle la plafonne à 1, la vraie est plus basse au-dessus de la résonance (Kramers-Kronig : jusqu'à −38,8 sur les matériaux du test) ; M-L1 a gardé le plancher et annulé le gradient à cet endroit, le retirer changerait les bits du coût. Juge de paix : après C-L4 seul la recherche locale ne gagnait rien sur le gagnant à 4 blocs, dont les trois graines sont finies : non expliqué ([acquis](ETAT_acquis.md)). Consensus : une graine dont l'évaluation échoue est journalisée, pas comptée comme un rejet |
+| **audit du code (45)** | ε1 d'INDEX : le plancher ε1 ≥ 1 n'agit sur aucun des quatre exemples (ε1 physique ≥ 2,24, [mesure](../reports/audit_code_2026-11-15/preuves/p_plancher_epsilon1.txt)) ; un écart de 0,42 entre forme fermée et Kramers-Kronig, vu une fois sur H800, non reproduit. Juge de paix : après C-L4 seul, la recherche locale ne gagnait rien sur un gagnant aux trois graines finies, non expliqué. Épaisseur du substrat : chantier 47 |
 | **avis de tiers** | DLL du runtime Visual C++ dans `THIRD_PARTY_NOTICES.md` : droit de redistribution réservé par Microsoft aux licenciés de Visual Studio |
 | **paquet `certus_re`** | correction de la citation du saphir (Malitson et Dodge, 1972) à commiter par 👤 dans ce dépôt, puis à publier sur Zenodo |
 | **interface** | revoir les onze fenêtres ; teintes de marque, bande des fichiers récents, bornes des champs numériques |

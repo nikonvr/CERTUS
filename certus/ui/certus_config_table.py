@@ -21,15 +21,21 @@ from typing import Any
 #   float, int : a spin box, value() / setValue()
 #   bool       : a check box or radio button; ``off_widget`` is checked instead when the value is false
 #   text       : a combo box by its displayed text; an unknown text leaves the combo as it is
+#   loose_text : the same, but an empty text is skipped and a text differing only by case, spaces, hyphens and
+#                underscores is accepted (STRAT files name materials loosely)
 #   data       : a combo box by its item data; an unknown value leaves the combo as it is
 #   index      : a combo box by its position
 #   line       : a line edit, text() / setText()
-KINDS = ("float", "int", "bool", "text", "data", "index", "line")
+KINDS = ("float", "int", "bool", "text", "loose_text", "data", "index", "line")
 
 
 @dataclass(frozen=True)
 class ConfigField:
-    """One saved setting: its JSON key, its widget, how it is read and written, its value without the widget."""
+    """One saved setting: its JSON key, its widget, how it is read and written, its value without the widget.
+
+    ``off_widget``: the radio button checked when the value is false. ``applies(config)``: the row is loaded only when
+    true. ``missing``: see the module. ``saved_if(window)``: the row is saved only when true.
+    """
 
     key: str
     widget: str
@@ -38,6 +44,7 @@ class ConfigField:
     off_widget: str | None = None
     applies: Callable[[Mapping[str, Any]], bool] | None = None
     missing: Any = None
+    saved_if: Callable[[Any], bool] | None = None
 
     def __post_init__(self) -> None:
         if self.kind not in KINDS:
@@ -45,10 +52,11 @@ class ConfigField:
 
 
 def resolve_widget(owner: object, path: str) -> Any:
-    """The widget at ``path`` (``"panel.spin"``) on ``owner``, or ``None`` when one step is missing."""
+    """The widget at ``path`` (``"panel.spin"``, ``"widgets.l0"`` in a dict) on ``owner``, or ``None`` when one step is
+    missing."""
     obj: Any = owner
     for name in path.split("."):
-        obj = getattr(obj, name, None)
+        obj = obj.get(name) if isinstance(obj, Mapping) else getattr(obj, name, None)
         if obj is None:
             return None
     return obj
@@ -66,7 +74,7 @@ def read_field(owner: object, field: ConfigField) -> Any:
         return int(w.value())
     if kind == "bool":
         return bool(w.isChecked())
-    if kind == "text":
+    if kind in ("text", "loose_text"):
         return w.currentText()
     if kind == "data":
         return w.currentData()
@@ -86,11 +94,11 @@ def write_field(owner: object, field: ConfigField, value: Any) -> bool:
     elif kind == "int":
         w.setValue(int(value))
     elif kind == "bool":
-        off = resolve_widget(owner, field.off_widget) if field.off_widget else None
-        if value or off is None:
-            w.setChecked(bool(value))
-        else:
-            off.setChecked(True)
+        w.setChecked(bool(value))
+        if field.off_widget and (off := resolve_widget(owner, field.off_widget)) is not None:
+            off.setChecked(not value)
+    elif kind == "loose_text":
+        return _set_loose_text(w, str(value))
     elif kind in ("text", "data"):
         idx = w.findText(str(value)) if kind == "text" else w.findData(value)
         if idx < 0:
@@ -103,10 +111,30 @@ def write_field(owner: object, field: ConfigField, value: Any) -> bool:
     return True
 
 
+def _loose(text: str) -> str:
+    return text.strip().replace("_", "-").replace(" ", "-").lower()
+
+
+def _set_loose_text(combo: Any, text: str) -> bool:
+    """Select ``text`` in ``combo``, or the item that differs from it only by case, spaces, hyphens and underscores."""
+    target = text.strip()
+    if not target:
+        return False
+    idx = combo.findText(target)
+    if idx < 0:
+        idx = next((i for i in range(combo.count()) if _loose(combo.itemText(i)) == _loose(target)), -1)
+    if idx < 0:
+        return False
+    combo.setCurrentIndex(idx)
+    return True
+
+
 def collect_table(owner: object, table: Iterable[ConfigField]) -> dict[str, Any]:
     """The saved values of every row, in the order of the table; a row at its ``missing`` value is left out."""
     out: dict[str, Any] = {}
     for field in table:
+        if field.saved_if is not None and not field.saved_if(owner):
+            continue
         value = read_field(owner, field)
         if field.missing is not None and (value is None or value == field.missing):
             continue

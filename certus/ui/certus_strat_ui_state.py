@@ -25,6 +25,7 @@ from certus.core.certus_strat_core import (
 from certus.core.certus_strat_rate_rules import rate_rules_params
 from certus.core.certus_strat_robustness import INDEX_CORRIDOR_DEFAULT
 from certus.ui import certus_strat_witness as witness
+from certus.ui.certus_config_table import ConfigField, apply_table, collect_table
 from certus.ui.certus_strat_defaults import default_settings
 from certus.ui.certus_strat_json_ui import JsonViewerWindow
 from certus.ui.certus_ui import get_certus_last_dir, safe_ui_action, set_certus_last_dir
@@ -265,6 +266,60 @@ _MODE_BUDGETS: dict[str, dict[str, int]] = {
 }
 
 
+def _strat_checked(key: str):
+    return lambda win: win.widgets[key].isChecked()
+
+
+def _strat_unchecked(key: str):
+    return lambda win: not win.widgets[key].isChecked()
+
+
+# The text fields and switches of STRAT, in the order the window builds them; each is saved under its widget key.
+_STRAT_TEXT_KEYS = (
+    "wl_range_start", "wl_range_end", "wl_step", "scan_wl_min", "scan_wl_max", "scan_wl_step", "dynamics_threshold",
+    "min_transmission_floor", "iter_divider_start", "iter_divider_end", "mc_runs_block", "thickness_tolerance_nm",
+    "trigger_tolerance", "non_monotonic_error_factor", "wavelength_change_penalty", "robustness_noise_factors",
+    "robustness_num_runs", "slit_bias_enabled", "monochromator_resolution_nm", "search_resolution", "index_corridor",
+    "photometric_curvature_amp", "allow_rate", "reading_smoothing_window", witness.KEY, "nucleation_mc_runs",
+    "mining_candidates_limit", "n_screen_runs", "k_keep_survivors", "top_k_parents", "max_fusions_per_parent",
+    "phase_a_scan_limit", "nucleation_max_rmse", "nucleation_degradation", "sym_enable", "sym_weight",
+    "sym_same_wl_bonus", "sym_extrema_window", "sym_continuity_weight", "sym_adaptive_same_wl", "sym_allow_hybrid",
+    "sym_prefer_on_tie", "sym_tie_epsilon", "sym_tie_epsilon_rel",
+)
+
+# The settings a STRAT configuration saves and loads back (all in ``self.widgets``), in the order they are loaded:
+# the material switches first (they decide which fields are enabled), then every text field, then the combos. A
+# custom index is saved only while its switch is on, a material file only while it is off, the custom substrate
+# only while "Custom" is chosen; a file that has them loads them whatever the switches say.
+STRAT_CONFIG_TABLE = (
+    ConfigField("h_type_custom", "widgets.h_type_custom", "bool", off_widget="widgets.h_type_file"),
+    ConfigField("l_type_custom", "widgets.l_type_custom", "bool", off_widget="widgets.l_type_file"),
+    ConfigField("nH_r", "widgets.nH_r", "line", saved_if=_strat_checked("h_type_custom")),
+    ConfigField("nL_r", "widgets.nL_r", "line", saved_if=_strat_checked("l_type_custom")),
+    ConfigField("nSub_custom", "widgets.nSub_custom", "line",
+                saved_if=lambda win: win.widgets["substrate_choice"].currentText() == "Custom"),
+    ConfigField("l0", "widgets.l0", "line"),
+    *(ConfigField(key, f"widgets.{key}", "line") for key in _STRAT_TEXT_KEYS),
+    ConfigField("h_material_file", "widgets.h_material_file", "loose_text", saved_if=_strat_unchecked("h_type_custom")),
+    ConfigField("l_material_file", "widgets.l_material_file", "loose_text", saved_if=_strat_unchecked("l_type_custom")),
+    ConfigField("substrate_choice", "widgets.substrate_choice", "loose_text"),
+    ConfigField("noise_distribution", "widgets.noise_distribution", "loose_text"),
+    ConfigField("non_monotonic_mode", "widgets.non_monotonic_mode", "loose_text"),
+    ConfigField("sym_scoring_mode", "widgets.sym_scoring_mode", "loose_text"),
+    ConfigField("execution_mode", "widgets.execution_mode", "loose_text"),
+)
+
+# The editable widgets the table does not carry, with the reason. The multi-realisation tab sets up a campaign that
+# scripts/orchestre_multigraine.py runs on the configuration; it is not part of it.
+STRAT_CONFIG_OUTSIDE_TABLE = {
+    "_mg_composant": "multi-realisation tab: campaign setting",
+    "_mg_budget": "multi-realisation tab: campaign setting",
+    "_mg_objectif": "multi-realisation tab: campaign setting",
+    "_mg_cible": "multi-realisation tab: campaign setting",
+    "_mg_slots": "multi-realisation tab: campaign setting",
+}
+
+
 class CertusStratStateMixin:
     def _load_defaults(self) -> None:
         """Load default values for CERTUS-STRAT"""
@@ -440,52 +495,10 @@ class CertusStratStateMixin:
             if "substrate_choice" not in config and "substratee_choice" in config:
                 config["substrate_choice"] = config["substratee_choice"]
 
-        # Step 1: Set radio button states
+        # Steps 1 and 2: the material switches, then every value (STRAT_CONFIG_TABLE gives the order). A combo given
+        # a text it does not offer keeps its choice; a key missing from the file leaves its widget as it is.
 
-        self.widgets["h_type_custom"].setChecked(bool(config.get("h_type_custom", True)))
-        self.widgets["h_type_file"].setChecked(not config.get("h_type_custom", True))
-        self.widgets["l_type_custom"].setChecked(bool(config.get("l_type_custom", True)))
-
-        self.widgets["l_type_file"].setChecked(not config.get("l_type_custom", True))
-
-        # Step 2: Set ALL widget values (before enabling/disabling)
-
-        def _set_combo_by_text(widget, value: str) -> bool:
-            if widget is None:
-                return False
-            target = str(value).strip()
-            if not target:
-                return False
-            idx = widget.findText(target)
-            if idx >= 0:
-                widget.setCurrentIndex(idx)
-                return True
-            # Fallbacks: try matching against normalized whitespace/hyphen variants.
-            normalized_target = target.replace("_", "-").replace(" ", "-").lower()
-            for i in range(widget.count()):
-                candidate = str(widget.itemText(i)).strip()
-                normalized_candidate = candidate.replace("_", "-").replace(" ", "-").lower()
-                if candidate == target or normalized_candidate == normalized_target:
-                    widget.setCurrentIndex(i)
-                    return True
-            return False
-
-        # Check boxes too: `CertusBooleanField` keeps the text field's `.setText()` contract (D100).
-        for key, widget in self.widgets.items():
-            if isinstance(widget, (QLineEdit, CertusBooleanField)) and key in config:
-                widget.setText(str(config[key]))
-
-        for combo_key in [
-            "h_material_file",
-            "l_material_file",
-            "substrate_choice",
-            "noise_distribution",
-            "non_monotonic_mode",
-            "sym_scoring_mode",
-            "execution_mode",
-        ]:
-            if combo_key in self.widgets and combo_key in config and config[combo_key]:
-                _set_combo_by_text(self.widgets[combo_key], str(config[combo_key]))
+        apply_table(self, STRAT_CONFIG_TABLE, config)
 
         # Step 3: Apply enable/disable states LAST
 
@@ -550,23 +563,7 @@ class CertusStratStateMixin:
 
     def _collect_config(self) -> dict[str, Any]:
         """Collect exactly the STRAT session format used by Save Configuration."""
-        config = {
-            "h_type_custom": self.widgets["h_type_custom"].isChecked(),
-            "l_type_custom": self.widgets["l_type_custom"].isChecked(),
-            "substrate_choice": self.widgets["substrate_choice"].currentText(),
-            "l0": self.widgets["l0"].text(),
-        }
-        if self.widgets["h_type_custom"].isChecked():
-            config["nH_r"] = self.widgets["nH_r"].text()
-        else:
-            config["h_material_file"] = self.widgets["h_material_file"].currentText()
-        if self.widgets["l_type_custom"].isChecked():
-            config["nL_r"] = self.widgets["nL_r"].text()
-        else:
-            config["l_material_file"] = self.widgets["l_material_file"].currentText()
-        # Save custom substrate only if "Custom" is selected
-        if self.widgets["substrate_choice"].currentText() == "Custom":
-            config["nSub_custom"] = self.widgets["nSub_custom"].text()
+        config = collect_table(self, STRAT_CONFIG_TABLE)
         table = self.widgets["stack_table"]
         stack_multipliers = []
         for row in range(table.rowCount()):
@@ -577,63 +574,6 @@ class CertusStratStateMixin:
                 except ValueError:
                     stack_multipliers.append(1.0)
         config["stack_multipliers"] = stack_multipliers
-        for key in [
-            "wl_range_start",
-            "wl_range_end",
-            "wl_step",
-            "scan_wl_min",
-            "scan_wl_max",
-            "scan_wl_step",
-            "dynamics_threshold",
-            "min_transmission_floor",
-            "mc_runs_block",
-            "iter_divider_start",
-            "iter_divider_end",
-            "trigger_tolerance", "thickness_tolerance_nm",  # the second: read by phase B, not saved before M-L6d
-            "sim_thickness_probe_offset_ratio",
-            "non_monotonic_error_factor",
-            "wavelength_change_penalty",
-            "robustness_noise_factors",
-            "robustness_num_runs",
-            "nucleation_mc_runs",
-            "mining_candidates_limit",
-            "slit_bias_enabled",
-            "monochromator_resolution_nm",
-            "search_resolution",
-            "index_corridor",
-            "photometric_curvature_amp",
-            "allow_rate",
-            "reading_smoothing_window",
-            witness.KEY,
-            "n_screen_runs",
-            "k_keep_survivors",
-            "top_k_parents",
-            "max_fusions_per_parent",
-            "phase_a_scan_limit",
-            "nucleation_max_rmse",
-            "nucleation_degradation",
-            "sym_enable",
-            "sym_weight",
-            "sym_same_wl_bonus",
-            "sym_extrema_window",
-            "sym_continuity_weight",
-            "sym_adaptive_same_wl",
-            "sym_allow_hybrid",
-            "sym_prefer_on_tie",
-            "sym_tie_epsilon",
-            "sym_tie_epsilon_rel",
-        ]:
-            if key in self.widgets:
-                config[key] = self.widgets[key].text()
-        # Save ComboBox values
-        if "noise_distribution" in self.widgets:
-            config["noise_distribution"] = self.widgets["noise_distribution"].currentText()
-        if "non_monotonic_mode" in self.widgets:
-            config["non_monotonic_mode"] = self.widgets["non_monotonic_mode"].currentText()
-        if "sym_scoring_mode" in self.widgets:
-            config["sym_scoring_mode"] = self.widgets["sym_scoring_mode"].currentText()
-        if "execution_mode" in self.widgets:
-            config["execution_mode"] = self.widgets["execution_mode"].currentText()
         config["show_plots"] = True
         config["export_excel"] = True
         config["force_first_layer_same_wl"] = True

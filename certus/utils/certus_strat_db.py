@@ -249,6 +249,12 @@ class RobustMaterialDatabase:
 
         df.dropna(subset=["wl", "n"], inplace=True)
 
+        # A sheet in micrometres (every wavelength under 50) was read as nanometres: np.interp then clamped every query
+        # to its last row, a constant index (audit 2026-11-15, L4-m3). Same threshold as _detect_x_unit.
+        if len(df) and float(df["wl"].max()) < 50.0:
+            self.logger.warning(f"Sheet '{sheet_name}': wavelengths read as micrometres, converted to nm")
+            df["wl"] = df["wl"] * 1000.0
+
         return df[["wl", "n", "k"]]
 
     def _sellmeier_n(self, wl_um, B1, C1, B2, C2, B3, C3):

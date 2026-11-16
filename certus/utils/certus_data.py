@@ -135,13 +135,25 @@ def read_csv_robust(filepath: str, **kwargs) -> pd.DataFrame:
         has_semi = ";" in sample
         cnt_semi = sample.count(";")
         cnt_comma = sample.count(",")
+        # A ';' on every line is a separator: "400,5;0,91" has one ';' and two ',' and was read with ',' (L4-m1).
+        lines = [ln for ln in sample.splitlines()[:-1] if ln.strip()] or [ln for ln in sample.splitlines() if ln.strip()]
+        semi_on_every_line = bool(lines) and all(";" in ln for ln in lines)
 
-        if has_semi and cnt_semi > cnt_comma / 2:
+        if has_semi and (semi_on_every_line or cnt_semi > cnt_comma / 2):
             kwargs.setdefault("sep", ";")
             kwargs.setdefault("decimal", ",")
         else:
             kwargs.setdefault("sep", ",")
             kwargs.setdefault("decimal", ".")
+
+        # A first line of numbers is data, not a header: it was lost into the column names (L4-m1).
+        first = [c.strip() for c in lines[0].split(kwargs["sep"])] if lines else []
+        if first and "header" not in kwargs:
+            try:
+                [float(c.replace(kwargs["decimal"], ".")) for c in first if c]
+                kwargs["header"] = None
+            except ValueError:
+                pass
 
         # 2. Read
         try:
@@ -1312,8 +1324,17 @@ def load_spectrum_columns(
         raise ValueError(f"Spectrum file has no columns: {abs_path}")
     df = df.iloc[:, :n_cols].copy()
 
-    # Coerce to numeric, drop NaN rows
-    df = df.apply(pd.to_numeric, errors="coerce").dropna().reset_index(drop=True)
+    # Coerce to numeric, drop NaN rows. A row is kept only when every column has a value, so a T measured on a wider
+    # range than R is cut to the range of R: INDEX and METAL need both on the same rows. The cut was silent; it is
+    # now logged (audit 2026-11-15, L4-m2).
+    df = df.apply(pd.to_numeric, errors="coerce")
+    n_valid_x = int(df.iloc[:, 0].notna().sum())
+    df = df.dropna().reset_index(drop=True)
+    if len(df) < n_valid_x:
+        logging.getLogger("CERTUS").warning(
+            "Spectrum %s: %d of %d rows dropped because a column has no value there (one column is shorter).",
+            abs_path.name, n_valid_x - len(df), n_valid_x,
+        )
     if df.empty:
         raise ValueError(f"Spectrum file is empty after numeric coercion: {abs_path}")
 

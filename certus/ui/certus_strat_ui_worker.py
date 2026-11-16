@@ -538,7 +538,8 @@ class CertusStratWorkerMixin:
                     "CERTUS-STRAT Final Ranking Error",
                     f"The final ranking table could not be displayed.\n\nError code: {describe_error(exc)}",
                 )
-                raise
+                # No re-raise from a slot: it skipped the restoration below, leaving the Step buttons disabled and the
+                # wait cursor on after a run of up to 2 h (audit 2026-11-15, L6-m1). The error is logged and shown.
 
         self.run_step0_btn.setEnabled(True)
 

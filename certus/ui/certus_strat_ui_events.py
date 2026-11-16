@@ -274,6 +274,10 @@ class CertusStratEventsMixin:
         if not self.confirm_close_during_run(event):
             return
 
+        # A close that goes to its end leaves no session to resume: the base class does it, and this override never
+        # chains to it (audit 2026-11-15, L6-m2).
+        self._session_end()
+
         try:
             # This override never chains to CertusBaseApp.closeEvent, so the
             # persistence call has to be explicit: without it STRAT saved

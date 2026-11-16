@@ -26,10 +26,9 @@ dans `artifacts/archives-20261114/inventaire.json`, dans `certus1111`.
 
 **Python de référence : 3.15.2**, dépendances de requirements.lock.
 
-**Dernière validation complète** : le 2026-11-16 sous Windows sur `672aaaaa`, dans `certus1111` : `VALIDATION=NO-GO` par
-`check_docs` seul, pour trois liens morts de `docs/AUDITS.md`, fichier non suivi de ce dossier ; ruff, oracle (1 210), unit
-(6 273), ui (1 627), reste (322) et performance verts. Dernier `VALIDATION=GO` : `3374b380`, le 2026-11-15.
-[Détails](../reports/audit_general_2026-11-14/runs/validation_6.console.txt).
+**Dernière validation complète** : `VALIDATION=GO`, le 2026-11-16 sous Windows sur `de22a521` (toutes les corrections du
+chantier 45) : oracle 1 210, unit 6 275, ui 1 627, reste 322, performance, ruff et les trois contrôles documentaires.
+[Détails](../reports/audit_general_2026-11-14/runs/validation_7.console.txt).
 
 Pour un échec de comparaison au bit, rejouer sur [cache Numba vierge](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md).
 

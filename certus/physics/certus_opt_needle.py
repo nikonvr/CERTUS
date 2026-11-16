@@ -3,7 +3,7 @@ import numpy as np
 from numba import njit, prange
 
 from certus.domain.constants import TWO_PI
-from certus.physics.certus_opt_tmm import compute_RT_from_matrix
+from certus.physics.certus_opt_tmm import compute_RT_from_matrix, reflection_amplitudes
 
 
 @njit(cache=True, fastmath=False, inline="never")
@@ -377,20 +377,16 @@ def needle_scan_cached(
 
             C = M10 + M11 * ns
 
-            Y = B + C  # n_inc * B + C  with n_inc = 1
+            Y, r_coeff, t_coeff = reflection_amplitudes(1.0, B, C)  # n_inc = 1
 
             if abs(Y) < 1e-14:
                 T_val = 0.0
 
             else:
-                t_coeff = 2.0 / Y  # 2·n_inc / Y
-
                 T_val = ns.real * (t_coeff.real * t_coeff.real + t_coeff.imag * t_coeff.imag)
 
                 if T_val < 0.0:
                     T_val = 0.0
-
-                r_coeff = (B - C) / Y
 
                 R_val = r_coeff.real * r_coeff.real + r_coeff.imag * r_coeff.imag
 

@@ -14,14 +14,14 @@
 
 **Liste active** : [chantiers](CHANTIERS_RESTANTS.md). Le chantier 45 est corrigé : les 27 défauts de l'audit du code
 du 15 novembre, un commit chacun ([plan](../reports/audit_code_2026-11-15/plan_corrections.md)), puis 36 de ses 40 mineurs, double-vérifiés
-([synthèse](../reports/audit_code_2026-11-15/mineurs_synthese.md), [plan](../reports/audit_code_2026-11-15/plan_mineurs.md)) ; restent les chantiers 46 et 47.
+([synthèse](../reports/audit_code_2026-11-15/mineurs_synthese.md), [plan](../reports/audit_code_2026-11-15/plan_mineurs.md)). Chantier 46 fait ; chantier 47 cartographié,
+à décider ([carte](../reports/nuit_2026-11-16/chantier47_carte.md)). Nuit du 2026-11-16 : [reprise](../reports/nuit_2026-11-16/REPRISE.md).
 Le polisseur hybride et la pondération par bande sont intégrés. La grille automatique et la sélection robuste
 restent optionnelles. Mesures terminées dans le [bilan DESIGN](../reports/questions_design_2026-11-13/bilan.md).
 Le [guide DESIGN](../pages/CERTUS_DESIGN.html#design-robust-search) décrit l'activation et les limites de la recherche robuste.
 La [campagne DESIGN–STRAT](../reports/codesign_2026-11-14/bilan.md) mesure trois paires du séparateur 50/50. Avec les plans retenus, le mérite robuste à 1 nm augmente la RMSE déposée de 52 à 82 %.
 
-**Branche de travail** : `master`, avancée sur `claude/claude-code-question-0aa978` puis des corrections du chantier 45 ; en avance
-sur `origin/master`, non poussée.
+**Branche de travail** : `master`, poussée sur ordre de 👤 le 2026-11-16 (Pillow 13.0.0 et setuptools 84.1.0 compris).
 Le sparse-checkout écarte les gros artefacts scientifiques suivis ; git sparse-checkout disable les restaure. Les sauvegardes et données locales de novembre sont répertoriées
 dans `artifacts/archives-20261114/inventaire.json`, dans `certus1111`.
 
@@ -173,7 +173,7 @@ Les précautions du cache Numba restent dans le [mode opératoire](../reports/re
 
 | sujet | ce qui est en jeu |
 |---|---|
-| **audit du code (45)** | ε1 d'INDEX : le plancher ε1 ≥ 1 n'agit sur aucun des quatre exemples (ε1 physique ≥ 2,24, [mesure](../reports/audit_code_2026-11-15/preuves/p_plancher_epsilon1.txt)) ; un écart de 0,42 entre forme fermée et Kramers-Kronig, vu une fois sur H800, non reproduit. Juge de paix : après C-L4 seul, la recherche locale ne gagnait rien sur un gagnant aux trois graines finies, non expliqué. Épaisseur du substrat : chantier 47 |
+| **audit du code (45)** | ε1 d'INDEX : le plancher ε1 ≥ 1 n'agit sur aucun des quatre exemples (ε1 physique ≥ 2,24, [mesure](../reports/audit_code_2026-11-15/preuves/p_plancher_epsilon1.txt)) ; l'écart de 0,42 avec Kramers-Kronig venait de C ≥ 2·E0 (amortissement critique), où la forme fermée bridait α : corrigé (`758b13e7`), C < 2·E0 au bit près ([balayage](../reports/nuit_2026-11-16/preuves/p_eps1_kk_scan.txt)). Juge de paix : la recherche locale finale est acceptée sur ses graines de contrôle et `rank_refined_first` la classe première quel que soit son score final ; après C-L4, 0,007340 contre 0,007335 au parent, écart dans le bruit, non mesuré. Classer par le score final changerait les résultats STRAT : à 👤. Épaisseur du substrat : chantier 47 |
 | **avis de tiers** | DLL du runtime Visual C++ dans `THIRD_PARTY_NOTICES.md` : droit de redistribution réservé par Microsoft aux licenciés de Visual Studio |
 | **paquet `certus_re`** | correction de la citation du saphir (Malitson et Dodge, 1972) à commiter par 👤 dans ce dépôt, puis à publier sur Zenodo |
 | **interface** | revoir les onze fenêtres ; teintes de marque, bande des fichiers récents, bornes des champs numériques |

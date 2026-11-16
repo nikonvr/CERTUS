@@ -1,0 +1,20 @@
+worst |closed form - KK| over the window, per (A, C):
+  gap 1.451e+01  A 300 C 10  at E 1.2398 eV: closed form 1.000000, KK(200) 15.514051, KK(5000) 15.514049
+  gap 7.022e+00  A 100 C 10  at E 1.2398 eV: closed form 1.000000, KK(200) 8.022017, KK(5000) 8.022016
+  gap 4.315e+00  A 30 C 10  at E 0.9537 eV: closed form 1.000000, KK(200) 5.315368, KK(5000) 5.315368
+  gap 2.435e+00  A 10 C 10  at E 0.2384 eV: closed form 2.161252, KK(200) 4.596219, KK(5000) 4.596219
+  gap 2.435e-01  A 1 C 10  at E 0.2384 eV: closed form 4.064525, KK(200) 4.308022, KK(5000) 4.308022
+  gap 1.498e-06  A 300 C 6  at E 0.2384 eV: closed form 17.509505, KK(200) 17.509506, KK(5000) 17.509505
+  gap 7.198e-07  A 300 C 3  at E 0.2384 eV: closed form 22.916578, KK(200) 22.916579, KK(5000) 22.916578
+  gap 4.995e-07  A 100 C 6  at E 0.2384 eV: closed form 8.687168, KK(200) 8.687169, KK(5000) 8.687168
+cases with gap > 1e-3: 5 of 40
+--- threshold scan, A 10.0, 2*E0 = 6.1480
+  C 6.0    max gap 4.995e-08
+  C 6.1    max gap 5.087e-08
+  C 6.14   max gap 5.124e-08
+  C 6.147  max gap 5.130e-08
+  C 6.149  max gap 4.091e-04
+  C 6.15   max gap 8.184e-04
+  C 6.2    max gap 2.156e-02
+  C 7.0    max gap 4.147e-01
+  C 8.0    max gap 1.022e+00

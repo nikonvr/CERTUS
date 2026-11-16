@@ -7,6 +7,7 @@ from typing import Any
 import numpy as np
 
 from certus.core.certus_core import CFG
+from certus.ui.certus_config_table import ConfigField, apply_table, collect_table
 from certus.ui.certus_qt_widgets import (
     QAbstractSpinBox,
     QApplication,
@@ -38,25 +39,36 @@ calc_spectrum_front = calc_spectrum_front_wrapper
 calc_spectrum_full_exact = calc_spectrum_full_exact_wrapper
 
 
+# The settings an RE configuration saves and loads back: l0 at the top level, the others in its "re_gui" block. The
+# workbook is a measured file, loaded by `load_config` before them.
+RE_CONFIG_TABLE = (ConfigField("l0", "l0_spin", "float"),)
+
+RE_GUI_TABLE = (
+    ConfigField("re_speed_mode", "re_speed_medium_radio", "choice", "medium", choices=(
+        ("slow", "re_speed_slow_radio"), ("medium", "re_speed_medium_radio"), ("fast", "re_speed_fast_radio"))),
+    ConfigField("re_phase2b_substrate_cauchy", "sub_refine_check", "bool"),
+    ConfigField("re_refine_h", "h_refine_check", "bool"),
+    ConfigField("re_refine_l", "l_refine_check", "bool"),
+    ConfigField("re_enable_qwot_penalty", "re_qwot_penalty_chk", "bool"),
+    ConfigField("re_fit_lambda_min_nm", "re_fit_lambda_min_spin", "float"),
+    ConfigField("re_fit_lambda_max_nm", "re_fit_lambda_max_spin", "float"),
+    ConfigField("re_beam_aperture", "re_aperture_combo", "data"),
+)
+
+# The editable widgets the two tables do not carry, with the reason.
+RE_CONFIG_OUTSIDE_TABLE = {
+    "back_check": "set by the headers of the measurement sheet of the workbook, read-only once it is loaded",
+    "auto_scale_y_check": "display of the spectrum axis, not a setting of the fit",
+}
+
+
 class CertusREStateMixin:
     _COMPUTATION_THREADS = ("_re_worker", "eval_worker")
     """CertusREStateMixin for CERTUS_RE."""
 
     def _collect_config(self) -> dict[str, Any]:
         """Save only RE settings that ``load_config`` can restore."""
-        config = {
-            "l0": float(self.l0_spin.value()),
-            "re_gui": {
-                "re_speed_mode": self._re_speed_mode(),
-                "re_phase2b_substrate_cauchy": self.sub_refine_check.isChecked(),
-                "re_refine_h": self.h_refine_check.isChecked(),
-                "re_refine_l": self.l_refine_check.isChecked(),
-                "re_enable_qwot_penalty": self.re_qwot_penalty_chk.isChecked(),
-                "re_fit_lambda_min_nm": float(self.re_fit_lambda_min_spin.value()),
-                "re_fit_lambda_max_nm": float(self.re_fit_lambda_max_spin.value()),
-                "re_beam_aperture": str(self.re_aperture_combo.currentData()),
-            },
-        }
+        config = {**collect_table(self, RE_CONFIG_TABLE), "re_gui": collect_table(self, RE_GUI_TABLE)}
         if getattr(self, "_re_loaded", False) and getattr(self, "_re_workbook_path", None):
             config["workbook_path"] = self._re_workbook_path
         return config
@@ -167,10 +179,7 @@ class CertusREStateMixin:
                 if not Path(str(workbook_path)).is_file() or not self.load_reverse_engineering_from_path(str(workbook_path)):
                     self.log(f"RE: workbook could not be loaded: {workbook_path!r}", "ERROR")
                     return False
-            if "l0" in cfg and hasattr(self, "l0_spin"):
-                self.l0_spin.setValue(float(cfg["l0"]))
-            if "re_gui" in raw and isinstance(raw["re_gui"], dict):
-                self._re_apply_gui_prefs_from_dict(raw["re_gui"])
+            self._apply_re_config(cfg)
             self.log("RE JSON loaded and normalized.", "INFO")
             self.mark_config_saved()
             return True
@@ -521,33 +530,15 @@ class CertusREStateMixin:
         if not d:
             return
         try:
-            if hasattr(self, "re_speed_slow_radio") and "re_speed_mode" in d:
-                mode = str(d.get("re_speed_mode", "medium")).strip().lower()
-                if mode == "slow":
-                    self.re_speed_slow_radio.setChecked(True)
-                elif mode == "fast":
-                    self.re_speed_fast_radio.setChecked(True)
-                else:
-                    self.re_speed_medium_radio.setChecked(True)
-            if hasattr(self, "sub_refine_check"):
-                if "re_phase2b_substrate_cauchy" in d:
-                    self.sub_refine_check.setChecked(bool(d["re_phase2b_substrate_cauchy"]))
-                if "re_refine_h" in d:
-                    self.h_refine_check.setChecked(bool(d["re_refine_h"]))
-                if "re_refine_l" in d:
-                    self.l_refine_check.setChecked(bool(d["re_refine_l"]))
-            if hasattr(self, "re_qwot_penalty_chk") and "re_enable_qwot_penalty" in d:
-                self.re_qwot_penalty_chk.setChecked(bool(d["re_enable_qwot_penalty"]))
-            if "re_fit_lambda_min_nm" in d and hasattr(self, "re_fit_lambda_min_spin"):
-                self.re_fit_lambda_min_spin.setValue(float(d["re_fit_lambda_min_nm"]))
-            if "re_fit_lambda_max_nm" in d and hasattr(self, "re_fit_lambda_max_spin"):
-                self.re_fit_lambda_max_spin.setValue(float(d["re_fit_lambda_max_nm"]))
-            if "re_beam_aperture" in d and hasattr(self, "re_aperture_combo"):
-                _idx = self.re_aperture_combo.findData(str(d["re_beam_aperture"]))
-                if _idx >= 0:
-                    self.re_aperture_combo.setCurrentIndex(_idx)
+            apply_table(self, RE_GUI_TABLE, d)
         except (KeyError, ValueError, TypeError) as e:
             logging.warning("RE GUI prefs restore skipped: %s", e)
+
+    def _apply_re_config(self, cfg: dict[str, Any]) -> None:
+        """Load the settings of a normalized RE configuration (the workbook apart): l0, then its ``re_gui`` block."""
+        apply_table(self, RE_CONFIG_TABLE, cfg)
+        if isinstance(cfg.get("re_gui"), dict):
+            self._re_apply_gui_prefs_from_dict(cfg["re_gui"])
 
     def closeEvent(self, event):
         """

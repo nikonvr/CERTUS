@@ -22,6 +22,7 @@ from PyQt6.QtWidgets import (
 )
 
 from certus.core.certus_field_core import calculate_opt_metrics, get_layer_properties_from_list
+from certus.ui.certus_config_table import ConfigField, apply_table, collect_table
 from certus.ui.certus_field_common import DetachedStackWindow
 from certus.ui.certus_field_services import FieldPlotData, FieldStackService
 from certus.ui.certus_theme import CertusTheme
@@ -29,6 +30,33 @@ from certus.ui.certus_ui_utils import show_toast
 from certus.ui.certus_ui_widgets_utils import ExcelTableWidget
 from certus.utils.certus_ux import Typography
 from certus.workers.certus_field_workers_dto import FieldParamsDTO, FieldWorkerRequest
+
+# The settings a FIELD configuration saves and loads back, in the order they are loaded; the stack (emp_factors,
+# layer_types) is a table of rows, saved and loaded by `_collect_config` and `_apply_config` themselves.
+FIELD_CONFIG_TABLE = (
+    ConfigField("mat_H", "combo_mat_H", "text"),
+    ConfigField("mat_L", "combo_mat_L", "text"),
+    ConfigField("mat_Sub", "combo_mat_Sub", "text"),
+    ConfigField("mat_Sup", "combo_mat_Sup", "text"),
+    ConfigField("l0", "edit_l0", "float"),
+    ConfigField("lcalc", "edit_lcalc", "line"),
+    ConfigField("seuil1", "edit_seuil1", "float"),
+    ConfigField("seuil2", "edit_seuil2", "float"),
+    ConfigField("alpha", "edit_alpha", "float"),
+    ConfigField("theta_inc_deg", "edit_angle", "float"),
+    ConfigField("pol_idx", "combo_pol", "index"),
+    ConfigField("mc_error", "edit_mc_error", "float"),
+    ConfigField("mc_iter", "edit_mc_iter", "int"),
+    ConfigField("rmin", "edit_rmin", "float"),
+    ConfigField("rmax", "edit_rmax", "float"),
+    ConfigField("min_field_active", "chk_min_field", "bool"),
+    ConfigField("global_opt", "chk_global_opt", "bool"),
+    ConfigField("allow_growth", "chk_allow_growth", "bool"),
+    ConfigField("opt_dmin", "opt_panel.edit_dmin", "float"),
+)
+
+# The editable widgets the table does not carry, with the reason: none.
+FIELD_CONFIG_OUTSIDE_TABLE: dict[str, str] = {}
 
 
 class CertusFieldStateMixin:
@@ -341,64 +369,18 @@ class CertusFieldStateMixin:
 
     def _collect_config(self) -> dict:
         """FIELD settings for `CertusBaseApp.save_config`."""
-        params = self._get_params()
+        params = self._get_params()  # also refuses an empty stack or an invalid QWOT, as before
         return {
-            "mat_H": self.combo_mat_H.currentText(),
-            "mat_L": self.combo_mat_L.currentText(),
-            "mat_Sub": self.combo_mat_Sub.currentText(),
-            "mat_Sup": self.combo_mat_Sup.currentText(),
-            "l0": params.l0,
-            "lcalc": self.edit_lcalc.text(),
+            **collect_table(self, FIELD_CONFIG_TABLE),
             "emp_factors": params.emp_factors,
             "layer_types": params.layer_types,
-            "seuil1": params.seuil_int_1,
-            "seuil2": params.seuil_int_2,
-            "alpha": params.alpha,
-            "theta_inc_deg": self.edit_angle.value(),
-            "pol_idx": self.combo_pol.currentIndex(),
-            "mc_error": self.edit_mc_error.value(),
-            "mc_iter": int(self.edit_mc_iter.value()),
-            "rmin": params.rmin,
-            "rmax": params.rmax,
-            "min_field_active": bool(params.min_field_active),
-            "global_opt": bool(params.global_opt),
             "analytic_gradient": bool(params.analytic_gradient),
-            "allow_growth": bool(self.chk_allow_growth.isChecked()),
-            "opt_dmin": float(self.opt_panel.edit_dmin.value()),
         }
 
     def _apply_config(self, data: dict) -> None:
         """Apply FIELD settings read by `CertusBaseApp.load_config`."""
         self._analytic_gradient = bool(data.get("analytic_gradient", False))
-
-        def set_combo(combo: QComboBox, text: str):
-            idx = combo.findText(text)
-            if idx >= 0:
-                combo.setCurrentIndex(idx)
-
-        set_combo(self.combo_mat_H, data.get("mat_H", "H800-Nb2O5"))
-        set_combo(self.combo_mat_L, data.get("mat_L", "H800-SiO2"))
-        set_combo(self.combo_mat_Sub, data.get("mat_Sub", "SiO2"))
-        set_combo(self.combo_mat_Sup, data.get("mat_Sup", "Air"))
-
-        self.edit_l0.setValue(data.get("l0", 1064.0))
-        self.edit_lcalc.setText(str(data.get("lcalc", "1064.0")))
-        self.edit_seuil1.setValue(data.get("seuil1", 0.5))
-        self.edit_seuil2.setValue(data.get("seuil2", 0.5))
-        self.edit_alpha.setValue(data.get("alpha", 10.0))
-
-        self.edit_angle.setValue(data.get("theta_inc_deg", 0.0))
-        self.combo_pol.setCurrentIndex(data.get("pol_idx", 0))
-        self.edit_mc_error.setValue(data.get("mc_error", 2.0))
-        self.edit_mc_iter.setValue(data.get("mc_iter", 50))
-        self.edit_rmin.setValue(data.get("rmin", 1.0))
-        self.edit_rmax.setValue(data.get("rmax", 1.0))
-        self.chk_min_field.setChecked(bool(data.get("min_field_active", False)))
-        self.chk_global_opt.setChecked(bool(data.get("global_opt", False)))
-        self.chk_allow_growth.setChecked(bool(data.get("allow_growth", False)))
-        # The minimal thickness of the optimiser was not saved (audit 2026-11-15, M-L5b); absent: left as it is.
-        if data.get("opt_dmin") is not None:
-            self.opt_panel.edit_dmin.setValue(float(data["opt_dmin"]))
+        apply_table(self, FIELD_CONFIG_TABLE, data)
 
         emp = data.get("emp_factors", [])
         layer_types = data.get("layer_types", [])

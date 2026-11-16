@@ -426,19 +426,8 @@ class ExportManager:
             return
 
         try:
-            # FINAL CLEANUP: Clean + Polish before export
-
-            if self.ui.front_table.rowCount() > 0:
-                self.ui.log("Final cleanup before export...", "INFO")
-
-                removed = self.ui.smart_cleanup()
-
-                if removed > 0:
-                    self.ui.log(f"Final cleanup: removed {removed} layers.", "INFO")
-
-                    self.ui._is_internal_restart = True
-
-                    self.ui._schedule_eval(True)
+            # No cleanup here: it changed the design being exported and left the Spectrum sheet on the design before
+            # it (audit 2026-11-15, L5-m1). The export writes the design as it is.
 
             # --- Materials table ---
 

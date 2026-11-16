@@ -110,26 +110,11 @@ class StateManager:
             self.ui._schedule_eval(instant=True)
 
     def _pre_save_smart_cleanup(self) -> None:
-        """Run the pre-save cleanup + heal step (idempotent)."""
+        """Nothing: saving writes the design as it is.
 
-        if self.ui.front_table.rowCount() > 0:
-            self.ui.log("Final cleanup before save...", "INFO")
-
-            removed = self.ui.smart_cleanup()
-
-            if removed > 0:
-                self.ui.log(
-                    f"Final cleanup: removed {removed} layers. Optimizing...",
-                    "INFO",
-                )
-
-                # Run fast local optimization to heal
-
-                self.ui._is_internal_restart = True
-
-                # Note: Cannot wait for optimization here (async)
-
-                self.ui._schedule_eval(True)  # Update display
+        It removed the layers under 1 nm and merged neighbours, so saving changed the operator's design (audit
+        2026-11-15, L5-m1). Cleaning stays an explicit action; the owner decided that saving never cleans.
+        """
 
     def _post_save_config(self, filename: str) -> None:
         """UX feedback after a successful save."""

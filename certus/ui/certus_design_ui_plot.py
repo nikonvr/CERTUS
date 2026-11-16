@@ -816,7 +816,7 @@ class PlotManager:
 
             self.ui._live_points = None
 
-        self.ui.spectrum_plot.plotItem.setLabel("left", "Transmission", color="black", size="12pt")
+        self.ui.spectrum_plot.plotItem.setLabel("left", "Transmission", color=CertusTheme.TEXT_MAIN, size="12pt")
 
         auto_scale = self.ui.auto_scale_y_check.isChecked() if hasattr(self.ui, "auto_scale_y_check") else True
 
@@ -842,7 +842,7 @@ class PlotManager:
 
             self.ui._live_points = None
 
-        self.ui.spectrum_plot.plotItem.setLabel("left", "R / T", color="black", size="12pt")
+        self.ui.spectrum_plot.plotItem.setLabel("left", "R / T", color=CertusTheme.TEXT_MAIN, size="12pt")
 
         auto_scale = self.ui.auto_scale_y_check.isChecked() if hasattr(self.ui, "auto_scale_y_check") else True
 
@@ -897,7 +897,7 @@ class PlotManager:
 
             spectrum = spectra_display[spec_key][tgt.target_type]
 
-            color = "#dc2626" if tgt.target_type == "R" else "#2563eb"
+            color = CertusTheme.DANGER if tgt.target_type == "R" else CertusTheme.PRIMARY
 
             label = f"{tgt.target_type}{tgt.pol} ({tgt.angle}°)"
 
@@ -950,10 +950,10 @@ class PlotManager:
             spectrum = spectra_display[spec_key][tgt.target_type]
 
             if tgt.target_type == "R":
-                color = "#dc2626"
+                color = CertusTheme.DANGER
 
             else:
-                color = "#2563eb"
+                color = CertusTheme.PRIMARY
 
             tgt_id = (tgt.angle, tgt.pol, tgt.target_type, tgt.lmin, tgt.lmax)
 
@@ -1019,7 +1019,7 @@ class PlotManager:
 
         status = "★ NEW BEST" if is_global_best else "Optimizing"
 
-        color = "#10b981" if is_global_best else "#f97316"
+        color = CertusTheme.SUCCESS if is_global_best else CertusTheme.WARNING
 
         n_points = self.ui.points_per_target_spin.value()
 

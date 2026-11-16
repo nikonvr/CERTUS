@@ -126,13 +126,12 @@ def test_design_load_post_config_refresh_order_is_safe():
         assert needle in src, f"_apply_config missing {needle}"
 
 
-def test_design_smart_cleanup_preserved_in_save_flow():
-    """The smart_cleanup pre-processing must still live in the save pipeline."""
+def test_design_save_flow_never_cleans_the_design():
+    """Saving writes the design as it is: the owner decided on 2026-11-16 that saving never cleans (L5-m1)."""
     from certus.ui.certus_design_ui_state import StateManager
 
     pre_src = inspect.getsource(StateManager._pre_save_smart_cleanup)
-    assert "smart_cleanup" in pre_src
-    assert "front_table" in pre_src
+    assert "smart_cleanup()" not in pre_src
 
 
 def test_design_hooks_apis_are_callable_on_instance_shape():

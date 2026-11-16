@@ -43,10 +43,10 @@ def test_collecting_the_configuration_does_not_schedule_an_evaluation_of_a_clean
     ui._schedule_eval.assert_not_called()
 
 
-def test_the_pre_save_cleanup_is_still_there_as_an_explicit_step() -> None:
-    """The save flow keeps its cleanup: only the hidden call inside the collection is gone."""
+def test_saving_never_cleans_the_design() -> None:
+    """Saving writes the design as it is (owner's decision of 2026-11-16, L5-m1): cleaning is an explicit action."""
     ui = _ui()
 
     StateManager(ui)._pre_save_smart_cleanup()
 
-    ui.smart_cleanup.assert_called_once()
+    ui.smart_cleanup.assert_not_called()

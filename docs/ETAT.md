@@ -67,8 +67,8 @@ SEEL du `RESULT` officiel ; taux de plantage de `RANK00`.
 
 - 🔴 **Substrat** : les repères sur substrat « SiO2 » sont antérieurs à la correction C-L4 (`5be9f704`) : substrat calculé à
   n = 1,48625 au lieu de 1,45991 à 550 nm ([recensement](../reports/audit_code_2026-11-15/recensement_sio2.md)), et à la
-  correction M-L2 du consensus (`23459079`). Juge de paix : SEEL 0,1531 nm avant, 0,1713 nm avec C-L4, **0,1577 nm** avec
-  C-L4 et M-L2 ; le gagnant change à chaque fois ([acquis](ETAT_acquis.md)).
+  correction M-L2 du consensus (`23459079`). Juge de paix : SEEL 0,1531 nm avant, 0,1713 nm avec C-L4, 0,1577 nm avec
+  C-L4 et M-L2, **0,1704 nm** après les mineurs STRAT (L2-m1 et L4-m4) ; le gagnant change à chaque fois ([acquis](ETAT_acquis.md)).
 - 🔴 **Les SEEL ne se comparent pas d'un composant à l'autre** (domaines de notation différents, §7) ; à composant fixé, oui.
 - 🔴 **Un score seul ne départage rien** : à 150 tirages σ ≈ 6 %, deux runs à moins de ~8 % sont indiscernables ; sur `r75x2`,
   σ ≈ 1,8 % en changeant le triplet de graines de consensus. On compare des classes d'équivalence SEEL.

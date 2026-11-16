@@ -267,7 +267,16 @@ class CertusFieldWorkersMixin:
             self._initial_spectral_data = None
 
         if hasattr(self, 'worker') and self.worker is not None and self.worker.isRunning():
-            return
+            # A synthesis chains its workers from the `finished` signal, which run() emits just before the thread ends:
+            # wait for that end. It returned silently, and the window stayed busy for good (audit 2026-11-15, L5-m3).
+            if not self.worker.wait(5000):
+                self.logger.warning("FIELD: the previous computation has not ended; the next one is not started.")
+                self._synthesis_active = False
+                self._is_running = False
+                self.btn_calc.setEnabled(True)
+                self.btn_opt.setEnabled(True)
+                self.btn_mc.setEnabled(True)
+                return
 
         self.worker = FieldWorkerThread(request)
         self.worker._result_reported = False

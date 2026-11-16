@@ -14,6 +14,10 @@ from certus.core.certus_field_core import calculate_electric_field, calculate_op
 from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
 from certus.workers.certus_field_workers_dto import FieldParamsDTO, FieldWorkerRequest, FieldWorkerResult
 
+#: One seed for the draws of FIELD (tolerance Monte Carlo, optimisation starts, PGlobal): they drew from the global
+#: np.random, unseeded, so two identical analyses gave two yields (audit 2026-11-15, L3-m6, owner's decision).
+FIELD_RANDOM_SEED = 0
+
 try:
     from scipy.optimize import minimize
     SCIPY_AVAILABLE = True
@@ -354,7 +358,7 @@ class FieldWorkerThread(QThread):
 
         import concurrent.futures
 
-        perturbations = np.random.normal(1.0, error_pct, (num_iterations, n_layers))
+        perturbations = np.random.default_rng(FIELD_RANDOM_SEED).normal(1.0, error_pct, (num_iterations, n_layers))
 
         def _mc_task(it: int) -> tuple[int, list, list]:
             if not self._is_running:
@@ -713,7 +717,7 @@ class FieldWorkerThread(QThread):
                 dim=n_layers,
                 base_samples=6000,
                 max_feval=50000000,
-            )
+            ).with_overrides(random_seed=FIELD_RANDOM_SEED)
 
             state.best_cost = initial_cost
             state.generation = 0
@@ -806,7 +810,7 @@ class FieldWorkerThread(QThread):
             is_synthesis = bool(params.get("synthesis_mode", False))
             if not is_synthesis:
                 for _ in range(2):
-                    perturb = np.random.uniform(0.85, 1.15, n_layers)
+                    perturb = np.random.default_rng((FIELD_RANDOM_SEED, _)).uniform(0.85, 1.15, n_layers)
                     start_points.append(start_points[0] * perturb)
 
             n_runs = len(start_points)

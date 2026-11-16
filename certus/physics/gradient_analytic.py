@@ -101,7 +101,7 @@ def _compute_epsilon2_gradient_kernel(
     for i in prange(n):
         E = E_array[i]
 
-        if E > Eg:
+        if E > E_edge:  # switch where the Urbach tail is anchored, as epsilon2_TLU_array does (L1-m6; D71)
             E_sq = E * E
 
             diff = E - Eg

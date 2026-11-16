@@ -142,7 +142,9 @@ def epsilon2_TLU_array(E_array: np.ndarray, Eg: float, A: float, E0: float, C: f
     for i in prange(n):
         E = E_array[i]
 
-        if E > Eg:
+        # The tail is anchored at E_edge = Eg + delta: switch there, where both parts are equal. Switching at Eg left a
+        # jump of a factor 8000 and a dip on (Eg, Eg + delta] (audit 2026-11-15, L1-m6; D71).
+        if E > E_edge:
             E_sq = E * E
 
             diff = E - Eg

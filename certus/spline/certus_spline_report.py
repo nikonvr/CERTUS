@@ -26,6 +26,7 @@ from certus.spline.spline_objective import (
     spline_objective_mse_on_masked_grid,
 )
 from certus.spline.spline_profile_corridors import enforce_min_k_corridor_half_width
+from certus.utils.certus_atomic_io import atomic_excel_writer
 from certus.utils.certus_index_utils import _lam_uniform_grid
 from certus_physics import calculate_bare_substrate_RT
 
@@ -805,7 +806,7 @@ class SplineReportBuilder:
             except (TypeError, ValueError):
                 return float("nan")
 
-        with pd.ExcelWriter(out_path, engine="openpyxl") as writer:
+        with atomic_excel_writer(out_path) as writer:
             pd.DataFrame(spec_rows).to_excel(writer, sheet_name="Spectrum", index=False)
             self._build_mesh_parameters_df(result).to_excel(writer, sheet_name="Mesh_Parameters", index=False)
             self._write_summary_sheets(

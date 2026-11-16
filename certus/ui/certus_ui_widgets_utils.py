@@ -632,7 +632,10 @@ class ExcelTableWidget(QTableWidget):
 
             df = pd.DataFrame(data, columns=headers)
 
-            df.to_excel(filename, index=False)
+            from certus.utils.certus_atomic_io import atomic_excel_writer  # the whole file or the old one (L5-m4)
+
+            with atomic_excel_writer(filename) as writer:
+                df.to_excel(writer, index=False)
 
             return True
 

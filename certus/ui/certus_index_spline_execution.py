@@ -44,7 +44,7 @@ logger = logging.getLogger("CERTUS_INDEX_SPLINE")
 
 from certus.spline.spline_pipeline_utils import _interp_series_at_sigma_knots
 from certus.ui.certus_ui_utils import notify
-from certus.utils.certus_atomic_io import atomic_open
+from certus.utils.certus_atomic_io import atomic_excel_writer, atomic_open
 from certus.utils.errors import describe_error
 
 
@@ -357,7 +357,7 @@ class _CorridorExportMixin:
             return
 
         try:
-            with pd.ExcelWriter(out_path, engine="openpyxl") as writer:
+            with atomic_excel_writer(out_path) as writer:
                 df_n.to_excel(writer, sheet_name="n", index=False, header=False, startrow=2)
                 df_k.to_excel(writer, sheet_name="k", index=False, header=False, startrow=2)
 

@@ -49,3 +49,19 @@ def atomic_open(
         with contextlib.suppress(OSError):
             temporary.unlink()
         raise
+
+
+@contextlib.contextmanager
+def atomic_excel_writer(path: str | os.PathLike[str], engine: str = "openpyxl", **kwargs: Any) -> Iterator[Any]:
+    """`pd.ExcelWriter(path)` written through `atomic_open`: an Excel export is either the old file or the complete new
+    one. The Excel exports wrote straight to the target, unlike the HTML ones (audit 2026-11-15, L4-m6, L5-m4)."""
+    import pandas as pd
+
+    with atomic_open(path, "wb") as handle, pd.ExcelWriter(handle, engine=engine, **kwargs) as writer:
+        yield writer
+
+
+def atomic_save_workbook(workbook: Any, path: str | os.PathLike[str]) -> None:
+    """`workbook.save(path)` for an openpyxl workbook, through `atomic_open`."""
+    with atomic_open(path, "wb") as handle:
+        workbook.save(handle)

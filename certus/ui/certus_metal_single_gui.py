@@ -76,6 +76,7 @@ from certus.ui.certus_ui import (
     setup_common_metal_plots,
     show_toast,
 )
+from certus.utils.certus_atomic_io import atomic_excel_writer
 from certus.utils.certus_data import (
     OPENPYXL_AVAILABLE,
     to_excel_robust,
@@ -1259,7 +1260,7 @@ class CertusMetalSingleApp(MetalBaseApp):
             df_sols = pd.DataFrame(sol_data)
 
             if OPENPYXL_AVAILABLE:
-                with pd.ExcelWriter(excel_path, engine="openpyxl") as writer:
+                with atomic_excel_writer(excel_path) as writer:
                     df_summary.to_excel(writer, sheet_name="Beam Summary", index=False)
 
                     df_spectra.to_excel(writer, sheet_name="Reference Indices", index=False)

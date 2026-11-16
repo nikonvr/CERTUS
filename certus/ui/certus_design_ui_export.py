@@ -17,6 +17,7 @@ from certus.core.certus_core import (
 )
 from certus.core.certus_metrology import ValidationStatus
 from certus.ui.certus_ui import certus_get_save_file_name
+from certus.utils.certus_atomic_io import atomic_save_workbook
 from certus.utils.certus_copy_utils import copy_optimization_result
 from certus.utils.certus_data import OPENPYXL_AVAILABLE, generate_html_report
 from certus.utils.certus_services import IndexFitRequest, IndexFitService
@@ -172,7 +173,7 @@ class ExportManager:
         for k, v in manifest_dict.items():
             ws_m.append([str(k), str(v)])
 
-        wb.save(excel_path)
+        atomic_save_workbook(wb, excel_path)
 
         self.ui.log(f"Excel saved: {Path(excel_path).name}", "SUCCESS")
 

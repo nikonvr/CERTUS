@@ -12,7 +12,7 @@ from certus.core.certus_core import get_resource_path
 from certus.ui.certus_field_common import LIDT_PRESETS
 from certus.ui.certus_field_services import FieldExportService
 from certus.ui.certus_ui_utils import open_file_explorer, show_toast
-from certus.utils.certus_atomic_io import atomic_open
+from certus.utils.certus_atomic_io import atomic_excel_writer, atomic_open
 from certus.utils.certus_ux import Typography
 from certus.workers.certus_field_workers_dto import FieldWorkerRequest
 
@@ -49,7 +49,7 @@ class CertusFieldEventsMixin:
             params = self._get_params()
             sheets = {"Summary": self._build_summary_frame(params)}
             sheets.update(self._build_plot_export_frames(self._last_plot_data))
-            with pd.ExcelWriter(excel_path, engine="openpyxl") as writer:
+            with atomic_excel_writer(excel_path) as writer:
                 for sheet_name, df in sheets.items():
                     df.to_excel(writer, sheet_name=sheet_name[:31], index=False)
 

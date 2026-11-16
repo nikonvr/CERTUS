@@ -34,7 +34,7 @@ from certus.core.certus_core import (
 )
 from certus.core.certus_metrology import ValidationStatus
 from certus.ui.certus_strat_common import _resolve_strat_indices_db_path
-from certus.utils.certus_atomic_io import atomic_open
+from certus.utils.certus_atomic_io import atomic_excel_writer, atomic_open, atomic_save_workbook
 from certus.utils.certus_data import (
     OPENPYXL_AVAILABLE,
     generate_html_report,
@@ -315,7 +315,7 @@ class CertusStratExportMixin:
                     ws_m.append(["Key", "Value"])
                     for k, v in manifest_dict.items():
                         ws_m.append([str(k), str(v)])
-                    wb_m.save(excel_path)
+                    atomic_save_workbook(wb_m, excel_path)
                 except (ImportError, OSError, ValueError, TypeError, RuntimeError) as exc:
                     self.logger.warning("STRAT manifest Excel sheet injection skipped: %s", exc)
                 try:
@@ -526,7 +526,7 @@ class CertusStratExportMixin:
                 df_extrema = pd.DataFrame(ext_data)
 
         if OPENPYXL_AVAILABLE:
-            with pd.ExcelWriter(excel_path, engine="openpyxl") as writer:
+            with atomic_excel_writer(excel_path) as writer:
                 df_summary.to_excel(writer, sheet_name="Summary", index=False)
                 if not df_strategies.empty:
                     df_strategies.to_excel(writer, sheet_name="Top_Strategies", index=False)

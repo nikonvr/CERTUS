@@ -333,9 +333,9 @@ def to_excel_robust(df: pd.DataFrame, filepath: str, **kwargs) -> None:
     if not filepath or not isinstance(filepath, str):
         raise ValueError(f"Invalid filepath: {filepath}")
 
-    kwargs.setdefault("engine", "openpyxl")
     df_clean = _clean_and_truncate_df_for_excel(df)
-    df_clean.to_excel(filepath, **kwargs)
+    with atomic_excel_writer(filepath, engine=kwargs.pop("engine", "openpyxl")) as writer:  # L4-m6
+        df_clean.to_excel(writer, **kwargs)
 
 
 def export_optimization_report(
@@ -823,7 +823,7 @@ def generate_html_report(filename: str, title: str, sections: list[dict], figure
             "img { max-width: 100%; height: auto; }"
         )
 
-        html = [f"<html><head><title>{title}</title><style>{css}</style></head><body><div class='container'>"]
+        html = [f"<!DOCTYPE html><html><head><meta charset='utf-8'><title>{title}</title><style>{css}</style></head><body><div class='container'>"]
         html.append(f"<h1>{title}</h1>")
 
         for sec in sections:
@@ -1037,7 +1037,7 @@ def build_standard_report(
     if excel_path:
         try:
             used_names: set[str] = set()
-            with pd.ExcelWriter(excel_path, engine="openpyxl") as writer:
+            with atomic_excel_writer(excel_path) as writer:
                 summary_rows: list[dict[str, Any]] = []
                 for sec in report_sections:
                     if not sec.include_in_excel:
@@ -1399,4 +1399,4 @@ def load_spectrum_columns(
 
 # QueueHandler and setup_gui_logger are defined in certus_core.py (Single Source of Truth)
 from certus.core.certus_core import QueueHandler, setup_gui_logger
-from certus.utils.certus_atomic_io import atomic_open
+from certus.utils.certus_atomic_io import atomic_excel_writer, atomic_open

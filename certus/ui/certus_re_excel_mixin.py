@@ -46,6 +46,7 @@ from certus.ui.certus_ui import (
     set_certus_window_icon,
     show_toast,
 )
+from certus.utils.certus_atomic_io import atomic_save_workbook
 from certus.utils.certus_data import OPENPYXL_AVAILABLE
 from certus.utils.certus_re_helpers import (
     _RE_CANONICAL_SHEETS,
@@ -206,7 +207,6 @@ class CertusREExcelMixin:
             "fused silica": "sio2",
         }
         sub_norm = sub_map.get(sub_lower, sub_lower)
-
         # --- Priority 1: built-in analytical model (Sellmeier SiO2, Si) ---
         builtin = self._re_builtin_substrate_tabular(sub_norm, l0_ref)
         if builtin is None:
@@ -1955,7 +1955,7 @@ class CertusREExcelMixin:
                 )
                 return
 
-            wb.save(f)
+            atomic_save_workbook(wb, f)
 
             self.log(f"Exported to:  {f}", "SUCCESS")
 
@@ -2184,7 +2184,7 @@ class CertusREExcelMixin:
             for k, v in manifest_dict.items():
                 ws_m.append([str(k), str(v)])
 
-            wb.save(path)
+            atomic_save_workbook(wb, path)
 
             self.log(f"RE targets vs theory export: {Path(path).name}", "SUCCESS")
 

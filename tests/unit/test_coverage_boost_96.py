@@ -247,11 +247,11 @@ def test_to_excel_robust_engine(tmp_path, monkeypatch):
     monkeypatch.setattr("certus.utils.certus_data.OPENPYXL_AVAILABLE", True)
     df = pd.DataFrame({"a": [1]})
     f = tmp_path / "out.xlsx"
-    mock_to_excel = Mock()
-    monkeypatch.setattr(df, "to_excel", mock_to_excel)
+    # Since L4-m6 the engine goes to the atomic ExcelWriter, not to to_excel: check the written workbook instead.
     certus_data.to_excel_robust(df, str(f))
-    mock_to_excel.assert_called_once()
-    assert mock_to_excel.call_args[1]["engine"] == "openpyxl"
+    import openpyxl
+
+    assert "a" in [c.value for c in next(openpyxl.load_workbook(f).active.iter_rows(max_row=1))]
 
 @pytest.mark.unit
 def test_export_optimization_report_branches(tmp_path, monkeypatch):

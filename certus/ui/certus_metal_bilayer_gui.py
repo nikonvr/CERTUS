@@ -76,6 +76,7 @@ from certus.ui.certus_ui import (
     show_toast,
 )
 from certus.ui.certus_ui_utils import notify
+from certus.utils.certus_atomic_io import atomic_excel_writer
 from certus.utils.certus_data import OPENPYXL_AVAILABLE
 from certus.utils.errors import describe_error
 from certus_physics import (
@@ -822,7 +823,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
             if not OPENPYXL_AVAILABLE:
                 raise ImportError("openpyxl is required for Excel writing. Install with: pip install openpyxl")
 
-            with pd.ExcelWriter(excel_filename, engine="openpyxl") as writer:
+            with atomic_excel_writer(excel_filename) as writer:
                 df_summary.to_excel(writer, sheet_name="Summary_Beam", index=False)
 
                 df_metal.to_excel(writer, sheet_name="Metal_Indices_Uncertainty", index=False)

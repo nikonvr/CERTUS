@@ -412,7 +412,9 @@ def build_excel_report(
             cell.font = sub_font
 
     output_path = str(Path(output_path).resolve(strict=False))
-    wb.save(output_path)
+    from certus.utils.certus_atomic_io import atomic_save_workbook  # a whole workbook or the old file (L4-m6)
+
+    atomic_save_workbook(wb, output_path)
     return output_path
 
 

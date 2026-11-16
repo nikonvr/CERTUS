@@ -1,0 +1,19 @@
+VALIDATION PARALLELE -- 672aaaaa, 0 fichier(s) suivi(s) modifie(s)
+  python 3.15.2, 16 worker(s), ui 6, journaux : reports\audit_general_2026-11-14\runs\validation_6
+  ruff            PASS      0:00  
+  coherence_md    PASS      0:10  
+  check_claude_md PASS      0:00  
+  check_docs      FAIL      0:00  
+  oracle          PASS      0:19  1210 passed
+  unit : 2 echec(s) en parallele, rejeu seul en serie...
+  unit            ARTEFACT  4:14  2 failed, 6273 passed, 7 skipped, 1 xfailed
+  ui              PASS      10:27  1627 passed, 12 skipped, 2 xfailed
+  rest            PASS      3:46  322 passed
+  performance     PASS      0:19  30 passed, 2 skipped
+
+ECHEC (check_docs), code 1, non rejoue : lire reports\audit_general_2026-11-14\runs\validation_6\check_docs.log
+ARTEFACT de charge ou d'ordre (unit), verts seuls en serie :
+    tests/unit/test_the_default_pytest_run_is_quiet.py::test_a_bare_run_lists_no_test_and_measures_no_coverage
+    tests/unit/test_the_default_pytest_run_is_quiet.py::test_a_quiet_run_still_ends_on_the_summary_line
+VALIDATION=NO-GO
+La reference de CLAUDE.md section 2 reste la suite complete en serie.

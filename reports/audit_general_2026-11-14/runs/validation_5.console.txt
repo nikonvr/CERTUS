@@ -1,0 +1,22 @@
+VALIDATION PARALLELE -- 86f2336d, 0 fichier(s) suivi(s) modifie(s)
+  python 3.15.2, 16 worker(s), ui 6, journaux : reports\audit_general_2026-11-14\runs\validation_5
+  ruff            PASS      0:00  
+  coherence_md    PASS      0:10  
+  check_claude_md PASS      0:00  
+  check_docs      FAIL      0:00  
+  oracle          PASS      0:19  1210 passed
+  unit : 7 echec(s) en parallele, rejeu seul en serie...
+  unit            FAIL      4:38  7 failed, 6268 passed, 7 skipped, 1 xfailed
+  ui              PASS      10:51  1627 passed, 12 skipped, 2 xfailed
+  rest            PASS      3:43  322 passed
+  performance     PASS      0:22  30 passed, 2 skipped
+
+ECHEC (check_docs), code 1, non rejoue : lire reports\audit_general_2026-11-14\runs\validation_5\check_docs.log
+ECHEC REEL (unit), rouge aussi seul en serie :
+    tests/unit/test_tauc_lorentz_kernels_match_kramers_kronig_and_finite_differences.py::test_eps1_is_the_kramers_kronig_transform_of_the_tauc_lorentz_absorption[a_silicon]
+    tests/unit/test_tauc_lorentz_kernels_match_kramers_kronig_and_finite_differences.py::test_eps1_is_the_kramers_kronig_transform_of_the_tauc_lorentz_absorption[absorbing]
+    tests/unit/test_tauc_lorentz_kernels_match_kramers_kronig_and_finite_differences.py::test_eps1_is_the_kramers_kronig_transform_of_the_tauc_lorentz_absorption[oxide]
+    tests/unit/test_certus_is_written_in_english.py::test_certus_prose_is_english
+    tests/unit/test_certus_is_written_in_english.py::test_certus_prose_carries_no_accented_letter
+VALIDATION=NO-GO
+La reference de CLAUDE.md section 2 reste la suite complete en serie.

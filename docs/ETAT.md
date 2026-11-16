@@ -12,23 +12,24 @@
 > L'état présent seulement ; l'historique est dans `git log` et `reports/`. À la demande : actions ouvertes et protocole de mesure
 > ([`CHANTIERS_RESTANTS.md`](CHANTIERS_RESTANTS.md)), acquis ([`ETAT_acquis.md`](ETAT_acquis.md)), preuves dans `reports/`.
 
-**Liste active** : [chantiers](CHANTIERS_RESTANTS.md). **En cours** : le chantier 45, corrections de l'audit du code
-du 15 novembre, reprise prête à exécuter dans son [plan](../reports/audit_code_2026-11-15/plan_corrections.md).
+**Liste active** : [chantiers](CHANTIERS_RESTANTS.md). Le chantier 45 est corrigé : les 27 défauts de l'audit du code
+du 15 novembre, un commit chacun ([plan](../reports/audit_code_2026-11-15/plan_corrections.md)) ; trois points y attendent 👤 (§5).
 Le polisseur hybride et la pondération par bande sont intégrés. La grille automatique et la sélection robuste
 restent optionnelles. Mesures terminées dans le [bilan DESIGN](../reports/questions_design_2026-11-13/bilan.md).
 Le [guide DESIGN](../pages/CERTUS_DESIGN.html#design-robust-search) décrit l'activation et les limites de la recherche robuste.
 La [campagne DESIGN–STRAT](../reports/codesign_2026-11-14/bilan.md) mesure trois paires du séparateur 50/50. Avec les plans retenus, le mérite robuste à 1 nm augmente la RMSE déposée de 52 à 82 %.
 
-**Branche de travail** : `claude/claude-code-question-0aa978`, en avance sur `master`, ni fusionnée ni poussée.
+**Branche de travail** : `master`, avancée sur `claude/claude-code-question-0aa978` puis des corrections du chantier 45 ; en avance
+sur `origin/master`, non poussée.
 Le sparse-checkout écarte les gros artefacts scientifiques suivis ; git sparse-checkout disable les restaure. Les sauvegardes et données locales de novembre sont répertoriées
 dans `artifacts/archives-20261114/inventaire.json`, dans `certus1111`.
 
 **Python de référence : 3.15.2**, dépendances de requirements.lock.
 
-**Dernière validation complète** : `VALIDATION=GO`, le 2026-11-15 sous Windows sur `3374b380`, avec les
-chantiers 37, 38 et le délai UX, commités ensuite tels quels. Les corrections de l'audit qui suivent n'ont que des
-tests ciblés (référence §2).
-[Détails](../reports/audit_general_2026-11-14/runs/validation_4.console.txt).
+**Dernière validation complète** : le 2026-11-16 sous Windows sur `672aaaaa`, dans `certus1111` : `VALIDATION=NO-GO` par
+`check_docs` seul, pour trois liens morts de `docs/AUDITS.md`, fichier non suivi de ce dossier ; ruff, oracle (1 210), unit
+(6 273), ui (1 627), reste (322) et performance verts. Dernier `VALIDATION=GO` : `3374b380`, le 2026-11-15.
+[Détails](../reports/audit_general_2026-11-14/runs/validation_6.console.txt).
 
 Pour un échec de comparaison au bit, rejouer sur [cache Numba vierge](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md).
 
@@ -171,6 +172,7 @@ Les précautions du cache Numba restent dans le [mode opératoire](../reports/re
 
 | sujet | ce qui est en jeu |
 |---|---|
+| **audit du code (45)** | ε1 d'INDEX : le modèle la plafonne à 1, la vraie est plus basse au-dessus de la résonance (Kramers-Kronig : jusqu'à −38,8 sur les matériaux du test) ; M-L1 a gardé le plancher et annulé le gradient à cet endroit, le retirer changerait les bits du coût. Juge de paix : après C-L4 seul la recherche locale ne gagnait rien sur le gagnant à 4 blocs, non expliqué ([acquis](ETAT_acquis.md)). Consensus : une graine dont l'évaluation échoue est journalisée, pas comptée comme un rejet |
 | **avis de tiers** | DLL du runtime Visual C++ dans `THIRD_PARTY_NOTICES.md` : droit de redistribution réservé par Microsoft aux licenciés de Visual Studio |
 | **paquet `certus_re`** | correction de la citation du saphir (Malitson et Dodge, 1972) à commiter par 👤 dans ce dépôt, puis à publier sur Zenodo |
 | **interface** | revoir les onze fenêtres ; teintes de marque, bande des fichiers récents, bornes des champs numériques |

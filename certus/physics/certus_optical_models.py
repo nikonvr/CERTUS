@@ -167,8 +167,80 @@ def epsilon2_TLU_array(E_array: np.ndarray, Eg: float, A: float, E0: float, C: f
     return result
 
 
+@njit(cache=True, nogil=True, error_model="numpy")
+def epsilon1_TL_overdamped_point(E: float, Eg: float, A: float, E0: float, C: float, eps_inf: float) -> float:
+    """Unfloored eps1 of the Jellison-Modine closed form, valid for any C, written for C >= 2 E0.
+
+    There alpha = sqrt(4 E0^2 - C^2) is imaginary: the terms in alpha are evaluated in complex arithmetic (principal
+    branches) and their sum is real; Kramers-Kronig agrees to 3e-6 (tests/unit/test_tauc_lorentz_eps1_beyond_critical_damping.py).
+    No fastmath: the caller tests the result with isfinite.
+    """
+    E0_sq = E0 * E0
+    Eg_sq = Eg * Eg
+    C_sq = C * C
+    E_sq = E * E
+    gamma_sq = E0_sq - C_sq / 2.0
+    alpha = np.sqrt(complex(4.0 * E0_sq - C_sq, 0.0))
+    zeta4 = max((E_sq - E0_sq) ** 2 + C_sq * E_sq, SMALL_EPSILON)
+    al = (Eg_sq - E0_sq) * E_sq + Eg_sq * C_sq - E0_sq * (E0_sq + 3.0 * Eg_sq)
+    aa = (E_sq - E0_sq) * (E0_sq + Eg_sq) + Eg_sq * C_sq
+    term1 = 0.0
+    if E > SMALL_EPSILON:
+        term1 = -A * E0 * C * (E_sq + Eg_sq) / (PI * zeta4 * E) * np.log(np.abs((Eg - E) / (Eg + E)))
+    denom_log_norm = np.sqrt((E0_sq - Eg_sq) ** 2 + C_sq * Eg_sq)
+    term2 = 2.0 * A * E0 * C * Eg / (PI * zeta4) * np.log(np.abs((Eg - E) * (Eg + E)) / denom_log_norm)
+    term3 = (A * C * al) / (2.0 * PI * zeta4 * alpha * E0) * np.log((E0_sq + Eg_sq + alpha * Eg) / (E0_sq + Eg_sq - alpha * Eg))
+    term4 = -(A * aa) / (PI * zeta4 * E0) * (PI - np.arctan((2.0 * Eg + alpha) / C) - np.arctan((2.0 * Eg - alpha) / C))
+    term5 = (4.0 * A * E0 * Eg * (E_sq - gamma_sq)) / (PI * zeta4 * alpha) * (PI / 2.0 - np.arctan(2.0 * (Eg_sq - gamma_sq) / (alpha * C)))
+    return eps_inf + term1 + term2 + (term3 + term4 + term5).real
+
+
+@njit(cache=True, nogil=True, error_model="numpy")
+def _epsilon1_TL_overdamped(E_array: np.ndarray, Eg: float, A: float, E0: float, C: float, eps_inf: float) -> np.ndarray:
+    """epsilon1_TL_analytic for C >= 2 E0, with the same floor."""
+    eps1_array = np.empty(len(E_array), dtype=np.float64)
+    for i in range(len(E_array)):
+        val = epsilon1_TL_overdamped_point(E_array[i], Eg, A, E0, C, eps_inf)
+        eps1_array[i] = max(val, 1.0) if np.isfinite(val) else eps_inf
+    return eps1_array
+
+
+@njit(cache=True, nogil=True, error_model="numpy")
+def epsilon1_gradient_overdamped(E_array: np.ndarray, Eg: float, A: float, E0: float, C: float, eps_inf: float) -> np.ndarray:
+    """`gradient_analytic._compute_epsilon1_gradient_kernel` for C >= 2 E0: eps1 from the complex closed form, its
+    derivatives in Eg, A, E0 and C by central differences (step 1e-6 of each), with the same floor."""
+    n = len(E_array)
+    result = np.zeros((7, n), dtype=np.float64)
+    params = np.array([Eg, A, E0, C], dtype=np.float64)
+    for i in range(n):
+        E = E_array[i]
+        val = epsilon1_TL_overdamped_point(E, Eg, A, E0, C, eps_inf)
+        if not np.isfinite(val):
+            result[0, i] = eps_inf
+            result[6, i] = 1.0
+        elif val < 1.0:
+            result[0, i] = 1.0
+        else:
+            result[0, i] = val
+            for k in range(4):
+                h = 1e-6 * max(abs(params[k]), 1.0)
+                up = params.copy()
+                down = params.copy()
+                up[k] += h
+                down[k] -= h
+                f_up = epsilon1_TL_overdamped_point(E, up[0], up[1], up[2], up[3], eps_inf)
+                f_down = epsilon1_TL_overdamped_point(E, down[0], down[1], down[2], down[3], eps_inf)
+                result[k + 1, i] = (f_up - f_down) / (2.0 * h)
+            result[6, i] = 1.0
+    return result
+
+
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
 def epsilon1_TL_analytic(E_array: np.ndarray, Eg: float, A: float, E0: float, C: float, eps_inf: float) -> np.ndarray:
+
+    if 4.0 * E0 * E0 - C * C < 1e-12:
+        # Overdamped (C >= 2 E0): alpha is imaginary; the clamp below would give a wrong eps1 (ETAT section 5).
+        return _epsilon1_TL_overdamped(E_array, Eg, A, E0, C, eps_inf)
 
     n = len(E_array)
 

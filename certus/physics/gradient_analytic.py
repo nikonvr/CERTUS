@@ -13,7 +13,7 @@ from numba import njit, prange
 
 import certus.physics.certus_tmm_core as tmm_core
 from certus.domain.constants import PI, TWO_PI
-from certus.physics.certus_optical_models import extinction_from_epsilon
+from certus.physics.certus_optical_models import epsilon1_gradient_overdamped, extinction_from_epsilon
 
 # Explicit imports for type annotations and helper functions
 # to prevent F821 undefined symbol errors.
@@ -166,14 +166,14 @@ def _compute_epsilon1_gradient_kernel(
 ) -> np.ndarray:
     """Computes [eps1, d/dEg, d/dA, d/dE0, d/dC, d/dEu, d/deps_inf]"""
 
+    if 4.0 * E0 * E0 - C * C < 1e-12:
+        # Overdamped (C >= 2 E0): same branch as epsilon1_TL_analytic (ETAT section 5).
+        return epsilon1_gradient_overdamped(E_array, Eg, A, E0, C, eps_inf)
+
     n = len(E_array)
-
     result = np.zeros((7, n), dtype=np.float64)
-
     E0_sq = E0 * E0
-
     Eg_sq = Eg * Eg
-
     C_sq = C * C
 
     gamma_sq = E0_sq - C_sq / 2.0

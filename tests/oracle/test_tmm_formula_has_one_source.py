@@ -36,6 +36,7 @@ ALLOWED = {
     # Same shape, other physics: the Tauc-Lorentz epsilon_1 integral and its gradient.
     "certus/physics/certus_optical_models.py::epsilon1_TL_analytic": "not TMM (Tauc-Lorentz epsilon_1)",
     "certus/physics/gradient_analytic.py::_compute_epsilon1_gradient_kernel": "not TMM (its gradient)",
+    "certus/physics/certus_optical_models.py::epsilon1_TL_overdamped_point": "not TMM (the same, for C >= 2 E0)",
     # Found on 2026-11-16 by the ratio form `(a - b) / (a + b)` (audit 2026-11-15, L1-m1), which the pair test missed.
     # Copies of the stack formula, to delegate to `reflection_amplitudes` (chantier 46):
     # Not the stack formula: the Fresnel coefficient of ONE interface (bare substrate, back face), (n - 1)/(n + 1)

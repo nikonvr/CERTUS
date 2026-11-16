@@ -103,28 +103,22 @@ class CertusFieldStateMixin:
         return values
 
     def _get_n_for_material(self, mat_name: str, wl: float) -> float:
+        """Real index of a material at ``wl`` from the index database: layer sheets, and the Sellmeier law of a built-in
+        substrate.
+
+        This called SUBSTRATE_NAMES, get_substrate_index and get_material_index, which exist nowhere: the error was
+        caught and every FIELD computation (field profile, R spectrum, thicknesses) used constant indices typed here,
+        2.20 for Nb2O5 where the database has 2.2505 at 1064 nm (audit 2026-11-15, L5-m8). D88: a material absent from
+        the database refuses the computation.
+        """
         if mat_name == "Air":
             return 1.0
-        if self.materials_db and hasattr(self.materials_db, "_db"):
-            try:
-                db_ref = self.materials_db._db
-                name_norm = mat_name.strip().lower()
-                if name_norm in db_ref.SUBSTRATE_NAMES:
-                    return float(db_ref.get_substrate_index(mat_name, wl).real)
-                else:
-                    return float(db_ref.get_material_index(mat_name, wl).real)
-            except Exception:
-                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
-        # Fallbacks to avoid crashes if DB is empty or fails
-        if "Ta2O5" in mat_name:
-            return 2.10
-        if "Nb" in mat_name:
-            return 2.20
-        if "SiO2" in mat_name:
-            return 1.46
-        if "BK7" in mat_name:
-            return 1.52
-        return 1.5
+        try:
+            return float(self.materials_db.get_index(mat_name, wl))
+        except (KeyError, AttributeError) as exc:
+            raise ValueError(
+                f'Material "{mat_name}" is not in the index database: FIELD does not compute with an invented index (D88).'
+            ) from exc
 
     def _update_thicknesses(self):
         if self._is_updating_table:

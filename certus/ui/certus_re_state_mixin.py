@@ -179,6 +179,13 @@ class CertusREStateMixin:
                 if not Path(str(workbook_path)).is_file() or not self.load_reverse_engineering_from_path(str(workbook_path)):
                     self.log(f"RE: workbook could not be loaded: {workbook_path!r}", "ERROR")
                     return False
+                # The workbook's lambda_ref makes the design (QWOT, drift reference); the configuration's l0 replaced it
+                # silently, and RE started from another design. The workbook wins, with a warning (audit 2026-11-15,
+                # L6-m4, owner's decision of 2026-11-16).
+                wb_l0 = float(self.l0_spin.value())
+                if "l0" in cfg and abs(float(cfg["l0"]) - wb_l0) > 1e-9:
+                    self.log(f"RE: the configuration's l0 ({float(cfg['l0']):g} nm) differs from the workbook's ({wb_l0:g} nm): the workbook's is kept.", "WARNING")
+                cfg = {k: v for k, v in cfg.items() if k != "l0"}
             self._apply_re_config(cfg)
             self.log("RE JSON loaded and normalized.", "INFO")
             self.mark_config_saved()

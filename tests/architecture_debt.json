@@ -44,7 +44,7 @@
     "certus/ui/certus_index_spline_manualmesh_mixin.py::CertusIndexSplineManualMeshMixin._open_manual_extra_knots_dialog": 433,
     "certus/ui/certus_index_spline_smart_init.py::SmartInitPreviewManager.__init__": 572,
     "certus/ui/certus_manual_sigma_knot_dialog.py::ManualSigmaKnotDialog.__init__": 461,
-    "certus/ui/certus_re_excel_mixin.py::CertusREExcelMixin.load_reverse_engineering_from_path": 514,
+    "certus/ui/certus_re_excel_mixin.py::CertusREExcelMixin.load_reverse_engineering_from_path": 512,
     "certus/ui/certus_re_ui.py::CertusREResultsDialog.__init__": 459,
     "certus/ui/certus_strat_ui_state.py::CertusStratStateMixin.collect_params": 515,
     "certus/utils/certus_ux.py::build_premium_overrides": 574
@@ -61,7 +61,7 @@
     "certus/ui/certus_index_spline_corridor_worker.py::_CorridorWorkerMixin._finish_corridor_rmse_d_grid_worker_done": 72,
     "certus/ui/certus_index_spline_manualmesh_mixin.py::CertusIndexSplineManualMeshMixin._open_manual_extra_knots_dialog": 75,
     "certus/ui/certus_index_spline_mixins_ui.py::_MeshOptimizationMixin._build_opt_config": 76,
-    "certus/ui/certus_re_excel_mixin.py::CertusREExcelMixin.load_reverse_engineering_from_path": 67
+    "certus/ui/certus_re_excel_mixin.py::CertusREExcelMixin.load_reverse_engineering_from_path": 66
   },
   "fonctions_non_annotees": [],
   "fichiers_longs": {
@@ -74,7 +74,7 @@
     "certus/spline/certus_index_spline_core.py": 2108,
     "certus/spline/spline_workers.py": 1980,
     "certus/ui/certus_metal_base_app.py": 1758,
-    "certus/ui/certus_re_excel_mixin.py": 2194,
+    "certus/ui/certus_re_excel_mixin.py": 2193,
     "certus/ui/certus_re_layout_mixin.py": 1743,
     "certus/ui/certus_strat_ui_state.py": 1662,
     "certus/utils/certus_re_helpers.py": 1972,

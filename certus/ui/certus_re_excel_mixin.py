@@ -67,6 +67,7 @@ from certus.utils.certus_re_helpers import (
     re_interp_delta_knots_clamped,
     re_knots_wavelengths,
 )
+from certus.utils.certus_re_target_windows import re_target_windows
 from certus_physics import ObliqueTarget, calc_spectrum_front_wrapper, calc_spectrum_full_exact_wrapper
 
 calc_spectrum_front = calc_spectrum_front_wrapper
@@ -1180,9 +1181,7 @@ class CertusREExcelMixin:
 
             #  Build ObliqueTarget list (stored internally, not in widget)
 
-            step = float(wls_meas[1] - wls_meas[0]) if len(wls_meas) >= 2 else 10.0
-
-            half = step / 2.0
+            windows = re_target_windows(wls_meas)  # local, sorted half-widths (L6-m5)
 
             self._re_targets = []
 
@@ -1191,7 +1190,7 @@ class CertusREExcelMixin:
             for spec, vals in spectra_columns:
                 group = []
 
-                for wl, val in zip(wls_meas, vals, strict=False):
+                for (lo, hi), val in zip(windows, vals, strict=False):
                     if np.isnan(val):
                         continue
 
@@ -1199,8 +1198,8 @@ class CertusREExcelMixin:
                         angle=float(spec.angle_deg),
                         pol=spec.pol,
                         target_type=spec.target_type,
-                        lmin=max(1.0, float(wl) - half),
-                        lmax=float(wl) + half,
+                        lmin=max(1.0, lo),
+                        lmax=hi,
                         tmin=float(val),
                         tmax=float(val),
                         w=1.0,

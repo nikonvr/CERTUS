@@ -304,11 +304,10 @@ def _polish_lbfgsb_chunked(
 
         state["last_fun"] = float(_best_fun_seen[0])
 
-    except NUMERICAL_FAULT_EXCEPTIONS:
-        logging.getLogger("CERTUS").debug(
-            "L-BFGS-B minimize raised unexpected exception in _polish_lbfgsb_chunked",
-            exc_info=True,
-        )
+    except NUMERICAL_FAULT_EXCEPTIONS:  # a coherent (x, f): the best point seen, not the last iterate (L3-m4)
+        state["x"] = np.asarray(_best_x_seen[0], dtype=np.float64).ravel().copy()
+        state["last_fun"] = float(_best_fun_seen[0])
+        logging.getLogger("CERTUS").warning("L-BFGS-B raised in _polish_lbfgsb_chunked: best point seen kept", exc_info=True)
 
     return state["x"], state["last_fun"], state["nfev"]
 
@@ -681,6 +680,11 @@ class FreeKnotStageContext:
     def obj(self, z: np.ndarray) -> float:
         if self.stop_event.is_set():
             return 1e30
+        return self.spectral_mse(z)
+
+    def spectral_mse(self, z: np.ndarray) -> float:
+        """The spectral MSE of z, without the stop guard of ``obj``: after a stop, ``obj`` returns 1e30 to end the
+        optimiser, and the stage reported RMSE 1e15 with a valid n, k (audit 2026-11-15, L3-m2)."""
         if self.optimize_n:
             n_l, k_l, d, _, _ = self.sol3_split_to_nk_masked(z)
         else:
@@ -698,7 +702,7 @@ class FreeKnotStageContext:
         self.best_z.clear()
         self.best_spec_mse.clear()
         self.best_z.append(zi)
-        self.best_spec_mse.append(float(self.obj(zi)))
+        self.best_spec_mse.append(float(self.spectral_mse(zi)))
 
     def obj_tracked(self, z: np.ndarray) -> float:
         v = float(self.obj(z))
@@ -1017,16 +1021,6 @@ def _run_free_knot_stage(
                 n_mono_band_nm=cfg.n_mono_band_nm,
                 profile_interp=str(cfg.nk_profile_interp),
             )
-            _n0, _k0 = nk_from_x_pwlnk(
-                z0v,
-                lam_f,
-                sk0,
-                lo_k,
-                hi_k,
-                sig_pre=sig_f,
-                n_mono_band_nm=cfg.n_mono_band_nm,
-                profile_interp=str(cfg.nk_profile_interp),
-            )
 
             _mse_sol2_sp = float(
                 spline_objective_mse_on_masked_grid(
@@ -1043,20 +1037,9 @@ def _run_free_knot_stage(
                 )
             )
 
-            _mse_sol3_z0_sp = float(
-                spline_objective_mse_on_masked_grid(
-                    cfg,
-                    lam_f=lam_f,
-                    n_sub_f=n_sub_f_mg,
-                    w=w_f,
-                    inv_npix=inv_npix,
-                    t_exp_f=t_exp_f,
-                    r_exp_f=r_exp_f,
-                    n_l=_n0,
-                    k_l=_k0,
-                    d=float(z0v[0]),
-                )
-            )
+            # SOL3 decoded by its own decoder: the SOL2 one read the encoded sigmas as n and L, so the warning below fired
+            # every time and named a false cause (audit 2026-11-15, L3-m1).
+            _mse_sol3_z0_sp = float(ctx.spectral_mse(z0v))
 
             _tol_m = 1e-6 * max(1.0, abs(_mse_sol2_sp))
 
@@ -1091,7 +1074,7 @@ def _run_free_knot_stage(
 
 
 
-    rmse_warm = float(np.sqrt(max(float(ctx.obj(z0)), 0.0)))
+    rmse_warm = float(np.sqrt(max(float(ctx.spectral_mse(z0)), 0.0)))
 
     if not optimize_n:
         rmse_ref = float(base_result.get("rmse", float("nan")))
@@ -1137,11 +1120,11 @@ def _run_free_knot_stage(
 
     z1 = np.asarray(ctx.best_z[0], dtype=np.float64).ravel().copy()
 
-    mse_1_spec = float(ctx.obj(z1))
+    mse_1_spec = float(ctx.spectral_mse(z1))
 
     _x1_ret = np.asarray(getattr(r1, "x", z1), dtype=np.float64).ravel()
 
-    _mse1_ret_spec = float(ctx.obj(_x1_ret))
+    _mse1_ret_spec = float(ctx.spectral_mse(_x1_ret))
 
     if _mse1_ret_spec > mse_1_spec + 1e-12 * max(1.0, abs(mse_1_spec)):
         log.info(
@@ -1220,11 +1203,11 @@ def _run_free_knot_stage(
 
     zf = np.asarray(ctx.best_z[0], dtype=np.float64).ravel().copy()
 
-    mse_f_spec = float(ctx.obj(zf))
+    mse_f_spec = float(ctx.spectral_mse(zf))
 
     _x2_ret = np.asarray(getattr(r2, "x", zf), dtype=np.float64).ravel()
 
-    _mse2_ret_spec = float(ctx.obj(_x2_ret))
+    _mse2_ret_spec = float(ctx.spectral_mse(_x2_ret))
 
     if _mse2_ret_spec > mse_f_spec + 1e-12 * max(1.0, abs(mse_f_spec)):
         log.info(
@@ -1245,11 +1228,11 @@ def _run_free_knot_stage(
 
         z3 = np.asarray(ctx.best_z[0], dtype=np.float64).ravel().copy()
 
-        mse_3_spec = float(ctx.obj(z3))
+        mse_3_spec = float(ctx.spectral_mse(z3))
 
         _x3_ret = np.asarray(getattr(r3, "x", z3), dtype=np.float64).ravel()
 
-        _mse3_ret_spec = float(ctx.obj(_x3_ret))
+        _mse3_ret_spec = float(ctx.spectral_mse(_x3_ret))
 
         if _mse3_ret_spec > mse_3_spec + 1e-12 * max(1.0, abs(mse_3_spec)):
             log.info(
@@ -1278,7 +1261,7 @@ def _run_free_knot_stage(
             nfev=int(getattr(r3, "nfev", 0) or 0),
             status=int(getattr(r3, "status", -1)),
             rmse=float(rmse_3),
-            delta_rmse_vs_phase2=float(rmse_3 - float(np.sqrt(max(float(ctx.obj(_x2_ret)), 0.0)))),
+            delta_rmse_vs_phase2=float(rmse_3 - float(np.sqrt(max(float(ctx.spectral_mse(_x2_ret)), 0.0)))),
             delta_rmse_vs_warm=float(rmse_3 - rmse_warm),
         )
 

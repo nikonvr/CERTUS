@@ -162,6 +162,17 @@ from certus.utils.certus_exclusions import filter_params_for_gui
 from certus_physics import SLIT_PROFILE_NODES, arange_inclusive, calculate_RT_vectorized_real_HL
 
 
+def _log_consensus_seed_score(logger: Any, params: dict[str, Any], stage_tag: str, sid: str, seed: int, score: float) -> None:
+    """One line per consensus seed, raw score included (inf = rejected), when ``consensus_log_seed_scores`` is set.
+
+    Off by default: no line, nothing else changes. The aggregates alone could not tell whether a winner had a rejected
+    seed (audit 2026-11-15, follow-up of M-L2).
+    """
+    if params.get("consensus_log_seed_scores", False):
+        logger.info("[CONSENSUS-SEED] %s sid=%s seed=%d score=%r", stage_tag, sid, int(seed), float(score))
+
+
+
 def _prepare_robustness_nominal_optics(
     params: dict[str, Any],
     p_thick_nominal: list[float],
@@ -964,11 +975,11 @@ def run_final_simulation_block(
                         compute_layer_profile=False,
                     )
                     _task_futures.append((sid, seed, cache_key, f))
-
                 for sid, seed, cache_key, f in _task_futures:
                     try:
                         res_consensus = f.result()
                         score_c = _consensus_score_from_result(res_consensus)
+                        _log_consensus_seed_score(logger, params, stage_tag, sid, seed, score_c)
                         _store_and_consume_consensus_score(
                             robustness_score_cache=robustness_score_cache,
                             cache_key=cache_key,

@@ -1,0 +1,23 @@
+juge de paix (JSON-strat-example.json), banc STRAT après les mineurs du groupe STRAT (L2-m1, L2-m2, L2-m3, L2-m6, L3-m7, L4-m4) et la graine en échec
+commande : python scripts/bench_examples.py strat --auto-yes ; code : 73b4835d Measure whether the eps1 floor of INDEX acts on the examples (owner's question on M-L1)
+WAIT_EXIT=finished
+STRAT_N_STRATEGIES=2560
+STRAT_CRASH_ELIMINATED=0/2560
+SETUP_S=0.832
+RUN_S=1376.349
+RESULT=0.007256533920244814
+SEEL = 2*sqrt(RESULT) = 0.1704 nm (après M-L2 : 0.1577 nm ; après C-L4 : 0.1713 ; avant : 0.1531)
+0 « slit-bias profile failed », 0 « Consensus re-score failed », 0 classement INCOMPLETE
+classement (140 premiers caractères) :
+STRAT_RANK00 id=900450739 origin=LOCAL_SEARCH score=0.007257 crash=0.0000 elim=False nblocks=9 nwl=6 wl=[544,604,544,604,574,544,485,453,473
+STRAT_RANK01 id=900450739 origin=ELITE score=0.007300 crash=0.0000 elim=False nblocks=4 nwl=4 wl=[544,485,453,473]
+STRAT_RANK02 id=900450740 origin=ELITE score=0.007300 crash=0.0000 elim=False nblocks=4 nwl=4 wl=[544,485,453,473]
+STRAT_RANK03 id=900450741 origin=ELITE score=0.007300 crash=0.0000 elim=False nblocks=4 nwl=4 wl=[544,485,453,473]
+STRAT_RANK04 id=900450742 origin=ELITE score=0.007300 crash=0.0000 elim=False nblocks=4 nwl=4 wl=[544,485,453,473]
+STRAT_RANK05 id=900450743 origin=ELITE score=0.007300 crash=0.0000 elim=False nblocks=4 nwl=4 wl=[544,485,453,473]
+STRAT_RANK06 id=900450744 origin=ELITE score=0.007300 crash=0.0000 elim=False nblocks=4 nwl=4 wl=[544,485,453,473]
+STRAT_RANK07 id=900350516 origin=ELITE score=0.007787 crash=0.0000 elim=False nblocks=3 nwl=3 wl=[543,459,471]
+STRAT_RANK08 id=900250422 origin=ELITE score=0.008192 crash=0.0000 elim=False nblocks=2 nwl=2 wl=[544,459]
+STRAT_RANK09 id=900550295 origin=ELITE score=0.008568 crash=0.0000 elim=False nblocks=5 nwl=5 wl=[544,461,471,459,454]
+L2-m1 (porte ELITE au niveau de bruit du run) et L4-m4 (k et float64 en phase B) changent le calcul ; mesurés ensemble, leur part n'est pas séparée.
+journal complet hors dépôt : CERTUS/certus1111_hors_git_2026-11-15/juge_de_paix_apres_mineurs_complet.txt

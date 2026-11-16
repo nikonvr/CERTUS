@@ -66,3 +66,43 @@ def test_a_configuration_without_the_new_keys_keeps_the_window_as_it_is(index_wi
 
     assert fresh.sb_lmin.value() == 420.0
     assert fresh.sb_sub_thickness_mm.value() == 2.5
+
+
+# The INDEX window saves and loads its settings through one table (certus/ui/certus_config_table.py).
+
+_INDEX_KEYS = {
+    "version", "data_type", "file_loaded", "substrate", "frosted", "thickness_min", "thickness_max", "normalized",
+    "exclude_oh", "exclude_min", "exclude_max", "fit_lambda_min", "fit_lambda_max", "substrate_thickness_mm", "oh_band",
+    "high_precision", "weight_T", "weight_R", "model_type", "params", "optimization",
+}
+
+
+def test_the_index_configuration_keeps_its_keys(index_windows) -> None:
+    assert set(index_windows[0]._collect_config()) == _INDEX_KEYS
+
+
+def test_every_setting_of_the_index_table_comes_back(index_windows) -> None:
+    from config_table_checks import assert_round_trip
+
+    from certus.ui.certus_index_ui_state import INDEX_CONFIG_TABLE
+
+    # Frosted glass forces both weights and is not loaded with them: its own test follows.
+    assert_round_trip(*index_windows, INDEX_CONFIG_TABLE, skip=("frosted",))
+
+
+def test_a_frosted_configuration_comes_back_frosted_with_its_forced_weights(index_windows) -> None:
+    source, fresh = index_windows
+    source.rb_frosted_glass.setChecked(True)
+
+    fresh._apply_config(source._collect_config())
+
+    assert fresh.rb_frosted_glass.isChecked() is True
+    assert (fresh.sb_weight_T.value(), fresh.sb_weight_R.value()) == (0.0, 1.0)
+
+
+def test_every_editable_index_setting_is_saved_or_left_out_by_name(index_windows) -> None:
+    from config_table_checks import assert_every_setting_is_in_the_table
+
+    from certus.ui.certus_index_ui_state import INDEX_CONFIG_OUTSIDE_TABLE, INDEX_CONFIG_TABLE
+
+    assert_every_setting_is_in_the_table(index_windows[0], INDEX_CONFIG_TABLE, INDEX_CONFIG_OUTSIDE_TABLE)

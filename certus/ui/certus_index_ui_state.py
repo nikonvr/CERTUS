@@ -17,9 +17,42 @@ from certus.core.certus_index_core import (
     OptimizationConfig,
     substrateMode,
 )
+from certus.ui.certus_config_table import ConfigField, apply_table, collect_table
 from certus.ui.certus_ui_utils import notify
 from certus.utils.certus_index_utils import DataType, normalize_index_config
 from certus.utils.certus_qsettings import certus_settings
+
+
+def _weights_apply(cfg) -> bool:
+    """Frosted glass forces the weights (T = 0, R = 1): a frosted configuration does not load them."""
+    return not cfg.get("frosted", False)
+
+
+# The settings an INDEX configuration saves and loads back, in the order they are loaded: the substrate first (it resets
+# the substrate thickness), frosted glass before the boxes and weights it forces, the excluded range before the OH box
+# that overwrites it.
+INDEX_CONFIG_TABLE = (
+    ConfigField("substrate", "cb_sub", "text", ""),
+    ConfigField("frosted", "rb_frosted_glass", "bool", False, off_widget="rb_standard"),
+    ConfigField("thickness_min", "sb_dmin", "float", 50.0),
+    ConfigField("thickness_max", "sb_dmax", "float", 1000.0),
+    ConfigField("normalized", "chk_normalized", "bool", True),
+    ConfigField("exclude_oh", "chk_exclude", "bool", False),
+    ConfigField("exclude_min", "sb_ex_min", "float"),
+    ConfigField("exclude_max", "sb_ex_max", "float"),
+    ConfigField("fit_lambda_min", "sb_lmin", "float"),
+    ConfigField("fit_lambda_max", "sb_lmax", "float"),
+    ConfigField("substrate_thickness_mm", "sb_sub_thickness_mm", "float"),
+    ConfigField("oh_band", "chk_oh_band", "bool", False),
+    ConfigField("high_precision", "chk_high_precision", "bool", False),
+    ConfigField("weight_T", "sb_weight_T", "float", 1.0, applies=_weights_apply),
+    ConfigField("weight_R", "sb_weight_R", "float", 1.0, applies=_weights_apply),
+)
+
+# The editable widgets the table does not carry, with the reason.
+INDEX_CONFIG_OUTSIDE_TABLE = {
+    "chk_absorbing_sub": "set by the substrate: checked and locked for silicon, unchecked and hidden otherwise",
+}
 
 
 class CertusIndexStateMixin:
@@ -158,42 +191,19 @@ class CertusIndexStateMixin:
     def _collect_config(self) -> dict:
         """Serialize the CERTUS_INDEX widget state to a JSON-ready dict."""
 
-        params_values = []
-
-        if hasattr(self, "input_params"):
-            params_values = [s.value() for s in self.input_params]
-
         opt_block = {}
-
-        if hasattr(self, "input_max_feval"):
-            opt_block["max_feval"] = int(self.input_max_feval.value())
         if getattr(self, "_ir_analytic_polish", False):
             opt_block["ir_analytic_polish"] = True
 
+        # This window has no data-type combo, model combo nor parameter spins: their keys keep the values they always had.
         return {
             "version": __version__,
-            "substrate": self.cb_sub.currentText() if hasattr(self, "cb_sub") else "",
-            "frosted": self.rb_frosted_glass.isChecked() if hasattr(self, "rb_frosted_glass") else False,
-            "data_type": self.cb_data_type.currentText() if hasattr(self, "cb_data_type") else "",
+            "data_type": "",
             "file_loaded": getattr(self, "source_file_path", None),
-            "thickness_min": self.sb_dmin.value() if hasattr(self, "sb_dmin") else 50.0,
-            "thickness_max": self.sb_dmax.value() if hasattr(self, "sb_dmax") else 1000.0,
-            "normalized": self.chk_normalized.isChecked() if hasattr(self, "chk_normalized") else True,
-            "exclude_oh": self.chk_exclude.isChecked() if hasattr(self, "chk_exclude") else False,
-            "exclude_min": self.sb_ex_min.value() if hasattr(self, "sb_ex_min") else None,
-            "exclude_max": self.sb_ex_max.value() if hasattr(self, "sb_ex_max") else None,
-            "oh_band": self.chk_oh_band.isChecked() if hasattr(self, "chk_oh_band") else False,
-            "fit_lambda_min": self.sb_lmin.value() if hasattr(self, "sb_lmin") else None,
-            "fit_lambda_max": self.sb_lmax.value() if hasattr(self, "sb_lmax") else None,
-            "substrate_thickness_mm": (
-                self.sb_sub_thickness_mm.value() if hasattr(self, "sb_sub_thickness_mm") else None
-            ),
-            "high_precision": self.chk_high_precision.isChecked() if hasattr(self, "chk_high_precision") else False,
-            "model_type": (self.model_combo.currentText() if hasattr(self, "model_combo") else "TLU"),
-            "params": params_values,
+            **collect_table(self, INDEX_CONFIG_TABLE),
+            "model_type": "TLU",
+            "params": [],
             "optimization": opt_block,
-            "weight_T": float(self.sb_weight_T.value()) if hasattr(self, "sb_weight_T") else 1.0,
-            "weight_R": float(self.sb_weight_R.value()) if hasattr(self, "sb_weight_R") else 1.0,
         }
 
     def _normalize_index_config(self, cfg: dict) -> dict:
@@ -218,56 +228,9 @@ class CertusIndexStateMixin:
         cfg = self._normalize_index_config(cfg)
         self._ir_analytic_polish = bool(cfg.get("optimization", {}).get("ir_analytic_polish", False))
 
-        sub = cfg.get("substrate")
-
-        if sub and hasattr(self, "cb_sub"):
-            idx = self.cb_sub.findText(str(sub))
-
-            if idx >= 0:
-                self.cb_sub.setCurrentIndex(idx)
-
-        if cfg.get("frosted", False):
-            self.rb_frosted_glass.setChecked(True)
-
-        else:
-            self.rb_standard.setChecked(True)
-
-        self.sb_dmin.setValue(cfg.get("thickness_min", 10.0))
-
-        self.sb_dmax.setValue(cfg.get("thickness_max", 1000.0))
-
-        self.chk_normalized.setChecked(cfg.get("normalized", False))
-
-        self.chk_exclude.setChecked(cfg.get("exclude_oh", False))
-
-        # Settings of the fit that a configuration lost (audit 2026-11-15, M-L5b): the excluded range was written but
-        # never read back; the fit window, the substrate thickness and the two boxes below were not written at all.
-        # A configuration saved before them leaves the widgets as they are.
-        for key, spin_name in (
-            ("exclude_min", "sb_ex_min"),
-            ("exclude_max", "sb_ex_max"),
-            ("fit_lambda_min", "sb_lmin"),
-            ("fit_lambda_max", "sb_lmax"),
-            ("substrate_thickness_mm", "sb_sub_thickness_mm"),
-        ):
-            if cfg.get(key) is not None and hasattr(self, spin_name):
-                getattr(self, spin_name).setValue(float(cfg[key]))
-
-        for key, box_name in (("oh_band", "chk_oh_band"), ("high_precision", "chk_high_precision")):
-            if key in cfg and hasattr(self, box_name):
-                getattr(self, box_name).setChecked(bool(cfg[key]))
+        apply_table(self, INDEX_CONFIG_TABLE, cfg)
 
         if not cfg.get("frosted", False):
-            wt = cfg.get("weight_T")
-
-            if wt is not None and hasattr(self, "sb_weight_T"):
-                self.sb_weight_T.setValue(float(wt))
-
-            wr = cfg.get("weight_R")
-
-            if wr is not None and hasattr(self, "sb_weight_R"):
-                self.sb_weight_R.setValue(float(wr))
-
             self._persist_index_weight_settings()
 
     def _post_save_config(self, filename: str) -> None:

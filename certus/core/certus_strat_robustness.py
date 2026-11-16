@@ -173,6 +173,20 @@ def _log_consensus_seed_score(logger: Any, params: dict[str, Any], stage_tag: st
 
 
 
+def _record_consensus_seed_failure(
+    logger: Any, sid: str, seed: int, error: Exception, seed_scores: list[float]
+) -> None:
+    """A seed whose evaluation raised counts as a rejection: inf joins the scores, so the consensus is infinite (M-L2).
+
+    It used to be logged only, and the strategy kept the mean of its other seeds (owner's decision, 2026-11-16). Not
+    cached: the next stage evaluates that seed again.
+    """
+    from certus.core.certus_strat_consensus import _log_consensus_seed_failure
+
+    _log_consensus_seed_failure(logger=logger, sid=sid, seed=seed, error=error)
+    seed_scores.append(float("inf"))
+
+
 def _prepare_robustness_nominal_optics(
     params: dict[str, Any],
     p_thick_nominal: list[float],
@@ -987,11 +1001,8 @@ def run_final_simulation_block(
                             seed_scores=_consensus_cached[sid],
                         )
                     except NUMERICAL_FAULT_EXCEPTIONS as e:
-                        _log_consensus_seed_failure(
-                            logger=logger,
-                            sid=sid,
-                            seed=seed,
-                            error=e,
+                        _record_consensus_seed_failure(
+                            logger, sid, seed, e, _consensus_cached[sid]
                         )
 
         for _local_idx, item in enumerate(candidates):

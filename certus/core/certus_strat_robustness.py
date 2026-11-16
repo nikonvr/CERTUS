@@ -54,8 +54,12 @@ from certus.core.certus_strat_robustness_diagnostics import (
     _MARGIN_REPORT_CEILING_A,
     _critical_layer,
     _margin_profile_sparse,
+    _nominal_crash_rate,
+    _nominal_noise_amp,
+    _nominal_noise_index,
     _phase_a_forced_layers,
     _resolve_witness_resets,
+    _strategy_final_score,
     _worst_layer_swing,
 )
 from certus.core.certus_strat_robustness_gate import (
@@ -319,8 +323,12 @@ def _attach_slit_profiles(
             # 🔴 EACH STRATEGY AT ITS OWN SLIT (A18). The bias goes as B^2, so handing every variant the run-level width would make
             # the four widths differ only by their NOISE and not by their BIAS -- half the effect, silently.
             strategy["slit_profile"] = _slit_bias_profiles(strategy, p_thick_nominal, params, _strategy_resolution(strategy, params))
-        except Exception:  # a missing profile disables the bias
-            strategy["slit_profile"] = None  # for that strategy alone
+        except Exception as exc:  # noqa: BLE001 -- any failure of the profile has the same consequence, said below
+            # Without its profile the strategy would be simulated without the bias the others carry, and look better
+            # than it is: it is marked, then scored infinite by _strategy_final_score (audit 2026-11-15, L2-m3).
+            strategy["slit_profile"] = None
+            strategy["slit_profile_failed"] = True
+            logger.warning("[SLIT] slit-bias profile failed for strategy %s, rejected: %r", strategy.get("strategy_id"), exc)
     n_ok = sum(1 for strategy in strategies if strategy.get("slit_profile") is not None)
     logger.info(
         f"[SLIT] slit bias active, {n_ok}/{len(strategies)} strategies "

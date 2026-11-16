@@ -124,6 +124,7 @@ def test_yield_explains_the_worst_rate_and_the_nominal_noise_rate(qapp):
     data = result()
     data["crash_rate"] = 0.12
     data["crash_rates_by_noise"] = {"0.5": 0.01, "1": 0.02, "2": 0.12}
+    data["crash_rate_nominal"] = 0.02  # the task's own reading of the nominal level, since L2-m6
     win = StrategiesTableWindow(None, [data], [100.0, 80.0, 60.0])
     try:
         item = win.table.item(0, headers(win).index("Yield %"))

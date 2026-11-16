@@ -701,12 +701,26 @@ def _strategy_id_sort_token(strategy_id: Any) -> tuple:
         return (1, text)
 
 
+def _note_failed_phase_b_block(params: dict[str, Any], n_blk: int) -> list:
+    """Record a phase B block that failed, and return the empty inheritance the next block starts from.
+
+    A failed block was logged in ERROR and then simply absent: the final ranking was published as if complete. The
+    list reaches the exported parameters, and the report says the ranking is incomplete (audit 2026-11-15, L3-m7).
+    """
+    params.setdefault("phase_b_failed_blocks", []).append(int(n_blk))
+    return []
+
+
 def _extract_rmse_p95_for_noise(result_item: dict[str, Any], target_noise: float) -> float:
     try:
         results = result_item.get("results_per_noise", [])
         if not results:
             return float("inf")
-        best = min(results, key=lambda r: abs(float(r.get("noise_level", 0.0)) - float(target_noise)))
+        # The level of the RUN, not the one rescaled by the strategy's own slit: a 1 nm child had its 0.5x level read
+        # as its nominal one (audit 2026-11-15, L2-m1). Older results without the key keep the previous reading.
+        best = min(
+            results, key=lambda r: abs(float(r.get("noise_level_run", r.get("noise_level", 0.0))) - float(target_noise))
+        )
         return float(best.get("rmse_p95", best.get("rmse_mean", np.inf)))
     except Exception:
         return float("inf")

@@ -14,6 +14,50 @@ _CAUSE_WORDS = {
 }
 
 
+def _nominal_noise_index(noise_levels: list[float], params: dict[str, Any]) -> int:
+    """Position of the nominal level: the factor of ``robustness_noise_factors`` closest to 1, not the middle element.
+
+    The middle of an unsorted list ("1, 0.5, 2") is the 2x level: margins read against it came out twice as safe
+    (audit 2026-11-15, L2-m2). With the default factors (0.5, 1, 2) both answers are the same index.
+    """
+    from certus.core.certus_strat_robustness_noise import _parse_noise_factors
+
+    factors = list(_parse_noise_factors(params.get("robustness_noise_factors", [0.5, 1.0, 2.0])))
+    if len(factors) != len(noise_levels) or not factors:
+        return len(noise_levels) // 2
+    return int(np.argmin(np.abs(np.asarray(factors, dtype=np.float64) - 1.0)))
+
+
+def _nominal_noise_amp(noise_levels: list[float], params: dict[str, Any], dT_dd: Any = None) -> float:
+    """The amplitude A of the nominal noise, in units of T, that the margins are counted in.
+
+    Photometric noise: the nominal level / 100. Thickness noise (``thickness_tolerance_nm``): the level is in nm, and
+    dividing nm by 100 gave margins in no unit at all; A is then |dT/dd| x sigma, with the median slope over the layers,
+    as ``reading_hysteresis`` does (audit 2026-11-15, L2-m2).
+    """
+    level = float(noise_levels[_nominal_noise_index(noise_levels, params)])
+    if params.get("thickness_tolerance_nm") is not None and dT_dd is not None:
+        return float(np.median(np.abs(np.asarray(dT_dd, dtype=np.float64)))) * level
+    return level / 100.0
+
+
+def _nominal_crash_rate(crash_rates_by_noise: dict[str, float], noise_levels: list[float], params: dict[str, Any]) -> Any:
+    """The non-completion rate at the nominal level. The table read the key "1", an absolute level: with a trigger of
+    0.5 that is the 2x level, with 0.05 there is no such key (audit 2026-11-15, L2-m6)."""
+    return crash_rates_by_noise.get(f"{float(noise_levels[_nominal_noise_index(noise_levels, params)]):g}")
+
+
+def _strategy_final_score(strategy: dict[str, Any], results_per_noise: list[dict[str, Any]]) -> float:
+    """The worst P95 over the noise levels; infinite when the slit-bias profile of this strategy could not be built.
+
+    Without its profile a strategy is simulated without the bias every other plan carries, so it looks better than
+    the same plan judged like the others: it is rejected, never ranked (audit 2026-11-15, L2-m3).
+    """
+    if strategy.get("slit_profile_failed"):
+        return float("inf")
+    return max(r.get("rmse_p95", r["rmse_mean"] + r["rmse_std"]) for r in results_per_noise)
+
+
 #: Above this many multiples of A a margin carries no ranking information: the draws are
 #: bounded, so the event is impossible and one impossibility does not beat another. Kept
 #: well above the 2 A verdict threshold so the boundary itself stays visible.

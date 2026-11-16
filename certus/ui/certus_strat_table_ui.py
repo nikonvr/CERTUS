@@ -465,8 +465,7 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
             f"⚠ {yield_pct:.1f}" if rescued else f"{yield_pct:.1f}"
         )
         causes = result.get("crash_causes") or {}
-        rates_by_noise = result.get("crash_rates_by_noise") or {}
-        nominal_rate = rates_by_noise.get("1")
+        nominal_rate = result.get("crash_rate_nominal")  # the key "1" was an absolute level, not the nominal (L2-m6)
         nominal_line = (
             f"Nominal noise (1x) non-completion rate: {float(nominal_rate):.2%}\n"
             if nominal_rate is not None

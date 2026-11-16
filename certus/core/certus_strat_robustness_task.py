@@ -9,8 +9,11 @@ from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.core.certus_strat_robustness_diagnostics import (
     _critical_layer,
     _margin_profile_sparse,
+    _nominal_crash_rate,
+    _nominal_noise_amp,
     _phase_a_forced_layers,
     _resolve_witness_resets,
+    _strategy_final_score,
     _worst_layer_swing,
 )
 from certus.core.certus_strat_robustness_gate import (
@@ -706,6 +709,7 @@ def _test_strategy_robustness_task(
         results_per_noise.append(
             {
                 "noise_level": noise_val,
+                "noise_level_run": noise_val / rescale if strat_slit is not None else noise_val,
                 "rmse_mean": float(np.mean(run_rmses)),
                 "rmse_std": float(np.std(run_rmses)),
                 "rmse_p95": rmse_p95,
@@ -715,13 +719,11 @@ def _test_strategy_robustness_task(
                 "avg_dynamics": avg_dyns_batch.tolist(),
             }
         )
-
     total_mc_sims = num_runs * len(noise_levels)
     _emit_stat("MCS", total_mc_sims)
     #Ranking functional: P95, decided by measurement (see comment block
     # in the loop above). CVaR95 was tried and REMOVED.
-    final_score = max(r.get("rmse_p95", r["rmse_mean"] + r["rmse_std"]) for r in results_per_noise)
-
+    final_score = _strategy_final_score(strategy, results_per_noise)
     # ELIMINATION ON CRASH RISK.
     #
     # A strategy whose deposition risks not terminating is unusable,
@@ -833,6 +835,7 @@ def _test_strategy_robustness_task(
         "crash_rate": crash_rate_max,
         # The detail the `max` above throws away. See the comment of `crash_rates_by_noise`.
         "crash_rates_by_noise": dict(crash_rates_by_noise),
+        "crash_rate_nominal": _nominal_crash_rate(crash_rates_by_noise, noise_levels, params),
         # The three failure modes, separately. 👤 "If 95% of depositions
         # work, it's a win" — but knowing WHY the 5% fail is what
         # allows correcting the strategy rather than rejecting it.
@@ -871,7 +874,7 @@ def _test_strategy_robustness_task(
         # by the amplitude A the MACHINE actually has; dividing by the 2x level would
         # report a strategy as twice as safe as it is.
         "critical_layer": _critical_layer(
-            margin_profile, float(noise_levels[len(noise_levels) // 2]) / 100.0
+            margin_profile, _nominal_noise_amp(noise_levels, params, dT_dd)
         ),
         # The profile itself, sparsely. 🔴 NEEDED FOR RANKING, and the reduced
         # `critical_layer` above cannot replace it: measured 2026-08-11, nine of the ten
@@ -881,7 +884,7 @@ def _test_strategy_robustness_task(
         # them. Ranking needs the margin restricted to the layers where they DIFFER,
         # which only a caller seeing the whole set can work out.
         "margin_by_layer": _margin_profile_sparse(
-            margin_profile, float(noise_levels[len(noise_levels) // 2]) / 100.0
+            margin_profile, _nominal_noise_amp(noise_levels, params, dT_dd)
         ),
         "symmetry_score_pct": float(strategy.get("symmetry_score_pct", 0.0)),
         "num_unique_wavelengths": unique_wls,

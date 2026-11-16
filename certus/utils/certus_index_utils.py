@@ -98,13 +98,13 @@ def _ratio_theoretical_from_nk(lam, n_l, k_l, d_nm, n_sub):
 
     n_pts = len(lam)
 
-    _THICK_BUF[0] = float(d_nm)
+    thickness = np.array([float(d_nm)], dtype=np.float64)  # local: the corridor walks run in 2 threads (L4-m5)
 
     n_layers_all = (n_l - 1j * k_l).reshape(n_pts, 1)
 
     # Exact R and T calculation (with backside)
 
-    _r_film_tot, t_film_tot = calculate_RT_vectorized_real(_THICK_BUF, n_layers_all, n_sub, lam, with_backside=True)
+    _r_film_tot, t_film_tot = calculate_RT_vectorized_real(thickness, n_layers_all, n_sub, lam, with_backside=True)
 
     # Bare substrate T (with backside) - 1e-7 safety bound to prevent NaN
 
@@ -113,7 +113,6 @@ def _ratio_theoretical_from_nk(lam, n_l, k_l, d_nm, n_sub):
     return t_film_tot / t_sub_nu
 
 
-_THICK_BUF = np.empty(1, dtype=np.float64)  # Pre-allocated, rewritten in-place
 
 
 def _transmittance_absolute_from_nk(lam, n_l, k_l, d_nm, n_sub):
@@ -133,13 +132,13 @@ def _transmittance_absolute_from_nk(lam, n_l, k_l, d_nm, n_sub):
         Absolute film transmittance, element-wise.
     """
 
-    _THICK_BUF[0] = float(d_nm)
+    thickness = np.array([float(d_nm)], dtype=np.float64)  # local: the corridor walks run in 2 threads (L4-m5)
 
     n_layers_all = (n_l - 1j * k_l).reshape(len(lam), 1)
 
     # Exact R and T calculation (with backside)
 
-    _r_film_tot, t_film_tot = calculate_RT_vectorized_real(_THICK_BUF, n_layers_all, n_sub, lam, with_backside=True)
+    _r_film_tot, t_film_tot = calculate_RT_vectorized_real(thickness, n_layers_all, n_sub, lam, with_backside=True)
 
     return t_film_tot
 
@@ -163,11 +162,11 @@ def _reflectance_ratio_theoretical_from_nk(lam, n_l, k_l, d_nm, n_sub):
 
     n_pts = len(lam)
 
-    _THICK_BUF[0] = float(d_nm)
+    thickness = np.array([float(d_nm)], dtype=np.float64)  # local: the corridor walks run in 2 threads (L4-m5)
 
     n_layers_all = (n_l - 1j * k_l).reshape(n_pts, 1)
 
-    r_film_tot, _t_film_tot = calculate_RT_vectorized_real(_THICK_BUF, n_layers_all, n_sub, lam, with_backside=True)
+    r_film_tot, _t_film_tot = calculate_RT_vectorized_real(thickness, n_layers_all, n_sub, lam, with_backside=True)
 
     t_sub_nu = np.maximum(calculate_bare_substrate_RT(lam, n_sub), 1e-7)
 

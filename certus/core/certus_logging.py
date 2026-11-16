@@ -117,7 +117,36 @@ def setup_logging(log_file: str | None = None, level: int | None = None) -> logg
         attach_jsonl_handler(logger, jsonl_path)
     except Exception:
         logger.debug("logger=certus sink=jsonl status=unavailable path=%s", jsonl_path, exc_info=True)
+    _forward_unhandled_certus_loggers(logger)
     return logger
+
+
+class _ForwardToCertus(logging.Handler):
+    """Hand the records of CERTUS code that logs through another logger to the handlers of "CERTUS"."""
+
+    _PREFIXES = ("certus", "ThinFilm", "CERTUS_")
+
+    def __init__(self, target: logging.Logger) -> None:
+        super().__init__(logging.INFO)
+        self._target = target
+
+    def emit(self, record: logging.LogRecord) -> None:
+        if record.name == "root" or record.name.startswith(self._PREFIXES):
+            self._target.handle(record)
+
+
+def _forward_unhandled_certus_loggers(certus_logger: logging.Logger) -> None:
+    """Only "CERTUS" had handlers: the INFO records sent to the root logger, to ``__name__`` loggers of certus/ or to
+    "certus" and "ThinFilm" were lost, among them the RE phase summaries and the FIELD workers' journal (audit
+    2026-11-15, L3-m5). The root logger gets one forwarding handler, at INFO, restricted to those names; replaced, not
+    stacked, when logging is set up again."""
+    root = logging.getLogger()
+    for handler in list(root.handlers):
+        if isinstance(handler, _ForwardToCertus):
+            root.removeHandler(handler)
+    root.addHandler(_ForwardToCertus(certus_logger))
+    if root.level > logging.INFO or root.level == logging.NOTSET:
+        root.setLevel(logging.INFO)
 
 
 def get_logger() -> logging.Logger:

@@ -15,3 +15,5 @@ complète à la fin ; rien de poussé. Une seule mesure à la fois (banc, valida
 | hors groupe | plancher ε1 d'INDEX | mesurer seulement (décision 👤 ensuite) |
 
 ## Fait
+
+G1 `83f0b7c6` `6ee16a4c` `cda58825` `196cb101` · G2 `05aa20dd` `8912a0f6` `7cb9b85d` · G3 `12926141` `0b857568` `015b1788` `df60ad0c` · G4 `4a0d00da` `085411a3` (L1-m4 reporté, chantier 47) · G5 `5e799503` `396efea0` (L5-m5 par la branche des configurations, fusion `e2f15e48`) · G6 `6da29b4e` `12146a9c` `02583592` `0c2791ad`.

@@ -37,28 +37,31 @@ ALLOWED = {
     "certus/physics/certus_optical_models.py::epsilon1_TL_analytic": "not TMM (Tauc-Lorentz epsilon_1)",
     "certus/physics/gradient_analytic.py::_compute_epsilon1_gradient_kernel": "not TMM (its gradient)",
     # Found on 2026-11-16 by the ratio form `(a - b) / (a + b)` (audit 2026-11-15, L1-m1), which the pair test missed.
-    # Single-interface Fresnel coefficients and stack copies mixed, NOT classified one by one: they may only go away.
-    "certus/core/certus_field_core.py::_calculate_field_single_pol": "ratio form, found 2026-11-16, not classified",
-    "certus/core/certus_substrate_index.py::IndexCore.n_from_r45p_single_face": "ratio form, found 2026-11-16, not classified",
-    "certus/core/certus_substrate_index.py::IndexCore.n_from_r45s_single_face": "ratio form, found 2026-11-16, not classified",
-    "certus/domain/optical/value_objects/refractive_index.py::RefractiveIndex.reflectance_normal_incidence": "ratio form, found 2026-11-16, not classified",
-    "certus/physics/certus_opt_needle.py::needle_scan_cached": "ratio form, found 2026-11-16, not classified",
-    "certus/physics/certus_opt_tmm.py::calculate_RTRback_incoherent_vectorized": "ratio form, found 2026-11-16, not classified",
-    "certus/physics/certus_opt_tmm.py::calculate_reflectance_bilayer_vectorized": "ratio form, found 2026-11-16, not classified",
-    "certus/physics/certus_strat_batch.py::_calculate_RT_HL_single_point": "ratio form, found 2026-11-16, not classified",
-    "certus/physics/certus_strat_batch.py::_compute_batch_rmse_kernel": "ratio form, found 2026-11-16, not classified",
-    "certus/physics/certus_strat_growth.py::calculate_detailed_growth": "ratio form, found 2026-11-16, not classified",
-    "certus/physics/certus_tmm_backside.py::_apply_exact_backside_generic": "ratio form, found 2026-11-16, not classified",
-    "certus/physics/certus_tmm_backside.py::apply_exact_backside_combination": "ratio form, found 2026-11-16, not classified",
-    "certus/physics/certus_tmm_matrix.py::calculate_RT_with_backside_fused": "ratio form, found 2026-11-16, not classified",
-    "certus/physics/certus_tmm_oblique.py::calc_spectrum_full_oblique_exact": "ratio form, found 2026-11-16, not classified",
-    "certus/physics/certus_tmm_single_layer.py::_calculate_RT_absorbing_sub_single": "ratio form, found 2026-11-16, not classified",
-    "certus/physics/certus_tmm_substrate.py::calculate_bare_substrate_R": "ratio form, found 2026-11-16, not classified",
-    "certus/physics/certus_tmm_substrate.py::calculate_bare_substrate_RT": "ratio form, found 2026-11-16, not classified",
-    "certus/physics/certus_tmm_substrate.py::calculate_bare_substrate_R_absorbing": "ratio form, found 2026-11-16, not classified",
-    "certus/physics/certus_tmm_substrate.py::calculate_bare_substrate_T_absorbing": "ratio form, found 2026-11-16, not classified",
-    "certus/physics/certus_tmm_substrate.py::calculate_single_interface_R": "ratio form, found 2026-11-16, not classified",
-    "certus/physics/gradient_analytic.py::_compute_single_layer_sensitivity_kernel": "ratio form, found 2026-11-16, not classified",
+    # Copies of the stack formula, to delegate to `reflection_amplitudes` (chantier 46):
+    "certus/core/certus_field_core.py::_calculate_field_single_pol": "copy (admittance recursion, r from Y_eff)",
+    "certus/physics/certus_opt_needle.py::needle_scan_cached": "copy (needle scan, n_inc = 1)",
+    "certus/physics/certus_opt_tmm.py::calculate_reflectance_bilayer_vectorized": "copy (METAL bilayer)",
+    # Not the stack formula: the Fresnel coefficient of ONE interface (bare substrate, back face), (n - 1)/(n + 1)
+    # with no matrix, which compute_RT_from_matrix does not compute.
+    "certus/domain/optical/value_objects/refractive_index.py::RefractiveIndex.reflectance_normal_incidence": "not TMM (one interface)",
+    "certus/physics/certus_opt_tmm.py::calculate_RTRback_incoherent_vectorized": "not TMM (back face, one interface)",
+    "certus/physics/certus_strat_batch.py::_calculate_RT_HL_single_point": "not TMM (back face, one interface)",
+    "certus/physics/certus_strat_batch.py::_compute_batch_rmse_kernel": "not TMM (back face, one interface)",
+    "certus/physics/certus_strat_growth.py::calculate_detailed_growth": "not TMM (back face, one interface)",
+    "certus/physics/certus_tmm_backside.py::_apply_exact_backside_generic": "not TMM (back face, one interface)",
+    "certus/physics/certus_tmm_backside.py::apply_exact_backside_combination": "not TMM (back face, one interface)",
+    "certus/physics/certus_tmm_matrix.py::calculate_RT_with_backside_fused": "not TMM (back face, one interface)",
+    "certus/physics/certus_tmm_oblique.py::calc_spectrum_full_oblique_exact": "not TMM (oblique back face, one interface)",
+    "certus/physics/certus_tmm_single_layer.py::_calculate_RT_absorbing_sub_single": "not TMM (back face, one interface)",
+    "certus/physics/certus_tmm_substrate.py::calculate_bare_substrate_R": "not TMM (bare substrate, one interface)",
+    "certus/physics/certus_tmm_substrate.py::calculate_bare_substrate_RT": "not TMM (bare substrate; T = (1-R)/(1+R))",
+    "certus/physics/certus_tmm_substrate.py::calculate_bare_substrate_R_absorbing": "not TMM (bare substrate, one interface)",
+    "certus/physics/certus_tmm_substrate.py::calculate_bare_substrate_T_absorbing": "not TMM (bare substrate, one interface)",
+    "certus/physics/certus_tmm_substrate.py::calculate_single_interface_R": "not TMM (one interface)",
+    "certus/physics/gradient_analytic.py::_compute_single_layer_sensitivity_kernel": "not TMM (back face, one interface)",
+    # Not a reflection at all: n from a measured R (inverse of the one-interface formula).
+    "certus/core/certus_substrate_index.py::IndexCore.n_from_r45p_single_face": "not TMM (n from R, inverse)",
+    "certus/core/certus_substrate_index.py::IndexCore.n_from_r45s_single_face": "not TMM (n from R, inverse)",
 }
 
 

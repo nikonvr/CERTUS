@@ -421,7 +421,9 @@ class SharedIndicesManager:
 
     def __init__(self, clues_at_wl: dict[float, dict[str, float]]) -> None:
         self.shm = None
-        self.dtype = np.float32
+        # Complex float64, as phase A holds them: float32 real parts dropped k and rounded n to 1e-7 for the phase B
+        # workers (audit 2026-11-15, L4-m4).
+        self.dtype = np.complex128
         self._serialize(clues_at_wl)
 
     def __enter__(self) -> Any:
@@ -442,10 +444,9 @@ class SharedIndicesManager:
         data = []
         for wl in sorted_wls:
             e = clues_dict[wl]
-            # Extract real part from potentially complex clues
-            h_val = np.real(e.get("H", 1.0))
-            l_val = np.real(e.get("L", 1.0))
-            sub_val = np.real(e.get("substrate", e.get("Sub", 1.0)))
+            h_val = complex(e.get("H", 1.0))
+            l_val = complex(e.get("L", 1.0))
+            sub_val = complex(e.get("substrate", e.get("Sub", 1.0)))
             data.append([wl, h_val, l_val, sub_val])
 
         arr = np.array(data, dtype=self.dtype)
@@ -509,7 +510,7 @@ class SharedIndicesWorker:
     def __init__(self, ctx: dict[str, Any]) -> None:
         self.shm = shared_memory.SharedMemory(name=ctx["shm_name"])
         self.arr = np.ndarray(ctx["shape"], dtype=ctx["dtype"], buffer=self.shm.buf)
-        self.wls = self.arr[:, 0]
+        self.wls = np.ascontiguousarray(self.arr[:, 0].real)
         self.vals = self.arr[:, 1:]
         self._cache = {}
 
@@ -565,7 +566,7 @@ class SharedIndicesWorker:
                     t = max(0.0, min(1.0, t))
             r = self.vals[idx - 1] + t * (self.vals[idx] - self.vals[idx - 1])
 
-        res = {"H": float(r[0]), "L": float(r[1]), "substrate": float(r[2])}
+        res = {"H": complex(r[0]), "L": complex(r[1]), "substrate": complex(r[2])}
         if len(self._cache) < 1000:
             self._cache[wl] = res
         return res

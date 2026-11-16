@@ -221,7 +221,7 @@ class TestSharedIndicesManagerWorker:
 
                 # Interpolation
                 d500 = worker.get(500.0)
-                assert 2.2 < d500["H"] < 2.4  # between 400 and 600
+                assert 2.2 < d500["H"].real < 2.4  # between 400 and 600 (complex since L4-m4: k reaches phase B)
 
                 # Edge: below range
                 d300 = worker.get(300.0)

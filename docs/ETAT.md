@@ -171,7 +171,7 @@ Les précautions du cache Numba restent dans le [mode opératoire](../reports/re
 
 | sujet | ce qui est en jeu |
 |---|---|
-| **audit du code (45)** | ε1 d'INDEX : le modèle la plafonne à 1, la vraie est plus basse au-dessus de la résonance (Kramers-Kronig : jusqu'à −38,8 sur les matériaux du test) ; M-L1 a gardé le plancher et annulé le gradient à cet endroit, le retirer changerait les bits du coût. Juge de paix : après C-L4 seul la recherche locale ne gagnait rien sur le gagnant à 4 blocs, non expliqué ([acquis](ETAT_acquis.md)). Consensus : une graine dont l'évaluation échoue est journalisée, pas comptée comme un rejet |
+| **audit du code (45)** | ε1 d'INDEX : le modèle la plafonne à 1, la vraie est plus basse au-dessus de la résonance (Kramers-Kronig : jusqu'à −38,8 sur les matériaux du test) ; M-L1 a gardé le plancher et annulé le gradient à cet endroit, le retirer changerait les bits du coût. Juge de paix : après C-L4 seul la recherche locale ne gagnait rien sur le gagnant à 4 blocs, dont les trois graines sont finies : non expliqué ([acquis](ETAT_acquis.md)). Consensus : une graine dont l'évaluation échoue est journalisée, pas comptée comme un rejet |
 | **avis de tiers** | DLL du runtime Visual C++ dans `THIRD_PARTY_NOTICES.md` : droit de redistribution réservé par Microsoft aux licenciés de Visual Studio |
 | **paquet `certus_re`** | correction de la citation du saphir (Malitson et Dodge, 1972) à commiter par 👤 dans ce dépôt, puis à publier sur Zenodo |
 | **interface** | revoir les onze fenêtres ; teintes de marque, bande des fichiers récents, bornes des champs numériques |

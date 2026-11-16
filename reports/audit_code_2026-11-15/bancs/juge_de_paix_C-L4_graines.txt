@@ -1,0 +1,14 @@
+juge de paix, code 5be9f704 (C-L4 seul) + journal des graines 1210fd23 (consensus_log_seed_scores injecté par collect_params), arbre ../certus_wt_cl4_seeds
+WAIT_EXIT=timeout, WAIT_TIMEOUT=1800 s, RESULT=None : machine partagée (deux agents d'audit et une autre session) ; le RESULT ne vaut rien, le journal des graines vaut jusqu'à la fin d'ELITE (post-elite-r2).
+lignes [CONSENSUS-SEED] : 1098 ; score=inf : 450 ; stratégies notées : 365 ; avec graines finies ET infinies : 0 (un rejet est tout ou rien).
+ancien gagnant à 4 blocs [544,469,454,471] :
+[CONSENSUS-SEED] post-elite-r2 sid=900450561 seed=41 score=0.007037812923049674
+[CONSENSUS-SEED] post-elite-r2 sid=900450561 seed=42 score=0.007689080443844078
+[CONSENSUS-SEED] post-elite-r2 sid=900450561 seed=43 score=0.006922366809573504
+[CONSENSUS-SEED] post-elite-r2 sid=900350505 seed=41 score=0.00778357733836585
+[CONSENSUS-SEED] post-elite-r2 sid=900350505 seed=42 score=0.007664677553652453
+[CONSENSUS-SEED] post-elite-r2 sid=900350505 seed=43 score=0.0074958580443354825
+[CONSENSUS-SEED] post-elite-r2 sid=900150290 seed=41 score=0.008500510122227217
+[CONSENSUS-SEED] post-elite-r2 sid=900150290 seed=42 score=0.008639549761269886
+[CONSENSUS-SEED] post-elite-r2 sid=900150290 seed=43 score=0.008588924589577954
+journal complet hors dépôt : CERTUS/certus1111_hors_git_2026-11-15/juge_de_paix_C-L4_graines_complet.txt

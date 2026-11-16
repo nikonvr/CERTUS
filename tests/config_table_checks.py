@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from certus.ui.certus_config_table import ConfigField, read_field, resolve_widget, table_widgets
+from certus.ui.certus_config_table import ConfigField, read_field, resolve_widget
 
 _EDITABLE = (QAbstractSpinBox, QCheckBox, QComboBox, QLineEdit, QRadioButton, QAbstractSlider)
 
@@ -55,6 +55,17 @@ def editable_widgets(owner: object, depth: int = 2) -> dict[int, str]:
 
     seen.add(id(owner))
     walk(owner, "", 1)
+    return out
+
+
+def table_widgets(table) -> set[str]:
+    """The widget paths a table saves, radio partners included."""
+    out: set[str] = set()
+    for field in table:
+        out.add(field.widget)
+        if field.off_widget:
+            out.add(field.off_widget)
+        out.update(path for _, path in field.choices)
     return out
 
 

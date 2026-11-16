@@ -162,13 +162,3 @@ def apply_table(owner: object, table: Iterable[ConfigField], config: Mapping[str
             continue
         write_field(owner, field, value)
 
-
-def table_widgets(table: Iterable[ConfigField]) -> set[str]:
-    """The widget paths a table saves, radio partners included."""
-    out: set[str] = set()
-    for field in table:
-        out.add(field.widget)
-        if field.off_widget:
-            out.add(field.off_widget)
-        out.update(path for _, path in field.choices)
-    return out

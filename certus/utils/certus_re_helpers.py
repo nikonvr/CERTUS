@@ -1069,7 +1069,7 @@ def _re_header_normalize_for_tokens(raw: str) -> str:
 
     # Common FR -> tokens already handled by the parser
 
-    # [eèé]: the accented letters had been lost from this class, so "sans arrière" kept the backside
+    # The class below holds e and its two accented forms: they had been lost from it, so the accented spelling kept the backside
     # (audit 2026-11-15, M-L4b).
     s = re.sub(
         r"sans\s*[-_/]?\s*arri[eèé]res?",

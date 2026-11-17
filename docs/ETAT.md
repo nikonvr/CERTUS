@@ -12,7 +12,7 @@
 > L'état présent seulement ; l'historique est dans `git log` et `reports/`. À la demande : actions ouvertes et protocole de mesure
 > ([`CHANTIERS_RESTANTS.md`](CHANTIERS_RESTANTS.md)), acquis ([`ETAT_acquis.md`](ETAT_acquis.md)), preuves dans `reports/`.
 
-**Liste active** : [chantiers](CHANTIERS_RESTANTS.md) ; les chantiers faits y sont listés en fin de page. Décisions de 👤
+**Liste active** : [chantiers](CHANTIERS_RESTANTS.md), les ouverts seulement. Décisions de 👤
 du 17 au soir : 05, pôle infrarouge de catalogue derrière une option inactive ; 21, session dédiée ; 18, feu vert (18a puis
 18b). Reprise de la session en cours : [REPRISE](../reports/suite_2026-11-17/REPRISE.md).
 Le polisseur hybride et la pondération par bande sont intégrés. La grille automatique et la sélection robuste
@@ -29,7 +29,7 @@ dans `artifacts/archives-20261114/inventaire.json` de l'ancien clone (hors Git).
 
 **Python de référence : 3.15.2**, dépendances de requirements.lock.
 
-**Dernière validation complète** : le 2026-11-17 dans la nuit sous Windows sur `88e854dd` (chantiers 19, 05, 21) : oracle 1 214, ui 1 670, reste 322, performance 30, contrôles documentaires et ruff verts ([résumé](../reports/suite_2026-11-17/validation_nuit/summary.txt)) ; unit, relancé après un `git ls-files` en échec passager à la collecte : 6 367 et deux artefacts de charge, verts seuls en série : `VALIDATION=GO` ([résumé](../reports/suite_2026-11-17/validation_nuit_unit/summary.txt)).
+**Dernière validation complète** : le 2026-11-17 dans la nuit sous Windows sur `88e854dd` : oracle 1 214, ui 1 670, reste 322, performance 30, contrôles documentaires et ruff verts ([résumé](../reports/suite_2026-11-17/validation_nuit/summary.txt)) ; unit, relancé après un `git ls-files` en échec passager à la collecte : 6 367 et deux artefacts de charge, verts seuls en série : `VALIDATION=GO` ([résumé](../reports/suite_2026-11-17/validation_nuit_unit/summary.txt)).
 
 Pour un échec de comparaison au bit, rejouer sur [cache Numba vierge](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md).
 
@@ -44,7 +44,7 @@ Pour un échec de comparaison au bit, rejouer sur [cache Numba vierge](../report
 | **Conception (DESIGN)** | étape globale mémétique, champion sans couche < 5 nm et relances par défaut depuis le 2026-10-23 ; séparatrice 400–1200 nm à 0,000135 depuis l'exemple ([bilan](../reports/DESIGN_bs5050_2026-10-22/bilan.md)) | robustesse et reprise ([chantiers](CHANTIERS_RESTANTS.md)) |
 | **RE** | indices tabulés lus en n − ik depuis R148 (2026-10-05) : un RE antérieur sur indices absorbants en incidence oblique est à refaire ; un indice demandé hors de sa table est prolongé par une constante, avec un avertissement | — |
 | **Base de dépôts** | 140 monocouches mesurées au Photon RT (`example/database_depots/`), chargées par INDEX (« Deposit database… ») ; la voie (T ou R) se lit dans la géométrie du détecteur. Onze ajustements certifiés servent de références (`references_index.json`, `scripts\bench_base_depots.py`) : neuf à moins de 2 % d'épaisseur, deux écarts documentés dans les références du banc. RE ne la lit pas (il lui faut un classeur complet) | IDX-01 ; §5 |
-| **Exécutable gelé** | couche OpenMP (D87), 420 Mo, sans les outils de développement (D72) ; construit à `260e4e8c` le 2026-11-17, hub et dix modules démarrent (chantier 39) ; il porte son commit (`BUILD_COMMIT.json`). Licences embarquées dans `licenses/`. L'exécutable reste sur OpenMP : la roue PyPI de TBB est sous licence Intel, hors GPL (oneTBB sous Apache-2.0 à trouver, décision de 👤) | D72 |
+| **Exécutable gelé** | couche OpenMP (D87), 420 Mo, sans les outils de développement (D72) ; construit à `260e4e8c` le 2026-11-17, hub et dix modules démarrent ; il porte son commit (`BUILD_COMMIT.json`). Licences embarquées dans `licenses/`. L'exécutable reste sur OpenMP : la roue PyPI de TBB est sous licence Intel, hors GPL (oneTBB sous Apache-2.0 à trouver, décision de 👤) | D72 |
 | **Interface** | plan clos le 2026-09-08 : 12 critères de fin sur 13, le treizième démontré inatteignable (`xfail` strict) | §5 |
 | **Qualité** | CI : calcul sous Linux, interface et gel sous Windows, `pip-audit`, `gitleaks` ; tests isolés des préférences de 👤 ; aucune arête d'import montante (D26) | §5 |
 | **Validation externe** | 🔴 **aucune** : STRAT n'est validé que contre lui-même (👤, 2026-10-06 : les dépôts réels du dichroïque ne sont plus prévus) | — |
@@ -93,7 +93,7 @@ SEEL du `RESULT` officiel ; taux de plantage de `RANK00`.
 | `index_corridor` | 0,005 en indice absolu, actif |
 | DESIGN, étape globale (2026-10-23) | mémétique, 1000 enfants, population 30 (`_memetic_children = 0` : PGLOBAL) ; champion Pareto sans couche < 5 nm, actif ([bilan](../reports/DESIGN_bs5050_2026-10-22/bilan.md)) |
 | `photometric_curvature_amp` ; `affine_scale_amp`, `affine_offset_amp` | 0,00375 ; 0,05 et 0,02 |
-| modèle d'arrêt et étalonnage de STRAT (chantier 44, 2026-11-17, délégué par 👤) | inchangés : attente sans fin, étalonnage parfait ; arrêt au niveau ou tardif et échelle de 1 % ne changent pas l'ordre des plans déposables du juge de paix ([bilan](../reports/chantier44_etape3_2026-11-17/bilan.md)) |
+| modèle d'arrêt et étalonnage de STRAT (2026-11-17, délégué par 👤) | inchangés : attente sans fin, étalonnage parfait ; arrêt au niveau ou tardif et échelle de 1 % ne changent pas l'ordre des plans déposables du juge de paix ([bilan](../reports/chantier44_etape3_2026-11-17/bilan.md)) |
 | `allow_rate`, `rate_by_swing`, `rate_rescue` (`rate_rescue_few` 10) | vrais (« le cas général », 2026-10-12) |
 | `elite_rate_moves`, `elite_rate_max_candidates` | vrai, 120 (2026-10-13) |
 | `strat_local_search` | actif : recherche et contrôle à ±0,010, garde au corridor configuré (`strat_local_search_guard`, 2026-10-23) |
@@ -166,7 +166,7 @@ dépendant de T ou de λ, grenaille, bruit multiplicatif ou corrélé. Seul un r
 
 ## 4. Limites et travaux ouverts
 
-Les chantiers des 12–14 novembre sont suivis uniquement dans
+Les chantiers ouverts sont suivis uniquement dans
 [`CHANTIERS_RESTANTS.md`](CHANTIERS_RESTANTS.md). Les limites de fonctionnement sont décrites dans les guides
 [DESIGN](../pages/CERTUS_DESIGN.html#design-limits) et [STRAT](../pages/CERTUS_STRAT.html).
 Les précautions du cache Numba restent dans le [mode opératoire](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md).
@@ -175,7 +175,7 @@ Les précautions du cache Numba restent dans le [mode opératoire](../reports/re
 
 | sujet | ce qui est en jeu |
 |---|---|
-| **audit du code (45)** | ε1 d'INDEX : le plancher ε1 ≥ 1 n'agit sur aucun des quatre exemples (ε1 physique ≥ 2,24, [mesure](../reports/audit_code_2026-11-15/preuves/p_plancher_epsilon1.txt)) ; l'écart de 0,42 avec Kramers-Kronig venait de C ≥ 2·E0 (amortissement critique), où la forme fermée bridait α : corrigé (`758b13e7`), C < 2·E0 au bit près ([balayage](../reports/nuit_2026-11-16/preuves/p_eps1_kk_scan.txt)). |
+| **audit du code du 15 novembre** | ε1 d'INDEX : le plancher ε1 ≥ 1 n'agit sur aucun des quatre exemples (ε1 physique ≥ 2,24, [mesure](../reports/audit_code_2026-11-15/preuves/p_plancher_epsilon1.txt)) ; l'écart de 0,42 avec Kramers-Kronig venait de C ≥ 2·E0 (amortissement critique), où la forme fermée bridait α : corrigé (`758b13e7`), C < 2·E0 au bit près ([balayage](../reports/nuit_2026-11-16/preuves/p_eps1_kk_scan.txt)). |
 | **avis de tiers** | DLL du runtime Visual C++ dans `THIRD_PARTY_NOTICES.md` : droit de redistribution réservé par Microsoft aux licenciés de Visual Studio |
 | **paquet `certus_re`** | correction de la citation du saphir (Malitson et Dodge, 1972) à commiter par 👤 dans ce dépôt, puis à publier sur Zenodo |
 | **interface** | revoir les onze fenêtres ; teintes de marque, bande des fichiers récents, bornes des champs numériques |

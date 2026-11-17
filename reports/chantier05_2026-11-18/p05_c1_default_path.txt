@@ -1,0 +1,1 @@
+C1 : 20 tableaux (courbes, sources, coefficients, IndexCore.fit_sellmeier) sur BK7 et donnees de la variante A, bruit 2e-5 et 0 : 0 different au bit (code d'avant par git stash, 2026-11-18).

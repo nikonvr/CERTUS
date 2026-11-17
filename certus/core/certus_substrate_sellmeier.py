@@ -506,6 +506,91 @@ def sellmeier_2poles_const_eval(params: np.ndarray, wl_um: np.ndarray) -> np.nda
     return np.sqrt(np.maximum(np.asarray(n2, dtype=np.float64), 0.0))
 
 
+SELLMEIER_IR_UV_FRAC_MAX = 0.97  # L1, L2 below this fraction of the shortest evaluated wavelength
+SELLMEIER_IR_POLE_FRAC_MIN = 1.0 / 0.97  # L3 beyond this multiple of the longest evaluated wavelength
+SELLMEIER_IR_L_MAX_UM = 40.0
+SELLMEIER_IR_B_MAX = (12.0, 12.0, 200.0)  # B1, B2 (UV), B3 (IR: a far pole needs a large strength)
+
+
+def sellmeier_ir_pole_eval(params: np.ndarray, wl_um: np.ndarray) -> np.ndarray:
+    """Catalog Sellmeier n2 = A + sum Bi*lambda2/(lambda2 - Li2), lambda and Li in um, denominators SIGNED.
+
+    L1 and L2 are UV poles below the window and L3 an infrared pole beyond it, so no denominator vanishes where the curve
+    is evaluated; unlike `sellmeier_2poles_const_eval`, which floors them, a pole beyond lambda contributes its (negative)
+    term instead of being pinned at B = 0.
+    """
+
+    A, B1, L1, B2, L2, B3, L3 = np.asarray(params, dtype=np.float64).ravel()
+    lam2 = np.asarray(wl_um, dtype=np.float64) ** 2
+    n2 = A + B1 * lam2 / (lam2 - L1 * L1) + B2 * lam2 / (lam2 - L2 * L2) + B3 * lam2 / (lam2 - L3 * L3)
+    return np.sqrt(np.maximum(n2, 0.0))
+
+
+def _fit_sellmeier_ir_pole(
+    wl_fit_um: np.ndarray,
+    n_fit: np.ndarray,
+    w_fit: np.ndarray,
+    lam_lo_um: float,
+    lam_hi_um: float,
+    max_nfev: int,
+) -> np.ndarray | None:
+    """Fit the catalog form of `sellmeier_ir_pole_eval` on the fit window; poles bounded by [lam_lo_um, lam_hi_um].
+
+    At fixed poles n2 is linear in (A, B1, B2, B3): a non-negative least squares on a grid of poles seeds the three best
+    starts, then a bounded least squares with the analytic Jacobian polishes all seven parameters. Returns None when the
+    window leaves no room for the poles.
+    """
+
+    from scipy.optimize import nnls
+
+    uv_cap = float(SELLMEIER_IR_UV_FRAC_MAX) * float(lam_lo_um)
+    ir_lo = float(SELLMEIER_IR_POLE_FRAC_MIN) * float(lam_hi_um)
+    l_min = 1.0e-3
+    if uv_cap <= 2.0 * l_min or ir_lo >= SELLMEIER_IR_L_MAX_UM:
+        return None
+
+    lam2 = np.asarray(wl_fit_um, dtype=np.float64) ** 2
+    target = np.asarray(n_fit, dtype=np.float64)
+    w = np.asarray(w_fit, dtype=np.float64)
+    lo = np.array([0.0, 0.0, l_min, 0.0, l_min, 0.0, ir_lo])
+    hi = np.array([4.0, SELLMEIER_IR_B_MAX[0], uv_cap, SELLMEIER_IR_B_MAX[1], uv_cap, SELLMEIER_IR_B_MAX[2], SELLMEIER_IR_L_MAX_UM])
+
+    def residuals(p: np.ndarray) -> np.ndarray:
+        return (sellmeier_ir_pole_eval(p, wl_fit_um) - target) * w * 1000.0
+
+    def jacobian(p: np.ndarray) -> np.ndarray:
+        _A, B1, L1, B2, L2, B3, L3 = p
+        n = np.maximum(sellmeier_ir_pole_eval(p, wl_fit_um), 1.0e-12)
+        J = np.empty((lam2.size, 7), dtype=np.float64)
+        J[:, 0] = 1.0
+        for col_b, (b, pole) in zip((1, 3, 5), ((B1, L1), (B2, L2), (B3, L3)), strict=True):
+            den = lam2 - pole * pole
+            J[:, col_b] = lam2 / den
+            J[:, col_b + 1] = b * lam2 * 2.0 * pole / (den * den)
+        return J * ((w * 1000.0) / (2.0 * n))[:, None]
+
+    seeds: list[tuple[float, np.ndarray]] = []
+    sq = target * target
+    for l1 in np.linspace(0.15, 0.6, 4) * uv_cap:
+        for l2 in np.linspace(0.3, 0.95, 5) * uv_cap:
+            if l2 <= l1 + 0.01:
+                continue
+            for l3 in np.geomspace(ir_lo * 1.05, SELLMEIER_IR_L_MAX_UM * 0.95, 8):
+                X = np.column_stack([np.ones_like(lam2)] + [lam2 / (lam2 - pole * pole) for pole in (l1, l2, l3)])
+                coef, _ = nnls(X * w[:, None], sq * w)
+                p0 = np.clip(np.array([coef[0], coef[1], l1, coef[2], l2, coef[3], l3]), lo, hi)
+                seeds.append((float(np.sum(residuals(p0) ** 2)), p0))
+    seeds.sort(key=lambda t: t[0])
+
+    best: tuple[float, np.ndarray] | None = None
+    for _, p0 in seeds[:3]:
+        res = least_squares(residuals, p0, jac=jacobian, bounds=(lo, hi), loss="linear", max_nfev=int(max_nfev))
+        cost = float(np.sum(res.fun**2))
+        if np.isfinite(cost) and (best is None or cost < best[0]):
+            best = (cost, np.asarray(res.x, dtype=np.float64))
+    return None if best is None else best[1]
+
+
 def _fit_model_sellmeier3poles(
     n_vals: np.ndarray,
     wl: np.ndarray,
@@ -519,6 +604,7 @@ def _fit_model_sellmeier3poles(
     sellmeier_de_popsize: int,
     sellmeier_ls_max_nfev: int,
     sellmeier_log_l1l2: bool | None,
+    sellmeier_ir_pole: bool = False,
 ) -> tuple[np.ndarray | None, str, np.ndarray | None, dict]:
 
     import time
@@ -870,16 +956,37 @@ def _fit_model_sellmeier3poles(
         except NUMERICAL_FAULT_EXCEPTIONS:
             logger.info("Sellmeier standard 3-term: fit unavailable, keeping 3-poles variant.")
 
+        if sellmeier_ir_pole:
+            # Catalog form with an infrared pole (chantier 05, off by default). Poles are bounded by the whole evaluated
+            # range, not the fit window alone, so the returned curve has no pole anywhere.
+            try:
+                p_ir = _fit_sellmeier_ir_pole(
+                    wl_fit_um, n_fit, w_fit_sell, float(np.nanmin(wl_full_um)), float(np.nanmax(wl_full_um)), ls_max_nfev
+                )
+                if p_ir is None:
+                    logger.info("Sellmeier IR-pole candidate: no room for the poles around this range.")
+                else:
+                    n_out_ir = sellmeier_ir_pole_eval(p_ir, wl_full_um)
+                    n_ir_fit = np.asarray(n_out_ir[mask], dtype=np.float64)
+                    if np.all(np.isfinite(n_out_ir)) and np.all((n_ir_fit >= n_lo_acc) & (n_ir_fit <= n_hi_acc)):
+                        wrmse_ir = float(np.sqrt(np.mean(((n_ir_fit - n_fit) * w_fit_sell) ** 2)))
+                        candidates.append(("analytic-sellmeier-3poles-ir", p_ir, np.asarray(n_out_ir, dtype=np.float64), wrmse_ir, {}))
+                        logger.info("Sellmeier IR-pole candidate: wrmse=%.6g | L3=%.6g um", wrmse_ir, float(p_ir[6]))
+            except NUMERICAL_FAULT_EXCEPTIONS:
+                logger.info("Sellmeier IR-pole candidate: fit unavailable.")
+
         best_src, best_coeffs, best_curve, _best_wrmse, best_extra = min(
             candidates,
             key=lambda t: float(t[3]),
         )
 
-        if best_src != "analytic-sellmeier-3poles-A":
+        if best_src == "analytic-sellmeier-3term-standard":
             logger.info(
                 "Sellmeier selection: standard 3-term variant kept (closer, wrmse=%.6g).",
                 float(_best_wrmse),
             )
+        elif best_src == "analytic-sellmeier-3poles-ir":
+            logger.info("Sellmeier selection: IR-pole variant kept (closer, wrmse=%.6g).", float(_best_wrmse))
 
         return (
             np.asarray(best_curve, dtype=np.float64),

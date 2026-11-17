@@ -1001,6 +1001,12 @@ class IndexCore:
                 "(lambda and Li in m; lambda_nm/1000 = lambda_m)."
             )
 
+        if s == "analytic-sellmeier-3poles-ir":
+            return (
+                "Law (adjustment): n2 = A + B1lambda2/(lambda2-L12) + B2lambda2/(lambda2-L22) + B3lambda2/(lambda2-L32), "
+                "signed denominators: L1, L2 UV poles below the range, L3 IR pole beyond it (lambda and Li in um)."
+            )
+
         if s == "analytic-sellmeier-3term-standard":
             return (
                 "Law (adjustment): Standard Sellmeier n2 = 1 + (Bilambda2/(lambda2-Ci)) "
@@ -1051,6 +1057,13 @@ class IndexCore:
                 )
 
             return base
+
+        if s == "analytic-sellmeier-3poles-ir" and c.size >= 7:
+            return (
+                f"Coefficients: A={c[0]:.9g} ; B1={c[1]:.9g} ; L1={c[2]:.9g} um ; "
+                f"B2={c[3]:.9g} ; L2={c[4]:.9g} um ; "
+                f"B3={c[5]:.9g} ; L3={c[6]:.9g} um (IR pole)"
+            )
 
         if s == "analytic-sellmeier-3term-standard" and c.size >= 6:
             return (
@@ -1198,6 +1211,7 @@ class IndexCore:
         sellmeier_de_popsize: int = 12,
         sellmeier_ls_max_nfev: int = 3000,
         sellmeier_log_l1l2: bool | None = None,
+        sellmeier_ir_pole: bool = False,
     ) -> np.ndarray | tuple[np.ndarray, dict]:
 
         wl = np.asarray(wl_nm, dtype=np.float64)
@@ -1310,6 +1324,7 @@ class IndexCore:
                 progress_cb=progress_cb, sellmeier_timeout_s=sellmeier_timeout_s,
                 sellmeier_de_maxiter=sellmeier_de_maxiter, sellmeier_de_popsize=sellmeier_de_popsize,
                 sellmeier_ls_max_nfev=sellmeier_ls_max_nfev, sellmeier_log_l1l2=sellmeier_log_l1l2,
+                sellmeier_ir_pole=bool(sellmeier_ir_pole),
             )
         elif model_kind == "spline_adaptive":
             res_n, res_src, res_coeffs, res_extra = IndexCore._fit_model_spline_adaptive(
@@ -1815,6 +1830,7 @@ class IndexCore:
         sellmeier_de_maxiter: int = 300,
         sellmeier_ls_max_nfev: int = 3000,
         sellmeier_log_l1l2: bool | None = None,
+        sellmeier_ir_pole: bool = False,
     ) -> tuple[Any, Any, Any]:
 
         n_raw = np.asarray(n_raw, dtype=np.float64).ravel()
@@ -1874,6 +1890,7 @@ class IndexCore:
             sellmeier_de_maxiter=sellmeier_de_maxiter,
             sellmeier_ls_max_nfev=sellmeier_ls_max_nfev,
             sellmeier_log_l1l2=sellmeier_log_l1l2,
+            sellmeier_ir_pole=bool(sellmeier_ir_pole),
         )
 
         return n_raw, n_sell, fit_meta

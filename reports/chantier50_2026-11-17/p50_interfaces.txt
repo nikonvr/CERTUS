@@ -1,0 +1,6 @@
+max |dT| sur 4 longueurs d'onde ; A CERTUS, B oracle Re(n), C oracle n complexe, D tmm.inc_tmm
+k=0       A-B 5.6e-16  C-D 8.9e-16  A-D 8.9e-16  B-C 1.1e-16
+k=1e-06   A-B 6.7e-16  C-D 3.8e-13  A-D 6.0e-09  B-C 6.0e-09
+k=4.4e-06 A-B 4.4e-16  C-D 7.1e-12  A-D 2.1e-08  B-C 2.1e-08
+k=2e-05   A-B 4.4e-16  C-D 1.2e-10  A-D 3.2e-08  B-C 3.2e-08
+k=0.0001  A-B 8.3e-17  C-D 9.6e-10  A-D 1.3e-09  B-C 2.3e-09

@@ -1,0 +1,8 @@
+ECHEC (coherence_md), code 1, non rejoue : lire reports\nuit_2026-11-16\validation_finale\coherence_md.log
+ARTEFACT de charge ou d'ordre (unit), verts seuls en serie :
+    tests/unit/test_strat_arming_on_request.py::test_without_the_flag_the_kernel_is_unchanged_bit_for_bit
+    tests/unit/test_strat_phase_a_state_coherence.py::test_neutral_parameters_are_bit_identical_to_the_legacy_call
+    tests/unit/test_strat_poem_anchors_are_exact_on_request.py::test_without_the_flag_the_kernel_keeps_the_coarse_samples_bit_for_bit
+    tests/unit/test_strat_phase_a_state_coherence.py::test_the_slit_profile_is_inert_when_absent_or_zero
+VALIDATION=NO-GO
+La reference de CLAUDE.md section 2 reste la suite complete en serie.

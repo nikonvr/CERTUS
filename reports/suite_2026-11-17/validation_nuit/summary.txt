@@ -1,0 +1,5 @@
+ECHEC REEL (unit), rouge aussi seul en serie :
+    tests/unit/test_the_index_spline_shared_names_have_one_definition.py
+    gw1
+VALIDATION=NO-GO
+La reference de CLAUDE.md section 2 reste la suite complete en serie.

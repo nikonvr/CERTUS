@@ -5,32 +5,31 @@
 > [`CLAUDE.md`](../CLAUDE.md). Il se tient **en place** : un fait change, on corrige sa ligne,
 > on ne raconte pas la correction (`git log` s'en charge). Toute mesure porte sa date.
 > Le détail et l'historique sont dans `git`, sans autorité (CLAUDE.md, en-tête).
-> Mis à jour le 2026-11-15.
+> Mis à jour le 2026-11-17.
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
 > L'état présent seulement ; l'historique est dans `git log` et `reports/`. À la demande : actions ouvertes et protocole de mesure
 > ([`CHANTIERS_RESTANTS.md`](CHANTIERS_RESTANTS.md)), acquis ([`ETAT_acquis.md`](ETAT_acquis.md)), preuves dans `reports/`.
 
-**Liste active** : [chantiers](CHANTIERS_RESTANTS.md). Le chantier 45 est corrigé : les 27 défauts de l'audit du code
-du 15 novembre, un commit chacun ([plan](../reports/audit_code_2026-11-15/plan_corrections.md)), puis 36 de ses 40 mineurs, double-vérifiés
-([synthèse](../reports/audit_code_2026-11-15/mineurs_synthese.md), [plan](../reports/audit_code_2026-11-15/plan_mineurs.md)). Chantier 46 fait ; chantier 47 fait pour DESIGN
-et RE (champ en mm), METAL simple sans objet (k = 0), STRAT archivé sans objet (👤). Chantiers 50 et 19 faits ; 05 et 21 mesurés, décision de 👤 attendue. Suite du 2026-11-17 : [reprise](../reports/suite_2026-11-17/REPRISE.md).
+**Liste active** : [chantiers](CHANTIERS_RESTANTS.md) ; les chantiers faits y sont listés en fin de page. Décisions de 👤
+du 17 au soir : 05, pôle infrarouge de catalogue derrière une option inactive ; 21, session dédiée ; 18, feu vert (18a puis
+18b). Reprise de la session en cours : [REPRISE](../reports/suite_2026-11-17/REPRISE.md).
 Le polisseur hybride et la pondération par bande sont intégrés. La grille automatique et la sélection robuste
 restent optionnelles. Mesures terminées dans le [bilan DESIGN](../reports/questions_design_2026-11-13/bilan.md).
 Le [guide DESIGN](../pages/CERTUS_DESIGN.html#design-robust-search) décrit l'activation et les limites de la recherche robuste.
 La [campagne DESIGN–STRAT](../reports/codesign_2026-11-14/bilan.md) mesure trois paires du séparateur 50/50. Avec les plans retenus, le mérite robuste à 1 nm augmente la RMSE déposée de 52 à 82 %.
 
-**Attention (chantier 48)** : ce clone est dans un dossier synchronisé par Google Drive, qui peut réécrire des fichiers
-sous Git (copies « (1) » suivies) ; vérifier `git status` avant et après une mesure.
+**Clone de travail (chantier 48, décision de 👤 du 17)** : `C:\dev\certus1111`, hors de Google Drive ; l'ancien clone sous
+`D:\drivfl` (dossier synchronisé, qui réécrivait des fichiers suivis) reste intact, on n'y travaille plus.
 
-**Branche de travail** : `master`, poussée sur ordre de 👤 le 2026-11-17 au soir (chantiers 34, 39, 40, 43, 44, 47).
+**Branche de travail** : `master`, poussée sur ordre de 👤 (dernière poussée : nuit du 17 au 18 novembre).
 Le sparse-checkout écarte les gros artefacts scientifiques suivis ; git sparse-checkout disable les restaure. Les sauvegardes et données locales de novembre sont répertoriées
-dans `artifacts/archives-20261114/inventaire.json`, dans `certus1111`.
+dans `artifacts/archives-20261114/inventaire.json` de l'ancien clone (hors Git).
 
 **Python de référence : 3.15.2**, dépendances de requirements.lock.
 
-**Dernière validation complète** : le 2026-11-17 au soir sous Windows sur `aec4b0e2` (chantiers 34, 39, 40, 43, 44 et 47) : oracle 1 214, ui 1 670, reste 322, performance 30, contrôles documentaires et ruff verts ; unit 6 357 et deux artefacts de charge (`test_the_default_pytest_run_is_quiet.py`), verts seuls en série : `VALIDATION=GO` ([résumé](../reports/suite_2026-11-17/validation_soir/summary.txt)).
+**Dernière validation complète** : le 2026-11-17 dans la nuit sous Windows sur `88e854dd` (chantiers 19, 05, 21) : oracle 1 214, ui 1 670, reste 322, performance 30, contrôles documentaires et ruff verts ([résumé](../reports/suite_2026-11-17/validation_nuit/summary.txt)) ; unit, relancé après un `git ls-files` en échec passager à la collecte : 6 367 et deux artefacts de charge, verts seuls en série : `VALIDATION=GO` ([résumé](../reports/suite_2026-11-17/validation_nuit_unit/summary.txt)).
 
 Pour un échec de comparaison au bit, rejouer sur [cache Numba vierge](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md).
 
@@ -139,6 +138,8 @@ dépendant de T ou de λ, grenaille, bruit multiplicatif ou corrélé. Seul un r
   D99 n'est pas un défaut (lecture d'arrêt brute) ([rapport](../reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md)).
 - **Rate dans tous les scénarios** : couche posée au temps, à la vitesse estimée (`_rate_layer_thickness`) ; secours Rate, enfants
   d'ELITE qui gardent et déplacent les couches Rate, optique possible après du Rate ; `rate_rescue_hard` inactif (sans gain mesuré).
+- `rank_refined_first` gardé (2026-11-17, « mesurer d'abord ») : au juge de paix, classer au score final donne le même
+  gagnant ([mesure](../reports/suite_2026-11-17/classement_recherche_locale.md)).
 - Threads Numba d'une tâche de robustesse : 4 sur 16 cœurs logiques ou plus, 2 sinon (`task_numba_threads`), populations identiques au bit.
 
 ### DESIGN, INDEX, RE et logiciel
@@ -157,7 +158,7 @@ dépendant de T ou de λ, grenaille, bruit multiplicatif ou corrélé. Seul un r
   le coût et le gradient de DESIGN changent de bits d'un lancement à l'autre, INDEX ne gagne rien
   ([STRAT](../reports/audit_oms5100_2026-11-15/profil_strat_complet/bilan.md), [INDEX et RE](../reports/audit_oms5100_2026-11-15/tbb_index_re/bilan.md)).
 - Publication : rien à purger dans l'historique ; les œuvres de tiers vont dans les avis de tiers ; `certus_re` sous CC BY 4.0.
-- Toute fusion dans `master` se redemande à 👤. Le dépôt reste dans Google Drive, avec les sauvegardes Git sous `artifacts/`.
+- Toute fusion dans `master` se redemande à 👤. Le dépôt quitte Google Drive (48) ; GitHub sert de sauvegarde.
 - Sobriété de lecture (2026-10-18) : plafonds dans `tests/unit/test_the_ai_entry_points_stay_small.py`, à baisser librement.
 - Comparaisons à Tikhonravov et Trubetskov (2026-10-30) : le miroir dispersif d'une octave de Trubetskov 2020 ne sera pas
   traité ; le miroir chaud et les antireflets sortent du champ de l'article ; la cissoïde OIC 2016 doit battre le
@@ -174,7 +175,7 @@ Les précautions du cache Numba restent dans le [mode opératoire](../reports/re
 
 | sujet | ce qui est en jeu |
 |---|---|
-| **audit du code (45)** | ε1 d'INDEX : le plancher ε1 ≥ 1 n'agit sur aucun des quatre exemples (ε1 physique ≥ 2,24, [mesure](../reports/audit_code_2026-11-15/preuves/p_plancher_epsilon1.txt)) ; l'écart de 0,42 avec Kramers-Kronig venait de C ≥ 2·E0 (amortissement critique), où la forme fermée bridait α : corrigé (`758b13e7`), C < 2·E0 au bit près ([balayage](../reports/nuit_2026-11-16/preuves/p_eps1_kk_scan.txt)). Juge de paix : `rank_refined_first` classe la recherche locale finale première quel que soit son score final ; à `e6fdac67`, classer au score final donne le même gagnant (0,007257 contre 0,007300, [mesure](../reports/suite_2026-11-17/classement_recherche_locale.md)) : règle gardée. Épaisseur du substrat : chantier 47 |
+| **audit du code (45)** | ε1 d'INDEX : le plancher ε1 ≥ 1 n'agit sur aucun des quatre exemples (ε1 physique ≥ 2,24, [mesure](../reports/audit_code_2026-11-15/preuves/p_plancher_epsilon1.txt)) ; l'écart de 0,42 avec Kramers-Kronig venait de C ≥ 2·E0 (amortissement critique), où la forme fermée bridait α : corrigé (`758b13e7`), C < 2·E0 au bit près ([balayage](../reports/nuit_2026-11-16/preuves/p_eps1_kk_scan.txt)). |
 | **avis de tiers** | DLL du runtime Visual C++ dans `THIRD_PARTY_NOTICES.md` : droit de redistribution réservé par Microsoft aux licenciés de Visual Studio |
 | **paquet `certus_re`** | correction de la citation du saphir (Malitson et Dodge, 1972) à commiter par 👤 dans ce dépôt, puis à publier sur Zenodo |
 | **interface** | revoir les onze fenêtres ; teintes de marque, bande des fichiers récents, bornes des champs numériques |
@@ -187,7 +188,7 @@ Les précautions du cache Numba restent dans le [mode opératoire](../reports/re
 | **A9** | refiger le protocole sur la branche de travail (il refuse un code différent de son commit figé), puis donner ou non le GO ; A14, son préalable, est fait |
 | **réglages STRAT** | `elite_rate_moves` (actif, ou `git revert 978b8f04` ; mesures d'A2 dans `ETAT_acquis.md`) ; `rate_rescue_hard` (inactif, sans gain : 35 déposables sur 410) ; `tp_hysteresis_floor` à bas bruit ; armer `strat_local_search_fresh_id` |
 | **modèles** | D71 (continuité de Tauc-Lorentz-Urbach en E = Eg) ; D69 (nouvelle définition de la couverture des noyaux) |
-| **publication** | toute poussée (`git push`), la fusion de la PR #9, la vitrine ; le design publié de Tikhonravov et al. 1996 (`example/example_design/JSON-design-reference-tikhonravov-1996-published-design.json`), versionné « avec l'autorisation des auteurs » : garder cette autorisation par écrit, ou retirer le fichier (CLAUDE.md §1) |
+| **publication** | toute poussée (`git push`), la vitrine ; le design publié de Tikhonravov et al. 1996 (`example/example_design/JSON-design-reference-tikhonravov-1996-published-design.json`), versionné « avec l'autorisation des auteurs » : garder cette autorisation par écrit, ou retirer le fichier (CLAUDE.md §1) |
 | **dossier et archives** | cible de 600 Mo fixée par 👤 le 2026-10-25 : 560 Mo mesurés après le déplacement des non-suivis, `git gc` et le sparse-checkout (`.git` 286 Mo, arbre suivi 260 Mo), contre 2,5 Go avant ; seconde copie de l'archive de 8,2 Go |
 
 ## 6. Ordre de travail

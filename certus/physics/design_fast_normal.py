@@ -10,6 +10,7 @@ from numba import njit, prange
 import certus.physics.certus_tmm_core as tmm_core
 from certus.domain.constants import TWO_PI
 from certus.physics.certus_opt_tmm import reflection_amplitude_derivatives, reflection_amplitudes
+from certus.physics.certus_substrate_absorption import DEFAULT_SUBSTRATE_THICKNESS_NM
 from certus.physics.gradient_utils import FASTMATH_SAFE, SMALL_EPSILON, compute_mse_vectorized
 
 
@@ -831,8 +832,11 @@ def prepare_normal_fast_context(
     n_back_T: np.ndarray,
     d_back: np.ndarray,
     k_real_threshold: float = 1e-4,
+    substrate_thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM,
 ) -> dict[str, Any]:
     """Precompute wavelength-dependent optical constants and backside arrays for normal-incidence optimization.
+
+    `substrate_thickness_nm` (1 mm by default) is the plate of an absorbing substrate, seen with the back face.
 
     During exhaustive global search (`k_real_threshold=1e-4`), stacks with weak extinction (`|k| <= 1e-4`) and
     non-absorbing substrate are routed through the pure-real `float64` kernels (`use_real_approx=True`), and
@@ -873,6 +877,7 @@ def prepare_normal_fast_context(
             d_back_f64,
             n_back_c128,
             n_sub_c128,
+            float(substrate_thickness_nm),
         )
         rb_prime = np.ascontiguousarray(rb_p, dtype=np.float64)
         tb = np.ascontiguousarray(tb_p, dtype=np.float64)

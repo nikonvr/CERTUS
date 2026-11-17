@@ -9,6 +9,7 @@ import numpy as np
 from numba import njit, prange
 
 import certus.physics.certus_tmm_core as tmm_core
+from certus.physics.certus_substrate_absorption import DEFAULT_SUBSTRATE_THICKNESS_NM
 
 SMALL_EPSILON = 1e-12
 
@@ -85,6 +86,7 @@ def cost_numba_fast(
     has_back: bool,
     n_back_T: np.ndarray,
     d_back: np.ndarray,
+    substrate_thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM,
 ) -> float:
     """
     Fast cost function for TMM optimization (TRANSMISSION only).
@@ -109,13 +111,16 @@ def cost_numba_fast(
         has_back: Whether backside calculation is enabled
         n_back_T: Backside refractive indices
         d_back: Backside thicknesses
+        substrate_thickness_nm: Thickness of an absorbing substrate (plate loss), 1 mm by default
 
     Returns:
         Cost value (MSE)
     """
     # 1. Calc Optical Properties (T)
     if has_back:
-        _Rf, Tf, Rf_prime, Rb_prime, Tb = tmm_core.calc_spectrum_full_exact(wls, ep, n_layers_T, d_back, n_back_T, n_sub)
+        _Rf, Tf, Rf_prime, Rb_prime, Tb = tmm_core.calc_spectrum_full_exact(
+            wls, ep, n_layers_T, d_back, n_back_T, n_sub, substrate_thickness_nm
+        )
 
         # Exact incoherent: T = (Tf * Tb) / (1 - Rf' * Rb')
         n_wls = len(wls)

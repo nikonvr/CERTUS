@@ -617,12 +617,13 @@ def calc_spectrum_full_wrapper(wls: np.ndarray, nf: np.ndarray, df: np.ndarray, 
     return calc_spectrum_full(wls, df, nf, db, nb, ns)
 
 
-def calc_spectrum_full_exact_wrapper(wls: np.ndarray, nf: np.ndarray, df: np.ndarray, ns: np.ndarray, nb: np.ndarray, db: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def calc_spectrum_full_exact_wrapper(wls: np.ndarray, nf: np.ndarray, df: np.ndarray, ns: np.ndarray, nb: np.ndarray, db: np.ndarray,
+                                     substrate_thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Exact wrapper: accepts (wls, n_f, d_f, n_sub, n_b, d_b) -> calls exact kernel"""
 
     # Kernel expects: (wls, d_front, n_front, d_back, n_back, n_sub)
 
-    return calc_spectrum_full_exact(wls, df, nf, db, nb, ns)
+    return calc_spectrum_full_exact(wls, df, nf, db, nb, ns, float(substrate_thickness_nm))
 
 
 # =============================================================================

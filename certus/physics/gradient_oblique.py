@@ -1125,10 +1125,13 @@ def compute_gradient_all_layers_analytic(
     n_back_T: np.ndarray,
     d_back: np.ndarray,
     var_idx: np.ndarray | None = None,
+    substrate_thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM,
 ) -> tuple[float, np.ndarray]:
     """
 
     Calculates cost and analytic gradient for multilayer stack.
+
+    `substrate_thickness_nm` (1 mm by default) is the plate of an absorbing substrate, seen with the back face.
 
     """
 
@@ -1176,7 +1179,7 @@ def compute_gradient_all_layers_analytic(
         # Back stack response is fixed for this optimization variable set.
 
         _Rf0, _Tf0, _Rf_p0, Rb_prime, Tb = tmm_core.calc_spectrum_full_exact(
-            wls_f64, ep_f64, n_layers_T_c128, d_back_f64, n_back_T_c128, n_sub_c128
+            wls_f64, ep_f64, n_layers_T_c128, d_back_f64, n_back_T_c128, n_sub_c128, float(substrate_thickness_nm)
         )
 
         D = np.maximum(1.0 - Rf_prime * Rb_prime, 1e-12)

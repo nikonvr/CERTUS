@@ -72,6 +72,12 @@ MODELS = {
     "livre_ancres_attente": {"smoothing": 1, "hyst": None, "exact": False, "anchors": True, "arming": 2},
     "livre_exact_attente": {"smoothing": 1, "hyst": None, "exact": True, "arming": 2},
     "livre_corrige_attente": {"smoothing": 1, "hyst": None, "exact": True, "anchors": True, "arming": 2},
+    # Chantier 44, step 3 (sensitivity to what cannot be measured): R2, the production model (above) with the stop at
+    # the level (`arming` = 0; the late stop is `livre_corrige`); R10, the production model with a photometric
+    # calibration off by up to 1 % (`affine_scale_amp`, 0 in production; the maker quotes < 1 %).
+    "livre_corrige_niveau": {"smoothing": 1, "hyst": None, "exact": True, "anchors": True, "arming": 0},
+    "livre_corrige_attente_echelle1": {"smoothing": 1, "hyst": None, "exact": True, "anchors": True, "arming": 2,
+                                       "affine_scale": 0.01},
 }
 
 
@@ -104,7 +110,7 @@ def score_plan(params, thick, blocks, n_runs, A, h_config, model, wls, nH_w, nL_
         res = simulate_stack_robustness_batch(
             np.asarray(thick, dtype=float), lw, nH, nL, nS, stop, compute_probe_offset_nm_from_ratio(params),
             float(params.get("non_monotonic_error_factor", 2.0)), 0, np.full(n, A * f), seed * 7919 + level_idx,
-            hf * A * f, 0.0, 0.0, curvature, seed * 31 + level_idx, True, int(model["smoothing"]), corridor,
+            hf * A * f, float(model.get("affine_scale", 0.0)), 0.0, curvature, seed * 31 + level_idx, True, int(model["smoothing"]), corridor,
             seed * 53 + level_idx, lo, hi, None, None, None, bool(model.get("exact", False)),
             bool(model.get("anchors", False)), int(model.get("arming", 0)),
         )[0]

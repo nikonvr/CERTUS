@@ -1,0 +1,9 @@
+1. BK7 dans la variante A : max |n_A - n_BK7| = 3.497e+07 (n_A max = 3.497e+07)
+2. Donnees de la variante A, poles UV :
+   A-UV sigma=2e-05 (bruit tire 1.93e-05) | retenu 3term-standard: aux donnees 1.91e-05, a la courbe vraie 2.74e-06 | A seule 3poles-A: aux donnees 6.57e-03, a la courbe vraie 6.58e-03
+   A-UV sigma=2e-07 (bruit tire 1.93e-07) | retenu 3term-standard: aux donnees 1.91e-07, a la courbe vraie 2.77e-08 | A seule 3poles-A: aux donnees 7.14e-03, a la courbe vraie 7.14e-03
+   A-UV sigma=0e+00 (bruit tire 0.00e+00) | retenu 3term-standard: aux donnees 9.51e-09, a la courbe vraie 9.51e-09 | A seule 3poles-A: aux donnees 6.17e-03, a la courbe vraie 6.17e-03
+3. BK7 :
+   BK7  sigma=2e-05 (bruit tire 1.93e-05) | retenu 3term-standard: aux donnees 2.95e-04, a la courbe vraie 2.93e-04 | A seule 3poles-A: aux donnees 2.07e-03, a la courbe vraie 2.07e-03
+   BK7  sigma=2e-07 (bruit tire 1.93e-07) | retenu 3term-standard: aux donnees 2.93e-04, a la courbe vraie 2.93e-04 | A seule 3poles-A: aux donnees 4.55e-03, a la courbe vraie 4.55e-03
+   BK7  sigma=0e+00 (bruit tire 0.00e+00) | retenu 3term-standard: aux donnees 2.93e-04, a la courbe vraie 2.93e-04 | A seule 3poles-A: aux donnees 4.31e-01, a la courbe vraie 4.31e-01

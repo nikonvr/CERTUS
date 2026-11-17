@@ -1,0 +1,10 @@
+run 1 : 3.01 s, retenu analytic-sellmeier-3term-standard
+     1.89 s    1 appels    3000 evaluations  least_squares(_std_residuals, diff. finies)
+     0.23 s   12 appels    3568 evaluations  minimize(_mse_full_q, diff. finies)
+     0.02 s    1 appels      26 evaluations  least_squares(_res5_q, diff. finies)
+     0.00 s    1 appels       2 evaluations  least_squares(_residuals_polish_q, jac)
+run 2 : 2.11 s, retenu analytic-sellmeier-3term-standard
+     1.85 s    1 appels    3000 evaluations  least_squares(_std_residuals, diff. finies)
+     0.24 s   12 appels    3568 evaluations  minimize(_mse_full_q, diff. finies)
+     0.02 s    1 appels      26 evaluations  least_squares(_res5_q, diff. finies)
+     0.00 s    1 appels       2 evaluations  least_squares(_residuals_polish_q, jac)

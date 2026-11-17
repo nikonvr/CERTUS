@@ -1,0 +1,22 @@
+"""Start the hub and every module of the frozen build offscreen; alive after WAIT s and no startup log = OK."""
+import os, subprocess, sys, time
+from pathlib import Path
+DIST = Path(r"C:\certus_clone\dist\CERTUS_HUB"); EXE = DIST / "CERTUS_HUB.exe"; LOG = DIST / "certus_frozen_startup.log"
+sys.path.insert(0, r"C:\certus_clone")
+from certus.core.certus_frozen_entry import catalog_modules
+from certus.core.certus_hub_config import RUN_MODULE_FLAG
+WAIT = 45
+env = dict(os.environ, QT_QPA_PLATFORM="offscreen")
+if LOG.exists(): LOG.unlink()
+ok = 0; names = ["(hub)", *catalog_modules()]
+for name in names:
+    args = [str(EXE)] if name == "(hub)" else [str(EXE), RUN_MODULE_FLAG, name]
+    t0 = time.time(); p = subprocess.Popen(args, cwd=DIST, env=env)
+    while time.time() - t0 < WAIT and p.poll() is None: time.sleep(1)
+    alive = p.poll() is None
+    if alive: p.kill(); p.wait()
+    failed = LOG.exists() and name in LOG.read_text(encoding="utf-8", errors="replace")
+    status = "OK" if alive and not failed else f"FAIL (exit={p.returncode}, log={failed})"
+    ok += status == "OK"; print(f"{name:28s} {status}", flush=True)
+print(f"SMOKE {ok}/{len(names)} OK")
+if LOG.exists(): print(LOG.read_text(encoding="utf-8", errors="replace")[-3000:])

@@ -131,3 +131,32 @@ def test_with_a_back_stack_the_gradient_is_the_derivative_of_the_cost_whatever_t
         up[j] += step
         down[j] -= step
         assert gradient[j] == pytest.approx((cost(up) - cost(down)) / (2 * step), rel=1e-5, abs=1e-9)
+
+
+@pytest.mark.parametrize("k", [0.0, 1e-4])
+def test_a_bare_back_face_is_in_the_gradient_as_in_the_cost(k) -> None:
+    """The back face ticked without a back coating (`has_back=True`, empty back stack): the gradient took the
+    front-only branch, 14.6 % off the cost at k = 0 and of the wrong sign at k = 1e-4 (2026-11-17,
+    reports/suite_2026-11-17/preuves/p_back_bare_gradient.txt)."""
+    from certus.physics.gradient_oblique import compute_gradient_all_layers_analytic
+    from certus.physics.gradient_utils import cost_numba_fast
+
+    n, d = _stack(3, seed=37)
+    n_back, d_back = np.zeros((len(WLS), 0), dtype=np.complex128), np.zeros(0)
+    n_sub = _substrate(k)
+    targets = np.random.default_rng(43).uniform(0.2, 0.9, len(WLS))
+    weights = np.ones(len(WLS))
+    var = np.arange(3, dtype=np.int64)
+
+    def cost(thicknesses):
+        return cost_numba_fast(thicknesses, n, n_sub, WLS, targets, weights, 1.0, True, n_back, d_back)
+
+    value, gradient = compute_gradient_all_layers_analytic(d, n, n_sub, WLS, targets, weights, 1.0, True, n_back, d_back, var)
+
+    assert value == pytest.approx(cost(d), rel=1e-10)
+    step = 1e-3
+    for j in range(3):
+        up, down = d.copy(), d.copy()
+        up[j] += step
+        down[j] -= step
+        assert gradient[j] == pytest.approx((cost(up) - cost(down)) / (2 * step), rel=1e-5, abs=1e-9)

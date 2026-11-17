@@ -40,4 +40,8 @@ mode. Les indices de couche des artefacts commencent à 0 ; l'interface et les r
   ([banc](../reports/audit_code_2026-11-15/bancs/juge_de_paix_apres_M-L2.txt)). Journal des graines au code C-L4 seul ([relevé](../reports/audit_code_2026-11-15/bancs/juge_de_paix_C-L4_graines.txt)) : l'ancien gagnant à 4 blocs avait ses trois graines finies, et aucune des 365 stratégies notées n'a de graines mêlées ; M-L2 agit ici par les 150 stratégies rejetées sur leurs trois graines, qui gardaient avant leur score de base.
 - ε1 de Tauc-Lorentz pour C ≥ 2·E0 (`758b13e7`, 2026-11-17) : la forme fermée et son gradient bridaient 4·E0² − C² à 1e-12 ; tout ajustement INDEX arrivé à C ≥ 2·E0
   (bornes : C jusqu'à 10 eV, E0 dès ~1,6 eV) avait un ε1 faux, 0,41 de Kramers-Kronig à C = 7, E0 = 3,074. Les ajustements à C < 2·E0 ne bougent pas (au bit).
+- Gradient DESIGN, face arrière nue (2026-11-17) : `compute_gradient_all_layers_analytic` avec la face arrière cochée et sans
+  empilement arrière prenait la branche avant seule ; sa valeur s'écartait du coût rapporté de 14,6 % à k = 0, et le gradient avait le
+  signe faux à k = 1e-4 ([preuve](../reports/suite_2026-11-17/preuves/p_back_bare_gradient.txt)). Touchés : le nettoyage final
+  (`design_cost_factory`) et les chemins sans contexte rapide, à incidence normale. `c1_diff` : 9 172 tableaux identiques (cas absent).
 - Mineurs STRAT de l'audit (2026-11-16, `83f0b7c6`, `cda58825`) : la porte ELITE lit le niveau de bruit du run (L2-m1) et la phase B reçoit k en float64 (L4-m4). Juge de paix : SEEL 0,1577 → 0,1704 nm ; gagnant à 4 blocs [544, 485, 453, 473] ; les deux corrections, mesurées ensemble, ne sont pas séparées ([banc](../reports/audit_code_2026-11-15/bancs/juge_de_paix_apres_mineurs.txt)).

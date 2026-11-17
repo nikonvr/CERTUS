@@ -1142,9 +1142,10 @@ def compute_gradient_all_layers_analytic(
 
     # Backside (normal incidence): full analytic chain using oblique kernel at 0 deg.
 
-    # This keeps one derivative source of truth with the oblique implementation.
+    # This keeps one derivative source of truth with the oblique implementation. A bare back face (no back stack)
+    # takes it too: the front-only branch below left the back face out, unlike `cost_numba_fast`.
 
-    if has_back and len(d_back) > 0:
+    if has_back:
         ep_f64 = np.asarray(ep, dtype=np.float64)
 
         wls_f64 = np.asarray(wls, dtype=np.float64)
@@ -1157,9 +1158,10 @@ def compute_gradient_all_layers_analytic(
 
         n_sub_c128 = np.asarray(n_sub, dtype=np.complex128)
 
-        n_back_T_c128 = np.asarray(n_back_T, dtype=np.complex128)
+        d_back_f64 = np.asarray(d_back if d_back is not None else (), dtype=np.float64)
 
-        d_back_f64 = np.asarray(d_back, dtype=np.float64)
+        n_back_T_c128 = (np.asarray(n_back_T, dtype=np.complex128) if len(d_back_f64) > 0
+                         else np.zeros((len(wls_f64), 0), dtype=np.complex128))
 
         # Front stack (air->sub) and reverse front stack (sub->air = Rf_prime path).
 

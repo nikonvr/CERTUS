@@ -1,0 +1,10 @@
+# avant le correctif (e6fdac67)
+k=0 cost=1.8269664611e-01 grad_value=2.0931662052e-01 rel_value_gap=1.457e-01
+   analytic=[ 0.000833  0.000309 -0.000293] finite_diff=[ 0.000723  0.000241 -0.00026 ]
+k=0.0001 cost=1.4343927713e-01 grad_value=2.0930997565e-01 rel_value_gap=4.592e-01
+   analytic=[ 0.000834  0.000309 -0.000293] finite_diff=[-1.070853e-05 -9.673710e-05 -5.257688e-06]
+# apres le correctif
+k=0 cost=1.8269664611e-01 grad_value=1.8269664611e-01 rel_value_gap=3.038e-16
+   analytic=[ 0.000723  0.000241 -0.00026 ] finite_diff=[ 0.000723  0.000241 -0.00026 ]
+k=0.0001 cost=1.4343927713e-01 grad_value=1.4343927713e-01 rel_value_gap=0.000e+00
+   analytic=[-1.070853e-05 -9.673710e-05 -5.257688e-06] finite_diff=[-1.070853e-05 -9.673710e-05 -5.257688e-06]

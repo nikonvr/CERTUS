@@ -1,0 +1,24 @@
+config=JSON-strat-example.json plans=120 runs=300 A=0.0005 h=1.66 python=3.15.2
+  1/120 plans, 1 s
+  11/120 plans, 8 s
+  21/120 plans, 14 s
+  31/120 plans, 21 s
+  41/120 plans, 27 s
+  51/120 plans, 34 s
+  61/120 plans, 40 s
+  71/120 plans, 47 s
+  81/120 plans, 53 s
+  91/120 plans, 59 s
+  101/120 plans, 66 s
+  111/120 plans, 72 s
+
+120 plans; depositable (crash <= 5 % at every level): livre_corrige_attente 106, livre_corrige_niveau 120, livre_corrige 120, livre_corrige_attente_echelle1 106, livre 120
+Spearman(livre_corrige_attente, livre_corrige_niveau) over the 106 plans depositable under both: 1.000; score ratio livre_corrige_niveau / livre_corrige_attente: median 1.000
+Spearman(livre_corrige_attente, livre_corrige) over the 106 plans depositable under both: 1.000; score ratio livre_corrige / livre_corrige_attente: median 1.000
+Spearman(livre_corrige_attente, livre_corrige_attente_echelle1) over the 106 plans depositable under both: 0.992; score ratio livre_corrige_attente_echelle1 / livre_corrige_attente: median 1.000
+Spearman(livre_corrige_attente, livre) over the 106 plans depositable under both: 0.915; score ratio livre / livre_corrige_attente: median 0.991
+top 5 under livre_corrige_attente: [(11, 0.007421), (9, 0.007733), (12, 0.007812), (0, 0.007839), (8, 0.007856)]
+top 5 under livre_corrige_niveau: [(11, 0.007421), (9, 0.007733), (12, 0.007812), (23, 0.007837), (95, 0.007839)]
+top 5 under livre_corrige: [(11, 0.007421), (9, 0.007733), (12, 0.007812), (23, 0.007831), (0, 0.007839)]
+top 5 under livre_corrige_attente_echelle1: [(11, 0.007422), (9, 0.007732), (20, 0.007788), (12, 0.0078), (0, 0.007839)]
+top 5 under livre: [(11, 0.007477), (22, 0.007548), (23, 0.007628), (0, 0.007679), (12, 0.007742)]

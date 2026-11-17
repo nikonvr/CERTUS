@@ -94,6 +94,7 @@ SEEL du `RESULT` officiel ; taux de plantage de `RANK00`.
 | `index_corridor` | 0,005 en indice absolu, actif |
 | DESIGN, étape globale (2026-10-23) | mémétique, 1000 enfants, population 30 (`_memetic_children = 0` : PGLOBAL) ; champion Pareto sans couche < 5 nm, actif ([bilan](../reports/DESIGN_bs5050_2026-10-22/bilan.md)) |
 | `photometric_curvature_amp` ; `affine_scale_amp`, `affine_offset_amp` | 0,00375 ; 0,05 et 0,02 |
+| modèle d'arrêt et étalonnage de STRAT (chantier 44, 2026-11-17, délégué par 👤) | inchangés : attente sans fin, étalonnage parfait ; arrêt au niveau ou tardif et échelle de 1 % ne changent pas l'ordre des plans déposables du juge de paix ([bilan](../reports/chantier44_etape3_2026-11-17/bilan.md)) |
 | `allow_rate`, `rate_by_swing`, `rate_rescue` (`rate_rescue_few` 10) | vrais (« le cas général », 2026-10-12) |
 | `elite_rate_moves`, `elite_rate_max_candidates` | vrai, 120 (2026-10-13) |
 | `strat_local_search` | actif : recherche et contrôle à ±0,010, garde au corridor configuré (`strat_local_search_guard`, 2026-10-23) |

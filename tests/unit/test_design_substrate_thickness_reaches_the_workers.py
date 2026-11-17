@@ -30,6 +30,7 @@ def _optics(k: float = 1e-5):
 def test_the_millimetres_of_a_configuration() -> None:
     assert substrate_thickness_nm_from_mm(1.0) == DEFAULT_SUBSTRATE_THICKNESS_NM
     assert substrate_thickness_nm_from_mm(2.5) == 2.5e6
+    assert substrate_thickness_nm_from_mm(0.5) == 5.0e5  # a plate thinner than the default is a thickness too
     for empty in (None, "", "x", 0.0, -1.0, float("nan")):
         assert substrate_thickness_nm_from_mm(empty) == DEFAULT_SUBSTRATE_THICKNESS_NM
 

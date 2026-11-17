@@ -51,10 +51,10 @@
    "error": 0
   },
   "certus/physics/certus_substrate_absorption.py": {
-   "mutants": 42,
-   "score": 0.9524,
-   "score_sans_chaines": 0.9524,
-   "killed": 40,
+   "mutants": 56,
+   "score": 0.9643,
+   "score_sans_chaines": 0.963,
+   "killed": 54,
    "timeout": 0,
    "survived": 2,
    "error": 0

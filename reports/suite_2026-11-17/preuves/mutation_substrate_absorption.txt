@@ -1,0 +1,64 @@
+temoin de certus/physics/certus_substrate_absorption.py : les tests passent sans faute
+[1/56] tue      certus/physics/certus_substrate_absorption.py:73 condition test -> not test
+[2/56] tue      certus/physics/certus_substrate_absorption.py:71 condition test -> not test
+[3/56] tue      certus/physics/certus_substrate_absorption.py:38 const-number 1000000.0 -> 1000001.0
+[4/56] tue      certus/physics/certus_substrate_absorption.py:35 const-number 1e-12 -> 1.000000000001
+[5/56] tue      certus/physics/certus_substrate_absorption.py:47 return return value -> return None
+[6/56] tue      certus/physics/certus_substrate_absorption.py:54 return return value -> return None
+[7/56] tue      certus/physics/certus_substrate_absorption.py:59 const-number 0.001 -> 1.001
+[8/56] tue      certus/physics/certus_substrate_absorption.py:60 const-number 1e-05 -> 1.00001
+[9/56] tue      certus/physics/certus_substrate_absorption.py:75 return return value -> return None
+[10/56] tue      certus/physics/certus_substrate_absorption.py:94 return return value -> return None
+[11/56] tue      certus/physics/certus_substrate_absorption.py:117 return return value -> return None
+[12/56] tue      certus/physics/certus_substrate_absorption.py:47 condition test -> not test
+[13/56] tue      certus/physics/certus_substrate_absorption.py:71 compare == -> !=
+[14/56] tue      certus/physics/certus_substrate_absorption.py:72 return return value -> return None
+[15/56] tue      certus/physics/certus_substrate_absorption.py:90 condition test -> not test
+[16/56] tue      certus/physics/certus_substrate_absorption.py:53 condition test -> not test
+[17/56] tue      certus/physics/certus_substrate_absorption.py:54 condition test -> not test
+[18/56] tue      certus/physics/certus_substrate_absorption.py:73 boolean or -> and
+[19/56] tue      certus/physics/certus_substrate_absorption.py:74 return return value -> return None
+[20/56] tue      certus/physics/certus_substrate_absorption.py:46 return return value -> return None
+[21/56] tue      certus/physics/certus_substrate_absorption.py:47 boolean and -> or
+[22/56] tue      certus/physics/certus_substrate_absorption.py:72 const-number 1.0 -> 2.0
+[23/56] tue      certus/physics/certus_substrate_absorption.py:47 arithmetic * -> /
+[24/56] tue      certus/physics/certus_substrate_absorption.py:54 compare is -> is not
+[25/56] tue      certus/physics/certus_substrate_absorption.py:71 const-number 0.0 -> 1.0
+[26/56] SURVIT   certus/physics/certus_substrate_absorption.py:73 compare < -> <=
+[27/56] tue      certus/physics/certus_substrate_absorption.py:73 compare <= -> <
+[28/56] tue      certus/physics/certus_substrate_absorption.py:86 swap sin -> cos
+[29/56] tue      certus/physics/certus_substrate_absorption.py:88 swap real -> imag
+[30/56] tue      certus/physics/certus_substrate_absorption.py:74 const-number 0.0 -> 1.0
+[31/56] tue      certus/physics/certus_substrate_absorption.py:117 arithmetic * -> /
+[32/56] tue      certus/physics/certus_substrate_absorption.py:89 const-number 0.0 -> 1.0
+[33/56] tue      certus/physics/certus_substrate_absorption.py:117 arithmetic * -> /
+[34/56] SURVIT   certus/physics/certus_substrate_absorption.py:90 compare > -> >=
+[35/56] tue      certus/physics/certus_substrate_absorption.py:47 compare > -> >=
+[36/56] tue      certus/physics/certus_substrate_absorption.py:47 const-number 1000000.0 -> 1000001.0
+[37/56] tue      certus/physics/certus_substrate_absorption.py:75 arithmetic / -> *
+[38/56] tue      certus/physics/certus_substrate_absorption.py:53 const-str 'substrate_thickness_nm' -> 'XXsubstrate_thickness_nmXX'
+[39/56] tue      certus/physics/certus_substrate_absorption.py:91 arithmetic / -> *
+[40/56] tue      certus/physics/certus_substrate_absorption.py:93 swap imag -> real
+[41/56] tue      certus/physics/certus_substrate_absorption.py:53 const-str 'substrate_thickness_nm' -> 'XXsubstrate_thickness_nmXX'
+[42/56] tue      certus/physics/certus_substrate_absorption.py:73 const-number 0.0 -> 1.0
+[43/56] tue      certus/physics/certus_substrate_absorption.py:75 arithmetic * -> /
+[44/56] tue      certus/physics/certus_substrate_absorption.py:117 arithmetic * -> /
+[45/56] tue      certus/physics/certus_substrate_absorption.py:75 arithmetic * -> /
+[46/56] tue      certus/physics/certus_substrate_absorption.py:75 arithmetic * -> /
+[47/56] tue      certus/physics/certus_substrate_absorption.py:92 swap max -> min
+[48/56] tue      certus/physics/certus_substrate_absorption.py:92 const-number 0.0 -> 1.0
+[49/56] tue      certus/physics/certus_substrate_absorption.py:47 const-number 0.0 -> 1.0
+[50/56] tue      certus/physics/certus_substrate_absorption.py:92 arithmetic - -> +
+[51/56] tue      certus/physics/certus_substrate_absorption.py:75 arithmetic * -> /
+[52/56] tue      certus/physics/certus_substrate_absorption.py:75 abs abs(x) -> x
+[53/56] tue      certus/physics/certus_substrate_absorption.py:92 const-number 1.0 -> 2.0
+[54/56] tue      certus/physics/certus_substrate_absorption.py:92 arithmetic * -> /
+[55/56] tue      certus/physics/certus_substrate_absorption.py:75 unary - -> 
+[56/56] tue      certus/physics/certus_substrate_absorption.py:75 const-number 4.0 -> 5.0
+
+certus/physics/certus_substrate_absorption.py : 56 fautes, 54 tuees, 0 timeouts, 2 survivants, 0 erreurs ; score 96.4 %, sans chaines 96.3 %
+  SURVIVANT ligne   73 compare      < -> <=    | if cos_theta < SMALL_EPSILON or wavelength_nm <= 0.0:
+  SURVIVANT ligne   90 compare      > -> >=    | if n_real > SMALL_EPSILON:
+
+56 fautes en 335 s
+base mutation_baseline.json : 0 survivant(s) non accepte(s), 0 accepte(s) qui ne survit plus

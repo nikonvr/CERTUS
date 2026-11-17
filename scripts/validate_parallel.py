@@ -11,7 +11,7 @@
   - les controles documentaires D'ABORD, sur machine calme, et leur CODE DE SORTIE compte, pas leur phrase de synthese
     (`coherence_md.py` dit « 0 point a instruire » et sort pourtant en 1 s'il trouve une commande morte) ;
   - `tests/unit/` : `-n N --dist loadfile` (un fichier reste sur un worker : etat de classe, etat de module) ;
-  - `tests/ui/` : **6 workers au plus**. A 16 l'audit d'ergonomie echoue (2 echecs, 12 erreurs « skeleton was still
+  - `tests/ui/` : **10 workers au plus**. A 16 l'audit d'ergonomie echoue (2 echecs, 12 erreurs « skeleton was still
     building ») et ne va pas plus vite : il attend que les fenetres aient fini de se construire, et la charge l'en empeche ;
   - le reste de `tests/`, sans `performance` : `-n N --dist loadfile` ;
   - `tests/performance/` EN SERIE, en dernier, machine calme : pytest-benchmark se coupe sous xdist, et ces tests chronometrent.
@@ -50,8 +50,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-#: Au plus ce nombre de workers pour `tests/ui/` (mesure le 2026-10-18 : 6 passe, 16 echoue sans aller plus vite).
-UI_WORKERS = 6
+#: Au plus ce nombre de workers pour `tests/ui/` (mesure le 2026-10-18 : 6 passe, 16 echoue sans aller plus vite ;
+#: le 2026-11-17 sur 32 coeurs : 6 en 9:53, 10 en 5:52 et 5:38, 12 en 5:44, tous verts).
+UI_WORKERS = 10
 
 #: Au-dela, un nombre d'echecs qui ne se rejoue plus a la main : la commande ne rejoue pas, et le dit.
 MAX_REPLAY = 40

@@ -1,0 +1,16 @@
+VALIDATION PARALLELE -- d2207653, 0 fichier(s) suivi(s) modifie(s)
+  python 3.15.2, 16 worker(s), ui 6, journaux : reports\suite_2026-11-17\validation
+  ruff            FAIL      0:00  
+  coherence_md    PASS      0:11  
+  check_claude_md PASS      0:00  
+  check_docs      PASS      0:00  
+  oracle          PASS      0:22  1214 passed
+  unit            FAIL      8:57  2 failed, 6352 passed, 7 skipped, 1 xfailed
+  ui              PASS      9:33  1667 passed, 12 skipped, 2 xfailed
+  rest            PASS      3:18  322 passed
+  performance     PASS      0:22  30 passed, 2 skipped
+
+ECHEC (ruff), code 1, non rejoue : lire reports\suite_2026-11-17\validation\ruff.log
+ECHEC (unit), code 1, non rejoue : lire reports\suite_2026-11-17\validation\unit.log
+VALIDATION=NO-GO
+La reference de CLAUDE.md section 2 reste la suite complete en serie.

@@ -1,0 +1,8 @@
+VALIDATION PARALLELE -- cf0882c7, 0 fichier(s) suivi(s) modifie(s)
+  python 3.15.2, 16 worker(s), ui 6, journaux : reports\suite_2026-11-17\validation_unit_froid
+  ruff            PASS      0:00  
+  unit            FAIL      10:24  2 failed, 6352 passed, 7 skipped, 1 xfailed
+
+ECHEC (unit), code 1, non rejoue : lire reports\suite_2026-11-17\validation_unit_froid\unit.log
+VALIDATION=NO-GO
+La reference de CLAUDE.md section 2 reste la suite complete en serie.

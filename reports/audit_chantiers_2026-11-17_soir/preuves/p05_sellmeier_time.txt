@@ -1,0 +1,2 @@
+run 1: total 4.63 s, source analytic-sellmeier-3term-standard, rms 2.95e-04 ; least_squares 3.41 s, minimize 0.28 s, differential_evolution 0.00 s
+run 2: total 2.65 s, source analytic-sellmeier-3term-standard, rms 2.95e-04 ; least_squares 2.38 s, minimize 0.26 s, differential_evolution 0.00 s

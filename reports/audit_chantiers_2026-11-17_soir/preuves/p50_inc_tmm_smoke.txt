@@ -1,0 +1,6 @@
+tmm 0.2.0 inc_tmm contre calculate_RT_with_backside_fused, couches dans l'ordre inverse (convention du 40), D = 1 mm
+k=0: max |dT| = 8.88e-16  T(550)=0.809659
+k=1e-06: max |dT| = 5.96e-09  T(550)=0.791127
+k=4.4e-06: max |dT| = 2.07e-08  T(550)=0.731306
+k=2e-05: max |dT| = 3.21e-08  T(550)=0.510580
+k=0.0001: max |dT| = 1.30e-09  T(550)=0.081862

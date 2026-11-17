@@ -1,0 +1,95 @@
+TEST SPLINE STARTING!
+warmup_physics done
+CertusIndexSplineApp created
+Spectrum loaded: 903 rows
+Config OK: n_seg=13, d=[1600, 1800] nm, local_only=True
+Running worker_spline_optimization (local only)...
+  [  0%] SOL 2: local optimization (29 vars, fixed knots, K_sigma=14)...
+  [ 52%] L-BFGS-B only (polish)...
+  [130%] Polish L-BFGS-B: iterations=1 | RMSE=0.060263
+  live: d=1700.0nm, RMSE=0.060263
+  [137%] Polish L-BFGS-B: iterations=30 | RMSE=0.007866
+  live: d=1699.9nm, RMSE=0.007866
+  [146%] Polish L-BFGS-B: iterations=65 | RMSE=0.003991
+  live: d=1700.0nm, RMSE=0.003991
+  [155%] Polish L-BFGS-B: iterations=102 | RMSE=0.003428
+  live: d=1699.9nm, RMSE=0.003428
+  [164%] Polish L-BFGS-B: iterations=136 | RMSE=0.003232
+  live: d=1699.9nm, RMSE=0.003232
+  [172%] Polish L-BFGS-B: iterations=169 | RMSE=0.003078
+  live: d=1699.8nm, RMSE=0.003078
+  [181%] Polish L-BFGS-B: iterations=206 | RMSE=0.002962
+  live: d=1699.7nm, RMSE=0.002962
+  [190%] Polish L-BFGS-B: iterations=244 | RMSE=0.002903
+  live: d=1699.6nm, RMSE=0.002903
+  live: d=1699.4nm, RMSE=0.002830
+  live: d=1699.4nm, RMSE=0.002830
+  [6800%] SOL 2 completed - continuing with fixed mesh finalization.
+  [6800%] Final spline: fixed mesh baseline (optional MWIR stage next)...
+  [7200%] Final fixed mesh - k floor / sigma mesh polish...
+  [7600%] k floor and spectral polish...
+  [7600%] Spectral mesh polish: cubic spline sigma...
+  [7600%] Spectral mesh polish: evals=0/10000 | nit=0 | RMSE=0.002830 | elapsed=0s
+  [7610%] Spectral mesh polish: evals=60/10000 | nit=1 | RMSE=0.002830 | elapsed=0s
+  [9200%] sigma mesh polish completed - RMSE synthesis.
+  [9300%] Spectral sigma mesh polish RMSE synthesis...
+  [10000%] Completed | RMSE=0.002830
+
+HEADLESS SPLINE DONE.
+RMSE       : 0.0028304302575443813
+Thickness  : 1699.4295219089365 nm
+n(550nm)   : None
+n(2000nm)  : None
+Result keys: ['x', 'sigma_knots', 'n_seg', 'lam_nm', 'n_lam', 'k_lam', 'd_nm', 'mse', 'rmse', 't_theo', 'r_theo', 'nfev_pglobal', 'nit_polish', 'stage_repli_local', 'pglobal_trust_rho', 'n_mono_band_nm', 'n_mono_continuous_penalty', 'x_encoding', 'n_nodes_physical', 'L_nodes', 'nk_profile_interp', 'post_s3_mwir_stage_considered', 'post_s3_mwir_insert_accepted', 'post_s3_k_floor_applied', 'n_lam_seg_spline_sigma', 'k_lam_seg_spline_sigma', 'd_nm_seg_spline_sigma', 'x_seg_spline_sigma', 'spectral_rmse_seg_spline_sigma', 'spectral_rmse_segments', 'spectral_mse_segments', 'spectral_rmse_solver_label', 'spectral_rmse_solver_value', 'spectral_rmse_solver_source', 'spectral_rmse_solver_status', 'spectral_rmse_global_best_label', 'spectral_rmse_global_best_value', 'spectral_rmse_global_best_source', 'spectral_rmse_global_best_status', 'spectral_rmse_best_label', 'spectral_rmse_best_value', 'spectral_rmse_polished_label', 'spectral_rmse_polished_value', 'spectral_rmse_polished_source', 'spectral_rmse_polished_status', 'spectral_rmse_polished_best_label', 'spectral_rmse_polished_best_value', 'gui_solver_snapshot_for_corridors', 'post_s3_candidate_ledger', 'post_s3_scientific_candidate', 'post_s3_scientific_candidate_id', 'post_s3_scientific_candidate_label', 'post_s3_scientific_candidate_origin', 'post_s3_scientific_candidate_rmse', 'rmse_fit_lambda_nm', 'profile_d_promoted_pass1', 'profile_d_promoted_corridor_blocks', 'profile_d_promoted_pass2', 'pipeline_best_rmse_watermark', 'pipeline_best_rmse_stage']
+
+PROFIL total 6.5 s (sous cProfile)
+         3808688 function calls (3768208 primitive calls) in 6.390 seconds
+   Ordered by: cumulative time
+   List reduced from 6113 to 45 due to restriction <45>
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.020    0.020    6.495    6.495 D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus1111\tests\headless\test_spline.py:19(test_spline_headless)
+        1    0.000    0.000    3.214    3.214 D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus1111\certus\spline\spline_pipeline_orchestrator.py:268(work
+        1    0.000    0.000    3.146    3.146 D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus1111\certus\spline\spline_workers.py:1656(_run_single_splin
+        2    0.000    0.000    2.854    1.427 C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\optimize\_minimize.py:54(minimize)
+        2    0.003    0.002    2.853    1.427 C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\optimize\_lbfgsb_py.py:272(_minimize_lbfgsb)
+        1    0.000    0.000    2.839    2.839 D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus1111\certus\spline\spline_workers.py:148(_polish_lbfgsb_chu
+      336    0.001    0.000    2.738    0.008 C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\optimize\_differentiable_functions.py:409(fun_and_grad)
+      338    0.001    0.000    2.654    0.008 C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\optimize\_differentiable_functions.py:371(_update_grad)
+      336    0.002    0.000    2.653    0.008 C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\optimize\_differentiable_functions.py:35(__call__)
+      336    0.017    0.000    2.651    0.008 C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\optimize\_numdiff.py:288(approx_derivative)
+      336    0.049    0.000    2.606    0.008 C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\optimize\_numdiff.py:683(_dense_difference)
+     9744    0.040    0.000    2.515    0.000 C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\optimize\_numdiff.py:904(__call__)
+    10080    0.026    0.000    2.452    0.000 C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\_lib\_util.py:541(__call__)
+    10021    0.028    0.000    2.389    0.000 D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus1111\certus\spline\spline_workers.py:181(_tracking_obj)
+    10024    0.101    0.000    2.381    0.000 D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus1111\certus\spline\spline_objective.py:994(__call__)
+  767/177    0.003    0.000    2.192    0.012 <frozen importlib._bootstrap>:1302(_find_and_load)
+   600/54    0.003    0.000    2.189    0.041 <frozen importlib._bootstrap>:1205(_find_and_load_unlocked)
+  1931/70    0.003    0.000    2.165    0.031 <frozen importlib._bootstrap>:483(_call_with_frames_removed)
+   597/54    0.002    0.000    2.150    0.040 <frozen importlib._bootstrap>:841(_load_unlocked)
+   554/51    0.002    0.000    2.145    0.042 <frozen importlib._bootstrap_external>:745(exec_module)
+   869/51    0.054    0.000    2.082    0.041 {built-in method builtins.exec}
+        1    0.000    0.000    1.037    1.037 D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus1111\certus\spline\spline_pipeline_orchestrator.py:1(<modul
+        1    0.000    0.000    1.027    1.027 D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus1111\certus\spline\spline_pipeline_corridors_runner.py:1(<m
+        1    0.000    0.000    0.994    0.994 D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus1111\certus\spline\certus_corridor_config.py:1(<module>)
+    10021    0.259    0.000    0.955    0.000 D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus1111\certus\spline\spline_objective.py:974(_fast_nk)
+6371/5897    0.005    0.000    0.930    0.000 <frozen importlib._bootstrap>:1392(_handle_fromlist)
+    10094    0.867    0.000    0.928    0.000 D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus1111\certus\spline\spline_objective.py:520(spline_objective
+  678/312    0.001    0.000    0.904    0.003 {built-in method builtins.__import__}
+       20    0.000    0.000    0.822    0.041 C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\numba\core\dispatcher.py:342(_compile_for_args)
+       20    0.001    0.000    0.787    0.039 C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\numba\core\dispatcher.py:873(compile)
+       20    0.000    0.000    0.783    0.039 C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\numba\core\caching.py:742(load_overload)
+        1    0.000    0.000    0.779    0.779 D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus1111\certus\ui\certus_index_spline_ui.py:88(__init__)
+      554    0.006    0.000    0.761    0.001 <frozen importlib._bootstrap_external>:814(get_code)
+        1    0.000    0.000    0.721    0.721 C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\scipy\stats\__init__.py:1(<module>)
+        1    0.001    0.001    0.719    0.719 D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus1111\certus\core\_certus_physics_impl.py:1179(warmup_physic
+        1    0.000    0.000    0.656    0.656 D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus1111\certus\ui\certus_index_spline_ui.py:1(<module>)
+        1    0.000    0.000    0.633    0.633 D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus1111\certus\ui\certus_index_spline_common.py:1(<module>)
+    10102    0.028    0.000    0.590    0.000 D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus1111\certus\spline\certus_index_spline_core.py:458(x_slice_
+     2072    0.534    0.000    0.534    0.000 {built-in method nt.stat}
+     2041    0.001    0.000    0.530    0.000 <frozen importlib._bootstrap_external>:145(_path_stat)
+        1    0.000    0.000    0.464    0.464 C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\pyqtgraph\__init__.py:1(<module>)
+       20    0.000    0.000    0.457    0.023 C:\Users\Fabien\AppData\Local\Programs\Python\Python315\Lib\site-packages\numba\core\caching.py:753(_load_overload)
+      601    0.004    0.000    0.452    0.001 <frozen importlib._bootstrap>:1140(_find_spec)
+      600    0.001    0.000    0.443    0.001 <frozen importlib._bootstrap_external>:1266(find_spec)
+      600    0.001    0.000    0.442    0.001 <frozen importlib._bootstrap_external>:1237(_get_spec)
+EXIT=0 DUREE=11s

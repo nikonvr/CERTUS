@@ -190,7 +190,7 @@ def build_graph(files: Iterable[str]) -> Graph:
                 graph.modules.setdefault(name, set()).add(path)
     parsed: dict[str, _File] = {}
     for path in graph.files:
-        if not path.endswith(".py"):
+        if not path.endswith((".py", ".spec")):  # un .spec PyInstaller est du Python, execute par son test
             continue
         try:
             source = (ROOT / path).read_text(encoding="utf-8-sig")
@@ -231,8 +231,9 @@ def build_graph(files: Iterable[str]) -> Graph:
 
     for path, info in parsed.items():
         is_test = path.startswith("tests/") and Path(path).name != "conftest.py"
+        whole_file = is_test or path.endswith(".spec")  # lu d'un bloc : ses imports et ses chemins sont ses aretes
         groups: dict[str, list[ast.AST]] = {}
-        if is_test:
+        if whole_file:
             groups[WHOLE] = [info.tree]
         else:
             groups[MODULE] = [n for n in info.tree.body if not isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))]
@@ -254,7 +255,7 @@ def build_graph(files: Iterable[str]) -> Graph:
                 attribute_bases = {id(n.value) for n in ast.walk(root) if isinstance(n, ast.Attribute)}
                 for node in ast.walk(root):
                     if isinstance(node, (ast.Import, ast.ImportFrom)):
-                        if not is_test:
+                        if not whole_file:
                             continue  # un import seul ne fait rien qu'a l'import (--collect-only) ; ses noms, si
                         for alias in node.names:
                             if isinstance(node, ast.Import):
@@ -304,13 +305,13 @@ def build_graph(files: Iterable[str]) -> Graph:
                             uses |= whole(text)
                         elif PATH_LIKE.fullmatch(text):
                             named_paths.add(text.rstrip("/"))
-                            if is_test and text in tracked and text.endswith(".py"):
+                            if whole_file and text in tracked and text.endswith((".py", ".spec")):
                                 uses.add((text, WHOLE))
                     elif isinstance(node, ast.BinOp):
                         chained = _path_chain(node)
                         if chained:
                             named_paths.add(chained.rstrip("/"))
-                            if is_test and chained.endswith(".py"):
+                            if whole_file and chained.endswith((".py", ".spec")):
                                 uses |= {(f, WHOLE) for f in tracked if f == chained or f.endswith("/" + chained)}
             if is_test:
                 uses |= _fixtures_used(path, info.tree, tracked, parsed)

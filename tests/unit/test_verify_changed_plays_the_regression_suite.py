@@ -81,6 +81,23 @@ def test_a_test_that_imports_helpers_from_another_test_follows_it(tmp_path, monk
     assert "tests/unit/test_user.py" in sel.tests
 
 
+def test_a_test_that_runs_the_pyinstaller_spec_follows_what_the_spec_loads(tmp_path, monkeypatch):
+    """`tests/unit/test_the_frozen_spec_bundles_the_suite.py` executes `certus_hub.spec`, which loads
+    `tools/frozen_licences.py` by its path; the spec, not a .py, was not parsed (`--audit-calls`, 2026-11-17)."""
+    (tmp_path / "tools").mkdir()
+    (tmp_path / "tools/licences.py").write_text("def toc():\n    return []\n", encoding="utf-8")
+    spec = "import importlib.util\nfrom pathlib import Path\nROOT = Path(SPECPATH)\nLOADED = ROOT / 'tools' / 'licences.py'\n"
+    (tmp_path / "app.spec").write_text(spec, encoding="utf-8")
+    runs = "from pathlib import Path\n\nROOT = Path(__file__).parents[2]\n\ndef test_spec():\n    exec((ROOT / 'app.spec').read_text())\n"
+    graph = _tree(tmp_path, monkeypatch, {"tests/unit/test_spec.py": runs})
+    graph = vc.build_graph([*graph.files, "tools/licences.py", "app.spec"])
+
+    sel = vc.select(graph, ["tools/licences.py"], whole_files=True)
+
+    assert "tests/unit/test_spec.py" in sel.tests
+    assert "tests/unit/test_other.py" not in sel.tests
+
+
 def test_the_audit_does_not_count_an_always_played_test_as_a_hole(tmp_path, monkeypatch):
     """The walk reaches `certus.kernel.value` by a name it builds, which no static edge can follow; the selection plays
     it whatever changes, so it can miss nothing (the hole `--audit-calls` reported on 2026-11-17)."""

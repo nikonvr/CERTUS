@@ -1,0 +1,3 @@
+  TROU tests/oracle/test_all_exports_are_real.py : certus/core/certus_core.py::bootstrap_app, certus/core/certus_core.py::certus_timestamp_file, certus/core/certus_core.py::create_module_environment, certus/core/certus_core.py::setup_module_logging ...
+AUDIT_APPELS=TROUS (22 fichiers de test, 1 avec un trou ; pytest vert)
+EXIT=1 DUREE=78s

@@ -63,7 +63,7 @@ FULL_SUITE_SHARE = 0.60
 #: Un test qui lit des sources contient l'un de ces appels.
 READS_SOURCES = re.compile(r"read_text\(|\.glob\(|rglob\(|ast\.parse|ls-files|os\.walk")
 #: ... et il les lit dans le depot.
-NAMES_THE_REPOSITORY = re.compile(r"parents\[|\bROOT\b|__file__")
+NAMES_THE_REPOSITORY = re.compile(r"parents\[|\bROOT\b|__file__|__path__")
 PATH_LIKE = re.compile(r"[\w.\-]+(/[\w.\-]+)+/?|[\w\-]+\.(py|md|json|toml|spec|txt|yml|ps1|bat|html)")
 DOC_SUFFIXES = (".md", ".html")
 DOC_CHECKS = ("coherence_md", "check_claude_md", "check_docs")
@@ -575,6 +575,13 @@ def select(graph: Graph, changed: list[str], base: str = "HEAD", whole_files: bo
         for test in tests:
             if test.startswith("tests/oracle/") and test not in sel.tests:
                 sel.tests[test] = f"noyau modifie ({sel.kernels[0]}) : tout l'oracle"
+    # tests/regression/ lance des scripts du depot en sous-processus, nommes par leur seul nom de fichier
+    # (`ROOT / "tests" / "headless"`, puis "test_spline.py") : le graphe statique ne suit pas cette arete (rapport du
+    # selecteur du 2026-11-15, section 3). Un module du depot a change : toute la suite de regression est jouee.
+    if sel.collect:
+        for test in tests:
+            if test.startswith("tests/regression/") and test not in sel.tests:
+                sel.tests[test] = "un module du depot a change : tests/regression/ lance des scripts en sous-processus"
     if sel.total_tests and len(sel.tests) > FULL_SUITE_SHARE * sel.total_tests:
         sel.full_suite = sel.full_suite or f"{len(sel.tests)} fichiers de test sur {sel.total_tests} : autant tout jouer"
     return sel
@@ -734,6 +741,8 @@ def audit_calls(graph: Graph, tests: list[str], workers: int = 1) -> int:
                 seen.setdefault(test, set()).update((rel, line) for rel, line in calls)
     holes = 0
     for test, calls in sorted(seen.items()):
+        if test in graph.reads and graph.reads[test] is None:
+            continue  # lit des sources sans dire lesquelles : toujours joue, aucune selection ne peut le manquer
         reach = forward(graph, [(c, WHOLE) for c in (test, *conftests_of(test, tracked))])
         reach_files = {f for f, n in reach if n == WHOLE}
         missing = set()

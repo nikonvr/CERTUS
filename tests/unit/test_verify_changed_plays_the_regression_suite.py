@@ -126,3 +126,9 @@ def test_the_audit_does_not_count_an_always_played_test_as_a_hole(tmp_path, monk
 
     assert graph.reads["tests/unit/test_walk.py"] is None
     assert vc.audit_calls(graph, ["tests/unit/test_walk.py"]) == 0
+
+
+def test_the_command_line_graph_includes_the_pyinstaller_spec():
+    """The graph of `main()` was built from `*.py` alone: the spec the selector now reads never reached it (re-audit of
+    2026-11-17)."""
+    assert "certus_hub.spec" in vc.source_files()

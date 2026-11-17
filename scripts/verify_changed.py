@@ -181,6 +181,12 @@ def _parse(path: str, tree: ast.Module) -> _File:
     return info
 
 
+def source_files() -> list[str]:
+    """Les sources Python du depot, suivies ou nouvelles : les .py et les .spec PyInstaller (du Python execute)."""
+    patterns = ("*.py", "*.spec")
+    return git("ls-files", *patterns) + git("ls-files", "--others", "--exclude-standard", *patterns)
+
+
 def build_graph(files: Iterable[str]) -> Graph:
     graph = Graph(files=sorted(files))
     tracked = set(graph.files)
@@ -784,7 +790,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--audit-calls", nargs="+", metavar="TEST")
     parser.add_argument("--audit-workers", type=int, default=1, help="workers de l'audit d'appels (defaut : serie)")
     args = parser.parse_args(argv)
-    graph = build_graph(git("ls-files", "*.py") + git("ls-files", "--others", "--exclude-standard", "*.py"))
+    graph = build_graph(source_files())
     if args.audit_calls:
         return audit_calls(graph, args.audit_calls, max(1, args.audit_workers))
     changed = sorted(f.replace("\\", "/") for f in args.files) if args.files else changed_files(args.base)

@@ -21,6 +21,8 @@ DESIGN_CONFIG_TABLE = (
     ConfigField("l0", "l0_spin", "float", 500.0),
     ConfigField("back_en", "back_check", "bool", False),
     ConfigField("back_coat", "back_coat_check", "bool", False),
+    # Substrate thickness, mm: a file without it is a file at 1 mm, the thickness every kernel assumed before the field.
+    ConfigField("substrate_thickness_mm", "sub_thickness_mm_spin", "float", 1.0, missing=1.0),
 )
 
 # The settings of the "optimization" block (the files of example/example_design name it "optim").
@@ -95,6 +97,9 @@ class StateManager:
 
             if hasattr(self.ui, "back_coat_check"):
                 self.ui.back_coat_check.setChecked(False)
+
+            if hasattr(self.ui, "sub_thickness_mm_spin"):
+                self.ui.sub_thickness_mm_spin.setValue(1.0)
 
             if hasattr(self.ui, "oblique_check"):
                 self.ui.oblique_check.setChecked(False)

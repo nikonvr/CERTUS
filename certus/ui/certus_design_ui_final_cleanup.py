@@ -27,7 +27,10 @@ class FinalCleanupMixin:
         try:
             from certus.core.certus_design_cost_context import prepare_design_cost_context
             from certus.core.certus_design_final_cleanup import design_cost_factory, final_cleanup
-            from certus.core.certus_design_worker_utils import optim_backside_flags_from_cfg
+            from certus.core.certus_design_worker_utils import (
+                design_substrate_thickness_nm,
+                optim_backside_flags_from_cfg,
+            )
 
             wls = np.asarray(self.ui._get_optim_wls(), dtype=np.float64)
             tgts = [t for t in self.ui._get_tgts() if t.valid()]
@@ -44,6 +47,7 @@ class FinalCleanupMixin:
             context = prepare_design_cost_context(
                 self.ui._get_materials(), self.ui._get_front_stack(), wls, tgts,
                 stack_back=back_stack, ep_back=ep_back, has_back_stack=has_back_stack, has_back_calc=has_back_calc,
+                substrate_thickness_nm=design_substrate_thickness_nm(self.ui),
             )
             names = [row["mat"] for row in state]
             floors = {name: float(self._min_layer_thickness([name])[0]) for name in set(names)}

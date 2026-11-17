@@ -12,6 +12,7 @@ from typing import Any
 import numpy as np
 
 from certus.core.certus_core import CFG, get_complex_dtype, get_export_config, get_float_dtype
+from certus.core.certus_design_worker_utils import design_substrate_thickness_nm
 
 
 class DesignOrchestrator:
@@ -714,6 +715,7 @@ class DesignOrchestrator:
             "tgts": tgts_needle,
             "ep": ep_curr,
             "has_back": has_back_calc,
+            "substrate_thickness_nm": design_substrate_thickness_nm(self.ui),
             "n_back_T": n_back_T,
             "d_back": d_back,
             "oblique_mode": self.ui.oblique_mode,  # Pass oblique mode

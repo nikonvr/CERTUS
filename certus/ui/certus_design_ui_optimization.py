@@ -851,7 +851,10 @@ class OptimizationManager(FinalCleanupMixin):
         try:
             from certus.core.certus_design_cost_context import prepare_design_cost_context
             from certus.core.certus_design_final_cleanup import lbfgsb_polish
-            from certus.core.certus_design_worker_utils import optim_backside_flags_from_cfg
+            from certus.core.certus_design_worker_utils import (
+                design_substrate_thickness_nm,
+                optim_backside_flags_from_cfg,
+            )
 
             stack = self.ui._get_front_stack()
             ep = np.asarray(self.ui.ep_current, dtype=np.float64) if self.ui.ep_current is not None else np.zeros(0)
@@ -875,6 +878,7 @@ class OptimizationManager(FinalCleanupMixin):
             context = prepare_design_cost_context(
                 self.ui._get_materials(), stack, wls, tgts,
                 stack_back=back_stack, ep_back=ep_back, has_back_stack=has_back_stack, has_back_calc=has_back_calc,
+                substrate_thickness_nm=design_substrate_thickness_nm(self.ui),
             )
             floor = np.maximum(self._current_min_layer_thickness(len(ep)), 0.01)
             x0 = np.maximum(ep[var_idx], floor[var_idx])
@@ -1122,7 +1126,10 @@ class OptimizationManager(FinalCleanupMixin):
         """
         from certus.core.certus_design_cost_context import prepare_design_cost_context
         from certus.core.certus_design_final_cleanup import lbfgsb_polish
-        from certus.core.certus_design_worker_utils import optim_backside_flags_from_cfg
+        from certus.core.certus_design_worker_utils import (
+            design_substrate_thickness_nm,
+            optim_backside_flags_from_cfg,
+        )
 
         wls = self.ui._get_optim_wls()
         has_back_stack, has_back_calc, back_stack = optim_backside_flags_from_cfg(
@@ -1136,6 +1143,7 @@ class OptimizationManager(FinalCleanupMixin):
         context = prepare_design_cost_context(
             self.ui._get_materials(), stack_test, wls, [t for t in self.ui._get_tgts() if t.valid()],
             stack_back=back_stack, ep_back=ep_back, has_back_stack=has_back_stack, has_back_calc=has_back_calc,
+            substrate_thickness_nm=design_substrate_thickness_nm(self.ui),
         )
         var_idx = np.arange(len(ep_test), dtype=np.int64)
         res, _ = lbfgsb_polish(

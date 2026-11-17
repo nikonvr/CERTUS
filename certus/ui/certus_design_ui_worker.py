@@ -7,7 +7,11 @@ from pathlib import Path
 import numpy as np
 
 from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS
-from certus.core.certus_design_worker_utils import optim_rmse_display_string, optim_rmse_is_valid_for_log
+from certus.core.certus_design_worker_utils import (
+    design_substrate_thickness_nm,
+    optim_rmse_display_string,
+    optim_rmse_is_valid_for_log,
+)
 from certus.ui.certus_overview_tab import PLACEHOLDER
 from certus.ui.certus_qt_widgets import QThread
 from certus.ui.certus_spectrum_eval_ui import (
@@ -472,6 +476,7 @@ class WorkerManager:
                 "local_delta_nm": 10.0,
                 "use_back_coat": self.ui.back_coat_check.isChecked(),
                 "back": self.ui.back_check.isChecked(),
+                "substrate_thickness_nm": design_substrate_thickness_nm(self.ui),
                 "ep_back": (self.ui.ep_back_current if self.ui.ep_back_current is not None else []),
                 "stack_back": self.ui._get_back_stack(),
                 "calc_oblique_func": (calc_spectrum_oblique_vectorized if self.ui.oblique_mode else None),
@@ -497,6 +502,7 @@ class WorkerManager:
                 "max_iter": 8,
                 "use_back_coat": self.ui.back_coat_check.isChecked(),
                 "back": self.ui.back_check.isChecked(),
+                "substrate_thickness_nm": design_substrate_thickness_nm(self.ui),
                 "ep_back": (self.ui.ep_back_current if self.ui.ep_back_current is not None else []),
                 "stack_back": self.ui._get_back_stack(),
                 "calc_oblique_func": (calc_spectrum_oblique_vectorized if self.ui.oblique_mode else None),
@@ -548,6 +554,7 @@ class WorkerManager:
                 "max_iter": g_max_iter,
                 "use_back_coat": self.ui.back_coat_check.isChecked(),
                 "back": self.ui.back_check.isChecked(),
+                "substrate_thickness_nm": design_substrate_thickness_nm(self.ui),
                 "ep_back": (self.ui.ep_back_current if self.ui.ep_back_current is not None else []),
                 "stack_back": self.ui._get_back_stack(),
                 "max_clusters": g_max_clusters,

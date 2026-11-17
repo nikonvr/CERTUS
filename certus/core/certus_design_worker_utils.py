@@ -20,7 +20,7 @@ from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS, get_float_d
 from certus.core.certus_design_cost_context import optim_prepare_stack_nk_back as optim_prepare_stack_nk_back
 from certus.core.certus_design_cost_context import prepare_design_cost_context
 from certus.physics.certus_inputs import PHASE_IMAG_OVERFLOW, is_s_polarization
-from certus.physics.certus_substrate_absorption import DEFAULT_SUBSTRATE_THICKNESS_NM
+from certus.physics.certus_substrate_absorption import DEFAULT_SUBSTRATE_THICKNESS_NM, substrate_thickness_nm_from_mm
 from certus_physics import PGlobalConfig, PGlobalOptimizer
 
 if TYPE_CHECKING:
@@ -68,6 +68,12 @@ def optim_calc_oblique_selected(
         )
 
     return calc_spectrum_oblique_vectorized(wls_arr, n_front_T, d_front_arr, n_sub_arr, angle, pol)
+
+
+def design_substrate_thickness_nm(ui: Any) -> float:
+    """The substrate thickness of the DESIGN window in nm (its `sub_thickness_mm_spin`); 1 mm without the field."""
+    spin = getattr(ui, "sub_thickness_mm_spin", None)
+    return substrate_thickness_nm_from_mm(spin.value()) if spin is not None else DEFAULT_SUBSTRATE_THICKNESS_NM
 
 
 def optim_post_optim_time_budget_seconds(n_layers: int) -> float:

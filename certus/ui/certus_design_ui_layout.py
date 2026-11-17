@@ -282,6 +282,35 @@ class LayoutManager:
 
         param_layout.addWidget(self.ui.back_coat_check)
 
+        # Thickness of the substrate: the plate an absorbing substrate (k > 0) is, seen with the back face
+
+        sub_thickness_lay = QHBoxLayout()
+
+        self.ui.sub_thickness_mm_spin = QDoubleSpinBox()
+
+        self.ui.sub_thickness_mm_spin.setRange(0.001, 100.0)
+
+        self.ui.sub_thickness_mm_spin.setDecimals(3)
+
+        self.ui.sub_thickness_mm_spin.setSingleStep(0.1)
+
+        self.ui.sub_thickness_mm_spin.setValue(1.0)
+
+        self.ui.sub_thickness_mm_spin.setSuffix(" mm")
+
+        self.ui.sub_thickness_mm_spin.setToolTip(
+            "Substrate thickness, used with the back face when the substrate absorbs (k > 0): the light loses part of "
+            "its flux on each pass. No effect on a substrate with k = 0."
+        )
+
+        self.ui.sub_thickness_mm_spin.valueChanged.connect(self.ui._on_schedule_eval_instant_signal)
+
+        sub_thickness_lay.addWidget(QLabel("substrate thickness:"))
+
+        sub_thickness_lay.addWidget(self.ui.sub_thickness_mm_spin)
+
+        param_layout.addLayout(sub_thickness_lay)
+
         # Oblique Mode
 
         self.ui.oblique_check = QCheckBox("Oblique incidence mode")

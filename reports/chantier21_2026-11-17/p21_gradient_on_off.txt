@@ -1,0 +1,6 @@
+n_seg=13 d=[1600, 1800] local_only=True n_mono_band_nm=(249.99, 2000.0) option par defaut=False
+option=eteinte : mediane 2.494 s, min 2.222, max 2.934 (2.244 2.222 2.934 2.494 2.549) | RMSE=0.0028304303 d=1699.429522 nm nit_polish=10020
+option=allumee : mediane 2.062 s, min 2.013, max 2.399 (2.165 2.021 2.062 2.013 2.399) | RMSE=0.0019481756 d=1667.485976 nm nit_polish=2545
+ecart allumee - eteinte : RMSE -8.823e-04, d -31.9435 nm, max|dn| nan, max|dk| nan
+option=eteinte : 10024 evaluations de cout, 0 gradients analytiques
+option=allumee : 2549 evaluations de cout, 2549 gradients analytiques

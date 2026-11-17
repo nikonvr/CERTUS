@@ -1,0 +1,8 @@
+HEAD 2a5443ba (export git archive), cache Numba vierge, NUMBA_NUM_THREADS=8 :
+n_mono_band_nm=(249.99, 2000.0) option=absente
+42 tableaux ecrits ; rmse=0.0028304302575443813 d=1699.4295219089365
+arbre de travail (option eteinte par defaut), cache Numba vierge, NUMBA_NUM_THREADS=8 :
+n_mono_band_nm=(249.99, 2000.0) option=False
+42 tableaux ecrits ; rmse=0.0028304302575443813 d=1699.4295219089365
+--compare :
+C1 SPLINE : 42 tableaux, 0 differents

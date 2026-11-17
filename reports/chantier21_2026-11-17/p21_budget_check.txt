@@ -1,0 +1,5 @@
+budgets par defaut : polish_maxfun=10000 stage_mandatory_local_maxfun=0
+option=eteinte budget x1 : 2.53 s, 10024 couts, RMSE=0.0028304303 d=1699.4295 nm, n600=1.46694 n1000=1.46099 k600=1.277e-04 | NaN n_lam 12/903, k_lam 12
+option=eteinte budget x1 : 2.24 s, 10024 couts, RMSE=0.0028304303 d=1699.4295 nm, n600=1.46694 n1000=1.46099 k600=1.277e-04 | NaN n_lam 12/903, k_lam 12
+option=allumee budget x1 : 2.46 s, 2549 couts, RMSE=0.0019481756 d=1667.4860 nm, n600=1.49652 n1000=1.48814 k600=4.987e-05 | NaN n_lam 12/903, k_lam 12
+option=eteinte budget x5 : 11.79 s, 50044 couts, RMSE=0.0021865354 d=1685.7844 nm, n600=1.48013 n1000=1.47178 k600=9.975e-05 | NaN n_lam 12/903, k_lam 12

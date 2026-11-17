@@ -64,6 +64,21 @@ datas = [
     ("certus_physics/structures.py", "certus_physics"),
 ]
 
+# The commit the build is made from, next to the executable: a frozen build has no repository, and its exports
+# would not say which code made them (`certus_metrology.git_state`, chantier 39).
+import json
+import subprocess
+
+from certus.core.certus_metrology import BUILD_COMMIT_FILE
+
+_git = ["git", "-C", str(ROOT), "--no-optional-locks"]
+_head = subprocess.run([*_git, "rev-parse", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()
+_dirty = subprocess.run([*_git, "diff", "--quiet", "HEAD", "--"], check=False).returncode != 0
+_stamp = Path(workpath) / BUILD_COMMIT_FILE
+_stamp.parent.mkdir(parents=True, exist_ok=True)
+_stamp.write_text(json.dumps({"commit": _head, "dirty": _dirty}), encoding="utf-8")
+datas.append((str(_stamp), "."))
+
 a = Analysis(
     [str(ROOT / "tools" / "frozen_entry.py")],
     pathex=[str(ROOT)],

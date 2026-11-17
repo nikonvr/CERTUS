@@ -32,15 +32,34 @@ except ImportError:
         return ""
 
 
+#: Written next to the executable by `certus_hub.spec` when it builds: the commit the build was made from.
+BUILD_COMMIT_FILE = "BUILD_COMMIT.json"
+
+
+def _frozen_build_commit() -> tuple[str, bool | None]:
+    """The `(sha, dirty)` a frozen build carries in `BUILD_COMMIT_FILE`; `("", None)` when absent or unreadable."""
+    try:
+        data = json.loads((Path(sys.executable).resolve().parent / BUILD_COMMIT_FILE).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return "", None
+    if not isinstance(data, dict):
+        return "", None
+    sha, dirty = data.get("commit"), data.get("dirty")
+    if not isinstance(sha, str) or len(sha) != 40:
+        return "", None
+    return sha, dirty if isinstance(dirty, bool) else None
+
+
 @lru_cache(maxsize=1)
 def git_state() -> tuple[str, bool | None]:
     """The commit of the checkout that runs, and whether its tracked files differ from it.
 
-    Returns `(sha, dirty)`; `("", None)` when it cannot be known: a frozen build (no repository), no `git`,
-    or a repository that does not answer in time (a synchronized folder can be slow). Asked once per process.
+    Returns `(sha, dirty)`; `("", None)` when it cannot be known: no `git`, a repository that does not answer in
+    time (a synchronized folder can be slow), or a frozen build without its `BUILD_COMMIT_FILE`. A frozen build
+    has no repository and starts no `git`: it reads the commit its build wrote. Asked once per process.
     """
     if getattr(sys, "frozen", False):
-        return "", None
+        return _frozen_build_commit()
     root = str(Path(__file__).resolve().parents[2])
     base = ["git", "-C", root, "--no-optional-locks"]
     try:

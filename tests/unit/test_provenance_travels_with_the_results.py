@@ -147,6 +147,27 @@ def test_a_frozen_build_has_no_repository_and_asks_none(monkeypatch) -> None:
     assert certus_metrology.provenance()["git_dirty"] is None
 
 
+def test_a_frozen_build_reads_the_commit_its_build_wrote(tmp_path, monkeypatch) -> None:
+    # Chantier 39: the exports of the executable did not say which code made them.
+    from certus.core import certus_metrology
+
+    def no_process(*_a, **_k):
+        raise AssertionError("a frozen build must not start git")
+
+    sha = "0123456789abcdef0123456789abcdef01234567"
+    (tmp_path / "BUILD_COMMIT.json").write_text(json.dumps({"commit": sha, "dirty": False}), encoding="utf-8")
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setattr(sys, "executable", str(tmp_path / "CERTUS_HUB.exe"))
+    monkeypatch.setattr(certus_metrology.subprocess, "run", no_process)
+
+    assert certus_metrology.provenance()["git_commit"] == sha
+    assert certus_metrology.provenance()["git_dirty"] is False
+
+    (tmp_path / "BUILD_COMMIT.json").write_text("{not json", encoding="utf-8")
+    certus_metrology.git_state.cache_clear()
+    assert certus_metrology.git_state() == ("", None)
+
+
 def test_no_git_is_no_commit_and_not_an_error(monkeypatch) -> None:
     from certus.core import certus_metrology
 

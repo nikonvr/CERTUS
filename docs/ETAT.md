@@ -15,7 +15,7 @@
 **Liste active** : [chantiers](CHANTIERS_RESTANTS.md). Le chantier 45 est corrigé : les 27 défauts de l'audit du code
 du 15 novembre, un commit chacun ([plan](../reports/audit_code_2026-11-15/plan_corrections.md)), puis 36 de ses 40 mineurs, double-vérifiés
 ([synthèse](../reports/audit_code_2026-11-15/mineurs_synthese.md), [plan](../reports/audit_code_2026-11-15/plan_mineurs.md)). Chantier 46 fait ; chantier 47 fait pour DESIGN
-et RE (champ en mm), METAL simple sans objet (k = 0), STRAT à décider (changement de modèle). Suite du 2026-11-17 : [reprise](../reports/suite_2026-11-17/REPRISE.md).
+et RE (champ en mm), METAL simple sans objet (k = 0), STRAT archivé sans objet (👤). Chantiers 50 et 19 faits ; 05 et 21 mesurés, décision de 👤 attendue. Suite du 2026-11-17 : [reprise](../reports/suite_2026-11-17/REPRISE.md).
 Le polisseur hybride et la pondération par bande sont intégrés. La grille automatique et la sélection robuste
 restent optionnelles. Mesures terminées dans le [bilan DESIGN](../reports/questions_design_2026-11-13/bilan.md).
 Le [guide DESIGN](../pages/CERTUS_DESIGN.html#design-robust-search) décrit l'activation et les limites de la recherche robuste.

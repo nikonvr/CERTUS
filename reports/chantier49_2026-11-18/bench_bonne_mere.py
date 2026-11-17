@@ -28,7 +28,16 @@ SUBSTRATE = "SiO2"
 
 
 def strat_config(design: dict, seed: int) -> dict:
-    from certus.core.certus_strat_config import get_refractive_index
+    import numpy as np
+
+    from certus.core.certus_strat_config import get_refractive_clues_vectorized
+    from certus.physics.certus_material_db import MaterialDatabase
+    from certus.workers.certus_strat_workers import _resolve_strat_indices_db_path
+
+    db = MaterialDatabase(_resolve_strat_indices_db_path())  # the database STRAT itself reads
+
+    def get_refractive_index(mat_id: str, wl: float) -> complex:
+        return complex(get_refractive_clues_vectorized(mat_id, np.array([wl], dtype=np.float64), db_instance=db)[0])
 
     cfg = json.loads(PARAMS.read_text(encoding="utf-8"))
     if design.get("order") != "substrate to incident air" or design.get("backside") is not True:

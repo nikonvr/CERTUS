@@ -877,7 +877,7 @@ def _fit_model_sellmeier3poles(
 
         if best_src != "analytic-sellmeier-3poles-A":
             logger.info(
-                "Sellmeier selection: variante standard 3-termes retenue (plus proche, wrmse=%.6g).",
+                "Sellmeier selection: standard 3-term variant kept (closer, wrmse=%.6g).",
                 float(_best_wrmse),
             )
 

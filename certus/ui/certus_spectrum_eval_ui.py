@@ -13,6 +13,8 @@ from typing import Any, Literal
 import numpy as np
 import pyqtgraph as pg
 
+from certus.core.certus_design_worker_utils import design_substrate_thickness_nm
+from certus.physics.certus_substrate_absorption import DEFAULT_SUBSTRATE_THICKNESS_NM
 from certus.ui.certus_ui import CertusTheme
 from certus.utils.certus_copy_utils import copy_optimization_result
 
@@ -117,6 +119,7 @@ def spectrum_eval_settings_signature(cfg: dict[str, Any]) -> tuple:
         str(cfg.get("variant", "")),
         bool(cfg.get("back", False)),
         bool(cfg.get("use_back_coat", False)),
+        float(cfg.get("substrate_thickness_nm", DEFAULT_SUBSTRATE_THICKNESS_NM)),
         tuple(str(getattr(layer, "mat", "")) for layer in cfg.get("stack_back", []) or []),
         _array(cfg.get("ep_back")),
         tuple((str(name), _material(mat)) for name, mat in sorted(cfg.get("mats", {}).items())),
@@ -373,6 +376,10 @@ def spectrum_eval_build_worker_cfg(
         "back": app.back_check.isChecked(),
         "l0": app.l0_spin.value(),
     }
+
+    # Chantier 47: the displayed spectrum sees the substrate thickness of the window, as its runs do (its spin in mm;
+    # a window without one: 1 mm).
+    cfg["substrate_thickness_nm"] = design_substrate_thickness_nm(app)
 
     if variant == "design":
         from certus_physics import calc_spectrum_oblique_vectorized

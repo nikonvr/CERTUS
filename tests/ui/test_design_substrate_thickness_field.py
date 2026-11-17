@@ -44,3 +44,18 @@ def test_the_window_gives_its_runs_the_thickness_in_nanometres(qapp) -> None:
     window.sub_thickness_mm_spin.setValue(2.5)
     assert design_substrate_thickness_nm(window) == 2.5e6
     assert design_substrate_thickness_nm(object()) == DEFAULT_SUBSTRATE_THICKNESS_NM
+
+
+def test_the_displayed_spectrum_sees_the_thickness_of_the_field(qapp) -> None:
+    # The evaluation that draws the spectrum took 1 mm whatever the field said, while the runs took the field.
+    from certus.ui.certus_design_ui import CertusDesignApp
+    from certus.ui.certus_spectrum_eval_ui import spectrum_eval_build_worker_cfg, spectrum_eval_settings_signature
+
+    window = CertusDesignApp()
+    at_1mm = spectrum_eval_build_worker_cfg(window, "design")
+    assert at_1mm is not None
+    assert at_1mm["substrate_thickness_nm"] == 1.0e6
+    window.sub_thickness_mm_spin.setValue(2.5)
+    at_2p5mm = spectrum_eval_build_worker_cfg(window, "design")
+    assert at_2p5mm["substrate_thickness_nm"] == 2.5e6
+    assert spectrum_eval_settings_signature(at_2p5mm) != spectrum_eval_settings_signature(at_1mm)

@@ -1,0 +1,18 @@
+VALIDATION PARALLELE -- aec4b0e2, 0 fichier(s) suivi(s) modifie(s)
+  python 3.15.2, 30 worker(s), ui 10, journaux : C:\Users\LEMARC~1\AppData\Local\Temp\val_1117c
+  ruff            PASS      0:00  
+  coherence_md    PASS      0:14  
+  check_claude_md PASS      0:00  
+  check_docs      PASS      0:00  
+  oracle          PASS      0:20  1214 passed
+  unit : 2 echec(s) en parallele, rejeu seul en serie...
+  unit            ARTEFACT  2:09  2 failed, 6357 passed, 9 skipped, 1 xfailed
+  ui              PASS      5:37  1670 passed, 12 skipped, 2 xfailed
+  rest            PASS      2:51  322 passed
+  performance     PASS      0:18  30 passed, 2 skipped
+
+ARTEFACT de charge ou d'ordre (unit), verts seuls en serie :
+    tests/unit/test_the_default_pytest_run_is_quiet.py::test_a_bare_run_lists_no_test_and_measures_no_coverage
+    tests/unit/test_the_default_pytest_run_is_quiet.py::test_a_quiet_run_still_ends_on_the_summary_line
+VALIDATION=GO
+La reference de CLAUDE.md section 2 reste la suite complete en serie.

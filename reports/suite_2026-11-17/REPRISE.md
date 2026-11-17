@@ -15,3 +15,16 @@ périmètre **DESIGN seul** (METAL, RE, STRAT à part) ; recherche locale finale
 
 Hors périmètre, laissés : `calculate_RT_vectorized_real_HL` (STRAT) ; préchauffage de `_certus_physics_impl.py` ; la branche RE de
 l'évaluation spectrale (1 mm).
+
+## Après-midi (ordre de 👤 : « continue en autonomie les 47, 34 et 44 », décisions déléguées)
+
+| chantier | état |
+|---|---|
+| 43 | `ui` à 10 workers : 9:53 → 5:38–5:52 ([bilan](../chantier43_2026-11-17/bilan.md)) |
+| 40 | TMM oblique contre `tmm` 0.2.0 : 4,3e-15 ([bilan](../tmm_tiers_2026-11-15/bilan.md)) |
+| 39 | exécutable reconstruit, 11/11 modules, commit embarqué ([bilan](../chantier39_2026-11-17/bilan.md)) |
+| 47 | spectre affiché de DESIGN corrigé ; RE en 3 commits ; METAL simple sans objet ; STRAT à décider |
+| 34 | non reproduit sur cache vierge ; noyaux inchangés ([bilan](../chantier34_2026-11-17/bilan.md)) |
+| 44 | R2 et R10 sans effet sur l'ordre ; rien n'est activé ([bilan](../chantier44_etape3_2026-11-17/bilan.md)) |
+
+Erreurs de la journée, corrigées : le spec gelé poussé avec 7 tests rouges (`a3513987`), un plan figé ajouté au suivi qui faisait échouer `coherence_md` (`efd60e72`), deux fichiers longs allongés (`08e3bb2c`).

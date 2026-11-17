@@ -1,0 +1,5 @@
+ARTEFACT de charge ou d'ordre (unit), verts seuls en serie :
+    tests/unit/test_the_default_pytest_run_is_quiet.py::test_a_bare_run_lists_no_test_and_measures_no_coverage
+    tests/unit/test_the_default_pytest_run_is_quiet.py::test_a_quiet_run_still_ends_on_the_summary_line
+VALIDATION=GO
+La reference de CLAUDE.md section 2 reste la suite complete en serie.

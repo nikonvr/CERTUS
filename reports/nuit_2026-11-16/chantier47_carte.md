@@ -14,11 +14,7 @@ Relevé par `rg` sur les fichiers suivis ; rien n'est modifié. `DEFAULT_SUBSTRA
 
 | zone | appels |
 |---|---|
-| DESIGN, cœur | `core/certus_design_core.py:483` (`apply_plate_loss`), `:632`, `:717` (`calc_spectrum_full_exact`) ; `workers/certus_design_engine.py:169` |
-| DESIGN, utilitaires | `core/certus_design_worker_utils.py:51`, `:63`, `:973` |
-| DESIGN, workers | `workers/certus_design_workers_strat.py:444` ; `workers/certus_design_workers_needle_strat.py:57` ; `workers/certus_spectral_workers.py:496`, `:518`, `:529` |
-| gradients | `physics/design_fast_normal.py:869` ; `physics/gradient_oblique.py:1176` ; `physics/gradient_utils.py:118` |
-| enveloppes | `physics/certus_tmm_hl.py:114` ; `physics/certus_tmm_matrix.py:345`, `:625` ; `core/_certus_physics_impl.py:1213` (fichier `DO NOT SPLIT`) |
+| DESIGN (cœur, utilitaires, workers, gradients, enveloppes) | fait le 2026-11-17 : `2800a0a3`, `23512693`, `a7d4eba6` ([reprise](../suite_2026-11-17/REPRISE.md)) ; le préchauffage de `core/_certus_physics_impl.py` reste à 1 mm (sans effet) |
 | RE | `utils/certus_re_helpers.py:276`, `:1915` |
 | METAL simple | `metal/certus_metal_single_physics.py:196`, `:408` ; `ui/certus_metal_single_gui.py:253`, `:781`, `:969` |
 

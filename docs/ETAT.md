@@ -14,8 +14,8 @@
 
 **Liste active** : [chantiers](CHANTIERS_RESTANTS.md). Le chantier 45 est corrigé : les 27 défauts de l'audit du code
 du 15 novembre, un commit chacun ([plan](../reports/audit_code_2026-11-15/plan_corrections.md)), puis 36 de ses 40 mineurs, double-vérifiés
-([synthèse](../reports/audit_code_2026-11-15/mineurs_synthese.md), [plan](../reports/audit_code_2026-11-15/plan_mineurs.md)). Chantier 46 fait ; chantier 47 cartographié,
-à décider ([carte](../reports/nuit_2026-11-16/chantier47_carte.md)). Nuit du 2026-11-16 : [reprise](../reports/nuit_2026-11-16/REPRISE.md).
+([synthèse](../reports/audit_code_2026-11-15/mineurs_synthese.md), [plan](../reports/audit_code_2026-11-15/plan_mineurs.md)). Chantier 46 fait ; chantier 47 fait pour DESIGN
+(champ en mm), METAL, RE et STRAT à part. Suite du 2026-11-17 : [reprise](../reports/suite_2026-11-17/REPRISE.md).
 Le polisseur hybride et la pondération par bande sont intégrés. La grille automatique et la sélection robuste
 restent optionnelles. Mesures terminées dans le [bilan DESIGN](../reports/questions_design_2026-11-13/bilan.md).
 Le [guide DESIGN](../pages/CERTUS_DESIGN.html#design-robust-search) décrit l'activation et les limites de la recherche robuste.
@@ -173,7 +173,7 @@ Les précautions du cache Numba restent dans le [mode opératoire](../reports/re
 
 | sujet | ce qui est en jeu |
 |---|---|
-| **audit du code (45)** | ε1 d'INDEX : le plancher ε1 ≥ 1 n'agit sur aucun des quatre exemples (ε1 physique ≥ 2,24, [mesure](../reports/audit_code_2026-11-15/preuves/p_plancher_epsilon1.txt)) ; l'écart de 0,42 avec Kramers-Kronig venait de C ≥ 2·E0 (amortissement critique), où la forme fermée bridait α : corrigé (`758b13e7`), C < 2·E0 au bit près ([balayage](../reports/nuit_2026-11-16/preuves/p_eps1_kk_scan.txt)). Juge de paix : la recherche locale finale est acceptée sur ses graines de contrôle et `rank_refined_first` la classe première quel que soit son score final ; après C-L4, 0,007340 contre 0,007335 au parent, écart dans le bruit, non mesuré. Classer par le score final changerait les résultats STRAT : à 👤. Épaisseur du substrat : chantier 47 |
+| **audit du code (45)** | ε1 d'INDEX : le plancher ε1 ≥ 1 n'agit sur aucun des quatre exemples (ε1 physique ≥ 2,24, [mesure](../reports/audit_code_2026-11-15/preuves/p_plancher_epsilon1.txt)) ; l'écart de 0,42 avec Kramers-Kronig venait de C ≥ 2·E0 (amortissement critique), où la forme fermée bridait α : corrigé (`758b13e7`), C < 2·E0 au bit près ([balayage](../reports/nuit_2026-11-16/preuves/p_eps1_kk_scan.txt)). Juge de paix : `rank_refined_first` classe la recherche locale finale première quel que soit son score final ; à `e6fdac67`, classer au score final donne le même gagnant (0,007257 contre 0,007300, [mesure](../reports/suite_2026-11-17/classement_recherche_locale.md)) : règle gardée. Épaisseur du substrat : chantier 47 |
 | **avis de tiers** | DLL du runtime Visual C++ dans `THIRD_PARTY_NOTICES.md` : droit de redistribution réservé par Microsoft aux licenciés de Visual Studio |
 | **paquet `certus_re`** | correction de la citation du saphir (Malitson et Dodge, 1972) à commiter par 👤 dans ce dépôt, puis à publier sur Zenodo |
 | **interface** | revoir les onze fenêtres ; teintes de marque, bande des fichiers récents, bornes des champs numériques |

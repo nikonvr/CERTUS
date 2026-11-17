@@ -34,6 +34,8 @@ class DesignParamsDTO(BaseModel):
     has_back: bool = False
     n_back_T: Any | None = None
     d_back: Any | None = None
+    # Thickness of an absorbing substrate (plate loss), nm; None: 1 mm (`certus_substrate_absorption`)
+    substrate_thickness_nm: float | None = None
 
 
 # Optional DESIGN steps added on 2026-10-26, each read from the file's `optimization` block. The defaults are the

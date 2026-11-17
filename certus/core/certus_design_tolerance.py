@@ -198,7 +198,7 @@ def design_cost_function(mats: dict, stack: list, wls: np.ndarray, tgts: list) -
     def cost(ep: np.ndarray) -> float:
         return float(cost_numba_fast(
             np.ascontiguousarray(ep, dtype=np.float64), context.n_front, context.n_sub, context.wls,
-            tgt_vals, tgt_weights, 0.0, context.has_back_calc, context.n_back, context.d_back,
+            tgt_vals, tgt_weights, 0.0, context.has_back_calc, context.n_back, context.d_back, context.substrate_thickness_nm,
         ))
 
     return cost

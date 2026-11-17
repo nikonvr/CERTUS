@@ -20,6 +20,7 @@ from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS, get_float_d
 from certus.core.certus_design_cost_context import optim_prepare_stack_nk_back as optim_prepare_stack_nk_back
 from certus.core.certus_design_cost_context import prepare_design_cost_context
 from certus.physics.certus_inputs import PHASE_IMAG_OVERFLOW, is_s_polarization
+from certus.physics.certus_substrate_absorption import DEFAULT_SUBSTRATE_THICKNESS_NM
 from certus_physics import PGlobalConfig, PGlobalOptimizer
 
 if TYPE_CHECKING:
@@ -44,6 +45,7 @@ def optim_calc_oblique_selected(
     calc_spectrum_full_oblique_exact: Any,
     calc_spectrum_oblique_backside_vectorized: Any,
     calc_spectrum_oblique_vectorized: Any,
+    substrate_thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM,
 ) -> tuple[np.ndarray, ...]:
     """Selects the oblique kernel (front-only, bare backside, backside with coating)."""
 
@@ -57,10 +59,13 @@ def optim_calc_oblique_selected(
             n_sub_arr,
             float(angle),
             is_s_polarization(pol),
+            float(substrate_thickness_nm),
         )
 
     if has_back_calc and (not has_back_stack):
-        return calc_spectrum_oblique_backside_vectorized(wls_arr, n_front_T, d_front_arr, n_sub_arr, angle, pol)
+        return calc_spectrum_oblique_backside_vectorized(
+            wls_arr, n_front_T, d_front_arr, n_sub_arr, angle, pol, substrate_thickness_nm
+        )
 
     return calc_spectrum_oblique_vectorized(wls_arr, n_front_T, d_front_arr, n_sub_arr, angle, pol)
 
@@ -946,6 +951,7 @@ def maybe_refine_grid_auto(
     tgt_vals: Any,
     tgt_weights: Any,
     rel_tol: float,
+    substrate_thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM,
 ) -> tuple[Any, ...]:
     """The grid that finds its own points (``auto_wavelength_grid``, normal incidence), in place of
     ``maybe_upgrade_grid_tikhonravov``: ``refine_grid`` on the design ``ep_current``, then the arrays on the new grid.
@@ -970,7 +976,9 @@ def maybe_refine_grid_auto(
             )
             substrate = np.ascontiguousarray(substrate, dtype=np.complex128)
             if has_back_calc:
-                _r, t = calc_spectrum_full_oblique_exact(lam, ep, front, d_back, back, substrate, 0.0, True)
+                _r, t = calc_spectrum_full_oblique_exact(
+                    lam, ep, front, d_back, back, substrate, 0.0, True, float(substrate_thickness_nm)
+                )
             else:
                 _r, t = calculate_RT_no_backside(ep, front, substrate, lam)
             vals, weights = target_values_and_weights(active, lam)

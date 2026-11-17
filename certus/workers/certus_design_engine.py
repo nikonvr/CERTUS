@@ -14,7 +14,7 @@ import numpy as np
 
 from certus.core.certus_core import CFG
 from certus.core.certus_design_worker_utils import optim_calc_oblique_selected
-from certus.physics.certus_substrate_absorption import apply_plate_loss
+from certus.physics.certus_substrate_absorption import DEFAULT_SUBSTRATE_THICKNESS_NM, apply_plate_loss
 from certus_physics import (
     calc_spectrum_full_oblique_exact,
     calc_spectrum_oblique_backside_vectorized,
@@ -49,6 +49,7 @@ class DesignPhysicsBridge:
     tgt_weights: Any
     oblique_configs: list[dict[str, Any]]
     ep_buffer: np.ndarray | None = None
+    substrate_thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM  # an absorbing substrate's plate (nm)
 
     def _build_ep(self, x: np.ndarray) -> np.ndarray:
         if self.all_variable:
@@ -81,6 +82,7 @@ class DesignPhysicsBridge:
             self.has_back_calc,
             self.n_back_T,
             self.d_back,
+            self.substrate_thickness_nm,
         )
 
     def gradient(self, x: np.ndarray) -> tuple[Any, np.ndarray]:
@@ -106,6 +108,7 @@ class DesignPhysicsBridge:
             self.n_back_T,
             self.d_back,
             self.var_idx,
+            substrate_thickness_nm=self.substrate_thickness_nm,
         )
 
     def compute_oblique_error(self, ep_test: np.ndarray) -> Any:
@@ -123,6 +126,7 @@ class DesignPhysicsBridge:
                 has_back_stack=self.has_back_stack,
                 d_back=self.d_back,
                 n_back_T=self.n_back_T,
+                substrate_thickness_nm=self.substrate_thickness_nm,
                 calc_spectrum_full_oblique_exact=calc_spectrum_full_oblique_exact,
                 calc_spectrum_oblique_backside_vectorized=calc_spectrum_oblique_backside_vectorized,
                 calc_spectrum_oblique_vectorized=calc_spectrum_oblique_vectorized,
@@ -166,7 +170,7 @@ class DesignPhysicsBridge:
                         Rb_prime, Tb, _, _ = compute_oblique_rt_and_grads_analytic(self.d_back, n_back_sel, n_sub_sel, wls_sel, np.zeros(0, dtype=np.int64), angle, is_s_pol, True)
                     else:
                         Rb_prime, Tb, _, _ = compute_oblique_rt_and_grads_analytic(np.zeros(0, dtype=np.float64), np.zeros((len(wls_sel), 0), dtype=np.complex128), n_sub_sel, wls_sel, np.zeros(0, dtype=np.int64), angle, is_s_pol, True)
-                    Rb_prime, Tb = apply_plate_loss(Rb_prime, Tb, n_sub_sel, wls_sel, angle)
+                    Rb_prime, Tb = apply_plate_loss(Rb_prime, Tb, n_sub_sel, wls_sel, angle, self.substrate_thickness_nm)
                     D = np.maximum(1.0 - Rf_prime * Rb_prime, 1e-12)
                     D2 = D * D
                     if is_reflectance:

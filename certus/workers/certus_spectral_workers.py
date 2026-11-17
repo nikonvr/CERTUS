@@ -24,6 +24,7 @@ from certus.core.certus_core import (
     get_float_dtype,
 )
 from certus.physics.certus_inputs import is_s_polarization
+from certus.physics.certus_substrate_absorption import DEFAULT_SUBSTRATE_THICKNESS_NM, substrate_thickness_nm_of
 from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
 from certus.workers.certus_base_workers import WorkerSignals
 from certus_physics import (
@@ -490,10 +491,13 @@ def _transmission_non_oblique(
     n_back_T: np.ndarray,
     d_back: np.ndarray,
     back_enabled: bool,
+    substrate_thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM,
 ) -> np.ndarray:
     """Compute non-oblique transmission with/without backside stack."""
     if back_enabled:
-        _, tf, rf_prime, rb_prime, tb = calc_spectrum_full_exact(wls, n_front_T, d_front, n_sub, n_back_T, d_back)
+        _, tf, rf_prime, rb_prime, tb = calc_spectrum_full_exact(
+            wls, n_front_T, d_front, n_sub, n_back_T, d_back, substrate_thickness_nm
+        )
         denom = np.maximum(1.0 - rf_prime * rb_prime, 1e-12)
         return np.asarray((tf * tb) / denom)
     t_vals, _ = calc_spectrum_front(wls, n_front_T, d_front, n_sub)
@@ -512,6 +516,7 @@ def _calc_oblique_selected_kernel(
     has_back_stack: bool,
     n_back_T_arr: np.ndarray | None = None,
     d_back_arr: np.ndarray | None = None,
+    substrate_thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Select oblique kernel variant according to backside configuration."""
     if has_back_calc and has_back_stack and n_back_T_arr is not None and d_back_arr is not None:
@@ -524,9 +529,12 @@ def _calc_oblique_selected_kernel(
             n_sub_arr,
             float(angle),
             is_s_polarization(pol),
+            float(substrate_thickness_nm),
         )
     if has_back_calc and (not has_back_stack):
-        return calc_spectrum_oblique_backside_vectorized(wls_arr, n_front_T, d_front_arr, n_sub_arr, angle, pol)
+        return calc_spectrum_oblique_backside_vectorized(
+            wls_arr, n_front_T, d_front_arr, n_sub_arr, angle, pol, substrate_thickness_nm
+        )
     return calc_spectrum_oblique_vectorized(wls_arr, n_front_T, d_front_arr, n_sub_arr, angle, pol)
 
 
@@ -788,6 +796,7 @@ class EvalWorker(QThread):
                     # (audit 2026-11-15, M-L6a). DESIGN targets all carry include_backside=True: same path as before.
                     has_back_calc=bool(has_back_calc) and bool(include_backside),
                     has_back_stack=bool(has_back_stack),
+                    substrate_thickness_nm=substrate_thickness_nm_of(self.cfg),
                     n_back_T_arr=n_back_T_arr,
                     d_back_arr=d_back_arr,
                 )
@@ -885,6 +894,7 @@ class EvalWorker(QThread):
                     n_back_T=n_back_vis_T,
                     d_back=d_back,
                     back_enabled=bool(back_enabled),
+                    substrate_thickness_nm=substrate_thickness_nm_of(self.cfg),
                 )
 
             Ts_optim, rmse, spectra_optim = _init_optim_outputs()
@@ -940,6 +950,7 @@ class EvalWorker(QThread):
                         n_back_T=n_back_opt_T,
                         d_back=d_back,
                         back_enabled=bool(back_enabled),
+                        substrate_thickness_nm=substrate_thickness_nm_of(self.cfg),
                     )
 
                     rmse = _compute_rmse_if_targets(Ts_optim, wls_optim, self.cfg["tgts"])

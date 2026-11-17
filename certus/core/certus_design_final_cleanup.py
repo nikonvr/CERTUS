@@ -174,7 +174,7 @@ def design_cost_factory(context: DesignCostContext) -> Callable[[Sequence[str]],
             cost, grad = compute_gradient_all_layers_analytic(
                 np.ascontiguousarray(ep, dtype=np.float64), n_layers_t, context.n_sub, context.wls, values, weights,
                 KERNEL_MIN_THICKNESS_NM, context.has_back_calc, context.n_back, context.d_back,
-                np.asarray(var_idx, dtype=np.int64),
+                np.asarray(var_idx, dtype=np.int64), substrate_thickness_nm=context.substrate_thickness_nm,
             )
             return float(cost), np.asarray(grad, dtype=np.float64)
 
@@ -211,6 +211,7 @@ def lbfgsb_polish(
         c, g = compute_gradient_all_layers_analytic(
             full, context.n_front, context.n_sub, context.wls, tgt_vals, tgt_weights, KERNEL_MIN_THICKNESS_NM,
             context.has_back_calc, context.n_back, context.d_back, var_idx,
+            substrate_thickness_nm=context.substrate_thickness_nm,
         )
         return float(c), np.asarray(g, dtype=np.float64)
 

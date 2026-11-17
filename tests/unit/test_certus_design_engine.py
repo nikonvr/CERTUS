@@ -40,12 +40,14 @@ def test_design_physics_bridge_returns_safe_sentinel_on_dimension_mismatch() -> 
 def test_design_physics_bridge_delegates_to_flat_cost_and_gradient(monkeypatch) -> None:
     calls: dict[str, object] = {}
 
-    def fake_cost_numba_fast(ep_test, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, min_thickness, has_back_calc, n_back_T, d_back):
+    def fake_cost_numba_fast(ep_test, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, min_thickness, has_back_calc, n_back_T, d_back,
+                             substrate_thickness_nm=None):
         calls["objective_ep"] = ep_test.copy()
         calls["objective_min_thickness"] = min_thickness
         return 12.5
 
-    def fake_gradient(ep_test, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, min_thickness, has_back_calc, n_back_T, d_back, var_idx):
+    def fake_gradient(ep_test, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, min_thickness, has_back_calc, n_back_T, d_back, var_idx,
+                      substrate_thickness_nm=None):
         calls["gradient_ep"] = ep_test.copy()
         calls["gradient_var_idx"] = var_idx.copy()
         return 3.5, np.array([0.1, 0.2], dtype=np.float64)
@@ -199,7 +201,7 @@ def test_design_physics_bridge_oblique_objective_delegates_to_selected_kernel(mo
 
     seen: dict[str, object] = {}
 
-    def fake_selected(wls_arr, n_front_T, d_front_arr, n_sub_arr, angle, pol, *, has_back_calc, has_back_stack, d_back, n_back_T, calc_spectrum_full_oblique_exact, calc_spectrum_oblique_backside_vectorized, calc_spectrum_oblique_vectorized):
+    def fake_selected(wls_arr, n_front_T, d_front_arr, n_sub_arr, angle, pol, *, has_back_calc, has_back_stack, d_back, n_back_T, calc_spectrum_full_oblique_exact, calc_spectrum_oblique_backside_vectorized, calc_spectrum_oblique_vectorized, substrate_thickness_nm=None):
         seen["wls_arr"] = wls_arr.copy()
         seen["angle"] = angle
         seen["pol"] = pol

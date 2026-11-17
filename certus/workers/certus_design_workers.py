@@ -52,6 +52,7 @@ from certus.core.certus_design_workers_dto import (
     OptimWorkerRequest,
     OptimWorkerResult,
 )
+from certus.physics.certus_substrate_absorption import substrate_thickness_nm_of
 from certus.utils.certus_logging import get_structured_logger
 from certus.utils.certus_progress_tracker import StepState, build_progress_callback, build_progress_snapshot
 from certus.workers.certus_base_workers import WorkerSignals
@@ -85,6 +86,7 @@ class OptimWorker(QObject):
         self.design_strat = DesignOptimizationStrategy()
         self.request = cfg if isinstance(cfg, OptimWorkerRequest) else OptimWorkerRequest.from_legacy(cfg)
         self.cfg = dict(self.request.cfg)
+        self._substrate_thickness_nm = substrate_thickness_nm_of(self.cfg)
         self.signals = WorkerSignals()
         self.on_progress_snapshot = self.signals.progress_snapshot.emit
         self.on_update_stats = self.signals.update_stats.emit
@@ -437,6 +439,7 @@ class OptimWorker(QObject):
                         has_back_calc=has_back_calc, has_back_stack=has_back_stack, stack_back=stack_back,
                         d_back=d_back, n_sub=n_sub, n_layers_T=n_layers_T, n_back_T=n_back_T,
                         tgt_vals=tgt_vals, tgt_weights=tgt_weights, rel_tol=float(self._optional_step('auto_grid_rel_tol')),
+                        substrate_thickness_nm=self._substrate_thickness_nm,
                     )
                     grid_changed = wls is not old_wls
                 else:
@@ -475,6 +478,7 @@ class OptimWorker(QObject):
                         n_back_T=n_back_T,
                         d_back=d_back,
                         k_real_threshold=1e-14,
+                        substrate_thickness_nm=self._substrate_thickness_nm,
                     )
                     if had_weak_k or grid_changed:
                         best_cost = float(
@@ -529,6 +533,7 @@ class ColorWorker(QObject):
         super().__init__()
         self.request = cfg if isinstance(cfg, ColorWorkerRequest) else ColorWorkerRequest.from_legacy(cfg)
         self.cfg = dict(self.request.cfg)
+        self._substrate_thickness_nm = substrate_thickness_nm_of(self.cfg)
         self.signals = WorkerSignals()
 
     def isInterruptionRequested(self) -> bool:
@@ -672,6 +677,7 @@ class NeedleWorker(QObject):
         self.needle_strat = NeedleOptimizationStrategy()
         self.request = cfg if isinstance(cfg, NeedleWorkerRequest) else NeedleWorkerRequest.from_legacy(cfg)
         self.cfg = dict(self.request.cfg)
+        self._substrate_thickness_nm = substrate_thickness_nm_of(self.cfg)
         self.signals = WorkerSignals()
 
     def isInterruptionRequested(self) -> bool:
@@ -743,7 +749,7 @@ class NeedleWorker(QObject):
                     total_wt = 0.0
                     for config in oblique_configs_needle:
                         n_layers_T_config = n_layers_T_test[config['all_clues'], :]
-                        R_config, T_config = optim_calc_oblique_selected(config['wls_config'], n_layers_T_config, ep_test, config['n_sub_config'], config['angle'], config['pol'], has_back_calc=has_back, has_back_stack=has_back_stack, d_back=d_back, n_back_T=n_back_T, calc_spectrum_full_oblique_exact=calc_spectrum_full_oblique_exact, calc_spectrum_oblique_backside_vectorized=calc_spectrum_oblique_backside_vectorized, calc_spectrum_oblique_vectorized=calc_spectrum_oblique_vectorized)
+                        R_config, T_config = optim_calc_oblique_selected(config['wls_config'], n_layers_T_config, ep_test, config['n_sub_config'], config['angle'], config['pol'], has_back_calc=has_back, has_back_stack=has_back_stack, d_back=d_back, n_back_T=n_back_T, calc_spectrum_full_oblique_exact=calc_spectrum_full_oblique_exact, calc_spectrum_oblique_backside_vectorized=calc_spectrum_oblique_backside_vectorized, calc_spectrum_oblique_vectorized=calc_spectrum_oblique_vectorized, substrate_thickness_nm=self._substrate_thickness_nm)
                         _sw_cfg = optim_oblique_config_weights(config)
                         for tgt_data in config['targets']:
                             local_positions = tgt_data['local_positions']

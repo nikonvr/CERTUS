@@ -8,6 +8,8 @@ from typing import Any
 
 import numpy as np
 
+from certus.physics.certus_substrate_absorption import DEFAULT_SUBSTRATE_THICKNESS_NM
+
 
 def design_layer_indices(
     material_indices: dict[str, np.ndarray], materials: Sequence[str], dtype: type = np.complex128,
@@ -63,6 +65,7 @@ class DesignCostContext:
     has_back_calc: bool
     target_values: np.ndarray | None
     target_weights: np.ndarray | None
+    substrate_thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM  # an absorbing substrate's plate, seen with the back
 
     def normal_targets(self) -> tuple[np.ndarray, np.ndarray]:
         if self.target_values is None or self.target_weights is None:
@@ -84,6 +87,7 @@ def prepare_design_cost_context(
     cast_materials: bool = False,
     float_dtype: type = np.float64,
     complex_dtype: type = np.complex128,
+    substrate_thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM,
 ) -> DesignCostContext:
     """Build one context for the requested grid. Oblique callers supply their own target groups."""
     from certus_physics import prepare_targets_vectorized
@@ -95,4 +99,5 @@ def prepare_design_cost_context(
         cast_materials=cast_materials,
     )
     values, weights = (None, None) if targets is None else prepare_targets_vectorized(wls, targets)
-    return DesignCostContext(wls, mats_nk, substrate, front, rear, rear_thickness, has_back_calc, values, weights)
+    return DesignCostContext(wls, mats_nk, substrate, front, rear, rear_thickness, has_back_calc, values, weights,
+                             float(substrate_thickness_nm))

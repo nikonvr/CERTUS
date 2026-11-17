@@ -20,8 +20,9 @@ a jump), STRAT validated the backside approximation up to `1e-5`, INDEX had its 
 a thickness, and the oblique plate kernels dropped the absorption altogether. A glass with `k = 4.4e-6`
 (α = 1 cm⁻¹) gave `T = 0.000` where it transmits about 0.92.
 
-The thickness of a substrate is not asked by DESIGN or STRAT: `DEFAULT_SUBSTRATE_THICKNESS_NM` stands in
-for it (1 mm), and every kernel takes it as an optional trailing argument.
+Every kernel takes the thickness as an optional trailing argument, `DEFAULT_SUBSTRATE_THICKNESS_NM` (1 mm)
+when absent. DESIGN reads it from its configuration (`substrate_thickness_mm`, carried to the workers as
+`substrate_thickness_nm`); STRAT does not ask it.
 """
 
 from __future__ import annotations
@@ -35,6 +36,22 @@ SMALL_EPSILON = 1e-12
 
 #: The thickness of the substrate when the caller does not give one: 1 mm, in nm.
 DEFAULT_SUBSTRATE_THICKNESS_NM: Final[float] = 1.0e6
+
+
+def substrate_thickness_nm_from_mm(value_mm: object) -> float:
+    """A thickness in mm (as a configuration gives it) in nm; empty, unreadable or not positive: the default."""
+    try:
+        mm = float(value_mm)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return DEFAULT_SUBSTRATE_THICKNESS_NM
+    return mm * 1.0e6 if np.isfinite(mm) and mm > 0.0 else DEFAULT_SUBSTRATE_THICKNESS_NM
+
+
+def substrate_thickness_nm_of(cfg: object) -> float:
+    """The `substrate_thickness_nm` a DESIGN run carries (a dict, or a DTO by its attribute); absent or ``None``:
+    the default."""
+    value = cfg.get("substrate_thickness_nm") if isinstance(cfg, dict) else getattr(cfg, "substrate_thickness_nm", None)
+    return DEFAULT_SUBSTRATE_THICKNESS_NM if value is None else float(value)
 
 #: STRAT's own approximation of the backside is valid only for layers and a substrate that are real
 #: enough (`validate_backside_real_clues`). These are its limits, defined here once; five modules of

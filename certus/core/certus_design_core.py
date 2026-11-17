@@ -71,7 +71,7 @@ from certus.core.certus_core import (
 from certus.core.certus_design_worker_utils import (
     optim_calc_oblique_selected,
 )
-from certus.physics.certus_substrate_absorption import apply_plate_loss
+from certus.physics.certus_substrate_absorption import DEFAULT_SUBSTRATE_THICKNESS_NM, apply_plate_loss
 from certus.physics.design_fast_kernels import (
     compute_gradient_backside_cached_fast,
     compute_gradient_lossless_backside_fast,
@@ -159,6 +159,11 @@ _ORIG_OBL_RT_GRADS = compute_oblique_rt_and_grads_analytic
 _EP_BUFFER_TLS = threading.local()
 
 
+def substrate_thickness_of(app: Any) -> float:
+    """The substrate thickness of the run (nm), set by the worker; 1 mm when it set none."""
+    return float(getattr(app, "_substrate_thickness_nm", DEFAULT_SUBSTRATE_THICKNESS_NM))
+
+
 def _get_ep_buffer(app: Any) -> np.ndarray:
     """Thickness buffer private to calling THREAD.
 
@@ -237,6 +242,7 @@ def _design_objective_wrapper_common(app: Any, x: np.ndarray) -> Any:
         app._has_back_calc,
         app._n_back_T,
         app._d_back,
+        substrate_thickness_of(app),
     )
 
 def _design_compute_oblique_error_common(app: Any, ep_test: np.ndarray) -> Any:
@@ -257,6 +263,7 @@ def _design_compute_oblique_error_common(app: Any, ep_test: np.ndarray) -> Any:
             has_back_stack=app._has_back_stack,
             d_back=app._d_back,
             n_back_T=app._n_back_T,
+            substrate_thickness_nm=substrate_thickness_of(app),
             calc_spectrum_full_oblique_exact=calc_spectrum_full_oblique_exact,
             calc_spectrum_oblique_backside_vectorized=calc_spectrum_oblique_backside_vectorized,
             calc_spectrum_oblique_vectorized=calc_spectrum_oblique_vectorized,
@@ -361,6 +368,7 @@ def _design_gradient_func_pglobal_common(app: Any, x: np.ndarray) -> Any:
         app._n_back_T,
         app._d_back,
         app._var_idx,
+        substrate_thickness_nm=substrate_thickness_of(app),
     )
     return cost, grad_var
 
@@ -480,7 +488,7 @@ def _design_compute_oblique_error_and_grad_analytic_common(app: Any, ep_test: np
 
                 # A substrate that absorbs is a plate that loses flux on each pass: the back side is seen
                 # through it, and the combination below stays the one of a plate without loss.
-                Rb_prime, Tb = apply_plate_loss(Rb_prime, Tb, n_sub_sel, wls_sel, angle)
+                Rb_prime, Tb = apply_plate_loss(Rb_prime, Tb, n_sub_sel, wls_sel, angle, substrate_thickness_of(app))
 
                 D = np.maximum(1.0 - Rf_prime * Rb_prime, 1e-12)
                 D2 = D * D
@@ -616,6 +624,7 @@ def _design_optimization_callback_common(app: Any, sample: Any) -> None:
                             has_back_stack=app._has_back_stack,
                             d_back=app._d_back,
                             n_back_T=app._n_back_T,
+                            substrate_thickness_nm=substrate_thickness_of(app),
                             calc_spectrum_full_oblique_exact=calc_spectrum_full_oblique_exact,
                             calc_spectrum_oblique_backside_vectorized=calc_spectrum_oblique_backside_vectorized,
                             calc_spectrum_oblique_vectorized=calc_spectrum_oblique_vectorized,
@@ -636,6 +645,7 @@ def _design_optimization_callback_common(app: Any, sample: Any) -> None:
                         app._n_sub_disp,
                         app._n_back_T_disp,
                         app._d_back,
+                        substrate_thickness_of(app),
                     )
 
                     # Exact incoherent: T_total = (Tf * Tb) / (1 - Rf' * Rb')
@@ -702,6 +712,7 @@ def _design_optimization_callback_common(app: Any, sample: Any) -> None:
                             has_back_stack=app._has_back_stack,
                             d_back=app._d_back,
                             n_back_T=app._n_back_T,
+                            substrate_thickness_nm=substrate_thickness_of(app),
                             calc_spectrum_full_oblique_exact=calc_spectrum_full_oblique_exact,
                             calc_spectrum_oblique_backside_vectorized=calc_spectrum_oblique_backside_vectorized,
                             calc_spectrum_oblique_vectorized=calc_spectrum_oblique_vectorized,
@@ -721,6 +732,7 @@ def _design_optimization_callback_common(app: Any, sample: Any) -> None:
                         app._n_sub_disp,
                         app._n_back_T_disp,
                         app._d_back,
+                        substrate_thickness_of(app),
                     )
                     denom = np.maximum(1.0 - Rf_prime * Rb_prime, 1e-12)
                     Ts_best = (Tf * Tb) / denom

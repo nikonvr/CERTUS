@@ -10,6 +10,7 @@ from certus.core.certus_design_core import (
     _design_gradient_func_pglobal_common,
     _design_objective_wrapper_common,
     _design_optimization_callback_common,
+    substrate_thickness_of,
 )
 from certus.core.certus_design_worker_utils import (
     build_pglobal_config_from_cfg,
@@ -195,7 +196,7 @@ class DesignOptimizationStrategy:
                     tgt_vals,
                     tgt_weights,
                 )
-        return cost_numba_fast(ep_test, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, CFG.MIN_THICKNESS, has_back_calc, n_back_T, d_back)
+        return cost_numba_fast(ep_test, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, CFG.MIN_THICKNESS, has_back_calc, n_back_T, d_back, substrate_thickness_of(worker))
 
     @staticmethod
 
@@ -243,7 +244,7 @@ class DesignOptimizationStrategy:
                         var_idx,
                         CFG.MIN_THICKNESS,
                     )
-        cost, grad = compute_gradient_all_layers_analytic(ep_test, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, CFG.MIN_THICKNESS, has_back_calc, n_back_T, d_back, var_idx)
+        cost, grad = compute_gradient_all_layers_analytic(ep_test, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, CFG.MIN_THICKNESS, has_back_calc, n_back_T, d_back, var_idx, substrate_thickness_nm=substrate_thickness_of(worker))
         return (cost, grad)
 
     @staticmethod
@@ -419,6 +420,7 @@ class DesignOptimizationStrategy:
                 n_back_T=n_back_T,
                 d_back=d_back,
                 k_real_threshold=k_thresh,
+                substrate_thickness_nm=substrate_thickness_of(worker),
             )
         else:
             worker._normal_fast_ctx = None
@@ -450,6 +452,7 @@ class DesignOptimizationStrategy:
                             has_back_calc=has_back_calc,
                             n_back_T=n_back_sel,
                             d_back=d_back if (has_back_calc and has_back_stack) else None,
+                            substrate_thickness_nm=substrate_thickness_of(worker),
                         )
                         precomp_targets.append(
                             {

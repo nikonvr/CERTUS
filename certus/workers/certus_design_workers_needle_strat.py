@@ -8,6 +8,7 @@ from certus.core.certus_design_core import (
     _design_gradient_func_pglobal_common,
     _design_objective_wrapper_common,
     _design_optimization_callback_common,
+    substrate_thickness_of,
 )
 from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
 from certus_physics import cost_numba_fast, needle_scan_cached
@@ -54,7 +55,9 @@ class NeedleOptimizationStrategy:
             from certus.physics.certus_opt_needle import needle_scan_cached_backside
             from certus.physics.certus_tmm_matrix import calc_spectrum_full_exact
 
-            _rf, _tf, _rfp, rb_prime, tb = calc_spectrum_full_exact(wls, ep_base, n_layers_T_orig, d_back, n_back_T, n_sub)
+            _rf, _tf, _rfp, rb_prime, tb = calc_spectrum_full_exact(
+                wls, ep_base, n_layers_T_orig, d_back, n_back_T, n_sub, substrate_thickness_of(worker)
+            )
             best_layer, best_depth, best_cost = needle_scan_cached_backside(
                 wls, n_layers_T_orig, n_needle_T, n_sub, ep_base, tgt_vals, tgt_weights, STEP_NM, PROBE_THICKNESS,
                 scan_mask.astype(np.int64), np.ascontiguousarray(rb_prime), np.ascontiguousarray(tb))
@@ -86,7 +89,8 @@ class NeedleOptimizationStrategy:
                     d_right = d_layer - d_left
                     ep_test[i] = d_left
                     ep_test[i + 2] = d_right
-                    c_refined = cost_numba_fast(ep_test, n_test_T, n_sub, wls, tgt_vals, tgt_weights, 0.0, has_back, n_back_T, d_back)
+                    c_refined = cost_numba_fast(ep_test, n_test_T, n_sub, wls, tgt_vals, tgt_weights, 0.0, has_back, n_back_T, d_back,
+                        substrate_thickness_of(worker))
                     if c_refined < best_cost:
                         best_cost = float(c_refined)
                         best_depth = float(d_left)
@@ -159,7 +163,8 @@ class NeedleOptimizationStrategy:
                 if oblique_mode:
                     c = compute_oblique_error_needle(ep_test, n_test_T)
                 else:
-                    c = cost_numba_fast(ep_test, n_test_T, n_sub, wls, tgt_vals, tgt_weights, 0.0, has_back, n_back_T, d_back)
+                    c = cost_numba_fast(ep_test, n_test_T, n_sub, wls, tgt_vals, tgt_weights, 0.0, has_back, n_back_T, d_back,
+                        substrate_thickness_of(worker))
                 if c < min_cost:
                     min_cost = c
                     best_res = {'action': 'split', 'layer_idx': i, 'depth': z, 'needle_mat': needle_mat, 'cost': min_cost}

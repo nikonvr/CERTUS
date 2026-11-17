@@ -69,7 +69,7 @@ def test_design_strategy_service_accepts_mapping_payload(tmp_path) -> None:
     service = DesignStrategyService(runner=runner)
     resp = service.optimize(payload)
 
-    assert seen == [{"cfg": {"mode": "local", "cycle_no_gain_patience": 2}, "params": {"mats": {}, "stack": [], "ep0": None, "ep": None, "wls": None, "tgts": None, "l0": None, "mode": "local", "ep_back": None, "oblique_mode": False, "oblique_tgts": [], "local_delta_nm": 2.0, "pre_polish": False, "cycle_rel_gain_min": 0.0002, "cycle_no_gain_patience": 2, "run_seed": 0, "n": None, "sigma": None, "has_back": False, "n_back_T": None, "d_back": None}}]
+    assert seen == [{"cfg": {"mode": "local", "cycle_no_gain_patience": 2}, "params": {"mats": {}, "stack": [], "ep0": None, "ep": None, "wls": None, "tgts": None, "l0": None, "mode": "local", "ep_back": None, "oblique_mode": False, "oblique_tgts": [], "local_delta_nm": 2.0, "pre_polish": False, "cycle_rel_gain_min": 0.0002, "cycle_no_gain_patience": 2, "run_seed": 0, "n": None, "sigma": None, "has_back": False, "n_back_T": None, "d_back": None, "substrate_thickness_nm": None}}]
     assert payload["config"] == {"mode": "local", "cycle_no_gain_patience": 2}
     assert resp.manifest.run_context.app_id == "CERTUS_DESIGN"
     assert resp.manifest.run_context.seed == 99
@@ -122,7 +122,7 @@ def test_design_strategy_service_normalizes_flat_payload_to_config(tmp_path) -> 
         }
     )
 
-    assert seen == [{"cfg": {"mode": "global", "pre_polish": True}, "params": {"mats": {}, "stack": [], "ep0": None, "ep": None, "wls": None, "tgts": None, "l0": None, "mode": "global", "ep_back": None, "oblique_mode": False, "oblique_tgts": [], "local_delta_nm": 2.0, "pre_polish": True, "cycle_rel_gain_min": 0.0002, "cycle_no_gain_patience": 1, "run_seed": 0, "n": None, "sigma": None, "has_back": False, "n_back_T": None, "d_back": None}}]
+    assert seen == [{"cfg": {"mode": "global", "pre_polish": True}, "params": {"mats": {}, "stack": [], "ep0": None, "ep": None, "wls": None, "tgts": None, "l0": None, "mode": "global", "ep_back": None, "oblique_mode": False, "oblique_tgts": [], "local_delta_nm": 2.0, "pre_polish": True, "cycle_rel_gain_min": 0.0002, "cycle_no_gain_patience": 1, "run_seed": 0, "n": None, "sigma": None, "has_back": False, "n_back_T": None, "d_back": None, "substrate_thickness_nm": None}}]
     assert resp.manifest.run_context.seed == 5
 
 
@@ -149,7 +149,7 @@ def test_design_strategy_service_accepts_cfg_alias_in_legacy_payload(tmp_path) -
         }
     )
 
-    assert seen == [{"cfg": {"mode": "healing", "pre_polish": False, "cycle_no_gain_patience": 4}, "params": {"mats": {}, "stack": [], "ep0": None, "ep": None, "wls": None, "tgts": None, "l0": None, "mode": "healing", "ep_back": None, "oblique_mode": False, "oblique_tgts": [], "local_delta_nm": 2.0, "pre_polish": False, "cycle_rel_gain_min": 0.0002, "cycle_no_gain_patience": 4, "run_seed": 0, "n": None, "sigma": None, "has_back": False, "n_back_T": None, "d_back": None}}]
+    assert seen == [{"cfg": {"mode": "healing", "pre_polish": False, "cycle_no_gain_patience": 4}, "params": {"mats": {}, "stack": [], "ep0": None, "ep": None, "wls": None, "tgts": None, "l0": None, "mode": "healing", "ep_back": None, "oblique_mode": False, "oblique_tgts": [], "local_delta_nm": 2.0, "pre_polish": False, "cycle_rel_gain_min": 0.0002, "cycle_no_gain_patience": 4, "run_seed": 0, "n": None, "sigma": None, "has_back": False, "n_back_T": None, "d_back": None, "substrate_thickness_nm": None}}]
     assert resp.manifest.run_context.seed == 11
 
 

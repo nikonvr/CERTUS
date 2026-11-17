@@ -1,11 +1,15 @@
 """Chantier 49 : STRAT sur deux designs de la Bonne Mère a 90 couches, nominal et robuste, une graine STRAT par processus.
 
-Composant (décision de 👤, 2026-11-18) : la Bonne Mère, 90 couches H800 Nb2O5 / SiO2 sur silice, face arrière incohérente,
-cible de 601 points. Réglage STRAT : les paramètres effectifs de l'étude (`studies/bonne_mere/dossier_final/donnees/
-parametres_STRAT_effectifs.json`), où seuls changent le substrat (silice), l'empilement (celui du design) et les graines.
-Le plan choisi est noté sur des graines disjointes, communes à tous les runs : SEEL, arrêts, couches au Rate, blocs.
+Composant (décision de 👤, 2026-11-18) : la Bonne Mère, 90 couches H800 Nb2O5 / SiO2 sur silice, face arrière incohérente.
+Réglage STRAT : la configuration de fenêtre de la campagne STRAT à 90 couches du 23 octobre
+(`reports/BONNE_MERE_strat_90c_2026-10-23/config_strat_90c_corridor0.010.json`, budgets et réglages spectraux de l'étude,
+sans règles de Rate), où changent les multiplicateurs (ceux du design), le couloir d'indice (0,005, celui de l'étude) et
+les graines. La fenêtre reçoit un fichier de fenêtre : un vidage des paramètres du worker n'y arrive pas (`wl_range`, par
+exemple, se lit dans `wl_range_start` et `wl_range_end`) ; le banc vérifie à l'arrivée la plage, le substrat et les
+épaisseurs. Le plan choisi est noté sur des graines disjointes, communes à tous les runs : SEEL, arrêts, couches au Rate,
+blocs.
 
-set PYTHONPATH=.;scripts && python reports/chantier49_2026-11-18/bench_bonne_mere.py --design DESIGN.json --seed 42 --out OUT.json
+set PYTHONPATH=.;scripts && set CERTUS_BENCH_TIMEOUT_S=21600 && python reports/chantier49_2026-11-18/bench_bonne_mere.py --design DESIGN.json --seed 42 --out OUT.json
 """
 
 from __future__ import annotations
@@ -22,42 +26,39 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 import bench_examples as bench  # noqa: E402
 
-PARAMS = ROOT / "studies/bonne_mere/dossier_final/donnees/parametres_STRAT_effectifs.json"
+BASE = ROOT / "reports/BONNE_MERE_strat_90c_2026-10-23/config_strat_90c_corridor0.010.json"
+STUDY = ROOT / "studies/bonne_mere/dossier_final/donnees/parametres_STRAT_effectifs.json"
 HOLDOUT_SEEDS = (2026111801, 2026111802, 2026111803)
 SUBSTRATE = "SiO2"
 
 
 def strat_config(design: dict, seed: int) -> dict:
-    import numpy as np
-
-    from certus.core.certus_strat_config import get_refractive_clues_vectorized
-    from certus.physics.certus_material_db import MaterialDatabase
+    from certus.utils.certus_strat_db import RobustMaterialDatabase
+    from certus.utils.certus_strat_service import _PhysicsBridge
     from certus.workers.certus_strat_workers import _resolve_strat_indices_db_path
 
-    db = MaterialDatabase(_resolve_strat_indices_db_path())  # the database STRAT itself reads
-
-    def get_refractive_index(mat_id: str, wl: float) -> complex:
-        return complex(get_refractive_clues_vectorized(mat_id, np.array([wl], dtype=np.float64), db_instance=db)[0])
-
-    cfg = json.loads(PARAMS.read_text(encoding="utf-8"))
+    cfg = json.loads(BASE.read_text(encoding="utf-8"))
+    study = json.loads(STUDY.read_text(encoding="utf-8"))
     if design.get("order") != "substrate to incident air" or design.get("backside") is not True:
         raise ValueError("Expected a design written substrate first, with the incoherent back face")
-    if design.get("materials") != [cfg["nH_id"], cfg["nL_id"]] or design.get("substrate_id") != 0:
+    if design.get("materials") != [cfg["h_material_file"], cfg["l_material_file"]] or design.get("substrate_id") != 0:
         raise ValueError("Expected H800 Nb2O5 / SiO2 on silica (substrate id 0), as the study")
     idx = design["material_indices"]
     if idx != [i % 2 for i in range(len(idx))]:
         raise ValueError("STRAT alternates H then L from the substrate: the design must too")
-    d = [float(x) for x in design["thickness_nm"]]
     l0 = float(cfg["l0"])
-    n_at_l0 = [float(get_refractive_index(cfg["nH_id"], l0).real), float(get_refractive_index(cfg["nL_id"], l0).real)]
+    db = RobustMaterialDatabase(_resolve_strat_indices_db_path())  # the database and the lookup of the 23 October builder
+    n_at_l0 = [float(_PhysicsBridge.get_refractive_index(name, l0, db_instance=db).real)
+               for name in (cfg["h_material_file"], cfg["l_material_file"])]
     cfg.update(
-        nSub_id=SUBSTRATE, substrate_choice=SUBSTRATE,
-        p_thick_nominal=d,
-        stack_string=",".join(repr(4.0 * n_at_l0[i % 2] * t / l0) for i, t in enumerate(d)),
+        stack_multipliers=[4.0 * n_at_l0[i % 2] * float(t) / l0 for i, t in enumerate(design["thickness_nm"])],
+        index_corridor=float(study["index_corridor"]),
         phase_a_seed=seed, robustness_seed=seed,
         consensus_seed_list=",".join(str(seed + k) for k in (-1, 0, 1)),
         show_plots=False, export_excel=False,
     )
+    if cfg["substrate_choice"] != SUBSTRATE:
+        raise ValueError("The base configuration is not on silica")
     return cfg
 
 
@@ -67,10 +68,14 @@ def holdout(design: dict, pre_calc_data: dict, params: dict, plan: dict, runs: i
     from certus.core.certus_strat_local_search import native_evaluator, nominal_level_index
 
     ep = np.asarray(pre_calc_data["p_thick_nominal"], dtype=np.float64)
-    if ep.shape != (len(design["thickness_nm"]),) or not np.array_equal(ep, np.asarray(design["thickness_nm"], float)):
+    d = np.asarray(design["thickness_nm"], dtype=np.float64)
+    if ep.shape != d.shape or not np.allclose(ep, d, rtol=1e-9, atol=0.0):
         raise RuntimeError("STRAT did not deposit the thicknesses of the design")
     if params.get("nSub_id") != SUBSTRATE:
         raise RuntimeError("The silica substrate did not reach STRAT")
+    study_range = json.loads(STUDY.read_text(encoding="utf-8"))["wl_range"]
+    if not np.allclose([float(x) for x in params["wl_range"]], study_range, rtol=0.0, atol=1e-9):
+        raise RuntimeError(f"STRAT works on {params['wl_range']} nm, not on the study's {study_range}")
     evaluator = native_evaluator(params, ep.tolist(), pre_calc_data["clues_at_wl"], {}, thickness=True)
     level = nominal_level_index(params)
     scored = [evaluator(plan, s, runs) for s in HOLDOUT_SEEDS]
@@ -88,6 +93,8 @@ def holdout(design: dict, pre_calc_data: dict, params: dict, plan: dict, runs: i
         "rms_completed": float(np.sqrt(np.mean(rmse[ok] ** 2))) if ok.any() else float("nan"),
         "strategy_id": plan.get("strategy_id"), "blocks": len(plan["blocks"]),
         "rate_layers": len(plan.get("rate_layers") or []), "layers": len(ep),
+        "max_rel_thickness_gap": float(np.max(np.abs(ep - d) / d)), "wl_range": [float(x) for x in params["wl_range"]],
+        "index_corridor": float(params.get("index_corridor", float("nan"))),
     }
 
 

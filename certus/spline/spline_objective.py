@@ -125,6 +125,7 @@ from certus.spline.certus_index_spline_core import (
     physical_nodes_to_x_slice_n,
     x_slice_n_to_physical_nodes,
 )
+from certus.spline.spline_mono_gradient import x_slice_n_grad_to_x
 
 
 def sigma_knots_encode(sk: np.ndarray, s_lo: float, s_hi: float) -> np.ndarray:
@@ -1380,14 +1381,22 @@ class SplinePWLObjective:
             grad[1 : 1 + k_nodes] += S_mat.T @ grad_n_lam
             grad[1 + k_nodes : 1 + 2 * k_nodes] += S_mat.T @ grad_k_lam
 
+        # Up to here the n block is d(cost)/d(physical n knots); with the monotone reparametrization, x holds xi.
+        if cfg.n_mono_band_nm is not None:
+            grad[1 : 1 + k_nodes] = x_slice_n_grad_to_x(x[1 : 1 + k_nodes], sk, cfg.n_mono_band_nm, grad[1 : 1 + k_nodes])
+
         return grad
 
 
 def spline_pwl_analytic_grad_supported(cfg: SplineOptConfig) -> bool:
-    """True if the analytic gradient (T + penalties; R by FD/lambda) is consistent with the objective."""
+    """True if the analytic gradient (T + penalties; R by FD/lambda) is consistent with the objective.
+
+    With the monotone n reparametrization (``n_mono_band_nm``), only when ``spline_mono_analytic_gradient`` is on:
+    the chain rule then goes through ``x_slice_n_grad_to_x``. Off by default, so L-BFGS-B keeps its finite differences.
+    """
 
     if cfg.n_mono_band_nm is not None:
-        return False
+        return bool(getattr(cfg, "spline_mono_analytic_gradient", False))
 
     return True
 

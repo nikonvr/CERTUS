@@ -30,6 +30,7 @@ script_dir = env["script_dir"]
 # =============================================================================
 
 
+from certus.physics.certus_substrate_absorption import DEFAULT_SUBSTRATE_THICKNESS_NM
 from certus.utils.certus_re_config import RE_GUI_DEFAULT_BEAM_APERTURE_DEG, RE_SPLINE_CORREC_KINDS
 from certus.utils.certus_re_extrapolation import warn_once_if_extrapolating
 from certus.utils.certus_re_math import (
@@ -241,6 +242,7 @@ def _re_calc_spectrum_for_config(
     beam_aperture: float = 1.0,
     beam_aperture_knots_deg: np.ndarray | None = None,
     beam_aperture_knots_lam_nm: np.ndarray | None = None,
+    substrate_thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Compute (R, T) for one physical config (angle × pol × backside model).
 
@@ -273,7 +275,7 @@ def _re_calc_spectrum_for_config(
         if not include_backside:
             return calc_spectrum_oblique_vectorized(wl_s, nlay_s, ep, nsub_s, a, p)
 
-        return calc_spectrum_oblique_backside_vectorized(wl_s, nlay_s, ep, nsub_s, a, p)
+        return calc_spectrum_oblique_backside_vectorized(wl_s, nlay_s, ep, nsub_s, a, p, substrate_thickness_nm)
 
     def _one(is_s: bool, a: float) -> tuple[np.ndarray, np.ndarray]:
 
@@ -422,6 +424,7 @@ def _re_rmse_oblique_weighted(
     beam_aperture: float = 1.0,
     beam_aperture_knots_deg: np.ndarray | None = None,
     beam_aperture_knots_lam_nm: np.ndarray | None = None,
+    substrate_thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM,
 ) -> float:
     """RE RMSE (Deltaln(lambda) trapezoidal weighting, same aggregation as the TRF least-squares objective)."""
 
@@ -444,6 +447,7 @@ def _re_rmse_oblique_weighted(
             beam_aperture=beam_aperture,
             beam_aperture_knots_deg=beam_aperture_knots_deg,
             beam_aperture_knots_lam_nm=beam_aperture_knots_lam_nm,
+            substrate_thickness_nm=substrate_thickness_nm,
         )
 
         for tgt in tgt_list:
@@ -1908,17 +1912,21 @@ def _re_trf_residual_rms(residual: np.ndarray | None) -> float:
     return float(np.sqrt(np.mean(v * v)))
 
 
-def _re_backside_bundle_fixed(ep_local, n_layers_sel, n_sub_sel, wls_sel, var_idx, angle, is_s_pol) -> Any:
+def _re_backside_bundle_fixed(
+    ep_local, n_layers_sel, n_sub_sel, wls_sel, var_idx, angle, is_s_pol,
+    substrate_thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM,
+) -> Any:
 
     from certus_physics import compute_oblique_backside_bundle_analytic
 
     return compute_oblique_backside_bundle_analytic(
-        ep_local, n_layers_sel, n_sub_sel, wls_sel, var_idx, angle, is_s_pol, None, None
+        ep_local, n_layers_sel, n_sub_sel, wls_sel, var_idx, angle, is_s_pol, None, None, float(substrate_thickness_nm)
     )
 
 
 def _re_eval_angle_physics_for(
-    sub, angle, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, var_idx
+    sub, angle, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, var_idx,
+    substrate_thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM,
 ) -> tuple:
 
     from certus_physics import compute_oblique_rt_and_grads_analytic
@@ -1950,9 +1958,9 @@ def _re_eval_angle_physics_for(
             return 0.5 * (Rs + Rp), 0.5 * (dRs + dRp), 0.5 * (Ts + Tp), 0.5 * (dTs + dTp)
 
         else:
-            yRs, dRs, yTs, dTs = _re_backside_bundle_fixed(ep_use, n_lay_s, n_sub_s, wls_s, var_idx, angle, True)
+            yRs, dRs, yTs, dTs = _re_backside_bundle_fixed(ep_use, n_lay_s, n_sub_s, wls_s, var_idx, angle, True, substrate_thickness_nm)
 
-            yRp, dRp, yTp, dTp = _re_backside_bundle_fixed(ep_use, n_lay_s, n_sub_s, wls_s, var_idx, angle, False)
+            yRp, dRp, yTp, dTp = _re_backside_bundle_fixed(ep_use, n_lay_s, n_sub_s, wls_s, var_idx, angle, False, substrate_thickness_nm)
 
             return 0.5 * (yRs + yRp), 0.5 * (dRs + dRp), 0.5 * (yTs + yTp), 0.5 * (dTs + dTp)
 
@@ -1967,6 +1975,6 @@ def _re_eval_angle_physics_for(
             return rR, rdR, rT, rdT
 
         else:
-            rR, rdR, rT, rdT = _re_backside_bundle_fixed(ep_use, n_lay_s, n_sub_s, wls_s, var_idx, angle, is_s_pol)
+            rR, rdR, rT, rdT = _re_backside_bundle_fixed(ep_use, n_lay_s, n_sub_s, wls_s, var_idx, angle, is_s_pol, substrate_thickness_nm)
 
             return rR, rdR, rT, rdT

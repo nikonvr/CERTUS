@@ -82,11 +82,11 @@ def test_the_spectral_evaluation_and_the_oblique_selection_pass_it_on() -> None:
     for stack in (False, True):
         nb, db = (n[:, :2].copy(), d[:2].copy()) if stack else (empty_n, empty_d)
 
-        def utils(**kw):
+        def utils(stack=stack, nb=nb, db=db, **kw):
             return optim_calc_oblique_selected(WLS, n, d, n_sub, 30.0, "s", has_back_calc=True, has_back_stack=stack,
                                                d_back=db, n_back_T=nb, **kernels, **kw)[1]
 
-        def spectral(**kw):
+        def spectral(stack=stack, nb=nb, db=db, **kw):
             return _calc_oblique_selected_kernel(wls_arr=WLS, n_front_T=n, d_front_arr=d, n_sub_arr=n_sub, angle=30.0,
                                                  pol="s", has_back_calc=True, has_back_stack=stack, n_back_T_arr=nb,
                                                  d_back_arr=db, **kw)[1]

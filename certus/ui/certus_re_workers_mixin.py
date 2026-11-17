@@ -11,6 +11,7 @@ import numpy as np
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
 )
+from certus.core.certus_design_worker_utils import design_substrate_thickness_nm
 from certus.ui.certus_qt_widgets import (
     QCheckBox,
     QTimer,
@@ -1001,7 +1002,10 @@ class CertusREWorkersMixin:
 
             n_layers_T = np.ascontiguousarray(n_layers_nominal.T)
             r_sp = float(
-                _re_rmse_oblique_weighted(ep, n_layers_T, n_sub, wls, tgts, **self._re_p4_display_beam_kwargs())
+                _re_rmse_oblique_weighted(
+                    ep, n_layers_T, n_sub, wls, tgts, **self._re_p4_display_beam_kwargs(),
+                    substrate_thickness_nm=design_substrate_thickness_nm(self),
+                )
             )
             ep0_rm = getattr(self, "_re_initial_ep", None)
             if ep0_rm is None or len(np.asarray(ep0_rm).ravel()) != len(ep):
@@ -1095,6 +1099,7 @@ class CertusREWorkersMixin:
         cfg.update(sp)
 
         cfg.update(self.cfg)
+        cfg["substrate_thickness_nm"] = design_substrate_thickness_nm(self)  # chantier 47: the field, in nm
 
         if not bool(cfg.get("re_enable_qwot_penalty", True)):
             cfg["re_qwot_penalty_weight"] = 0.0

@@ -53,6 +53,8 @@ RE_GUI_TABLE = (
     ConfigField("re_fit_lambda_min_nm", "re_fit_lambda_min_spin", "float"),
     ConfigField("re_fit_lambda_max_nm", "re_fit_lambda_max_spin", "float"),
     ConfigField("re_beam_aperture", "re_aperture_combo", "data"),
+    # Substrate thickness, mm: a file without it is a file at 1 mm, the thickness every kernel assumed before the field.
+    ConfigField("substrate_thickness_mm", "sub_thickness_mm_spin", "float", 1.0, missing=1.0),
 )
 
 # The editable widgets the two tables do not carry, with the reason.
@@ -108,6 +110,9 @@ class CertusREStateMixin:
 
             if hasattr(self, "auto_scale_y_check"):
                 self.auto_scale_y_check.setChecked(True)
+
+            if hasattr(self, "sub_thickness_mm_spin"):
+                self.sub_thickness_mm_spin.setValue(1.0)
 
             self.cfg["re_beam_aperture_deg"] = float(RE_GUI_DEFAULT_BEAM_APERTURE_DEG)
 

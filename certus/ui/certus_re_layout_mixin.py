@@ -9,6 +9,7 @@ import pyqtgraph as pg
 from certus.core.certus_core import (
     CFG,
 )
+from certus.core.certus_design_worker_utils import design_substrate_thickness_nm
 from certus.ui.certus_overview_tab import CertusKpiBanner, build_synthesis_tab
 from certus.ui.certus_qt_widgets import (
     QAbstractItemView,
@@ -410,6 +411,24 @@ class CertusRELayoutMixin:
         lay.addWidget(self._re_readout_lambda_lbl)
 
         lay.addWidget(self._re_readout_backside_lbl)
+
+        # Chantier 47: the thickness of the substrate, the plate an absorbing substrate (k > 0) is with the back face
+        sub_t_row = QHBoxLayout()
+        sub_t_row.setContentsMargins(0, 0, 0, 0)
+        self.sub_thickness_mm_spin = QDoubleSpinBox()
+        self.sub_thickness_mm_spin.setRange(0.001, 100.0)
+        self.sub_thickness_mm_spin.setDecimals(3)
+        self.sub_thickness_mm_spin.setSingleStep(0.1)
+        self.sub_thickness_mm_spin.setValue(1.0)
+        self.sub_thickness_mm_spin.setSuffix(" mm")
+        self.sub_thickness_mm_spin.setToolTip(
+            "Substrate thickness, used with the back face when the substrate absorbs (k > 0): the light loses part of "
+            "its flux on each pass. No effect on a substrate with k = 0."
+        )
+        sub_t_row.addWidget(QLabel("substrate thickness:"))
+        sub_t_row.addWidget(self.sub_thickness_mm_spin)
+        sub_t_row.addStretch()
+        lay.addLayout(sub_t_row)
 
         fit_label = QLabel("RE fit λ window:")
         lay.addWidget(fit_label)
@@ -1370,7 +1389,8 @@ class CertusRELayoutMixin:
             color_idx += 1
 
             R_c, T_c = _re_calc_spectrum_for_config(
-                wls_dense, n_layers_T, ep, n_sub_corr, float(ang), str(pol), bool(inc_back), **_p4_ov
+                wls_dense, n_layers_T, ep, n_sub_corr, float(ang), str(pol), bool(inc_back), **_p4_ov,
+                substrate_thickness_nm=design_substrate_thickness_nm(self),
             )
 
             theo = R_c if ttype == "R" else T_c

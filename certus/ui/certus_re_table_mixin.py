@@ -7,6 +7,7 @@ from typing import Any
 import numpy as np
 
 from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS
+from certus.core.certus_design_worker_utils import design_substrate_thickness_nm
 from certus.ui.certus_qt_widgets import (
     QApplication,
     QCheckBox,
@@ -918,7 +919,10 @@ class CertusRETableMixin:
         p4_kw = self._re_p4_display_beam_kwargs()
 
         for (angle, pol, include_backside), tgt_list in config_groups.items():
-            R_c, T_c = _re_calc_spectrum_for_config(wls, n_layers_T, ep, n_sub, angle, pol, include_backside, **p4_kw)
+            R_c, T_c = _re_calc_spectrum_for_config(
+                wls, n_layers_T, ep, n_sub, angle, pol, include_backside, **p4_kw,
+                substrate_thickness_nm=design_substrate_thickness_nm(self),
+            )
 
             for tgt in tgt_list:
                 wl_c = float((tgt.lmin + tgt.lmax) / 2.0)

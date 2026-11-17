@@ -21,6 +21,9 @@ restent optionnelles. Mesures terminées dans le [bilan DESIGN](../reports/quest
 Le [guide DESIGN](../pages/CERTUS_DESIGN.html#design-robust-search) décrit l'activation et les limites de la recherche robuste.
 La [campagne DESIGN–STRAT](../reports/codesign_2026-11-14/bilan.md) mesure trois paires du séparateur 50/50. Avec les plans retenus, le mérite robuste à 1 nm augmente la RMSE déposée de 52 à 82 %.
 
+**Attention (chantier 48)** : ce clone est dans un dossier synchronisé par Google Drive, qui peut réécrire des fichiers
+sous Git (copies « (1) » suivies) ; vérifier `git status` avant et après une mesure.
+
 **Branche de travail** : `master`, poussée sur ordre de 👤 le 2026-11-17 au soir (chantiers 34, 39, 40, 43, 44, 47).
 Le sparse-checkout écarte les gros artefacts scientifiques suivis ; git sparse-checkout disable les restaure. Les sauvegardes et données locales de novembre sont répertoriées
 dans `artifacts/archives-20261114/inventaire.json`, dans `certus1111`.

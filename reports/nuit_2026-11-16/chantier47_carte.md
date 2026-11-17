@@ -1,6 +1,6 @@
 # Chantier 47 — carte des chemins de l'épaisseur du substrat (2026-11-17)
 
-Relevé par `rg` sur les fichiers suivis ; rien n'est modifié. `DEFAULT_SUBSTRATE_THICKNESS_NM` = 1 mm
+Relevé par `rg` sur les fichiers suivis ; rien n'est modifié. `DEFAULT_SUBSTRATE_THICKNESS_NM` = 1000000.0, en nm
 (`certus/physics/certus_substrate_absorption.py`).
 
 ## Noyaux qui prennent déjà `substrate_thickness_nm`

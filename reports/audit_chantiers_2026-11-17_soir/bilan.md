@@ -1,5 +1,7 @@
 # Audit des chantiers ouverts — 17 novembre 2026 au soir
 
+> Corrigé par le [contre-audit](contre_audit.md) (49, 50, 18, 19, 48).
+
 Demande de 👤 : refaire un audit complet des chantiers ouverts et remanier l'ensemble pour qu'il soit faisable. Base :
 `master` @ `21694055`. Chaque ligne de [`CHANTIERS_RESTANTS.md`](../../docs/CHANTIERS_RESTANTS.md) a été recoupée avec le
 code et les rapports qu'elle cite (lecture seule ; aucune mesure de calcul lancée). Ce qui suit est constaté, sauf mention.

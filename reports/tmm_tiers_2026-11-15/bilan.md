@@ -15,5 +15,5 @@ R + T vaut 1 sans perte et descend à 0,93 avec absorption.
 l'écart sur R monte à 0,19 (empilement absorbant, 30°, p).
 
 **Ce que cela ne couvre pas** : seul `calc_spectrum_oblique_vectorized` (face avant, substrat semi-infini) est
-recoupé. La face arrière incohérente, la perte de la plaque et les gradients ne le sont pas ; `tmm` n'a que le cas
-cohérent (`coh_tmm`), et la face arrière reste recoupée par `tests/oracle/tmm_reference.py`.
+recoupé. La face arrière incohérente, la perte de la plaque et les gradients ne le sont pas ; `tmm` a aussi `inc_tmm` (incohérent), non utilisé par cette sonde (correction du 2026-11-17 : la version précédente disait le contraire, voir le [contre-audit](../audit_chantiers_2026-11-17_soir/contre_audit.md)) ;
+la sonde n'appelle que `coh_tmm`, et la face arrière reste recoupée par `tests/oracle/tmm_reference.py`.

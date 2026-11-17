@@ -210,8 +210,8 @@ def build_graph(files: Iterable[str]) -> Graph:
         found: set[Node] = set()
         for path in graph.modules.get(module, ()):
             info = parsed.get(path)
-            if info is None:
-                found.add((path, WHOLE))
+            if info is None or (path.startswith("tests/") and Path(path).name != "conftest.py"):
+                found.add((path, WHOLE))  # un fichier de test n'a d'aretes que pour lui entier (un test importe ses voisins)
             elif name in info.defs:
                 found.add((path, name))
             elif name in info.bindings and name not in info.assigned and depth < 10:

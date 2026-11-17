@@ -69,6 +69,18 @@ def test_a_test_that_walks_a_package_by_its_path_is_always_played(tmp_path, monk
     assert "tests/unit/test_walk.py" in sel.tests
 
 
+def test_a_test_that_imports_helpers_from_another_test_follows_it(tmp_path, monkeypatch):
+    """`tests/unit/test_design_memetic_robust_selection.py` imports `_build` from its neighbour test module by its bare
+    name; the edge stopped at the helper, which a test file has no edge for (`--audit-calls` on tests/unit, 2026-11-17)."""
+    helper = "from certus import kernel\n\ndef _build():\n    return kernel.value()\n\ndef test_helper():\n    assert _build() == 3\n"
+    user = "from test_helper_owner import _build\n\ndef test_user():\n    assert _build() == 3\n"
+    graph = _tree(tmp_path, monkeypatch, {"tests/unit/test_helper_owner.py": helper, "tests/unit/test_user.py": user})
+
+    sel = vc.select(graph, ["certus/kernel.py"], whole_files=True)
+
+    assert "tests/unit/test_user.py" in sel.tests
+
+
 def test_the_audit_does_not_count_an_always_played_test_as_a_hole(tmp_path, monkeypatch):
     """The walk reaches `certus.kernel.value` by a name it builds, which no static edge can follow; the selection plays
     it whatever changes, so it can miss nothing (the hole `--audit-calls` reported on 2026-11-17)."""

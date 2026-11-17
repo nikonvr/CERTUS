@@ -363,45 +363,25 @@ class CertusRELayoutMixin:
 
     def _build_re_excel_data_group(self) -> CertusCard:
         """Indices + lambda₀ / back face: all from the RE Excel file."""
-
         c = CertusCard("Data from Excel")
-
         lay = c.body
-
         lay.setSpacing(12)
-
         lbl_idx = QLabel("<b>Optical indices</b> — H, L and substrate: 'index' sheet (n(λ), k(λ) tables).")
-
         lbl_idx.setWordWrap(True)
-
         lbl_idx.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY}pt;")
-
         lay.addWidget(lbl_idx)
-
         sep = QFrame()
-
         sep.setFrameShape(QFrame.Shape.HLine)
-
         sep.setFrameShadow(QFrame.Shadow.Sunken)
-
         lay.addWidget(sep)
-
         sub = QLabel("<b>Design and measurement reference</b>")
-
         sub.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: {Typography.BODY}pt;")
-
         lay.addWidget(sub)
-
         self._re_readout_lambda_lbl = QLabel()
-
         self._re_readout_lambda_lbl.setWordWrap(True)
-
         self._re_readout_lambda_lbl.setTextFormat(Qt.TextFormat.RichText)
-
         self._re_readout_lambda_lbl.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-
         self._re_readout_backside_lbl = QLabel()
-
         self._re_readout_backside_lbl.setWordWrap(True)
 
         self._re_readout_backside_lbl.setTextFormat(Qt.TextFormat.RichText)

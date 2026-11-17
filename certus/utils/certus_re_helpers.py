@@ -1933,16 +1933,12 @@ def _re_eval_angle_physics_for(
 
     if sub is None:
         wls_s = wls_all
-
         n_lay_s = n_layers_all
-
         n_sub_s = n_sub_all
 
     else:
         wls_s = wls_all[sub]
-
         n_lay_s = n_layers_all[sub, :]
-
         n_sub_s = n_sub_all[sub]
 
     if pl == "avg":
@@ -1950,16 +1946,12 @@ def _re_eval_angle_physics_for(
             Rs, Ts, dRs, dTs = compute_oblique_rt_and_grads_analytic(
                 ep_use, n_lay_s, n_sub_s, wls_s, var_idx, angle, True, False
             )
-
             Rp, Tp, dRp, dTp = compute_oblique_rt_and_grads_analytic(
                 ep_use, n_lay_s, n_sub_s, wls_s, var_idx, angle, False, False
             )
-
             return 0.5 * (Rs + Rp), 0.5 * (dRs + dRp), 0.5 * (Ts + Tp), 0.5 * (dTs + dTp)
-
         else:
             yRs, dRs, yTs, dTs = _re_backside_bundle_fixed(ep_use, n_lay_s, n_sub_s, wls_s, var_idx, angle, True, substrate_thickness_nm)
-
             yRp, dRp, yTp, dTp = _re_backside_bundle_fixed(ep_use, n_lay_s, n_sub_s, wls_s, var_idx, angle, False, substrate_thickness_nm)
 
             return 0.5 * (yRs + yRp), 0.5 * (dRs + dRp), 0.5 * (yTs + yTp), 0.5 * (dTs + dTp)

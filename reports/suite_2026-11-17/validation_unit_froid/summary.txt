@@ -1,0 +1,3 @@
+ECHEC (unit), code 1, non rejoue : lire reports\suite_2026-11-17\validation_unit_froid\unit.log
+VALIDATION=NO-GO
+La reference de CLAUDE.md section 2 reste la suite complete en serie.

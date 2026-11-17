@@ -21,16 +21,16 @@ restent optionnelles. Mesures terminées dans le [bilan DESIGN](../reports/quest
 Le [guide DESIGN](../pages/CERTUS_DESIGN.html#design-robust-search) décrit l'activation et les limites de la recherche robuste.
 La [campagne DESIGN–STRAT](../reports/codesign_2026-11-14/bilan.md) mesure trois paires du séparateur 50/50. Avec les plans retenus, le mérite robuste à 1 nm augmente la RMSE déposée de 52 à 82 %.
 
-**Branche de travail** : `master`, poussée sur ordre de 👤 le 2026-11-16 (Pillow 13.0.0 et setuptools 84.1.0 compris).
+**Branche de travail** : `master`, poussée sur ordre de 👤 le 2026-11-17 (chantier 47 DESIGN compris).
 Le sparse-checkout écarte les gros artefacts scientifiques suivis ; git sparse-checkout disable les restaure. Les sauvegardes et données locales de novembre sont répertoriées
 dans `artifacts/archives-20261114/inventaire.json`, dans `certus1111`.
 
 **Python de référence : 3.15.2**, dépendances de requirements.lock.
 
-**Dernière validation complète** : `VALIDATION=GO`, le 2026-11-16 sous Windows sur `1a0a12cf` (les 27 défauts et les mineurs de
-l'audit, les tables de configuration fusionnées) : oracle 1 212, unit 6 330, ui 1 665, reste 322, performance, ruff et les trois
-contrôles documentaires ; trois tests au bit de la phase A, rouges sous la charge parallèle, verts seuls.
-[Détails](../reports/audit_general_2026-11-14/runs/validation_8.console.txt).
+**Dernière validation complète** : le 2026-11-17 sous Windows sur `d2207653` (chantier 47 DESIGN, gradient de la face arrière nue) :
+oracle 1 214, ui 1 667, reste 322, performance 30, contrôles documentaires ; ruff vert après `cf0882c7` ; unit 6 352 et deux tests STRAT
+au bit, rouges sous la charge parallèle (cache chaud ou vierge), verts seuls en série sur cache vierge (14 sur 14, chantier 34).
+[Détails](../reports/suite_2026-11-17/validation/summary.txt), [cache vierge](../reports/suite_2026-11-17/validation_unit_froid/summary.txt).
 
 Pour un échec de comparaison au bit, rejouer sur [cache Numba vierge](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md).
 

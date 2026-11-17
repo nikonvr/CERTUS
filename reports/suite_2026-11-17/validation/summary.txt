@@ -1,0 +1,4 @@
+ECHEC (ruff), code 1, non rejoue : lire reports\suite_2026-11-17\validation\ruff.log
+ECHEC (unit), code 1, non rejoue : lire reports\suite_2026-11-17\validation\unit.log
+VALIDATION=NO-GO
+La reference de CLAUDE.md section 2 reste la suite complete en serie.

@@ -10,8 +10,8 @@ périmètre **DESIGN seul** (METAL, RE, STRAT à part) ; recherche locale finale
 | 3 | C47 (1/3) : paramètre dans les entrées DESIGN | `2800a0a3`, `c1_diff` 9 172 au bit |
 | 4 | C47 (2/3) : de la configuration aux noyaux (13 fichiers) | `23512693`, `c1_diff` 9 172 au bit, oracle 1 214 |
 | 5 | C47 (3/3) : champ de l'interface DESIGN | `a7d4eba6`, test rouge avant |
-| 6 | base de mutation de `certus_substrate_absorption.py` (42 → 56 fautes) | pilote en cours |
-| 7 | validation complète, puis push sur ordre de 👤 | à faire |
+| 6 | base de mutation de `certus_substrate_absorption.py` (42 → 56 fautes) | `d2207653` : un survivant nouveau tué par un test (0,5 mm) |
+| 7 | validation complète, puis push sur ordre de 👤 | faite (ETAT §0) ; push |
 
 Hors périmètre, laissés : `calculate_RT_vectorized_real_HL` (STRAT) ; préchauffage de `_certus_physics_impl.py` ; la branche RE de
 l'évaluation spectrale (1 mm).

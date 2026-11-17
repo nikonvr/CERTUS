@@ -98,6 +98,20 @@ def test_a_test_that_runs_the_pyinstaller_spec_follows_what_the_spec_loads(tmp_p
     assert "tests/unit/test_other.py" not in sel.tests
 
 
+def test_the_audit_does_not_blame_a_test_for_nested_code_an_earlier_test_installed(tmp_path, monkeypatch):
+    """`--audit-calls` on tests/unit (2026-11-17): 33 DESIGN tests ran the event filter of `hover_lift` and the ViewBox
+    patch of `_patch_pyqtgraph_viewbox_nan_transform_angle`, nested functions an earlier test of the same process had
+    installed; run alone, they never reach them. A nested function runs only once its parent has, and the parent is
+    audited where it runs."""
+    hooks = "REG = []\n\ndef install():\n    def inner():\n        return 1\n    REG.append(inner)\n"
+    first = "from certus import hooks\n\ndef test_a():\n    hooks.install()\n"
+    second = ("import sys\n\ndef test_b():\n"  # reaches the hook without naming its module, as a Qt event does
+              "    assert [f() for m in list(sys.modules.values()) for f in getattr(m, 'REG', [])] == [1]\n")
+    graph = _tree(tmp_path, monkeypatch, {"certus/hooks.py": hooks, "tests/unit/test_a.py": first, "tests/unit/test_b.py": second})
+
+    assert vc.audit_calls(graph, ["tests/unit/test_a.py", "tests/unit/test_b.py"]) == 0
+
+
 def test_the_audit_does_not_count_an_always_played_test_as_a_hole(tmp_path, monkeypatch):
     """The walk reaches `certus.kernel.value` by a name it builds, which no static edge can follow; the selection plays
     it whatever changes, so it can miss nothing (the hole `--audit-calls` reported on 2026-11-17)."""

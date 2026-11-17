@@ -674,7 +674,9 @@ def _start(code, offset):
     if not ACTIVE[0]:
         return None
     name = code.co_filename
-    if name.startswith(ROOT) and code.co_name not in ("<module>", "__annotate__"):
+    # A nested function runs only once its parent has, and the parent is audited where it runs: a filter or a patch
+    # an earlier test of the process installed would otherwise be blamed on whatever test triggers it.
+    if name.startswith(ROOT) and code.co_name not in ("<module>", "__annotate__") and "<locals>" not in code.co_qualname:
         rel = Path(name).resolve().relative_to(ROOT).as_posix()
         if not rel.startswith("tests/"):
             SEEN.setdefault(CURRENT[0], set()).add((rel, code.co_firstlineno))

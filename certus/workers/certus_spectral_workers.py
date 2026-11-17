@@ -581,6 +581,7 @@ def _re_phase4_oblique_spectrum(
     ak: np.ndarray,
     alk: np.ndarray,
     nk: int,
+    substrate_thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Compute RE phase-4 averaged oblique spectrum."""
     from certus.utils.certus_re_helpers import _re_calc_spectrum_for_config
@@ -597,6 +598,7 @@ def _re_phase4_oblique_spectrum(
         beam_aperture=beam_aperture,
         beam_aperture_knots_deg=ak[:nk],
         beam_aperture_knots_lam_nm=alk[:nk],
+        substrate_thickness_nm=substrate_thickness_nm,
     )
 
 
@@ -782,6 +784,7 @@ class EvalWorker(QThread):
                             ak=ak,
                             alk=alk,
                             nk=int(_nk),
+                            substrate_thickness_nm=substrate_thickness_nm_of(self.cfg),
                         )
 
                 return _calc_oblique_selected_kernel(

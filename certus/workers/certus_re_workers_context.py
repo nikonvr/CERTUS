@@ -7,6 +7,7 @@ from typing import Any
 
 import numpy as np
 
+from certus.physics.certus_substrate_absorption import DEFAULT_SUBSTRATE_THICKNESS_NM
 from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
 from certus.utils.certus_re_config import (
     RE_GUI_DEFAULT_RE_QWOT_ALPHA,
@@ -136,7 +137,7 @@ class REContextStrategy:
                 if dkey in display_keys_done:
                     continue
                 display_keys_done.add(dkey)
-                R_o, T_o = _re_calc_spectrum_for_config(wls_display, n_lay_T_corr, ep_use, n_sub_use, angle, pol, inc_back, phase4_average=_re_state['is_phase4'], beam_aperture=_ap_gui, beam_aperture_knots_deg=_re_state['re_aperture_knots'], beam_aperture_knots_lam_nm=_re_state['re_p4_beam_knots_lam_nm'])
+                R_o, T_o = _re_calc_spectrum_for_config(wls_display, n_lay_T_corr, ep_use, n_sub_use, angle, pol, inc_back, phase4_average=_re_state['is_phase4'], beam_aperture=_ap_gui, beam_aperture_knots_deg=_re_state['re_aperture_knots'], beam_aperture_knots_lam_nm=_re_state['re_p4_beam_knots_lam_nm'], substrate_thickness_nm=_re_state.get('substrate_thickness_nm', DEFAULT_SUBSTRATE_THICKNESS_NM))
                 spectra_display[dkey] = {'R': R_o, 'T': T_o}
             if not spectra_display:
                 return

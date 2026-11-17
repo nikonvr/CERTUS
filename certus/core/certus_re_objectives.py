@@ -6,6 +6,7 @@ from typing import Any
 
 import numpy as np
 
+from certus.physics.certus_substrate_absorption import DEFAULT_SUBSTRATE_THICKNESS_NM, substrate_thickness_nm_of
 from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
 from certus.utils.certus_re_config import (
     RE_GUI_DEFAULT_RE_PHASE2_TOP_K,
@@ -146,7 +147,7 @@ def _prepare_re_run_context_setup(self, _re_t0: float) -> tuple[Any, dict[str, A
     re_env_s = float(self.cfg.get("re_envelope_scale", 1.0))
     _re_env_on_wls = re_envelope_max_delta_n(wls, scale=re_env_s)
     _ap_gui = float(np.clip(float(self.cfg.get("re_beam_aperture_deg", RE_GUI_DEFAULT_BEAM_APERTURE_DEG)), RE_P4_BEAM_AP_BOUNDS_DEG[0], RE_P4_BEAM_AP_BOUNDS_DEG[1]))
-    _re_state = {"is_phase4": False, "re_aperture_knots": np.full(int(RE_P4_BEAM_N_KNOTS), _ap_gui, dtype=np.float64), "re_p4_beam_knots_lam_nm": np.asarray(_p4_beam_knots_lam, dtype=np.float64).copy(), "p4_prof": None}
+    _re_state = {"is_phase4": False, "re_aperture_knots": np.full(int(RE_P4_BEAM_N_KNOTS), _ap_gui, dtype=np.float64), "re_p4_beam_knots_lam_nm": np.asarray(_p4_beam_knots_lam, dtype=np.float64).copy(), "p4_prof": None, "substrate_thickness_nm": substrate_thickness_nm_of(self.cfg)}
     n_layers_count = len(ep0)
     var_idx = np.arange(n_layers_count, dtype=np.int64)
     ctx = REMseContext(_alpha_slot=[float(self.cfg.get("re_qwot_penalty_weight", RE_GUI_DEFAULT_RE_QWOT_ALPHA))], _lref_arr=_lref_arr, _re_env_on_wls=_re_env_on_wls, _re_state=_re_state, ep0=ep0, is_H=is_H, is_L=is_L, lambda_ref=lambda_ref, n_layers_count=n_layers_count, n_layers_nominal=n_layers_nominal, n_ref_nom_per_layer=n_ref_nom_per_layer, n_sub_nominal=n_sub_nominal, oblique_config_meta=oblique_config_meta, re_env_s=re_env_s, var_idx=var_idx, wls=wls)
@@ -499,6 +500,8 @@ def _global_evaluate_oblique_physics(
     return_residuals: bool,
     _accum_from_stats: Callable[..., Any],
 ) -> None:
+    # Chantier 47: the plate an absorbing substrate is, seen with the back face; absent from a state: 1 mm.
+    sub_t_nm = float(ctx._re_state.get("substrate_thickness_nm", DEFAULT_SUBSTRATE_THICKNESS_NM))
     for meta in ctx.oblique_config_meta:
         angle = float(meta["angle"])
         pol = str(meta["pol"])
@@ -570,7 +573,8 @@ def _global_evaluate_oblique_physics(
                         _p4_prof["phi_calls"] = int(_p4_prof.get("phi_calls", 0)) + 1
 
                     yR0, dR0, yT0, dT0 = _re_eval_angle_physics_for(
-                        sub, angle, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, ctx.var_idx
+                        sub, angle, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, ctx.var_idx,
+                        sub_t_nm,
                     )
 
                     yR_all[sub] = yR0
@@ -582,10 +586,12 @@ def _global_evaluate_oblique_physics(
                         _p4_prof["phi_calls"] = int(_p4_prof.get("phi_calls", 0)) + 2
 
                     yR1, dR1, yT1, dT1 = _re_eval_angle_physics_for(
-                        sub, angle - h, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, ctx.var_idx
+                        sub, angle - h, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, ctx.var_idx,
+                        sub_t_nm,
                     )
                     yR2, dR2, yT2, dT2 = _re_eval_angle_physics_for(
-                        sub, angle + h, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, ctx.var_idx
+                        sub, angle + h, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, ctx.var_idx,
+                        sub_t_nm,
                     )
 
                     yR_all[sub] = 0.5 * (yR1 + yR2)
@@ -599,7 +605,8 @@ def _global_evaluate_oblique_physics(
                 )
         else:
             yR_all, dR_all, yT_all, dT_all = _re_eval_angle_physics_for(
-                None, angle, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, ctx.var_idx
+                None, angle, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, ctx.var_idx,
+                sub_t_nm,
             )
 
         # Distribute cached kernel evaluations into target buckets

@@ -1,0 +1,39 @@
+  TROU tests/unit/test_design_applies_the_floor_at_the_end_when_asked.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_close_stops_its_threads.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_excel_export_writes_its_file.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_export_keeps_the_design_of_the_table.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_failure_shows_its_dialog.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_final_evaluation_triggers_the_export.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_animations.py::hover_lift, certus/ui/certus_index_spline_corridor_data.py::_DataMixin, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_growth_caps_the_global_phase.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_heals_after_the_5nm_rule_when_asked.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_live_display_reads_the_window.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_memetic_global_stage.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_memetic_robust_selection.py : certus/core/certus_design_lm.py::build_memetic_lm_polisher, certus/core/certus_design_lm.py::lm_nielsen, certus/physics/design_fast_normal.py::compute_gradient_lossless_front_fast, certus/physics/design_fast_normal.py::prepare_normal_fast_context
+  TROU tests/unit/test_design_pareto_champion_respects_the_5nm_rule.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_plots_rmse_against_layers_with_tolerance_bars.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_progress_reaches_the_window.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_reads_the_limits_of_its_design_file.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_reads_the_optim_block_of_its_example_files.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_reports_carry_their_provenance.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_restarts_from_its_best_design.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_runs_carry_their_run_id.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_scheduled_tasks_run.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_smart_decimation_state_is_cleared_on_the_window.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_stack_information_opens.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_stop_button_stops.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_stop_stops_the_workflow.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_targets_offer_s_and_p_only.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_theme_reaches_the_plots.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_design_worker_manager_reads_the_window.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_manual_extra_knot_dialog.py : certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_metal_auto_batch_opens_no_dialog.py : certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_metal_single_config_keeps_substrate_and_window.py : certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_nk_plot_draws_what_the_application_produces.py : certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_physics_properties.py : certus/core/certus_core.py::CertusFacadeModule
+  TROU tests/unit/test_plot_export_writes_the_original_data.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_animations.py::hover_lift, certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_settings_stay_out_of_the_registry.py : certus/ui/certus_animations.py::_build_hover_filter, certus/ui/certus_animations.py::hover_lift
+  TROU tests/unit/test_substrate_index_dialog_pieces.py : certus/ui/certus_ui_utils.py::_patch_pyqtgraph_viewbox_nan_transform_angle
+  TROU tests/unit/test_the_frozen_spec_bundles_the_suite.py : tools/frozen_licences.py::canonical, tools/frozen_licences.py::distributions_of, tools/frozen_licences.py::licence_files, tools/frozen_licences.py::licence_toc ...
+  TROU tests/unit/test_the_hub_opens_without_the_scientific_stack.py : certus/ui/certus_animations.py::_build_hover_filter
+AUDIT_APPELS=TROUS (492 fichiers de test, 37 avec un trou ; pytest vert)
+EXIT=1 DUREE=4636s

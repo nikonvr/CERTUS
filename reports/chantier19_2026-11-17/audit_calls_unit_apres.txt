@@ -1,0 +1,2 @@
+AUDIT_APPELS=OK (5 fichiers de test, 0 avec un trou ; pytest vert)
+EXIT=0 DUREE=91s

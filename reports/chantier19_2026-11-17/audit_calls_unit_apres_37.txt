@@ -1,0 +1,17 @@
+[32mINFO    [0m root:certus_spectral_workers.py:273 [EVAL-WORKER] oblique_mode=False, n_targets=0, n_wls_vis=2000
+[32mINFO    [0m root:certus_spectral_workers.py:273 [EVAL-WORKER] oblique_mode=False, n_targets=0, n_wls_vis=2000
+[32mINFO    [0m root:certus_spectrum_eval_ui.py:153 [SPECTRUM_EVAL._on_eval_finished] callback received | oblique=False | generation_id=1 | current_generation=2
+[32mINFO    [0m root:certus_spectrum_eval_ui.py:153 [SPECTRUM_EVAL._on_eval_finished] callback received | oblique=False | generation_id=1 | current_generation=2
+[32mINFO    [0m root:certus_spectral_workers.py:258 [EVAL-WORKER] === EvalWorker complete in 7.4ms ===
+[32mINFO    [0m root:certus_spectral_workers.py:258 [EVAL-WORKER] === EvalWorker complete in 7.4ms ===
+[32mINFO    [0m root:certus_spectrum_eval_ui.py:153 [SPECTRUM_EVAL._on_eval_finished] callback received | oblique=False | generation_id=2 | current_generation=2
+[32mINFO    [0m root:certus_spectrum_eval_ui.py:153 [SPECTRUM_EVAL._on_eval_finished] callback received | oblique=False | generation_id=2 | current_generation=2
+[32mINFO    [0m root:certus_design_ui_worker.py:196 [DESIGN._on_eval_finished] completed callback | elapsed_ms=22.2
+[32mINFO    [0m root:certus_design_ui_worker.py:196 [DESIGN._on_eval_finished] completed callback | elapsed_ms=22.2
+[32mINFO    [0m root:certus_design_ui_worker.py:209 [DESIGN._on_eval_finished] evaluation cycle complete | ui_ready=True
+[32mINFO    [0m root:certus_design_ui_worker.py:209 [DESIGN._on_eval_finished] evaluation cycle complete | ui_ready=True
+=========================== short test summary info ===========================
+FAILED tests/unit/test_design_scheduled_tasks_run.py::test_a_scheduled_task_runs_after_its_delay[schedule_smart_pareto_decimation-_start_smart_pareto_decimation]
+1 failed, 247 passed in 165.52s (0:02:45)
+AUDIT_APPELS=ECHEC (37 fichiers de test, 0 avec un trou ; pytest ROUGE)
+EXIT=1 DUREE=190s

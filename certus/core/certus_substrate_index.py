@@ -1043,19 +1043,14 @@ class IndexCore:
                 f"B2={c[3]:.9g} ; L2={c[4]:.9g} m ; "
                 f"B3={c[5]:.9g} ; L3={c[6]:.9g} m"
             )
-
             if meta is not None and bool(meta.get("sellmeier_optim_log_l1l2")):
                 ln1 = float(np.log(max(float(c[2]), 1.0e-300)))
-
                 ln2 = float(np.log(max(float(c[4]), 1.0e-300)))
-
                 ln3 = float(np.log(max(float(c[6]), 1.0e-300)))
-
                 base += (
                     f"\n  (optimization. ui=ln(Li), nat.) ln(L1)={ln1:.9g} ; ln(L2)={ln2:.9g} ; ln(L3)={ln3:.9g} "
                     f"(equivalent log10: log10(L1)={ln1 / np.log(10.0):.9g} ; log10(L2)={ln2 / np.log(10.0):.9g} ; log10(L3)={ln3 / np.log(10.0):.9g})"
                 )
-
             return base
 
         if s == "analytic-sellmeier-3poles-ir" and c.size >= 7:
@@ -1074,38 +1069,24 @@ class IndexCore:
 
         if s.startswith("analytic-polynomial") and c.size >= 1:
             c7 = np.zeros(7, dtype=np.float64)
-
             c7[: min(7, c.size)] = c[: min(7, c.size)]
-
             parts = [f"{_POLY_COEFF_KEYS[i]}={c7[i]:.9g}" for i in range(7)]
-
             return "Coefficients: " + " ; ".join(parts)
 
         if str(source or "").startswith("analytic-bspline-lsq") and c.size >= 6:
             kdeg = round(float(c[1]))
-
             lo_nm, hi_nm = float(c[2]), float(c[3])
-
             nt = round(float(c[4]))
-
             min_nt = 2 * (kdeg + 1)  # minimal valid knot vector for a B-spline of degree k
-
             if nt < min_nt or kdeg < 0 or c.size < 5 + nt + 1:
                 return f"Coefficients (B-spline LSQ, raw): {np.array2string(c, precision=9, separator=', ')}"
-
             nc_hdr = round(float(c[5 + nt]))
-
             if nc_hdr < 1 or c.size < 6 + nt + nc_hdr:
                 return f"Coefficients (B-spline LSQ, raw): {np.array2string(c, precision=9, separator=', ')}"
-
             t_nm = c[5 : 5 + nt]
-
             coef_b = c[6 + nt : 6 + nt + nc_hdr]
-
             tk = np.array2string(t_nm, precision=4, separator=", ", max_line_width=220)
-
             cc = np.array2string(coef_b, precision=9, separator=", ", max_line_width=220)
-
             return (
                 "B-spline coefficients (LSQ, scipy):\n"
                 f"   degree k = {kdeg}\n"

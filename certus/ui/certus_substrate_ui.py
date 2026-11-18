@@ -53,7 +53,8 @@ from certus.core.certus_substrate_index import (
     logger,
 )
 from certus.ui.certus_a11y import install_accessible_names
-from certus.ui.certus_measurement_excel_ui import open_measurement_excel_interactive
+from certus.ui.certus_base_app import CertusBaseApp
+from certus.ui.certus_measurement_excel_ui import open_measurement_excel_interactive, read_measurement_excel
 from certus.ui.certus_substrate_index_dialog import (  # noqa: F401 - re-exported: callers import this name from here
     IndexTableDialog,
 )
@@ -77,9 +78,16 @@ from certus.utils.certus_ux import Typography
 from certus.utils.errors import describe_error
 
 
-class SubstrateIndexGUI(QMainWindow):
+class SubstrateIndexGUI(CertusBaseApp):
+    """SUBSTRATE on the suite's base window: theme at construction, session kept on disk (chantier 18b)."""
+
+    APP_NAME = "CERTUS_SUBSTRATE_INDEX"
+    APP_TITLE = "Index from spectral measurements"
+    DEFAULT_WIDTH = 1100
+    DEFAULT_HEIGHT = 850
+
     def __init__(self):
-        super().__init__()
+        super().__init__()  # title, icon, geometry and the theme preference, before any widget
 
         # Model and Presenter initialization
         from certus.ui.certus_substrate_presenter import CertusSubstratePresenter
@@ -101,7 +109,8 @@ class SubstrateIndexGUI(QMainWindow):
         self.last_dir = self.settings.value("last_dir", "")
 
         self._setup_ui()
-        self.resize(1100, 850)
+        self._build_status_bar()
+        self._finalize_init()
 
     @property
     def last_run_manifest(self) -> dict | None:
@@ -612,79 +621,8 @@ class SubstrateIndexGUI(QMainWindow):
                 return
 
             raw_df, path, self.last_dir = result
-            self._last_loaded_measurement_path = str(path or "")
-
             self.settings.setValue("last_dir", self.last_dir)
-
-            self.df, kept_spec, dropped_spec = _filter_dataframe_bare_substrate_columns(raw_df)
-
-            self._show_column_recap(kept_spec, dropped_spec)
-
-            if dropped_spec:
-                logger.info(
-                    "Substrate index: ignored columns (no bare substrate indicator in the name): %s",
-                    "; ".join(dropped_spec[:40]) + ("; ..." if len(dropped_spec) > 40 else ""),
-                )
-
-            if not kept_spec:
-                self.df = None
-
-                self.btn_calc_n.setEnabled(False)
-
-                QMessageBox.warning(
-                    self,
-                    "Bare substrate: no columns retained",
-                    "No spectral column name indicates a **bare substrate** "
-                    "(e.g. substrate nu, sbst nu, SNU, BSUB, bare sub, nocoat, sans_dep, "
-                    "nu sub, empty sub, isolated word 'nu', etc.).\n\n"
-                    "Filter or stack measurements are intentionally ignored.\n\n"
-                    f"Columns present but excluded ({len(dropped_spec)}): "
-                    + (", ".join(dropped_spec[:12]) + ("..." if len(dropped_spec) > 12 else "")),
-                )
-
-                self.progress_widget.stop("Error: No bare-substrate columns")
-
-                return
-
-            self.btn_calc_n.setEnabled(True)
-
-            # Measurement sheet imposes absolute lambda bounds; UI window stays inside these limits.
-
-            wl_all = np.asarray(pd.to_numeric(self.df.iloc[:, 0], errors="coerce").values, dtype=np.float64)
-
-            m_w = np.isfinite(wl_all)
-
-            if int(np.count_nonzero(m_w)) >= 2:
-                wmin = float(np.min(wl_all[m_w]))
-
-                wmax = float(np.max(wl_all[m_w]))
-
-                self.fit_lmin_spin.setRange(wmin, wmax)
-
-                self.fit_lmax_spin.setRange(wmin, wmax)
-
-                self.fit_lmin_spin.setValue(wmin)
-
-                self.fit_lmax_spin.setValue(wmax)
-
-            self.log(
-                f"Substrate index: {Path(path).name}  "
-                f"{len(kept_spec)} bare substrate column(s), {len(dropped_spec)} ignored.",
-                "INFO",
-            )
-
-            logger.info(
-                "Substrate index: loading %s  %d bare substrate column(s), %d ignored.",
-                Path(path).name,
-                len(kept_spec),
-                len(dropped_spec),
-            )
-
-            self.progress_widget.update(1, 1, phase="Preview")
-
-            self.preview_plot()
-
-            self.progress_widget.stop("Done")
+            self._adopt_workbook(raw_df, path)
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             logger.error("Failed to load measurement sheet: %s", e)
@@ -694,6 +632,129 @@ class SubstrateIndexGUI(QMainWindow):
             self.log(f"Load error: {e}", "ERROR")
 
             self.progress_widget.stop("Error: Load failed")
+
+    def _adopt_workbook(self, raw_df: pd.DataFrame, path: str) -> bool:
+        """Keep the bare-substrate columns of `raw_df`, read from `path`, and preview them; the loading button and a
+        resumed session both end here. False when no column names a bare substrate."""
+        self._last_loaded_measurement_path = str(path or "")
+
+        self.df, kept_spec, dropped_spec = _filter_dataframe_bare_substrate_columns(raw_df)
+
+        self._show_column_recap(kept_spec, dropped_spec)
+
+        if dropped_spec:
+            logger.info(
+                "Substrate index: ignored columns (no bare substrate indicator in the name): %s",
+                "; ".join(dropped_spec[:40]) + ("; ..." if len(dropped_spec) > 40 else ""),
+            )
+
+        if not kept_spec:
+            self.df = None
+
+            self.btn_calc_n.setEnabled(False)
+
+            QMessageBox.warning(
+                self,
+                "Bare substrate: no columns retained",
+                "No spectral column name indicates a **bare substrate** "
+                "(e.g. substrate nu, sbst nu, SNU, BSUB, bare sub, nocoat, sans_dep, "
+                "nu sub, empty sub, isolated word 'nu', etc.).\n\n"
+                "Filter or stack measurements are intentionally ignored.\n\n"
+                f"Columns present but excluded ({len(dropped_spec)}): "
+                + (", ".join(dropped_spec[:12]) + ("..." if len(dropped_spec) > 12 else "")),
+            )
+
+            self.progress_widget.stop("Error: No bare-substrate columns")
+
+            return False
+
+        self.btn_calc_n.setEnabled(True)
+
+        # Measurement sheet imposes absolute lambda bounds; UI window stays inside these limits.
+
+        wl_all = np.asarray(pd.to_numeric(self.df.iloc[:, 0], errors="coerce").values, dtype=np.float64)
+
+        m_w = np.isfinite(wl_all)
+
+        if int(np.count_nonzero(m_w)) >= 2:
+            wmin = float(np.min(wl_all[m_w]))
+
+            wmax = float(np.max(wl_all[m_w]))
+
+            self.fit_lmin_spin.setRange(wmin, wmax)
+
+            self.fit_lmax_spin.setRange(wmin, wmax)
+
+            self.fit_lmin_spin.setValue(wmin)
+
+            self.fit_lmax_spin.setValue(wmax)
+
+        self.log(
+            f"Substrate index: {Path(path).name}  "
+            f"{len(kept_spec)} bare substrate column(s), {len(dropped_spec)} ignored.",
+            "INFO",
+        )
+
+        logger.info(
+            "Substrate index: loading %s  %d bare substrate column(s), %d ignored.",
+            Path(path).name,
+            len(kept_spec),
+            len(dropped_spec),
+        )
+
+        self.progress_widget.update(1, 1, phase="Preview")
+
+        self.preview_plot()
+
+        self.progress_widget.stop("Done")
+
+        return True
+
+    def _maybe_run_first_time_tour(self) -> None:
+        """No welcome tour at opening: the base window brings SUBSTRATE the theme and the session, nothing else (18b)."""
+
+    # -- What SUBSTRATE saves (chantier 18b): the source workbook, the fit window and the Sellmeier settings ------------
+
+    def _collect_config(self) -> dict:
+        return {
+            "source_file": str(self._last_loaded_measurement_path or ""),
+            "fit_min_nm": float(self.fit_lmin_spin.value()),
+            "fit_max_nm": float(self.fit_lmax_spin.value()),
+            "sellmeier_auto": bool(self.sell_auto_chk.isChecked()),
+            "sellmeier_timeout_s": float(self.sell_timeout_spin.value()),
+            "sellmeier_de_maxiter": int(self.sell_de_iter_spin.value()),
+            "sellmeier_ls_max_nfev": int(self.sell_ls_nfev_spin.value()),
+            "sellmeier_log_l1l2": bool(self.sell_log_l_chk.isChecked()),
+        }
+
+    def _apply_config(self, config: dict) -> None:
+        """Sellmeier settings, then the workbook read again from its path (its load resets the fit window to the data),
+        then the fit window. A workbook moved since keeps the settings."""
+        self.sell_auto_chk.setChecked(bool(config.get("sellmeier_auto", True)))
+        for spin, key, cast in (
+            (self.sell_timeout_spin, "sellmeier_timeout_s", float),
+            (self.sell_de_iter_spin, "sellmeier_de_maxiter", int),
+            (self.sell_ls_nfev_spin, "sellmeier_ls_max_nfev", int),
+        ):
+            if config.get(key) is not None:
+                spin.setValue(cast(config[key]))
+        self.sell_log_l_chk.setChecked(bool(config.get("sellmeier_log_l1l2", SELLMEIER_DEFAULT_LOG_L1L2)))
+        source = str(config.get("source_file", "") or "")
+        if source and not Path(source).is_file():
+            logger.warning("Session: the workbook %s is no longer there; settings kept, no data loaded.", source)
+        elif source:
+            try:
+                raw_df = read_measurement_excel(source, self, round_wavelength_decimals=None)
+            except (*NUMERICAL_FAULT_EXCEPTIONS, OSError) as e:
+                logger.error("Session: failed to read %s: %s", source, e)
+                raw_df = None
+            if raw_df is not None:
+                self.progress_widget.start()
+                self._adopt_workbook(raw_df, source)
+                logger.info("Session: %s loaded again.", source)
+        for spin, key in ((self.fit_lmin_spin, "fit_min_nm"), (self.fit_lmax_spin, "fit_max_nm")):
+            if config.get(key) is not None:
+                spin.setValue(float(config[key]))
 
     def _output_table_titles(self, selected_model: str | None = None) -> list[str]:
         titles = ["lambda (nm)"]

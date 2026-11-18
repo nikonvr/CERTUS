@@ -10,17 +10,13 @@
 ## 0. Reprise — à lire en premier, à tenir à jour
 
 > L'état présent seulement ; l'historique est dans `git log` et `reports/`. À la demande : actions ouvertes et protocole de mesure
-> ([`CHANTIERS_RESTANTS.md`](CHANTIERS_RESTANTS.md)), acquis ([`ETAT_acquis.md`](ETAT_acquis.md)), preuves dans `reports/`.
+> ([`CHANTIERS_RESTANTS.md`](CHANTIERS_RESTANTS.md)), vocabulaire du Rate ([`ETAT_acquis.md`](ETAT_acquis.md)), preuves dans `reports/`.
 
-**Liste active** : [chantiers](CHANTIERS_RESTANTS.md), les ouverts seulement. Décisions de 👤
-du 17 au soir : 05, pôle infrarouge de catalogue derrière une option inactive ; 21, session dédiée ; 18, feu vert (18a puis
-18b). Reprise de la session en cours : [REPRISE](../reports/suite_2026-11-17/REPRISE.md).
-Le polisseur hybride et la pondération par bande sont intégrés. La grille automatique et la sélection robuste
-restent optionnelles. Mesures terminées dans le [bilan DESIGN](../reports/questions_design_2026-11-13/bilan.md).
-Le [guide DESIGN](../pages/CERTUS_DESIGN.html#design-robust-search) décrit l'activation et les limites de la recherche robuste.
-La [campagne DESIGN–STRAT](../reports/codesign_2026-11-14/bilan.md) mesure trois paires du séparateur 50/50. Avec les plans retenus, le mérite robuste à 1 nm augmente la RMSE déposée de 52 à 82 %.
+**Liste active** : [chantiers](CHANTIERS_RESTANTS.md), les ouverts seulement. Reprise de la session en cours :
+[REPRISE](../reports/suite_2026-11-17/REPRISE.md). La grille automatique et la sélection robuste de DESIGN sont
+optionnelles ; le [guide DESIGN](../pages/CERTUS_DESIGN.html#design-robust-search) décrit leur activation et leurs limites.
 
-**Clone de travail (chantier 48, décision de 👤 du 17)** : `C:\dev\certus1111`, hors de Google Drive ; l'ancien clone sous
+**Clone de travail** : `C:\dev\certus1111`, hors de Google Drive ; l'ancien clone sous
 `D:\drivfl` (dossier synchronisé, qui réécrivait des fichiers suivis) reste intact, on n'y travaille plus.
 
 **Branche de travail** : `master`, poussée sur ordre de 👤 (dernière poussée : nuit du 17 au 18 novembre).
@@ -42,11 +38,10 @@ Pour un échec de comparaison au bit, rejouer sur [cache Numba vierge](../report
 |---|---|---|
 | **Calcul (STRAT)** | étalon : `r75x2` à la fente de 2 nm. Recherche locale finale active avec sa garde au corridor configuré ; sur `r75x2`, −13,3 / −11,1 / neutre / −9,7 % de SEEL selon la graine de banc ([bilan](../reports/STRAT_garde_2026-10-22/bilan.md)). Sans rampes, aucun plan optique pur n'est déposable ; avec le secours Rate, tous les plans de la liste le sont, au modèle de Rate de STRAT (§7) | reprise de calcul et co-conception ([chantiers](CHANTIERS_RESTANTS.md)) |
 | **Conception (DESIGN)** | étape globale mémétique, champion sans couche < 5 nm et relances par défaut depuis le 2026-10-23 ; séparatrice 400–1200 nm à 0,000135 depuis l'exemple ([bilan](../reports/DESIGN_bs5050_2026-10-22/bilan.md)) | robustesse et reprise ([chantiers](CHANTIERS_RESTANTS.md)) |
-| **RE** | indices tabulés lus en n − ik depuis R148 (2026-10-05) : un RE antérieur sur indices absorbants en incidence oblique est à refaire ; un indice demandé hors de sa table est prolongé par une constante, avec un avertissement | — |
+| **RE** | indices tabulés lus en n − ik ; un indice demandé hors de sa table est prolongé par une constante, avec un avertissement | — |
 | **Base de dépôts** | 140 monocouches mesurées au Photon RT (`example/database_depots/`), chargées par INDEX (« Deposit database… ») ; la voie (T ou R) se lit dans la géométrie du détecteur. Onze ajustements certifiés servent de références (`references_index.json`, `scripts\bench_base_depots.py`) : neuf à moins de 2 % d'épaisseur, deux écarts documentés dans les références du banc. RE ne la lit pas (il lui faut un classeur complet) | IDX-01 ; §5 |
-| **Exécutable gelé** | couche OpenMP (D87), 420 Mo, sans les outils de développement (D72) ; construit à `260e4e8c` le 2026-11-17, hub et dix modules démarrent ; il porte son commit (`BUILD_COMMIT.json`). Licences embarquées dans `licenses/`. L'exécutable reste sur OpenMP : la roue PyPI de TBB est sous licence Intel, hors GPL (oneTBB sous Apache-2.0 à trouver, décision de 👤) | D72 |
-| **Interface** | plan clos le 2026-09-08 : 12 critères de fin sur 13, le treizième démontré inatteignable (`xfail` strict) | §5 |
-| **Qualité** | CI : calcul sous Linux, interface et gel sous Windows, `pip-audit`, `gitleaks` ; tests isolés des préférences de 👤 ; aucune arête d'import montante (D26) | §5 |
+| **Exécutable gelé** | couche OpenMP, 420 Mo, sans les outils de développement ; construit à `260e4e8c` le 2026-11-17, hub et dix modules démarrent ; il porte son commit (`BUILD_COMMIT.json`). Licences embarquées dans `licenses/`. L'exécutable reste sur OpenMP : la roue PyPI de TBB est sous licence Intel, hors GPL (oneTBB sous Apache-2.0 à trouver, décision de 👤) | §5 |
+| **Qualité** | CI : calcul sous Linux, interface et gel sous Windows, `pip-audit`, `gitleaks` ; tests isolés des préférences de 👤 ; aucune arête d'import montante | §5 |
 | **Validation externe** | 🔴 **aucune** : STRAT n'est validé que contre lui-même (👤, 2026-10-06 : les dépôts réels du dichroïque ne sont plus prévus) | — |
 
 ## 2. Repères mesurés — conditions précisées par ligne
@@ -66,10 +61,8 @@ SEEL du `RESULT` officiel ; taux de plantage de `RANK00`.
 
 **Lire ces chiffres :**
 
-- 🔴 **Substrat** : les repères sur substrat « SiO2 » sont antérieurs à la correction C-L4 (`5be9f704`) : substrat calculé à
-  n = 1,48625 au lieu de 1,45991 à 550 nm ([recensement](../reports/audit_code_2026-11-15/recensement_sio2.md)), et à la
-  correction M-L2 du consensus (`23459079`). Juge de paix : SEEL 0,1531 nm avant, 0,1713 nm avec C-L4, 0,1577 nm avec
-  C-L4 et M-L2, **0,1704 nm** après les mineurs STRAT (L2-m1 et L4-m4) ; le gagnant change à chaque fois ([acquis](ETAT_acquis.md)).
+- 🔴 **Ces repères sont antérieurs au code actuel de STRAT** (substrat « SiO2 », consensus) et ne se comparent pas à une
+  mesure d'aujourd'hui : à remesurer avant toute comparaison. Dernier juge de paix mesuré (2026-11-16) : **0,1704 nm**.
 - 🔴 **Les SEEL ne se comparent pas d'un composant à l'autre** (domaines de notation différents, §7) ; à composant fixé, oui.
 - 🔴 **Un score seul ne départage rien** : à 150 tirages σ ≈ 6 %, deux runs à moins de ~8 % sont indiscernables ; sur `r75x2`,
   σ ≈ 1,8 % en changeant le triplet de graines de consensus. On compare des classes d'équivalence SEEL.
@@ -115,7 +108,7 @@ dépendant de T ou de λ, grenaille, bruit multiplicatif ou corrélé. Seul un r
 - Les heuristiques de la littérature (15-85 %, amplitude de départ, swing) sont des colonnes explicatives, jamais des couperets.
 - **Rate interdit sur les couches 0 et 1** (`RATE_MIN_LAYER = 2`) ; la vitesse se calcule sur les couches du même matériau déposées
   optiquement ; une couche Rate lègue son erreur en boucle ouverte à ce qui suit.
-- **SEEL = 2 × √score**, en nm ; classement final : classe à 0,01 nm du meilleur SEEL, puis rendement, puis marge critique (D20, R130).
+- **SEEL = 2 × √score**, en nm ; classement final : classe à 0,01 nm du meilleur SEEL, puis rendement, puis marge critique (R130).
 - `fast` crible, il ne publie pas ; `extreme` n'a aucune justification mesurée. La profondeur Monte-Carlo sert à noter, jamais à choisir.
 - Le multi-témoins est un outil de faisabilité (champ « New test glass at layers: », `witness_reset_layers`, vide par défaut).
 - Un seul indice de saphir : le Sellmeier d'id 3, partout (2026-10-12).
@@ -129,13 +122,12 @@ dépendant de T ou de λ, grenaille, bruit multiplicatif ou corrélé. Seul un r
 ### STRAT
 
 - `RESULT` est le score du premier classé : P95 du RMSE au pire des trois niveaux de bruit, **tirages plantés compris** ; le consensus
-  le remplace par moyenne + `consensus_std_weight` écarts-types sur ses graines (D7, D6). Une graine rejetée (score
-  infini) rejette la stratégie : consensus infini (décision de 👤 du 2026-11-15, M-L2, `23459079`).
-- D73 corrigé (marge au sommet interpolé) ; D70 retiré ; D17 conservé (gain négatif) ; D15 : quatre couches d'historique POEM ;
-  D14 : 16 points d'historique ; D9 : sous un nombre minimal de blocs la DP ne rend que les graines structurées, et le journal le dit ;
-  D8 : les quatre intervalles retenus du 99c restent déposables avec la recherche de fente ; sans changement : D12, D13, D16, D18, D19, D22.
-- **Arrêt** : D96 et D97 actifs (ancre et inversion exactes de l'arrêt POEM) ; **D98, l'OMS attend sans fin** (`oms_arming` = 2) ;
-  D99 n'est pas un défaut (lecture d'arrêt brute) ([rapport](../reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md)).
+  le remplace par moyenne + `consensus_std_weight` écarts-types sur ses graines. Une graine rejetée (score
+  infini) rejette la stratégie : consensus infini (décision de 👤 du 2026-11-15).
+- Quatre couches d'historique POEM, 16 points d'historique ; sous un nombre minimal de blocs la DP ne rend que les graines
+  structurées, et le journal le dit.
+- **Arrêt** : ancre et inversion exactes de l'arrêt POEM ; **l'OMS attend sans fin** (`oms_arming` = 2) ; lecture d'arrêt
+  brute ([rapport](../reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md)).
 - **Rate dans tous les scénarios** : couche posée au temps, à la vitesse estimée (`_rate_layer_thickness`) ; secours Rate, enfants
   d'ELITE qui gardent et déplacent les couches Rate, optique possible après du Rate ; `rate_rescue_hard` inactif (sans gain mesuré).
 - `rank_refined_first` gardé (2026-11-17, « mesurer d'abord ») : au juge de paix, classer au score final donne le même
@@ -144,21 +136,20 @@ dépendant de T ou de λ, grenaille, bruit multiplicatif ou corrélé. Seul un r
 
 ### DESIGN, INDEX, RE et logiciel
 
-- DESIGN : D45 corrigé (coût et gradient avec pile arrière), D46 (bornes d'épaisseur des couches opaques) ; polarisation « Avg » retirée ;
-  substrat non absorbant (D48) ; quatre comportements par défaut acceptés (R29).
-- INDEX : réglages d'absorption du substrat affichés pour le silicium seul (D43) ; stop pendant l'étage IR : le résultat raffiné est gardé.
-- RE : deux rayons pour la divergence du faisceau ; pénalité QWOT gardée ; D86 : avertir, ne pas refuser l'extrapolation.
-- Un matériau absent de la base refuse le calcul (D88). Données Nb2O5 « Syrus » laissées telles quelles (creux non physique au-delà de 4 µm).
+- DESIGN : bornes d'épaisseur propres aux couches opaques ; pas de polarisation « Avg » ; quatre comportements par défaut acceptés (R29).
+- INDEX : réglages d'absorption du substrat affichés pour le silicium seul ; stop pendant l'étage IR : le résultat raffiné est gardé.
+- RE : deux rayons pour la divergence du faisceau ; pénalité QWOT gardée ; avertir, ne pas refuser l'extrapolation.
+- Un matériau absent de la base refuse le calcul. Données Nb2O5 « Syrus » laissées telles quelles (creux non physique au-delà de 4 µm).
 - Poste toujours à jour (CI en `uv sync --upgrade`) ; non-reproductibilité d'INDEX, RE et METAL_BILAYER acceptée ; **fastmath conservé**
-  dans tous les noyaux (D52, D67) ; tolérance C1 de 10⁻¹⁰ pour retirer du code mort d'un noyau (D54) ; le hub ne lance pas l'échauffement JIT.
+  dans tous les noyaux ; tolérance C1 de 10⁻¹⁰ pour retirer du code mort d'un noyau ; le hub ne lance pas l'échauffement JIT.
 - GPL-3.0 ; gel construit dans un environnement jetable depuis `requirements.lock`, toutes licences embarquées.
-- Couche de fils Numba : OpenMP (D87), sauf STRAT et RE sur TBB quand `tbb` est installé (optionnel, hors dépendances :
+- Couche de fils Numba : OpenMP, sauf STRAT et RE sur TBB quand `tbb` est installé (optionnel, hors dépendances :
   licence Intel ; `certus_core.TBB_THREADING_LAYER`, 👤 2026-11-15) :
   recherche STRAT du juge de paix en 1 074 s contre 1 339 s, mêmes bits ; exemple RE en 17,5 s contre 28,2 s ; sous TBB,
   le coût et le gradient de DESIGN changent de bits d'un lancement à l'autre, INDEX ne gagne rien
   ([STRAT](../reports/audit_oms5100_2026-11-15/profil_strat_complet/bilan.md), [INDEX et RE](../reports/audit_oms5100_2026-11-15/tbb_index_re/bilan.md)).
 - Publication : rien à purger dans l'historique ; les œuvres de tiers vont dans les avis de tiers ; `certus_re` sous CC BY 4.0.
-- Toute fusion dans `master` se redemande à 👤. Le dépôt quitte Google Drive (48) ; GitHub sert de sauvegarde.
+- Toute fusion dans `master` se redemande à 👤. Le dépôt est hors de Google Drive ; GitHub sert de sauvegarde.
 - Sobriété de lecture (2026-10-18) : plafonds dans `tests/unit/test_the_ai_entry_points_stay_small.py`, à baisser librement.
 - Comparaisons à Tikhonravov et Trubetskov (2026-10-30) : le miroir dispersif d'une octave de Trubetskov 2020 ne sera pas
   traité ; le miroir chaud et les antireflets sortent du champ de l'article ; la cissoïde OIC 2016 doit battre le
@@ -175,21 +166,20 @@ Les précautions du cache Numba restent dans le [mode opératoire](../reports/re
 
 | sujet | ce qui est en jeu |
 |---|---|
-| **audit du code du 15 novembre** | ε1 d'INDEX : le plancher ε1 ≥ 1 n'agit sur aucun des quatre exemples (ε1 physique ≥ 2,24, [mesure](../reports/audit_code_2026-11-15/preuves/p_plancher_epsilon1.txt)) ; l'écart de 0,42 avec Kramers-Kronig venait de C ≥ 2·E0 (amortissement critique), où la forme fermée bridait α : corrigé (`758b13e7`), C < 2·E0 au bit près ([balayage](../reports/nuit_2026-11-16/preuves/p_eps1_kk_scan.txt)). |
+| **plancher ε1 d'INDEX** | le plancher ε1 ≥ 1 n'agit sur aucun des quatre exemples (ε1 physique ≥ 2,24, [mesure](../reports/audit_code_2026-11-15/preuves/p_plancher_epsilon1.txt)) : le garder ? |
 | **avis de tiers** | DLL du runtime Visual C++ dans `THIRD_PARTY_NOTICES.md` : droit de redistribution réservé par Microsoft aux licenciés de Visual Studio |
 | **paquet `certus_re`** | correction de la citation du saphir (Malitson et Dodge, 1972) à commiter par 👤 dans ce dépôt, puis à publier sur Zenodo |
 | **interface** | revoir les onze fenêtres ; teintes de marque, bande des fichiers récents, bornes des champs numériques |
 | **base de dépôts** | RE depuis un dépôt (découper `load_reverse_engineering_from_path`) ? apparier T et R d'un même échantillon nommées différemment ? INDEX phase 2 : la fenêtre λ de l'utilisateur est remplacée par toute l'étendue des données, voulu ? |
-| **ELITE « tour à tour »** | `elite_round_robin` : médiane +0,7 % sur six graines (avant D106) ; inactif ; il manque le bruit d'une même graine rejouée |
+| **ELITE « tour à tour »** | `elite_round_robin` : médiane +0,7 % sur six graines, mesurée sur un code antérieur ; inactif ; il manque le bruit d'une même graine rejouée |
 | **arrêt de STRAT (D98)** | attente sans fin (défaut) ou arrêt tardif (`oms_arming=1`) : même meilleur SEEL à la dispersion près, mais 101 plans optiques purs déposables avec l'arrêt tardif contre 0 ([rapport](../reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md)) |
 | **le Rate et l'optique pure** | le meilleur plan porte du Rate sous tous les modèles d'arrêt ; le Rate de STRAT n'a ni dérive de la source ni bruit de vitesse (§7) ; A4 : réserver des parents optiques purs à ELITE ne donne aucun plan optique pur au modèle d'arrêt par défaut ([rapport](../reports/ANALYSE_claude_2026-10-22/bilan.md) §4). Dépend de la stabilité réelle de la vitesse (A25, §6) |
 | **comportements** | D108 (lever `ValueError`), D109 (épaisseur ≥ 0 au TMM), D114 (politique des entrées invalides) : changements de comportement, test rouge d'abord |
 | **CI** (D110) | déclarer `pytest-benchmark` et `pytest-xdist` ; ajouter les trois contrôles documentaires à `lint.yml` ; rendre bloquantes les étapes mypy et `bench_kernels` |
-| **A9** | refiger le protocole sur la branche de travail (il refuse un code différent de son commit figé), puis donner ou non le GO ; A14, son préalable, est fait |
-| **réglages STRAT** | `elite_rate_moves` (actif, ou `git revert 978b8f04` ; mesures d'A2 dans `ETAT_acquis.md`) ; `rate_rescue_hard` (inactif, sans gain : 35 déposables sur 410) ; `tp_hysteresis_floor` à bas bruit ; armer `strat_local_search_fresh_id` |
+| **A9** | refiger le protocole sur la branche de travail (il refuse un code différent de son commit figé), puis donner ou non le GO |
+| **réglages STRAT** | `elite_rate_moves` (actif, ou `git revert 978b8f04` ; [mesures d'A2](../reports/STRAT_A2_continuation_2026-10-14/final_bilan_A2_20261014.md)) ; `rate_rescue_hard` (inactif, sans gain : 35 déposables sur 410) ; `tp_hysteresis_floor` à bas bruit ; armer `strat_local_search_fresh_id` |
 | **modèles** | D71 (continuité de Tauc-Lorentz-Urbach en E = Eg) ; D69 (nouvelle définition de la couverture des noyaux) |
 | **publication** | toute poussée (`git push`), la vitrine ; le design publié de Tikhonravov et al. 1996 (`example/example_design/JSON-design-reference-tikhonravov-1996-published-design.json`), versionné « avec l'autorisation des auteurs » : garder cette autorisation par écrit, ou retirer le fichier (CLAUDE.md §1) |
-| **dossier et archives** | cible de 600 Mo fixée par 👤 le 2026-10-25 : 560 Mo mesurés après le déplacement des non-suivis, `git gc` et le sparse-checkout (`.git` 286 Mo, arbre suivi 260 Mo), contre 2,5 Go avant ; seconde copie de l'archive de 8,2 Go |
 
 ## 6. Ordre de travail
 

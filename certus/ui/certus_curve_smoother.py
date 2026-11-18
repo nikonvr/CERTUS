@@ -25,8 +25,9 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, __version__, setup_module_logging
-from certus.ui.certus_measurement_excel_ui import open_measurement_excel_interactive
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, setup_module_logging
+from certus.ui.certus_base_app import CertusBaseApp
+from certus.ui.certus_measurement_excel_ui import open_measurement_excel_interactive, read_measurement_excel
 from certus.ui.certus_ui import (
     CertusLogPanel,
     CertusScientificPlot,
@@ -94,7 +95,14 @@ class DetachedPlotWindow(QMainWindow):
         layout.addWidget(wrap_scientific_plot_with_toolbar(self, pw))
 
 
-class CurveSmootherGUI(QMainWindow):
+class CurveSmootherGUI(CertusBaseApp):
+    """SMOOTHER on the suite's base window: theme at construction, session kept on disk (chantier 18a)."""
+
+    APP_NAME = "CERTUS-SMOOTHER"
+    APP_TITLE = "Precision Spectral Smoothing"
+    DEFAULT_WIDTH = 1200
+    DEFAULT_HEIGHT = 750
+
     class _UILogHandler(logging.Handler):
         def __init__(self, append_fn):
             super().__init__(level=logging.INFO)
@@ -108,11 +116,8 @@ class CurveSmootherGUI(QMainWindow):
                 pass
 
     def __init__(self) -> None:
-        super().__init__()
-        self.setWindowTitle(f"CERTUS CURVE SMOOTHER v{__version__}")
-        self.resize(1200, 750)
+        super().__init__()  # title, icon, geometry and the theme preference, before any widget
         self.setStyleSheet(f"background-color: {CertusTheme.BACKGROUND};")
-        set_certus_window_icon(self)
         self.df: pd.DataFrame | None = None
         self.file_path = ""
         self.detached_windows: list[QMainWindow] = []
@@ -121,6 +126,8 @@ class CurveSmootherGUI(QMainWindow):
         self.current_level = "Medium"
         self._setup_ui()
         self._attach_ui_log_handler()
+        self._build_status_bar()
+        self._finalize_init()
 
     def _attach_ui_log_handler(self) -> None:
         if not hasattr(self, "log_panel") or self.log_panel is None:
@@ -296,14 +303,7 @@ class CurveSmootherGUI(QMainWindow):
                 return
             df, path, self.last_dir = result
             self.settings.setValue("last_dir", self.last_dir)
-            self.df = df
-            self.file_path = path
-            self.combo_isolate.clear()
-            self.combo_isolate.addItems(df.columns[1:].tolist())
-            self.btn_save.setEnabled(True)
-            self.btn_isolate.setEnabled(True)
-            self.combo_mode.setEnabled(True)
-            self.auto_tune()
+            self._adopt_data(df, path)
             logger.info("Loaded %s successfully.", path)
         # OSError is not in NUMERICAL_FAULT_EXCEPTIONS, and the commonest failure
         # of all is an OSError: the operator still has the workbook open in Excel,
@@ -312,6 +312,56 @@ class CurveSmootherGUI(QMainWindow):
         except (*NUMERICAL_FAULT_EXCEPTIONS, OSError) as e:
             logger.error("Failed to load measurement sheet: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to load measurement sheet:\n{describe_error(e)}")
+
+    def _maybe_run_first_time_tour(self) -> None:
+        """No welcome tour at opening: the base window brings SMOOTHER the theme and the session, nothing else (18a)."""
+
+    def _adopt_data(self, df: pd.DataFrame, path: str) -> None:
+        """Make `df`, read from `path`, the data on screen: the loading button and a resumed session both end here."""
+        self.df = df
+        self.file_path = path
+        self.combo_isolate.clear()
+        self.combo_isolate.addItems(df.columns[1:].tolist())
+        self.btn_save.setEnabled(True)
+        self.btn_isolate.setEnabled(True)
+        self.combo_mode.setEnabled(True)
+        self.auto_tune()
+
+    # -- What SMOOTHER saves (chantier 18a): the source workbook and how it is smoothed and shown ----------------------
+
+    def _collect_config(self) -> dict:
+        return {
+            "source_file": str(self.file_path or ""),
+            "smoothing_level": self.combo_mode.currentText(),
+            "show_raw": bool(self.chk_raw.isChecked()),
+            "isolated_curve": self.combo_isolate.currentText(),
+        }
+
+    def _apply_config(self, config: dict) -> None:
+        """Settings first, then the workbook, read again from its path: a file moved since keeps the settings."""
+        level = str(config.get("smoothing_level", "") or "")
+        if level in ("Low", "Medium", "High"):
+            self.combo_mode.setCurrentText(level)
+            self.current_level = level
+        self.chk_raw.setChecked(bool(config.get("show_raw", True)))
+        source = str(config.get("source_file", "") or "")
+        if not source:
+            return
+        if not Path(source).is_file():
+            logger.warning("Session: the workbook %s is no longer there; settings kept, no data loaded.", source)
+            return
+        try:
+            df = read_measurement_excel(source, self, round_wavelength_decimals=1)
+        except (*NUMERICAL_FAULT_EXCEPTIONS, OSError) as e:
+            logger.error("Session: failed to read %s: %s", source, e)
+            return
+        if df is None:
+            return
+        self._adopt_data(df, source)
+        isolated = str(config.get("isolated_curve", "") or "")
+        if isolated in df.columns[1:]:
+            self.combo_isolate.setCurrentText(isolated)
+        logger.info("Session: %s loaded again.", source)
 
     def show_help(self) -> None:
         help_text = (

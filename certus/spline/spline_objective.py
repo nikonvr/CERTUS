@@ -1392,11 +1392,11 @@ def spline_pwl_analytic_grad_supported(cfg: SplineOptConfig) -> bool:
     """True if the analytic gradient (T + penalties; R by FD/lambda) is consistent with the objective.
 
     With the monotone n reparametrization (``n_mono_band_nm``), only when ``spline_mono_analytic_gradient`` is on:
-    the chain rule then goes through ``x_slice_n_grad_to_x``. On by default; off, L-BFGS-B falls back to finite differences.
+    the chain rule then goes through ``x_slice_n_grad_to_x``. Off by default, so L-BFGS-B keeps its finite differences.
     """
 
     if cfg.n_mono_band_nm is not None:
-        return bool(getattr(cfg, "spline_mono_analytic_gradient", True))
+        return bool(getattr(cfg, "spline_mono_analytic_gradient", False))
 
     return True
 

@@ -76,3 +76,21 @@ change le résultat de l'exemple : décision de 👤.**
 `test_the_architecture_debt_only_shrinks.py` sur `certus/core/certus_substrate_sellmeier.py::_fit_model_sellmeier3poles`
 (389 → 411 lignes) et `certus/core/certus_substrate_index.py` (1 945 → 1 962), grandis par le commit `2a5443ba`
 (chantier 05) que ce chantier ne touche pas : `VALIDATION=NO-GO` hérité de HEAD.
+
+## Second exemple (2026-11-18, après l'ordre d'allumer par défaut)
+
+Les deux classeurs d'`example/example_index_spline/`, un calcul par cas, machine sans autre processus python
+([sonde](p21_examples_on_off.py), [sortie](p21_examples_on_off.txt)) :
+
+| exemple | option | budget | durée | coûts | RMSE | d (nm) | n(1000)·d (nm) |
+|---|---|---|---:|---:|---:|---:|---:|
+| TSIO2-1700-1 | éteinte | ×1 | 2,37 s | 10 024 | 0,0028304 | 1699,43 | 2482,8 |
+| TSIO2-1700-1 | allumée | ×1 | 2,24 s | 2 549 | 0,0019482 | 1667,49 | 2481,5 |
+| TSIO2-1700-1 | éteinte | ×5 | 10,99 s | 50 044 | 0,0021865 | 1685,78 | 2481,1 |
+| TOTAL | éteinte | ×1 | 6,67 s | 10 024 | 0,0528398 | 1700,40 | 3048,9 |
+| TOTAL | allumée | ×1 | 1,16 s | 972 | **0,0549209** | 1752,84 | 3117,3 |
+| TOTAL | éteinte | ×5 | 14,81 s | 39 094 | 0,0511547 | 1700,58 | 3038,8 |
+
+🔴 **Sur TOTAL, l'option allumée finit moins bien que les différences finies** : RMSE 0,0549 contre 0,0528 (et 0,0512
+à budget ×5), arrêt après 972 évaluations, d = 1752,8 nm et une épaisseur optique décalée de 69 nm. La cause n'est pas
+mesurée. Allumée par défaut sur la branche (`7b8c6136`), **non fusionnée** : à trancher par 👤.

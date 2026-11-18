@@ -1,0 +1,8 @@
+TOTAL.xlsx : n_seg=13 d=[1600, 1800] data_type=DataType.TRANSMISSION n_mono_band_nm=(350.0, 2000.0) polish_maxfun=10000
+  option=eteinte budget x1 : 6.67 s, 10024 couts, RMSE=0.0528398 d=1700.40 nm, n(1000)=1.79306 n*d=3048.9 nm | NaN n_lam 0/2231
+  option=allumee budget x1 : 1.16 s, 972 couts, RMSE=0.0549209 d=1752.84 nm, n(1000)=1.77840 n*d=3117.3 nm | NaN n_lam 0/2231
+  option=eteinte budget x5 : 14.81 s, 39094 couts, RMSE=0.0511547 d=1700.58 nm, n(1000)=1.78695 n*d=3038.8 nm | NaN n_lam 0/2231
+TSIO2-1700-1.xlsx : n_seg=13 d=[1600, 1800] data_type=DataType.TRANSMISSION n_mono_band_nm=(249.99, 2000.0) polish_maxfun=10000
+  option=eteinte budget x1 : 2.37 s, 10024 couts, RMSE=0.0028304 d=1699.43 nm, n(1000)=1.46099 n*d=2482.8 nm | NaN n_lam 12/903
+  option=allumee budget x1 : 2.24 s, 2549 couts, RMSE=0.0019482 d=1667.49 nm, n(1000)=1.48814 n*d=2481.5 nm | NaN n_lam 12/903
+  option=eteinte budget x5 : 10.99 s, 50044 couts, RMSE=0.0021865 d=1685.78 nm, n(1000)=1.47178 n*d=2481.1 nm | NaN n_lam 12/903

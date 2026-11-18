@@ -125,6 +125,7 @@ dépendant de T ou de λ, grenaille, bruit multiplicatif ou corrélé. Seul un r
 | date | règle | portée | raison |
 |---|---|---|---|
 | 2026-11-15 | interdit 3 (`reports/`) | retrait des `.md` réimportés par `20bd199d` (revert `e0c1fe70`) | déjà jugés obsolètes par `b6fb1939` ; copie hors dépôt dans `CERTUS/certus1111_hors_git_2026-11-15/` |
+| 2026-11-18 | C1 (paramètre inactif par défaut) | `spline_mono_analytic_gradient` allumée par défaut : le résultat de SPLINE change (TSIO2 : d 1667,5 nm au lieu de 1699,4) | le polissage converge au lieu de s'arrêter sur son budget de différences finies ([bilan](../reports/chantier21_2026-11-17/bilan.md)) |
 
 ### STRAT
 

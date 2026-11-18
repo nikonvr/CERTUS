@@ -591,6 +591,44 @@ def _fit_sellmeier_ir_pole(
     return None if best is None else best[1]
 
 
+_SELECTION_LOG = {
+    "analytic-sellmeier-3term-standard": "Sellmeier selection: standard 3-term variant kept (closer, wrmse=%.6g).",
+    "analytic-sellmeier-3poles-ir": "Sellmeier selection: IR-pole variant kept (closer, wrmse=%.6g).",
+}
+
+
+def _ir_pole_candidate(
+    wl_fit_um: np.ndarray,
+    n_fit: np.ndarray,
+    w_fit_sell: np.ndarray,
+    wl_full_um: np.ndarray,
+    mask: np.ndarray,
+    n_accept: tuple[np.ndarray, np.ndarray],
+    ls_max_nfev: int,
+) -> tuple | None:
+    """The catalog form with an infrared pole as a selection candidate (chantier 05, off by default), or None.
+
+    Poles are bounded by the whole evaluated range, not the fit window alone, so the returned curve has no pole anywhere.
+    """
+    n_lo_acc, n_hi_acc = n_accept
+    try:
+        p_ir = _fit_sellmeier_ir_pole(
+            wl_fit_um, n_fit, w_fit_sell, float(np.nanmin(wl_full_um)), float(np.nanmax(wl_full_um)), ls_max_nfev
+        )
+        if p_ir is None:
+            logger.info("Sellmeier IR-pole candidate: no room for the poles around this range.")
+            return None
+        n_out_ir = sellmeier_ir_pole_eval(p_ir, wl_full_um)
+        n_ir_fit = np.asarray(n_out_ir[mask], dtype=np.float64)
+        if np.all(np.isfinite(n_out_ir)) and np.all((n_ir_fit >= n_lo_acc) & (n_ir_fit <= n_hi_acc)):
+            wrmse_ir = float(np.sqrt(np.mean(((n_ir_fit - n_fit) * w_fit_sell) ** 2)))
+            logger.info("Sellmeier IR-pole candidate: wrmse=%.6g | L3=%.6g um", wrmse_ir, float(p_ir[6]))
+            return ("analytic-sellmeier-3poles-ir", p_ir, np.asarray(n_out_ir, dtype=np.float64), wrmse_ir, {})
+    except NUMERICAL_FAULT_EXCEPTIONS:
+        logger.info("Sellmeier IR-pole candidate: fit unavailable.")
+    return None
+
+
 def _fit_model_sellmeier3poles(
     n_vals: np.ndarray,
     wl: np.ndarray,
@@ -939,54 +977,23 @@ def _fit_model_sellmeier3poles(
 
             if np.all(np.isfinite(n_std_fit)) and np.all((n_std_fit >= n_lo_acc) & (n_std_fit <= n_hi_acc)):
                 wrmse_std = float(np.sqrt(np.mean(((n_std_fit - n_fit) * w_fit_sell) ** 2)))
-                candidates.append(
-                    (
-                        "analytic-sellmeier-3term-standard",
-                        p_std,
-                        np.asarray(n_out_std, dtype=np.float64),
-                        wrmse_std,
-                        {},
-                    )
-                )
-                logger.info(
-                    "Sellmeier standard 3-term candidate: wrmse=%.6g | rmse=%.6g",
-                    wrmse_std,
-                    float(np.sqrt(np.mean((n_std_fit - n_fit) ** 2))),
-                )
+                candidates.append(("analytic-sellmeier-3term-standard", p_std, np.asarray(n_out_std, dtype=np.float64), wrmse_std, {}))
+                rmse_std = float(np.sqrt(np.mean((n_std_fit - n_fit) ** 2)))
+                logger.info("Sellmeier standard 3-term candidate: wrmse=%.6g | rmse=%.6g", wrmse_std, rmse_std)
         except NUMERICAL_FAULT_EXCEPTIONS:
             logger.info("Sellmeier standard 3-term: fit unavailable, keeping 3-poles variant.")
 
-        if sellmeier_ir_pole:
-            # Catalog form with an infrared pole (chantier 05, off by default). Poles are bounded by the whole evaluated
-            # range, not the fit window alone, so the returned curve has no pole anywhere.
-            try:
-                p_ir = _fit_sellmeier_ir_pole(
-                    wl_fit_um, n_fit, w_fit_sell, float(np.nanmin(wl_full_um)), float(np.nanmax(wl_full_um)), ls_max_nfev
-                )
-                if p_ir is None:
-                    logger.info("Sellmeier IR-pole candidate: no room for the poles around this range.")
-                else:
-                    n_out_ir = sellmeier_ir_pole_eval(p_ir, wl_full_um)
-                    n_ir_fit = np.asarray(n_out_ir[mask], dtype=np.float64)
-                    if np.all(np.isfinite(n_out_ir)) and np.all((n_ir_fit >= n_lo_acc) & (n_ir_fit <= n_hi_acc)):
-                        wrmse_ir = float(np.sqrt(np.mean(((n_ir_fit - n_fit) * w_fit_sell) ** 2)))
-                        candidates.append(("analytic-sellmeier-3poles-ir", p_ir, np.asarray(n_out_ir, dtype=np.float64), wrmse_ir, {}))
-                        logger.info("Sellmeier IR-pole candidate: wrmse=%.6g | L3=%.6g um", wrmse_ir, float(p_ir[6]))
-            except NUMERICAL_FAULT_EXCEPTIONS:
-                logger.info("Sellmeier IR-pole candidate: fit unavailable.")
+        ir = _ir_pole_candidate(wl_fit_um, n_fit, w_fit_sell, wl_full_um, mask, (n_lo_acc, n_hi_acc), ls_max_nfev) if sellmeier_ir_pole else None
+        if ir is not None:
+            candidates.append(ir)
 
         best_src, best_coeffs, best_curve, _best_wrmse, best_extra = min(
             candidates,
             key=lambda t: float(t[3]),
         )
 
-        if best_src == "analytic-sellmeier-3term-standard":
-            logger.info(
-                "Sellmeier selection: standard 3-term variant kept (closer, wrmse=%.6g).",
-                float(_best_wrmse),
-            )
-        elif best_src == "analytic-sellmeier-3poles-ir":
-            logger.info("Sellmeier selection: IR-pole variant kept (closer, wrmse=%.6g).", float(_best_wrmse))
+        if best_src in _SELECTION_LOG:
+            logger.info(_SELECTION_LOG[best_src], float(_best_wrmse))
 
         return (
             np.asarray(best_curve, dtype=np.float64),

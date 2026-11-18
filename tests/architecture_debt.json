@@ -22,7 +22,7 @@
     "certus/core/certus_strat_robustness_rate.py::_expand_with_rate_variants": 314,
     "certus/core/certus_strat_robustness_task.py::_test_strategy_robustness_task": 794,
     "certus/core/certus_substrate_index.py::IndexCore._fit_model_spline_adaptive": 357,
-    "certus/core/certus_substrate_sellmeier.py::_fit_model_sellmeier3poles": 389,
+    "certus/core/certus_substrate_sellmeier.py::_fit_model_sellmeier3poles": 380,
     "certus/physics/certus_opt_needle.py::needle_scan_cached": 412,
     "certus/physics/gradient_analytic.py::_compute_epsilon1_gradient_kernel": 372,
     "certus/physics/gradient_analytic.py::_compute_single_layer_sensitivity_kernel": 333,
@@ -66,7 +66,7 @@
   "fonctions_non_annotees": [],
   "fichiers_longs": {
     "certus/core/certus_index_objectives.py": 1940,
-    "certus/core/certus_substrate_index.py": 1945,
+    "certus/core/certus_substrate_index.py": 1943,
     "certus/physics/certus_strat_growth.py": 1825,
     "certus/physics/gradient_analytic.py": 1802,
     "certus/spline/certus_corridor_exploration.py": 1615,

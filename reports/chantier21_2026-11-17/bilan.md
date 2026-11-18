@@ -94,3 +94,17 @@ Les deux classeurs d'`example/example_index_spline/`, un calcul par cas, machine
 🔴 **Sur TOTAL, l'option allumée finit moins bien que les différences finies** : RMSE 0,0549 contre 0,0528 (et 0,0512
 à budget ×5), arrêt après 972 évaluations, d = 1752,8 nm et une épaisseur optique décalée de 69 nm. La cause n'est pas
 mesurée. Allumée par défaut sur la branche (`7b8c6136`), **non fusionnée** : à trancher par 👤.
+
+### Cause sur TOTAL : un autre minimum local, pas un gradient faux
+
+- Au point d'arrêt de l'option allumée, le gradient analytique égale les différences finies centrées : écart relatif
+  ≤ 7·10⁻³ par bloc, 6·10⁻⁵ sur le bloc n ([sonde](p21_total_stop.py), [sortie](p21_total_stop.txt)).
+- L-BFGS-B s'y arrête sur `ftol` (réduction relative de f), après 871 itérations. Éteinte, depuis le même départ
+  (f = 1,069·10⁻², d = 1700,00), il s'arrête sur son budget de 10 000 évaluations, en descendant encore.
+- C'est un vrai minimum local ([sonde](p21_total_restart.py), [sortie](p21_total_restart.txt)). Aucune relance n'en sort,
+  ni analytique avec `ftol = 0`, ni par différences finies : f = 3,0163·10⁻³ et d = 1752,8 nm dans les trois cas.
+  Le calcul éteint descend, depuis le même départ, dans un autre bassin, plus bas : f = 2,79·10⁻³ à d = 1700,4.
+- Avec un gradient exact, L-BFGS-B suit la pente jusqu'au minimum local voisin. Avec des différences finies, il prend une
+  autre trajectoire, qui sur TOTAL mène plus bas. Sur TSIO2, c'est l'inverse.
+- Deux exemples ne disent pas lequel des deux chemins gagne en général. Aucun des deux ne cherche le minimum global : le
+  mode local part d'un seul point.

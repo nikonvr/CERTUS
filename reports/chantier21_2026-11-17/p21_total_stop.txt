@@ -1,0 +1,25 @@
+option=allumee : RMSE=0.0549209 d=1752.84 ; 1 appels L-BFGS-B, 1 polissages
+  appel 0 jac=True dim=29 : f0=1.069356e-02 -> f=3.016310e-03 nit=871 nfev=968 message='CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH'
+option=eteinte : RMSE=0.0528398 d=1700.40 ; 1 appels L-BFGS-B, 1 polissages
+  appel 0 jac=None dim=29 : f0=1.069356e-02 -> f=2.792041e-03 nit=265 nfev=10020 message='STOP: TOTAL NO. OF F,G EVALUATIONS EXCEEDS LIMIT'
+
+point final allume : f=3.016310e-03 dim=29 K=14 d=1752.840
+  h=0.0001 bloc d: max|analytique|=9.026e-11 max|DF|=9.027e-11 ecart relatif max=1.559e-04
+  h=0.0001 bloc n/xi: max|analytique|=1.031e-07 max|DF|=1.032e-07 ecart relatif max=1.343e-03
+  h=0.0001 bloc ln k: max|analytique|=1.180e-07 max|DF|=1.172e-07 ecart relatif max=6.533e-03
+    j=15 x=-11.512925 bornes=[-11.513, -0.010] analytique=+1.179630e-07 DF=+1.171974e-07
+    j=6 x=-2.794796 bornes=[-14.000, +14.000] analytique=+1.030896e-07 DF=+1.032283e-07
+    j=5 x=-2.051035 bornes=[-14.000, +14.000] analytique=-6.435753e-08 DF=-6.422120e-08
+    j=3 x=-1.634630 bornes=[-14.000, +14.000] analytique=-7.571019e-08 DF=-7.560978e-08
+    j=7 x=-3.492860 bornes=[-14.000, +14.000] analytique=+7.858377e-08 DF=+7.861036e-08
+    j=1 x=-1.927934 bornes=[-14.000, +14.000] analytique=+1.334247e-08 DF=+1.332220e-08
+  h=1e-06 bloc d: max|analytique|=9.026e-11 max|DF|=9.194e-11 ecart relatif max=1.829e-02
+  h=1e-06 bloc n/xi: max|analytique|=1.031e-07 max|DF|=1.031e-07 ecart relatif max=6.372e-05
+  h=1e-06 bloc ln k: max|analytique|=1.180e-07 max|DF|=1.172e-07 ecart relatif max=6.517e-03
+    j=15 x=-11.512925 bornes=[-11.513, -0.010] analytique=+1.179630e-07 DF=+1.171992e-07
+    j=1 x=-1.927934 bornes=[-14.000, +14.000] analytique=+1.334247e-08 DF=+1.333590e-08
+    j=17 x=-6.512361 bornes=[-11.513, -0.010] analytique=+7.404266e-09 DF=+7.399246e-09
+    j=23 x=-5.427925 bornes=[-11.513, -0.010] analytique=+3.968908e-10 DF=+4.011548e-10
+    j=27 x=-6.333374 bornes=[-11.513, -0.010] analytique=+5.069201e-08 DF=+5.068775e-08
+    j=9 x=-14.000000 bornes=[-14.000, +14.000] analytique=+1.193159e-10 DF=+1.151423e-10
+  gradient projete max = 1.031e-07 ; composantes aux bornes : 6

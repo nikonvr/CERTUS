@@ -1,0 +1,5 @@
+depart : f=1.069356e-02 d=1700.00 maxfun=10000
+(a) analytique ftol=1e-12: f=3.016310e-03 RMSE=0.0549209 d=1752.84 nit=871 nfev=968 message='CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH'
+(b) analytique relance ftol=0: f=3.016309e-03 RMSE=0.0549209 d=1752.83 nit=395 nfev=455 message='CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH'
+(c) analytique depart ftol=0: f=3.016309e-03 RMSE=0.0549209 d=1752.83 nit=1384 nfev=1547 message='ABNORMAL: '
+(d) DF relance depuis (a): f=3.016310e-03 RMSE=0.0549209 d=1752.84 nit=1 nfev=60 message='CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH'

@@ -502,12 +502,20 @@ class CertusIndexEventsMixin:
         from PyQt6.QtWidgets import QDialog
 
         from certus.ui.certus_depots_dialog import DepositDatabaseDialog
-        from certus.utils.certus_depots_db import measurement_path
+        from certus.utils.certus_depots_db import measurement_path, write_side_by_side
 
         dialog = DepositDatabaseDialog(self)
         if dialog.exec() != QDialog.DialogCode.Accepted or dialog.selected_entry() is None:
             return False
-        return self.load_file(str(measurement_path(dialog.selected_entry())))
+        entry, partner = dialog.selected_entry(), dialog.selected_pair()
+        if partner is None:
+            return self.load_file(str(measurement_path(entry)))
+        import tempfile
+        from pathlib import Path
+
+        folder = Path(tempfile.gettempdir()) / "certus_deposit_pairs"
+        folder.mkdir(parents=True, exist_ok=True)
+        return self.load_file(str(write_side_by_side([entry, partner], folder / f"{entry['id']}+{partner['id']}.csv")))
 
     def load_file(self, filepath=None) -> bool:
         """Load a spectrum. Returns True once the file is loaded, False when none was chosen or it was refused."""

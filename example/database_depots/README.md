@@ -23,8 +23,9 @@ qu'un classeur en sont des exports : gardés dans `bruts/`, ils ne sont pas lus 
 quel que soit le détecteur : un détecteur à 180° voit le faisceau transmis, un détecteur à deux fois l'angle du
 porte-échantillon (16° pour 8°) le faisceau réfléchi. Treize colonnes de cette source sont des réflexions déclarées
 « Transmittance » ; `mode_declare` garde la déclaration du fichier. Une transmission et une réflexion du même
-échantillon nommées différemment par l'opérateur (`NbT3` et `NbR3`, `H800-NbT` et `H800-NbR`) restent deux entrées :
-rien ne les apparie d'après leur nom.
+échantillon nommées différemment par l'opérateur (`NbT3` et `NbR3`, `H800-NbT` et `H800-NbR`) restent deux entrées ;
+`certus_depots_db.paired_entry` les apparie à la lecture (même classeur, même grille, noms qui ne diffèrent que de
+cette lettre : 13 paires), et la boîte de la base les charge côte à côte quand l'opérateur le demande.
 
 ## Une entrée du catalogue
 

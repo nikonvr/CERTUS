@@ -58,27 +58,11 @@ def _provenance() -> dict:
 
 def _measurement(ref: dict, catalogue: dict, workdir: Path) -> Path:
     """The file INDEX loads: the deposit itself, or its T and R columns side by side on their common grid."""
-    from certus.utils.certus_depots_db import measurement_path
+    from certus.utils.certus_depots_db import measurement_path, write_side_by_side
 
     if len(ref["depots"]) == 1:
         return measurement_path(catalogue[ref["depots"][0]], BASE)
-    import numpy as np
-
-    columns, grid = {}, None
-    for depot_id in ref["depots"]:
-        entry = catalogue[depot_id]
-        data = np.loadtxt(measurement_path(entry, BASE), delimiter=",", skiprows=1, ndmin=2)
-        if grid is None:
-            grid = data[:, 0]
-        elif data.shape[0] != grid.shape[0] or np.max(np.abs(data[:, 0] - grid)) > 1e-6:
-            raise ValueError(f"{ref['nom']}: {depot_id} is not on the grid of {ref['depots'][0]}")
-        columns[entry["voies"][0]["mode"]] = data[:, 1]
-    path = workdir / f"{ref['nom']}.csv"
-    order = [mode for mode in ("T", "R") if mode in columns]
-    lines = ["wavelength_nm," + ",".join(order)]
-    lines += [",".join([repr(float(w))] + [repr(float(columns[m][i])) for m in order]) for i, w in enumerate(grid)]
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    return path
+    return write_side_by_side([catalogue[depot_id] for depot_id in ref["depots"]], workdir / f"{ref['nom']}.csv", BASE)
 
 
 def _n_at(tlu, wavelength_nm: float) -> float | None:

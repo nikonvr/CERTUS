@@ -11,6 +11,7 @@ from typing import Any
 
 from PyQt6.QtWidgets import (
     QAbstractItemView,
+    QCheckBox,
     QDialog,
     QDialogButtonBox,
     QHeaderView,
@@ -21,7 +22,7 @@ from PyQt6.QtWidgets import (
 )
 
 from certus.ui.certus_ui import CertusTheme, create_styled_label
-from certus.utils.certus_depots_db import attribute, channels_label, load_catalogue, range_label
+from certus.utils.certus_depots_db import attribute, channels_label, load_catalogue, paired_entry, range_label
 
 COLUMNS = ("Sample", "Material", "Substrate", "Channels", "Range (nm)", "Measured")
 
@@ -64,6 +65,14 @@ class DepositDatabaseDialog(QDialog):
         self.table.itemSelectionChanged.connect(self._selection_changed)
         self.table.cellDoubleClicked.connect(self._double_clicked)
         layout.addWidget(self.table)
+        self.chk_pair = QCheckBox("Load with its other channel (T and R of the same sample, named apart)")
+        self.chk_pair.setToolTip(
+            "When the selected layer has its T or R in another column of the same workbook, on the same grid and under "
+            "the same name but for that letter (NbT3 and NbR3), load both side by side."
+        )
+        self.chk_pair.setChecked(False)
+        self.chk_pair.setEnabled(False)
+        layout.addWidget(self.chk_pair)
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Open | QDialogButtonBox.StandardButton.Cancel)
         self.load_button = buttons.button(QDialogButtonBox.StandardButton.Open)
         self.load_button.setText("Load")
@@ -81,7 +90,14 @@ class DepositDatabaseDialog(QDialog):
         self._selection_changed()
 
     def _selection_changed(self) -> None:
-        self.load_button.setEnabled(self.selected_entry() is not None)
+        entry = self.selected_entry()
+        self.load_button.setEnabled(entry is not None)
+        partner = None if entry is None else paired_entry(entry, self._entries)
+        self.chk_pair.setEnabled(partner is not None)
+        self.chk_pair.setText(
+            "Load with its other channel (T and R of the same sample, named apart)" if partner is None
+            else f"Load with its {partner['voies'][0]['mode']} channel ({partner['echantillon']})"
+        )
 
     def _double_clicked(self, _row: int, _column: int) -> None:
         self.accept()
@@ -93,6 +109,13 @@ class DepositDatabaseDialog(QDialog):
             return None
         row = rows.pop()
         return None if self.table.isRowHidden(row) else self._entries[row]
+
+    def selected_pair(self) -> dict[str, Any] | None:
+        """The other channel of the selected deposit when the operator asked for it, None otherwise (off by default)."""
+        entry = self.selected_entry()
+        if entry is None or not self.chk_pair.isChecked():
+            return None
+        return paired_entry(entry, self._entries)
 
     def accept(self) -> None:
         if self.selected_entry() is not None:

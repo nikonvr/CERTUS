@@ -122,3 +122,33 @@ def test_the_button_opens_the_database(index_window, monkeypatch):
     monkeypatch.setattr(DepositDatabaseDialog, "exec", fake_exec)
     index_window.btn_load_deposit.click()
     assert opened == [len(DEPOTS)]
+
+
+def _row_of(depot_id: str) -> int:
+    return next(row for row, d in enumerate(DEPOTS) if d["id"] == depot_id)
+
+
+def test_the_pair_box_is_off_and_waits_for_a_paired_row(dialog):
+    assert not dialog.chk_pair.isChecked()
+    assert not dialog.chk_pair.isEnabled()
+    dialog.table.selectRow(_row_of("fab19__nbt3"))
+    assert dialog.chk_pair.isEnabled()
+    assert dialog.selected_pair() is None
+    dialog.chk_pair.setChecked(True)
+    assert dialog.selected_pair()["id"] == "fab19__nbr3"
+
+
+def test_index_loads_a_paired_deposit_side_by_side_when_asked(index_window, monkeypatch):
+    from PyQt6.QtWidgets import QDialog
+
+    from certus.ui.certus_depots_dialog import DepositDatabaseDialog
+
+    t = next(d for d in DEPOTS if d["id"] == "fab19__nbt3")
+    r = next(d for d in DEPOTS if d["id"] == "fab19__nbr3")
+    monkeypatch.setattr(DepositDatabaseDialog, "exec", lambda self: QDialog.DialogCode.Accepted)
+    monkeypatch.setattr(DepositDatabaseDialog, "selected_entry", lambda self: t)
+    monkeypatch.setattr(DepositDatabaseDialog, "selected_pair", lambda self: r)
+    assert index_window.load_from_deposit_database() is True
+
+    assert list(index_window.target_data.columns) == ["lambda", "T", "R"]
+    assert len(index_window.target_data) == t["points"]

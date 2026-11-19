@@ -1192,7 +1192,7 @@ class IndexCore:
         sellmeier_de_popsize: int = 12,
         sellmeier_ls_max_nfev: int = 3000,
         sellmeier_log_l1l2: bool | None = None,
-        sellmeier_ir_pole: bool = False,
+        sellmeier_ir_pole: bool = True,
     ) -> np.ndarray | tuple[np.ndarray, dict]:
 
         wl = np.asarray(wl_nm, dtype=np.float64)
@@ -1811,7 +1811,7 @@ class IndexCore:
         sellmeier_de_maxiter: int = 300,
         sellmeier_ls_max_nfev: int = 3000,
         sellmeier_log_l1l2: bool | None = None,
-        sellmeier_ir_pole: bool = False,
+        sellmeier_ir_pole: bool = True,
     ) -> tuple[Any, Any, Any]:
 
         n_raw = np.asarray(n_raw, dtype=np.float64).ravel()

@@ -1,4 +1,4 @@
-"""Chantier 05: the SUBSTRATE Sellmeier fit can take an infrared pole (`sellmeier_ir_pole`, off by default).
+"""Chantier 05: the SUBSTRATE Sellmeier fit takes an infrared pole (`sellmeier_ir_pole`, on by default since 2026-11-19).
 
 Measured on 2026-11-17 (`reports/chantier05_2026-11-17/bilan.md`): variant A floors its denominators, so a pole beyond the
 shortest wavelength is pinned at B = 0 and BK7 (IR pole at 10.18 um) stays at 2.9e-4 whatever the noise. The option adds
@@ -38,12 +38,14 @@ def test_with_the_option_bk7_is_fitted_to_its_own_curve():
     assert coeffs[6] > WL[-1] / 1000.0  # the third pole lies beyond the window
 
 
-def test_without_the_option_the_fit_is_unchanged():
-    off = _fit(BK7)
-    explicit = _fit(BK7, sellmeier_ir_pole=False)
+def test_the_option_is_on_by_default_and_off_gives_the_former_fit():
+    default = _fit(BK7)
+    on = _fit(BK7, sellmeier_ir_pole=True)
+    off = _fit(BK7, sellmeier_ir_pole=False)
 
-    assert off[1] == explicit[1] == "analytic-sellmeier-3term-standard"
-    assert np.array_equal(off[0], explicit[0])
+    assert default[1] == on[1] == "analytic-sellmeier-3poles-ir"
+    assert np.array_equal(default[0], on[0])
+    assert off[1] == "analytic-sellmeier-3term-standard"
 
 
 def test_the_option_reaches_the_fit_through_index_core():

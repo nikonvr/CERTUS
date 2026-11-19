@@ -606,7 +606,7 @@ def _ir_pole_candidate(
     n_accept: tuple[np.ndarray, np.ndarray],
     ls_max_nfev: int,
 ) -> tuple | None:
-    """The catalog form with an infrared pole as a selection candidate (chantier 05, off by default), or None.
+    """The catalog form with an infrared pole as a selection candidate (chantier 05, on by default), or None.
 
     Poles are bounded by the whole evaluated range, not the fit window alone, so the returned curve has no pole anywhere.
     """
@@ -642,7 +642,7 @@ def _fit_model_sellmeier3poles(
     sellmeier_de_popsize: int,
     sellmeier_ls_max_nfev: int,
     sellmeier_log_l1l2: bool | None,
-    sellmeier_ir_pole: bool = False,
+    sellmeier_ir_pole: bool = True,
 ) -> tuple[np.ndarray | None, str, np.ndarray | None, dict]:
 
     import time

@@ -257,5 +257,9 @@ def calculate_electric_field(n1_r: float, n2_r: float, nSub_r: float, l0: float,
         z_coords_final.extend(current_z_start + z_local)
         E2_values_final.extend(np.abs(E_layer_func)**2)
         current_z_start += d_curr
-        
-    return np.array(z_coords_final), np.array(E2_values_final), list(ep_for_efield), list(integrals), list(averages)
+
+    # Return depth z from substrate (0) to superstrate (z_total), matching ep_c1_cn, integrals, averages, and plots.
+    z_total = float(current_z_start)
+    z_sub_to_sup = np.maximum(0.0, z_total - np.asarray(z_coords_final, dtype=np.float64)[::-1])
+    e2_sub_to_sup = np.asarray(E2_values_final, dtype=np.float64)[::-1]
+    return z_sub_to_sup, e2_sub_to_sup, list(ep_c1_cn), list(integrals), list(averages)

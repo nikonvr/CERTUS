@@ -234,284 +234,169 @@ def _compute_epsilon1_gradient_kernel(
         d_zeta4_dC = 2.0 * C * E_sq
 
         diff_sq = Eg_sq - E_sq
-
-        # Log1 / Log2 : singularities if E == Eg (diff_sq -> 0) or numerical quasi-degeneracy.
-
         _diff_eps = 1e-14
-
-        # Log1
-
         val_log1 = 0.0
-
         d_log1_dEg = 0.0
-
-        if E != Eg:
-            arg_log1 = np.abs((Eg - E) / (Eg + E))
-
-            val_log1 = np.log(arg_log1) if arg_log1 > 0 else -100.0
-
-            if np.abs(diff_sq) > _diff_eps:
-                d_log1_dEg = 2.0 * E / diff_sq
-
+        if np.abs(Eg - E) < 1e-12:
+            sum_e = Eg + E
+            if sum_e > 1e-12:
+                val_log1 = -np.log(sum_e)
+                d_log1_dEg = -1.0 / sum_e
+                val_log2 = np.log(sum_e) - np.log(denom_log_norm)
+                d_log2_dEg = 1.0 / sum_e - d_DLN_dEg * inv_denom_log_norm
             else:
-                d_log1_dEg = 0.0
-
-        # Log2
-
-        arg_log2 = np.abs(diff_sq)
-
-        val_log2_part = np.log(arg_log2) if arg_log2 > 0 else -100.0
-
-        val_log2 = val_log2_part - np.log(denom_log_norm)
-
-        if np.abs(diff_sq) > _diff_eps:
-            d_log2_dEg = 2.0 * Eg / diff_sq - d_DLN_dEg * inv_denom_log_norm
-
+                val_log2 = 0.0
+                d_log2_dEg = 0.0
         else:
-            d_log2_dEg = -d_DLN_dEg * inv_denom_log_norm
-
+            if E != Eg:
+                arg_log1 = np.abs((Eg - E) / (Eg + E))
+                val_log1 = np.log(arg_log1) if arg_log1 > 0 else -100.0
+                if np.abs(diff_sq) > _diff_eps:
+                    d_log1_dEg = 2.0 * E / diff_sq
+                else:
+                    d_log1_dEg = 0.0
+            arg_log2 = np.abs(diff_sq)
+            val_log2_part = np.log(arg_log2) if arg_log2 > 0 else -100.0
+            val_log2 = val_log2_part - np.log(denom_log_norm)
+            if np.abs(diff_sq) > _diff_eps:
+                d_log2_dEg = 2.0 * Eg / diff_sq - d_DLN_dEg * inv_denom_log_norm
+            else:
+                d_log2_dEg = -d_DLN_dEg * inv_denom_log_norm
         d_log2_dE0 = -d_DLN_dE0 * inv_denom_log_norm
-
         d_log2_dC = -d_DLN_dC * inv_denom_log_norm
-
         # al, aa
-
         al = (Eg_sq - E0_sq) * E_sq + Eg_sq * C_sq - E0_sq * (E0_sq + 3.0 * Eg_sq)
-
         d_al_dEg = 2 * Eg * E_sq + 2 * Eg * C_sq - E0_sq * 6.0 * Eg
-
         d_al_dE0 = -2 * E0 * E_sq - (4.0 * E0**3 + 6.0 * E0 * Eg_sq)
-
         d_al_dC = Eg_sq * 2.0 * C
-
         aa = (E_sq - E0_sq) * (E0_sq + Eg_sq) + Eg_sq * C_sq
-
         d_aa_dEg = (E_sq - E0_sq) * 2.0 * Eg + 2.0 * Eg * C_sq
-
         d_aa_dE0 = (-2 * E0) * (E0_sq + Eg_sq) + (E_sq - E0_sq) * (2 * E0)
-
         d_aa_dC = Eg_sq * 2.0 * C
-
         # Term 1
-
         E_safe = max(E, 1e-18)
-
         K1 = -A_E0_C * inv_PI / E_safe
-
         T1 = K1 * (E_sq + Eg_sq) * inv_zeta4 * val_log1
-
-        dT1_dA = T1 / A
-
+        dT1_dA = T1 / A if A != 0.0 else (-E0 * C * inv_PI / E_safe) * (E_sq + Eg_sq) * inv_zeta4 * val_log1
         dT1_dEg = K1 * (2.0 * Eg * inv_zeta4 * val_log1 + (E_sq + Eg_sq) * inv_zeta4 * d_log1_dEg)
-
-        dT1_dE0 = (K1 / E0) * (E_sq + Eg_sq) * inv_zeta4 * val_log1 + K1 * (E_sq + Eg_sq) * (
+        K1_E0 = K1 / E0 if E0 != 0.0 else -A * C * inv_PI / E_safe
+        dT1_dE0 = K1_E0 * (E_sq + Eg_sq) * inv_zeta4 * val_log1 + K1 * (E_sq + Eg_sq) * (
             -(inv_zeta4**2) * d_zeta4_dE0
         ) * val_log1
-
-        dT1_dC = (K1 / C) * (E_sq + Eg_sq) * inv_zeta4 * val_log1 + K1 * (E_sq + Eg_sq) * (
+        K1_C = K1 / C if C != 0.0 else -A * E0 * inv_PI / E_safe
+        dT1_dC = K1_C * (E_sq + Eg_sq) * inv_zeta4 * val_log1 + K1 * (E_sq + Eg_sq) * (
             -(inv_zeta4**2) * d_zeta4_dC
         ) * val_log1
-
         # Term 2
-
         K2 = two_A_E0_C_Eg * inv_PI
-
         T2 = K2 * inv_zeta4 * val_log2
-
-        dT2_dA = T2 / A
-
-        dT2_dEg = (K2 / Eg) * inv_zeta4 * val_log2 + K2 * inv_zeta4 * d_log2_dEg
-
+        dT2_dA = T2 / A if A != 0.0 else (2.0 * E0 * C * Eg * inv_PI) * inv_zeta4 * val_log2
+        K2_Eg = K2 / Eg if Eg != 0.0 else 2.0 * A_E0_C * inv_PI
+        dT2_dEg = K2_Eg * inv_zeta4 * val_log2 + K2 * inv_zeta4 * d_log2_dEg
+        K2_E0 = K2 / E0 if E0 != 0.0 else 2.0 * A * C * Eg * inv_PI
         dT2_dE0 = (
-            (K2 / E0) * inv_zeta4 * val_log2
+            K2_E0 * inv_zeta4 * val_log2
             + K2 * (-(inv_zeta4**2) * d_zeta4_dE0) * val_log2
             + K2 * inv_zeta4 * d_log2_dE0
         )
-
+        K2_C = K2 / C if C != 0.0 else 2.0 * A * E0 * Eg * inv_PI
         dT2_dC = (
-            (K2 / C) * inv_zeta4 * val_log2
+            K2_C * inv_zeta4 * val_log2
             + K2 * (-(inv_zeta4**2) * d_zeta4_dC) * val_log2
             + K2 * inv_zeta4 * d_log2_dC
         )
-
         # Term 3
-
         T3 = 0.0
-
         dT3_dA = 0.0
-
         dT3_dEg = 0.0
-
         dT3_dE0 = 0.0
-
         dT3_dC = 0.0
-
         if alpha > 1e-12:
             arg3 = (E0_sq + Eg_sq + alpha * Eg) / (E0_sq + Eg_sq - alpha * Eg)
-
             val_log3 = np.log(arg3)
-
             pre = (A * C) / (2.0 * PI)
-
             denom_T3 = zeta4 * alpha * E0
-
             term_frac = al / denom_T3
-
             T3 = pre * term_frac * val_log3
-
             N3 = E0_sq + Eg_sq + alpha * Eg
-
             D3 = E0_sq + Eg_sq - alpha * Eg
-
             dN3_dEg = 2 * Eg + alpha
-
             dD3_dEg = 2 * Eg - alpha
-
             dN3_dE0 = 2 * E0 + d_alpha_dE0 * Eg
-
             dD3_dE0 = 2 * E0 - d_alpha_dE0 * Eg
-
             dN3_dC = d_alpha_dC * Eg
-
             dD3_dC = -d_alpha_dC * Eg
-
             d_log3_dEg = dN3_dEg / N3 - dD3_dEg / D3
-
             d_log3_dE0 = dN3_dE0 / N3 - dD3_dE0 / D3
-
             d_log3_dC = dN3_dC / N3 - dD3_dC / D3
-
-            dT3_dA = T3 / A
-
+            dT3_dA = T3 / A if A != 0.0 else (C / (2.0 * PI)) * term_frac * val_log3
             dT3_dEg = pre * (d_al_dEg / denom_T3) * val_log3 + pre * term_frac * d_log3_dEg
-
             d_denomT3_dE0 = d_zeta4_dE0 * alpha * E0 + zeta4 * d_alpha_dE0 * E0 + zeta4 * alpha
-
             d_term_frac_dE0 = (d_al_dE0 * denom_T3 - al * d_denomT3_dE0) / (denom_T3**2)
-
             dT3_dE0 = pre * d_term_frac_dE0 * val_log3 + pre * term_frac * d_log3_dE0
-
             d_denomT3_dC = d_zeta4_dC * alpha * E0 + zeta4 * d_alpha_dC * E0
-
             d_term_frac_dC = (d_al_dC * denom_T3 - al * d_denomT3_dC) / (denom_T3**2)
-
-            dT3_dC = (T3 / C) + pre * d_term_frac_dC * val_log3 + pre * term_frac * d_log3_dC
-
+            T3_C = T3 / C if C != 0.0 else (A / (2.0 * PI)) * term_frac * val_log3
+            dT3_dC = T3_C + pre * d_term_frac_dC * val_log3 + pre * term_frac * d_log3_dC
         # Term 4
-
         atan1 = np.arctan((2 * Eg + alpha) / C)
-
         atan2 = np.arctan((2 * Eg - alpha) / C)
-
         sum_atan = PI - atan1 - atan2
-
         K4 = -A / (PI * E0)
-
         frac4 = aa * inv_zeta4
-
         T4 = K4 * frac4 * sum_atan
-
         u1 = (2 * Eg + alpha) / C
-
         u2 = (2 * Eg - alpha) / C
-
         fac1 = 1.0 / (1.0 + u1**2)
-
         fac2 = 1.0 / (1.0 + u2**2)
-
         du1_dEg = 2.0 / C
-
         du2_dEg = 2.0 / C
-
         du1_dE0 = d_alpha_dE0 / C
-
         du2_dE0 = -d_alpha_dE0 / C
-
         du1_dC = -(2 * Eg + alpha) / (C * C) + d_alpha_dC / C
-
         du2_dC = -(2 * Eg - alpha) / (C * C) - d_alpha_dC / C
-
         d_sum_atan_dEg = -(fac1 * du1_dEg + fac2 * du2_dEg)
-
         d_sum_atan_dE0 = -(fac1 * du1_dE0 + fac2 * du2_dE0)
-
         d_sum_atan_dC = -(fac1 * du1_dC + fac2 * du2_dC)
-
-        dT4_dA = T4 / A
-
+        dT4_dA = T4 / A if A != 0.0 else (-1.0 / (PI * E0)) * frac4 * sum_atan
         dT4_dEg = K4 * (d_aa_dEg * inv_zeta4) * sum_atan + K4 * frac4 * d_sum_atan_dEg
-
-        dK4_dE0 = -K4 / E0
-
+        dK4_dE0 = -K4 / E0 if E0 != 0.0 else 0.0
         d_frac4_dE0 = d_aa_dE0 * inv_zeta4 + aa * (-(inv_zeta4**2) * d_zeta4_dE0)
-
         dT4_dE0 = dK4_dE0 * frac4 * sum_atan + K4 * d_frac4_dE0 * sum_atan + K4 * frac4 * d_sum_atan_dE0
-
         d_frac4_dC = d_aa_dC * inv_zeta4 + aa * (-(inv_zeta4**2) * d_zeta4_dC)
-
         dT4_dC = K4 * d_frac4_dC * sum_atan + K4 * frac4 * d_sum_atan_dC
-
         # Term 5
-
         T5 = 0.0
-
         dT5_dA = 0.0
-
         dT5_dEg = 0.0
-
         dT5_dE0 = 0.0
-
         dT5_dC = 0.0
-
         if alpha > 1e-12:
             arg5 = 2.0 * (Eg_sq - gamma_sq) / max(alpha * C, 1e-12)
-
             atan3 = np.arctan(arg5)
-
             brack5 = PI / 2.0 - atan3
-
             K5 = 4.0 * A * E0 * Eg / (PI * alpha)
-
             term5_mid = (E_sq - gamma_sq) * inv_zeta4
-
             T5 = K5 * term5_mid * brack5
-
             dnum_dEg = 4.0 * Eg
-
             dnum_dE0 = -2.0 * d_gamma2_dE0
-
             dnum_dC = -2.0 * d_gamma2_dC
-
             dden_dE0 = d_alpha_dE0 * C
-
             dden_dC = d_alpha_dC * C + alpha
-
             den_sq = (alpha * C) ** 2
-
             fac3 = 1.0 / (1.0 + arg5**2)
-
             d_arg5_dEg = (dnum_dEg * alpha * C) / den_sq
-
             d_arg5_dE0 = (dnum_dE0 * alpha * C - 2 * (Eg_sq - gamma_sq) * dden_dE0) / den_sq
-
             d_arg5_dC = (dnum_dC * alpha * C - 2 * (Eg_sq - gamma_sq) * dden_dC) / den_sq
-
             d_brack5_dEg = -fac3 * d_arg5_dEg
-
             d_brack5_dE0 = -fac3 * d_arg5_dE0
-
             d_brack5_dC = -fac3 * d_arg5_dC
-
-            dT5_dA = T5 / A
-
-            dK5_dEg = K5 / Eg
-
+            dT5_dA = T5 / A if A != 0.0 else (4.0 * E0 * Eg / (PI * alpha)) * term5_mid * brack5
+            dK5_dEg = K5 / Eg if Eg != 0.0 else 4.0 * A * E0 / (PI * alpha)
             dT5_dEg = dK5_dEg * term5_mid * brack5 + K5 * term5_mid * d_brack5_dEg
-
-            d_K5_dE0 = K5 / E0 - K5 / alpha * d_alpha_dE0
-
+            K5_E0 = K5 / E0 if E0 != 0.0 else 4.0 * A * Eg / (PI * alpha)
+            d_K5_dE0 = K5_E0 - K5 / alpha * d_alpha_dE0
             d_term5_mid_dE0 = (-d_gamma2_dE0 * inv_zeta4) + (E_sq - gamma_sq) * (-(inv_zeta4**2) * d_zeta4_dE0)
-
             dT5_dE0 = d_K5_dE0 * term5_mid * brack5 + K5 * d_term5_mid_dE0 * brack5 + K5 * term5_mid * d_brack5_dE0
             d_K5_dC = -K5 / alpha * d_alpha_dC
             d_term5_mid_dC = (-d_gamma2_dC * inv_zeta4) + (E_sq - gamma_sq) * (-(inv_zeta4**2) * d_zeta4_dC)

@@ -80,7 +80,7 @@ from certus.ui.certus_ui import (
     show_toast,
     stop_worker_and_thread,
 )
-from certus.ui.certus_ui_widgets_factory import create_workflow_hint
+from certus.ui.certus_ui_widgets_factory import create_info_icon, create_workflow_hint
 from certus.utils.certus_data import (
     ReportSection,
     build_standard_report,
@@ -307,19 +307,7 @@ class MetalBaseApp(CertusBaseApp):
         layout.addWidget(lbl)
 
         if tooltip_text:
-            # Simple info icon
-
-            info_btn = QPushButton("?")
-
-            info_btn.setFixedSize(24, 24)
-
-            info_btn.setToolTip(tooltip_text)
-
-            info_btn.setStyleSheet(
-                f"border-radius: 12px; background: {CertusTheme.SECONDARY}; color: {CertusTheme.SECONDARY_LABEL}; font-weight: bold; border: none;"
-            )
-
-            layout.addWidget(info_btn)
+            layout.addWidget(create_info_icon(tooltip_text))
 
         layout.addStretch()
 

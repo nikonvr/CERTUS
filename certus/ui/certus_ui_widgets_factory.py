@@ -106,6 +106,7 @@ from PyQt6.QtWidgets import (
     QStyle,
     QTextEdit,
     QToolButton,
+    QToolTip,
     QVBoxLayout,
     QWidget,
 )
@@ -350,16 +351,45 @@ def create_workflow_hint(steps: list[str]) -> QLabel:
     return label
 
 
+class InfoButton(QPushButton):
+    """A "?" that shows the help of its field on a click, on Enter and on Space, not only on hover.
+
+    The METAL field helps took the keyboard focus and had no receiver of `clicked`, and were 16 or 20 px wide
+    (UX audit 2026-11-18, item 4): the keyboard reached a button that said nothing, and the mouse barely hit it.
+    """
+
+    #: The side of the active area: at least the 24 px of a pointer target (WCAG 2.5.8).
+    SIDE_PX = 28
+
+    def __init__(self, tooltip: str, parent=None) -> None:
+        super().__init__("?", parent)
+        self.setToolTip(tooltip)
+        self.setAccessibleName("Help")
+        self.setAccessibleDescription(tooltip)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.setFixedSize(self.SIDE_PX, self.SIDE_PX)
+        self.clicked.connect(self.show_help)
+
+    def show_help(self) -> None:
+        QToolTip.showText(self.mapToGlobal(self.rect().bottomLeft()), self.toolTip(), self)
+
+    def keyPressEvent(self, event) -> None:
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            self.click()
+            return
+        super().keyPressEvent(event)
+
+
 def create_info_icon(tooltip: str, parent=None) -> QPushButton:
-    """Creates a small '?' info icon with tooltip."""
+    """A "?" field help: a 28 px target that shows ``tooltip`` on hover, click, Enter and Space."""
 
-    btn = QPushButton("?", parent)
-
-    btn.setFixedSize(24, 24)
-
-    btn.setToolTip(tooltip)
+    btn = InfoButton(tooltip, parent)
 
     btn.setCursor(Qt.CursorShape.PointingHandCursor)
+
+    # A sheet's min-height outranks setFixedSize: the theme's button height (44 px) made the 16 px "?" a 16 x 44
+    # bar that ran over the next row. The sheet itself holds the side.
+    side = InfoButton.SIDE_PX - 2  # the 1 px border on each side
 
     btn.setStyleSheet(f"""
 
@@ -369,7 +399,17 @@ def create_info_icon(tooltip: str, parent=None) -> QPushButton:
 
             color: {CertusTheme.TEXT_SUB};
 
-            border-radius: 12px;
+            border-radius: 14px;
+
+            min-width: {side}px;
+
+            max-width: {side}px;
+
+            min-height: {side}px;
+
+            max-height: {side}px;
+
+            padding: 0px;
 
             font-weight: bold;
 

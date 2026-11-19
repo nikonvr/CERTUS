@@ -13,6 +13,7 @@ import threading
 
 import numpy as np
 
+from certus.spline import spline_polish_mixed
 from certus.spline import spline_workers as sw
 
 
@@ -54,7 +55,7 @@ def test_l3_m4_an_exception_in_lbfgsb_returns_a_coherent_point(monkeypatch, capl
         fun(np.asarray(x0) * 0.0 + 5.0)  # the last point evaluated, a bad one
         raise ValueError("line search")
 
-    monkeypatch.setattr(sw, "minimize", _raise)
+    monkeypatch.setattr(spline_polish_mixed, "minimize", _raise)  # the polish calls L-BFGS-B through minimize_polish
     monkeypatch.setattr(sw, "spline_pwl_analytic_grad_supported", lambda _cfg: False)
     certus_logger = logging.getLogger("CERTUS")  # may not propagate to the root handler of caplog
     certus_logger.addHandler(caplog.handler)

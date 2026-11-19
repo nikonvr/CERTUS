@@ -10,7 +10,7 @@ def format_count_kmg(val: object) -> str:
     """
 
     try:
-        v = float(val)
+        v = float(val)  # type: ignore[arg-type]  # any value: TypeError and ValueError are caught below
     except (TypeError, ValueError):
         return str(val)
     if v >= 1e9:

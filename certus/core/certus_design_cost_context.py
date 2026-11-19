@@ -45,7 +45,7 @@ def optim_prepare_stack_nk_back(
     front = design_layer_indices(mats_nk, [layer.mat for layer in stack], complex_dtype)
     if has_back_stack:
         rear = design_layer_indices(mats_nk, [layer.mat for layer in stack_back], complex_dtype)
-        rear_thickness = np.ascontiguousarray(ep_back, dtype=float_dtype)
+        rear_thickness: np.ndarray = np.ascontiguousarray(ep_back, dtype=float_dtype)
     else:
         rear = np.zeros((len(wls), 0), dtype=complex_dtype)
         rear_thickness = np.zeros(0, dtype=float_dtype)

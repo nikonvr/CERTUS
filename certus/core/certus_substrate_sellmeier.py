@@ -603,7 +603,7 @@ def _ir_pole_candidate(
     w_fit_sell: np.ndarray,
     wl_full_um: np.ndarray,
     mask: np.ndarray,
-    n_accept: tuple[np.ndarray, np.ndarray],
+    n_accept: tuple[np.ndarray | float, np.ndarray | float],
     ls_max_nfev: int,
 ) -> tuple | None:
     """The catalog form with an infrared pole as a selection candidate (chantier 05, on by default), or None.

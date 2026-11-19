@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
+from typing import cast
 
 import numpy as np
 
@@ -150,7 +151,7 @@ def final_cleanup(
         remove = cost_removed is not None and cost_removed <= cost_raised  # a tie goes to the fewer layers
         steps.append(CleanupStep("removed" if remove else "raised", mats[i], float(d[i]), cost, cost_removed, cost_raised))
         if remove:
-            mats, d, v, origin, cost = r_mats, r_d, r_v, r_o, float(cost_removed)
+            mats, d, v, origin, cost = r_mats, r_d, r_v, r_o, float(cast(float, cost_removed))
         else:
             d, cost = raised, cost_raised
 
@@ -192,7 +193,7 @@ def lbfgsb_polish(
     *,
     maxiter: int,
     ftol: float,
-) -> tuple[object, CostAndGrad]:
+) -> tuple[object, Callable[[np.ndarray], tuple[float, np.ndarray]]]:
     """L-BFGS-B on the thicknesses ``var_idx`` of ``ep_full`` with DESIGN's analytic gradient at normal incidence.
 
     Moved out of the DESIGN window (CLAUDE.md section 8): the re-polish after the 5 nm rule and the trial polish of a

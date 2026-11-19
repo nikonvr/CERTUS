@@ -108,11 +108,11 @@ def spectral_rmse_weights_banded(lam: npt.ArrayLike, bands: Iterable[tuple[float
 
     ordered = lam[order]
 
-    lo, hi = limits[:, 0], limits[:, 1]
+    lows, highs = limits[:, 0], limits[:, 1]
 
-    covered = np.any((ordered[:, None] >= lo) & (ordered[:, None] <= hi), axis=1)
+    covered = np.any((ordered[:, None] >= lows) & (ordered[:, None] <= highs), axis=1)
 
-    joined = np.any((ordered[:-1, None] >= lo) & (ordered[1:, None] <= hi), axis=1)
+    joined = np.any((ordered[:-1, None] >= lows) & (ordered[1:, None] <= highs), axis=1)
 
     cuts = np.flatnonzero(covered[:-1] & covered[1:] & ~joined) + 1
 

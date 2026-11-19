@@ -380,7 +380,7 @@ def analyze_resonances(problem: TransmissionProblem, thicknesses: np.ndarray, *,
     wl, target = problem.grid()
     r = _res_jac(problem, d, wl, target, np.empty(0, dtype=np.int64))[0]
     mse = float(r @ r / len(wl))
-    extra = sum(float(p.height) ** 2 for p in charged)
+    extra = sum(float(p.height) ** 2 for p in charged if p.height is not None)  # every charged peak has a height
     return ResonanceAnalysis(float(np.sqrt(mse)), float(np.sqrt(mse + extra / len(wl))),
                              poles, tuple(charged), tuple(counts))
 

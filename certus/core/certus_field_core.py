@@ -33,7 +33,7 @@ def get_layer_properties_numba(n1_r: float, n2_r: float, emp_factors_arr: np.nda
     return indices_complex, ep_physical_nm
 
 
-def get_layer_properties_from_list(n1_r: float, n2_r: float, emp_factors: list[float], layer_types: list[int] | None, l0: float) -> tuple[np.ndarray, np.ndarray]:
+def get_layer_properties_from_list(n1_r: float, n2_r: float, emp_factors: list[float] | np.ndarray, layer_types: list[int] | None, l0: float) -> tuple[np.ndarray, np.ndarray]:
     if np.size(emp_factors) == 0 or l0 <= 0:
         return np.empty(0, dtype=np.complex128), np.empty(0, dtype=np.float64)
 

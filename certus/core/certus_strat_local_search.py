@@ -39,7 +39,7 @@ from __future__ import annotations
 import copy
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 
@@ -100,7 +100,8 @@ def search_params(params: dict[str, Any]) -> dict[str, Any]:
     return out
 
 #: One evaluation: per noise level, (rmse per draw, stopped per draw).
-Evaluation = list[tuple[np.ndarray, np.ndarray]]
+#: Per noise level: (RMSE per draw, deposited flags) and, when thicknesses are asked, the thicknesses per draw.
+Evaluation = list[tuple[np.ndarray, ...]]
 
 
 @dataclass(frozen=True)
@@ -207,7 +208,7 @@ def group_candidates(plan: dict[str, Any], layers: list[int], cfg: LocalSearchCo
                     continue
                 out = plan
                 for k, w in zip(layers, wl0, strict=True):
-                    out = with_wavelength(out, k, _snap(grid, np.asarray([w + off]))[0])
+                    out = with_wavelength(out, k, _snap(grid, np.asarray([cast(float, w) + off]))[0])
                 yield f"{name} {off:+g}nm", out
         if cfg.allow_rate and layers[0] >= cfg.rate_min_layer:
             out = dict(plan)
@@ -520,7 +521,7 @@ def native_evaluator(
                                              wl_arr, nH_arr, nL_arr, nSub_arr, T_nom, full_dyn_grid,
                                              compute_layer_profile=False, n_layers_matrix_precomp=matrix)
         if thickness:
-            out = []
+            out: Evaluation = []
             for lv in res["results_per_noise"]:
                 th = np.asarray(lv["thicknesses_all"], dtype=np.float64)
                 out.append((np.asarray(lv["rmse_all"], dtype=np.float64), np.any(th > CRASH_SENTINEL_MIN, axis=1), th))

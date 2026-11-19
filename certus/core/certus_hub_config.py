@@ -67,6 +67,8 @@ class HubAppCatalogItem(TypedDict, total=False):
     task: str
     script: str
     icon: str
+    #: Name of the SVG of certus.ui.certus_icons drawn on the tile (U8).
+    svg_icon: str
     color: str
     badge: str
     type: str

@@ -21,6 +21,7 @@ from concurrent.futures import Executor
 from dataclasses import dataclass
 from threading import Event, Lock
 from types import SimpleNamespace
+from typing import Any, cast
 
 import numpy as np
 from scipy.optimize import minimize
@@ -99,7 +100,7 @@ def run_memetic(
     def stopped() -> bool:
         return stop_event is not None and stop_event.is_set()
 
-    best = {"y": np.inf, "x": None, "gen": 0}
+    best: dict[str, Any] = {"y": np.inf, "x": None, "gen": 0}
 
     def record(x: np.ndarray, y: float, gen: int) -> None:
         if y < best["y"]:
@@ -114,7 +115,7 @@ def run_memetic(
     while len(pop) < max(2, population) and not stopped():
         if parallel:
             starts = [rng.uniform(init_lo, init_hi) for _ in range(min(batch, max(2, population) - len(pop)))]
-            for x, y in pool.map(polish, starts, [local_maxiter] * len(starts)):
+            for x, y in cast(Executor, pool).map(polish, starts, [local_maxiter] * len(starts)):
                 pop.append((x, y))
                 record(x, y, 0)
         else:
@@ -155,7 +156,7 @@ def run_memetic(
         size = min(batch, children - gen) if parallel else 1
         kids = [draw_child(gen + 1 + k) for k in range(size)]
         worst_cost = pop[worst_index()][1]
-        polished = pool.map(polish_child, kids, [worst_cost] * size) if parallel else [polish_child(kids[0], worst_cost)]
+        polished = cast(Executor, pool).map(polish_child, kids, [worst_cost] * size) if parallel else [polish_child(kids[0], worst_cost)]
         for k, (x, y) in enumerate(polished):
             judge(x, y, gen + 1 + k)
         gen += size

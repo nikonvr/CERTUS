@@ -160,6 +160,7 @@ def build_memetic_lm_polisher(
             bool(fast_ctx.get("has_back_calc", False)), fast_ctx["rb_prime"], fast_ctx["tb"], tv, sqrt_w, idx)
         if qwot_max is None:
             return r, j
+        assert q_per_nm is not None  # a QWOT ceiling comes with its per-nm QWOT vector
         excess = float(q_per_nm @ x) - float(qwot_max)
         on = excess > 0.0
         return (np.append(r, root_p * excess if on else 0.0),

@@ -1,8 +1,8 @@
 """Chantier 21 : l'option `spline_polish_fd_prefix_maxfun` reproduit-elle la sonde, et combien coute-t-elle ?
 
 Pour chaque classeur d'`example/example_index_spline/`, configuration de la fenetre, trois reglages :
-- defaut : rien d'allume (differences finies) ;
-- AN : `spline_mono_analytic_gradient` ;
+- defaut : l'ancien defaut, differences finies (les deux options forcees a l'arret) ;
+- AN : `spline_mono_analytic_gradient` sans prefixe ;
 - AN + prefixe : `spline_mono_analytic_gradient` et `spline_polish_fd_prefix_maxfun` = PREFIX.
 Un calcul de chauffe, puis REPEATS tours alternes chronometres autour de `worker_spline_optimization` ; une derniere passe
 compte les evaluations de cout. RMSE et d du dernier tour, mediane et extremes des durees.
@@ -31,8 +31,8 @@ from certus.ui.certus_index_spline_ui import CertusIndexSplineApp  # noqa: E402
 PREFIX = 3000
 REPEATS = int(sys.argv[1]) if len(sys.argv) > 1 else 5
 SETTINGS = {
-    "defaut": {},
-    "AN": {"spline_mono_analytic_gradient": True},
+    "defaut": {"spline_mono_analytic_gradient": False, "spline_polish_fd_prefix_maxfun": 0},
+    "AN": {"spline_mono_analytic_gradient": True, "spline_polish_fd_prefix_maxfun": 0},
     "AN + prefixe": {"spline_mono_analytic_gradient": True, "spline_polish_fd_prefix_maxfun": PREFIX},
 }
 

@@ -1,0 +1,12 @@
+TOTAL.xlsx : depart f=1.069356e-02 d=1700.00, budget B=10000, d dans [1600.0, 1800.0]
+  DF1k>AN  :   1.55 s,   1948 couts, f=3.049988e-03 RMSE=0.0552267 d=1800.00
+  DF2k>AN  :   3.30 s,   3991 couts, f=2.667838e-03 RMSE=0.0516511 d=1769.25
+  DF3k>AN  :   5.73 s,   4709 couts, f=2.629430e-03 RMSE=0.0512780 d=1729.79
+  DF5k>AN  : 353.61 s,   7248 couts, f=2.629427e-03 RMSE=0.0512779 d=1731.32
+  DF7k>AN  :   7.34 s,   9256 couts, f=2.629462e-03 RMSE=0.0512783 d=1730.54
+TSIO2-1700-1.xlsx : depart f=3.860806e-03 d=1700.00, budget B=10000, d dans [1600.0, 1800.0]
+  DF1k>AN  :   3.91 s,   3800 couts, f=3.677493e-06 RMSE=0.0019177 d=1667.82
+  DF2k>AN  :   2.83 s,   4329 couts, f=3.687296e-06 RMSE=0.0019202 d=1665.69
+  DF3k>AN  :   3.25 s,   5551 couts, f=3.791534e-06 RMSE=0.0019472 d=1667.66
+  DF5k>AN  :   2.88 s,   6669 couts, f=3.838749e-06 RMSE=0.0019593 d=1667.24
+  DF7k>AN  :   3.75 s,   9037 couts, f=3.823330e-06 RMSE=0.0019553 d=1669.81

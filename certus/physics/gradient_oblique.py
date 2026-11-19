@@ -1113,6 +1113,24 @@ def compute_oblique_backside_bundle_analytic(
     return y_R, dy_R, y_T, dy_T
 
 
+def _min_thickness_penalty_and_grad(
+    ep: np.ndarray, var_idx_arr: np.ndarray, min_d: float
+) -> tuple[float, np.ndarray]:
+    """Return quadratic minimum-thickness violation penalty and its gradient over variable indices."""
+    min_d_f = float(min_d)
+    penalty = 0.0
+    for d_val in ep:
+        if 1e-12 < d_val < min_d_f:
+            gap = min_d_f - d_val
+            penalty += gap * gap * 1e6
+    grad_penalty = np.zeros(len(var_idx_arr), dtype=np.float64)
+    for j, v_idx in enumerate(var_idx_arr):
+        d_val = ep[int(v_idx)]
+        if 1e-12 < d_val < min_d_f:
+            grad_penalty[j] = -2e6 * (min_d_f - d_val)
+    return penalty, grad_penalty
+
+
 def compute_gradient_all_layers_analytic(
     ep: np.ndarray,
     n_layers_T: np.ndarray,
@@ -1207,25 +1225,7 @@ def compute_gradient_all_layers_analytic(
         grad = (2.0 / max(weight_sum, 1e-18)) * np.sum(diff_w[:, None] * dy, axis=0)
 
         # Keep penalty and its analytic derivative consistent with cost_numba_fast.
-
-        min_d_f = float(min_d)
-
-        penalty = 0.0
-
-        for d_val in ep_f64:
-            if 1e-12 < d_val < min_d_f:
-                gap = min_d_f - d_val
-
-                penalty += gap * gap * 1e6
-
-        grad_penalty = np.zeros(len(var_idx_arr), dtype=np.float64)
-
-        for i, v_idx in enumerate(var_idx_arr):
-            d_val = ep_f64[v_idx]
-
-            if 1e-12 < d_val < min_d_f:
-                grad_penalty[i] = -2e6 * (min_d_f - d_val)
-
+        penalty, grad_penalty = _min_thickness_penalty_and_grad(ep_f64, var_idx_arr, min_d)
         return mse + penalty, grad + grad_penalty
 
     # Front-only: use analytic gradient kernel
@@ -1274,18 +1274,8 @@ def compute_gradient_all_layers_analytic(
             var_idx_arr,
         )
 
-    # Add penalty for min thickness violation
-
-    penalty = 0.0
-
-    for i in range(len(ep)):
-        if ep[i] > 1e-12 and ep[i] < min_d:
-            diff = min_d - ep[i]
-
-            penalty += diff * diff * 1e6
-
-    cost += penalty
-
-    return cost, grad
+    # Keep penalty and its analytic derivative aligned on the front-only path as well.
+    penalty, grad_penalty = _min_thickness_penalty_and_grad(ep_f64, var_idx_arr, min_d)
+    return cost + penalty, grad + grad_penalty
 
 

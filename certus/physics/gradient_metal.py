@@ -377,10 +377,4 @@ def compute_metal_bilayer_gradient_analytic(
         # last two k knots, and never moved the last lambda positions.
         grad[offset + 2 * spline_knot_count + i] = np.dot(dJ_dn, dn_dp) + np.dot(dJ_dk, dk_dp)
 
-    if eM < 1.0:
-        grad[0] -= 1000.0 * (1.0 - eM)
-
-    if eL < 1.0:
-        grad[1] -= 1000.0 * (1.0 - eL)
-
     return mse, grad

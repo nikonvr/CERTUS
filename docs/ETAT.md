@@ -11,7 +11,7 @@
 
 **Répertoire unique (consigne absolue 👤 2026-11-19)** : travailler **exclusivement** dans le dépôt Drive `certus1111` (`D:\drivfl\...\CERTUS\certus1111`) — jamais de clone ni de déplacement ailleurs (ex. `C:\dev`).
 
-**Dernière validation complète** : le 2026-11-19 sous Windows sur `7b318542` (défauts SPLINE, SUBSTRATE et arrêt tardif allumés), `validate_parallel.py` : oracle 1 238, unit 6 375 (l'intermittent POEM vert seul en série), ui 1 676, reste 322, performance 30, contrôles documentaires et ruff verts, `VALIDATION=GO` ([résumé](../reports/chantier21_2026-11-19/validation_7b318542.txt)).
+**Dernière validation complète** : le 2026-11-19 sous Windows sur `8945bb17` (UX-1..5 fusionnés, correctifs Lot 0, docs à jour), `validate_parallel.py` : oracle 1 252, unit 6 425 (2 artefacts de charge verts seuls en série), ui 1 704, reste 322, performance 30, contrôles documentaires (`coherence_md`, `check_claude_md`, `check_docs`) et ruff verts, `VALIDATION=GO`.
 
 En cas d'écart au bit : rejouer sur [cache Numba vierge](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md). **Décisions réservées à 👤** : §5.
 

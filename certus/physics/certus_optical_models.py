@@ -207,7 +207,7 @@ def _tl_log_terms(
         return term1, term2
     term1 = 0.0
     if E > SMALL_EPSILON:
-        term1 = -pref * (E_sq + Eg_sq) / E * np.log(np.abs((Eg - E) / (Eg + E)))
+        term1 = -pref * (E_sq + Eg_sq) / E * (np.log(abs(Eg - E)) - np.log(Eg + E))
     term2 = 2.0 * pref * Eg * np.log(np.abs((Eg - E) * (Eg + E)) / denom_log_norm)
     return term1, term2
 

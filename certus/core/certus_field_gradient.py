@@ -81,9 +81,13 @@ def _field_trace_derivatives(
         wave_backward = backward * np.exp(1j * phase)
         ex = cx * (wave_forward + wave_backward)
         ez = cz * (wave_forward - wave_backward)
-        deriv_sum = gradient_forward * np.exp(-1j * phase) + gradient_backward * np.exp(1j * phase)
+        ep_m = np.exp(-1j * phase)
+        ep_p = np.exp(1j * phase)
+        df_phase = gradient_forward * ep_m
+        db_phase = gradient_backward * ep_p
+        deriv_sum = df_phase + db_phase
         deriv_sum[layer] += -1j * k[layer] * best_fraction * (wave_forward - wave_backward)
-        deriv_diff = gradient_forward * np.exp(-1j * phase) - gradient_backward * np.exp(1j * phase)
+        deriv_diff = df_phase - db_phase
         deriv_diff[layer] += -1j * k[layer] * best_fraction * (wave_forward + wave_backward)
         gradient_peaks[layer] = 2.0 * np.real(np.conj(ex) * (cx * deriv_sum) + np.conj(ez) * (cz * deriv_diff))
 

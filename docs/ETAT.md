@@ -5,27 +5,27 @@
 > [`CLAUDE.md`](../CLAUDE.md). Il se tient **en place** : un fait change, on corrige sa ligne,
 > on ne raconte pas la correction (`git log` s'en charge). Toute mesure porte sa date.
 > Le détail et l'historique sont dans `git`, sans autorité (CLAUDE.md, en-tête).
-> Mis à jour le 2026-11-17.
+> Mis à jour le 2026-11-19.
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
 > L'état présent seulement ; l'historique est dans `git log` et `reports/`. À la demande : actions ouvertes et protocole de mesure
 > ([`CHANTIERS_RESTANTS.md`](CHANTIERS_RESTANTS.md)), vocabulaire du Rate ([`ETAT_acquis.md`](ETAT_acquis.md)), preuves dans `reports/`.
 
-**Liste active** : [chantiers](CHANTIERS_RESTANTS.md), les ouverts seulement. Reprise de la session en cours :
-[REPRISE](../reports/suite_2026-11-17/REPRISE.md). La grille automatique et la sélection robuste de DESIGN sont
+**Liste active** : [chantiers](CHANTIERS_RESTANTS.md), les ouverts seulement. Reprise de la campagne 49 :
+[REPRISE](../reports/chantier49_2026-11-18/REPRISE.md). La grille automatique et la sélection robuste de DESIGN sont
 optionnelles ; le [guide DESIGN](../pages/CERTUS_DESIGN.html#design-robust-search) décrit leur activation et leurs limites.
 
 **Clone de travail** : `C:\dev\certus1111`, hors de Google Drive ; l'ancien clone sous
 `D:\drivfl` (dossier synchronisé, qui réécrivait des fichiers suivis) reste intact, on n'y travaille plus.
 
-**Branche de travail** : `master`, poussée sur ordre de 👤 (dernière poussée : nuit du 17 au 18 novembre).
+**Branche de travail** : `master`, poussée sur ordre de 👤 (dernière poussée : 2026-11-19).
 Le sparse-checkout écarte les gros artefacts scientifiques suivis ; git sparse-checkout disable les restaure. Les sauvegardes et données locales de novembre sont répertoriées
 dans `artifacts/archives-20261114/inventaire.json` de l'ancien clone (hors Git).
 
 **Python de référence : 3.15.2**, dépendances de requirements.lock.
 
-**Dernière validation complète** : le 2026-11-17 dans la nuit sous Windows sur `88e854dd` : oracle 1 214, ui 1 670, reste 322, performance 30, contrôles documentaires et ruff verts ([résumé](../reports/suite_2026-11-17/validation_nuit/summary.txt)) ; unit, relancé après un `git ls-files` en échec passager à la collecte : 6 367 et deux artefacts de charge, verts seuls en série : `VALIDATION=GO` ([résumé](../reports/suite_2026-11-17/validation_nuit_unit/summary.txt)).
+**Dernière validation complète** : le 2026-11-18 sous Windows sur `b217c138`, `validate_parallel.py` : oracle 1 231, unit 6 375, ui 1 676, reste 322, performance 30, contrôles documentaires et ruff verts, `VALIDATION=GO` ([résumé](../reports/chantier21_2026-11-19/validation_b217c138.txt)).
 
 Pour un échec de comparaison au bit, rejouer sur [cache Numba vierge](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md).
 
@@ -39,7 +39,7 @@ Pour un échec de comparaison au bit, rejouer sur [cache Numba vierge](../report
 | **Calcul (STRAT)** | étalon : `r75x2` à la fente de 2 nm. Recherche locale finale active avec sa garde au corridor configuré ; sur `r75x2`, −13,3 / −11,1 / neutre / −9,7 % de SEEL selon la graine de banc ([bilan](../reports/STRAT_garde_2026-10-22/bilan.md)). Sans rampes, aucun plan optique pur n'est déposable ; avec le secours Rate, tous les plans de la liste le sont, au modèle de Rate de STRAT (§7) | reprise de calcul et co-conception ([chantiers](CHANTIERS_RESTANTS.md)) |
 | **Conception (DESIGN)** | étape globale mémétique, champion sans couche < 5 nm et relances par défaut depuis le 2026-10-23 ; séparatrice 400–1200 nm à 0,000135 depuis l'exemple ([bilan](../reports/DESIGN_bs5050_2026-10-22/bilan.md)) | robustesse et reprise ([chantiers](CHANTIERS_RESTANTS.md)) |
 | **RE** | indices tabulés lus en n − ik ; un indice demandé hors de sa table est prolongé par une constante, avec un avertissement | — |
-| **Base de dépôts** | 140 monocouches mesurées au Photon RT (`example/database_depots/`), chargées par INDEX (« Deposit database… ») ; la voie (T ou R) se lit dans la géométrie du détecteur. Onze ajustements certifiés servent de références (`references_index.json`, `scripts\bench_base_depots.py`) : neuf à moins de 2 % d'épaisseur, deux écarts documentés dans les références du banc. RE ne la lit pas (il lui faut un classeur complet) | IDX-01 ; §5 |
+| **Base de dépôts** | 140 monocouches mesurées au Photon RT (`example/database_depots/`), chargées par INDEX (« Deposit database… ») ; la voie (T ou R) se lit dans la géométrie du détecteur. Onze ajustements certifiés servent de références (`references_index.json`, `scripts\bench_base_depots.py`) : neuf à moins de 2 % d'épaisseur, deux écarts documentés dans les références du banc. RE ne la lit pas (il lui faut un classeur complet) | §5 |
 | **Exécutable gelé** | couche OpenMP, 420 Mo, sans les outils de développement ; construit à `260e4e8c` le 2026-11-17, hub et dix modules démarrent ; il porte son commit (`BUILD_COMMIT.json`). Licences embarquées dans `licenses/`. L'exécutable reste sur OpenMP : la roue PyPI de TBB est sous licence Intel, hors GPL (oneTBB sous Apache-2.0 à trouver, décision de 👤) | §5 |
 | **Qualité** | CI : calcul sous Linux, interface et gel sous Windows, `pip-audit`, `gitleaks` ; tests isolés des préférences de 👤 ; aucune arête d'import montante | §5 |
 | **Validation externe** | 🔴 **aucune** : STRAT n'est validé que contre lui-même (👤, 2026-10-06 : les dépôts réels du dichroïque ne sont plus prévus) | — |

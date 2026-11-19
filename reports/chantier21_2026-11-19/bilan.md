@@ -40,3 +40,20 @@ Sorties : [six variantes](p21_mixed_polish_charge.txt), [balayage du préfixe DF
   probablement la charge de la machine.
 
 **Limites.** Deux exemples, un calcul chacun, en mode local. Les durées sont à refaire sur une machine libre.
+
+## L'option (`bc34b37a`)
+
+`spline_polish_fd_prefix_maxfun` (0 par défaut, `certus/spline/spline_polish_mixed.py::minimize_polish`). Quand le gradient
+analytique est en usage et que le préfixe est > 0, une passe L-BFGS-B par différences finies fait ce nombre
+d'évaluations. Puis la passe analytique repart de sa fin avec le reste du budget.
+
+- **C1, éteinte :** les 42 tableaux de SPLINE sont identiques au bit à HEAD, et `c1_diff.py HEAD` donne 9 172 tableaux
+  identiques au bit. Les deux mesures sont faites sur des caches Numba vierges.
+- **Tests :** six nouveaux tests dans `tests/oracle/test_spline_mono_gradient_vs_fd.py`, rouges sur le code d'avant.
+- **La sonde est reproduite :** gradient analytique allumé, préfixe 3 000, dans la fenêtre
+  ([sonde](p21_mixed_option.py), un tour, machine chargée). On retrouve les chiffres de la sonde :
+  - TOTAL : RMSE 0,0512780, d = 1729,79 nm, 4 713 coûts ;
+  - TSIO2 : RMSE 0,0019472, d = 1667,66 nm, 5 555 coûts.
+
+  Sous charge, les durées étaient : TOTAL 2,86 s contre 5,46 s par défaut, TSIO2 3,24 s contre 2,19 s. **Je ne les ai pas
+  remesurées sur une machine libre.**

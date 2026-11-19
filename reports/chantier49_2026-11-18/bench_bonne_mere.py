@@ -88,6 +88,15 @@ def holdout(design: dict, pre_calc_data: dict, params: dict, plan: dict, runs: i
     p95_by_level = [float(np.percentile(e, 95)) for e in rmse_by_level]
     rmse, stops = rmse_by_level[level], stopped_by_level[level]
     ok = ~stops & np.isfinite(rmse)
+    # Thickness error the plan leaves at the nominal noise level (completed draws): what chantier 31 would work on.
+    errors = np.concatenate([seed[level][2] for seed in scored])[ok] - ep
+    bias = errors.mean(axis=0)
+    thickness = {
+        "rms_thickness_error_nm": float(np.sqrt(np.mean(errors**2))),
+        "rms_layer_bias_nm": float(np.sqrt(np.mean(bias**2))), "max_abs_layer_bias_nm": float(np.max(np.abs(bias))),
+        "worst_bias_layer": int(np.argmax(np.abs(bias))) + 1,
+        "rms_thickness_error_by_layer_nm": [float(x) for x in np.sqrt(np.mean(errors**2, axis=0))],
+    }
     return {
         "holdout_seeds": HOLDOUT_SEEDS, "draws_per_seed": runs, "noise_level_index": level,
         "seel_nm": float(2.0 * np.sqrt(max(p95_by_level))), "p95_by_level": p95_by_level,
@@ -96,7 +105,7 @@ def holdout(design: dict, pre_calc_data: dict, params: dict, plan: dict, runs: i
         "strategy_id": plan.get("strategy_id"), "blocks": len(plan["blocks"]),
         "rate_layers": len(plan.get("rate_layers") or []), "layers": len(ep),
         "max_rel_thickness_gap": float(np.max(np.abs(ep - d) / d)), "wl_range": [float(x) for x in params["wl_range"]],
-        "index_corridor": float(params.get("index_corridor", float("nan"))),
+        "index_corridor": float(params.get("index_corridor", float("nan"))), **thickness,
     }
 
 

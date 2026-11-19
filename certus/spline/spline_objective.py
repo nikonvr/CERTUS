@@ -199,20 +199,20 @@ def sigma_knots_decode(
 
     np.cumsum(ds, out=c)
 
+    eps_eff = min(float(eps_s), 0.25 * max(s_hi - s_lo, 1e-12) / max(m, 1))
     sk[0] = s_lo
     if m > 1:
         sk[1:-1] = s_lo + c[:-1]
     sk[-1] = s_hi
 
-    sk[1:] = np.maximum(sk[1:], sk[:-1] + eps_s)
+    for idx in range(1, m):
+        sk[idx] = max(float(sk[idx]), float(sk[idx - 1]) + eps_eff)
 
     sk[-1] = s_hi
 
-    # Resetting the last knot to s_hi left the knot before it above (3.01 before 3.0) when the last intervals are
-    # tiny: cap each inner knot at eps_s per remaining interval below s_hi (audit 2026-11-15, M-L3a). A mesh that
-    # already keeps its separation is below the caps and comes back to the bit.
-    if m > 1:
-        np.minimum(sk[1:-1], s_hi - eps_s * np.arange(m - 1, 0, -1), out=sk[1:-1])
+    # Enforce separation sequentially from both ends so consecutive collapsed intervals never tie.
+    for idx in range(m - 1, 0, -1):
+        sk[idx] = min(float(sk[idx]), float(sk[idx + 1]) - eps_eff)
 
     if reuse_output and work is not None:
         return sk

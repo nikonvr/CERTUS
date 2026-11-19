@@ -10,7 +10,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from certus.spline.spline_objective import sigma_knots_decode
+from certus.spline.spline_objective import _interpolate_along_sigma, sigma_knots_decode
 
 S_LO, S_HI = 1.0, 3.0
 
@@ -44,3 +44,15 @@ def test_the_work_buffers_give_the_same_mesh() -> None:
     np.testing.assert_array_equal(
         sigma_knots_decode(raw, S_LO, S_HI, work=work, reuse_output=True), sigma_knots_decode(raw, S_LO, S_HI)
     )
+
+
+def test_consecutive_extreme_negative_knots_stay_strictly_increasing_for_smooth_spline() -> None:
+    raw = np.array([-20.0, -20.0, -20.0, 20.0], dtype=np.float64)
+    sk = sigma_knots_decode(raw, S_LO, S_HI)
+    assert np.all(np.diff(sk) > 0.0), f"non-increasing knots {sk}"
+    assert np.all(np.diff(sk) >= 0.01 * (1.0 - 1e-9)), f"knots too close {sk}"
+
+    sig = np.linspace(S_LO, S_HI, 17, dtype=np.float64)
+    vals = np.linspace(2.0, 2.5, sk.size, dtype=np.float64)
+    interp = _interpolate_along_sigma(sig, sk, vals, "smooth")
+    assert np.all(np.isfinite(interp))

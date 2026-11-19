@@ -1,5 +1,5 @@
-"""D96, D97 and D98 are settled (ETAT section 3, 2026-10-12): production runs STRAT with POEM's anchors at the extremum, the stop on the
-exact signal, and an OMS that waits for ever on a level crossed before the last extremum is declared.
+"""D96, D97 and D98 are settled (ETAT section 3, 2026-10-12; D98 changed on 2026-11-19): production runs STRAT with POEM's anchors at
+the extremum, the stop on the exact signal, and an OMS that stops late, where the last extremum is declared, on a level crossed before.
 
 The kernels keep their historical path as the default of their own signature (proved to the bit by `scripts/c1_diff.py`). What makes it
 the stop model of PRODUCTION is that every production entry into them asks for it: Phase A (the candidates and the propagated states) and
@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from certus.physics.certus_strat_readings import ARMING_NEVER_STOPS, stop_model_flags
+from certus.physics.certus_strat_readings import ARMING_LATE_STOP, stop_model_flags
 
 ROOT = Path(__file__).resolve().parents[2]
 SERVICE = ROOT / "certus" / "utils" / "certus_strat_service.py"
@@ -53,8 +53,8 @@ def _passes_the_stop_model(call: ast.Call) -> bool:
 
 
 def test_the_decided_stop_model_is_the_default() -> None:
-    assert stop_model_flags({}) == (True, True, ARMING_NEVER_STOPS)
-    assert stop_model_flags(_Dto()) == (True, True, ARMING_NEVER_STOPS)
+    assert stop_model_flags({}) == (True, True, ARMING_LATE_STOP)
+    assert stop_model_flags(_Dto()) == (True, True, ARMING_LATE_STOP)
 
 
 def test_a_parameter_set_can_ask_for_the_old_model_for_a_baseline() -> None:

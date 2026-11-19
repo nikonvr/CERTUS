@@ -25,7 +25,7 @@ dans `artifacts/archives-20261114/inventaire.json` de l'ancien clone (hors Git).
 
 **Python de référence : 3.15.2**, dépendances de requirements.lock.
 
-**Dernière validation complète** : le 2026-11-18 sous Windows sur `b217c138`, `validate_parallel.py` : oracle 1 231, unit 6 375, ui 1 676, reste 322, performance 30, contrôles documentaires et ruff verts, `VALIDATION=GO` ([résumé](../reports/chantier21_2026-11-19/validation_b217c138.txt)).
+**Dernière validation complète** : le 2026-11-19 sous Windows sur `7b318542` (défauts SPLINE, SUBSTRATE et arrêt tardif allumés), `validate_parallel.py` : oracle 1 238, unit 6 375 (l'intermittent POEM vert seul en série), ui 1 676, reste 322, performance 30, contrôles documentaires et ruff verts, `VALIDATION=GO` ([résumé](../reports/chantier21_2026-11-19/validation_7b318542.txt)).
 
 Pour un échec de comparaison au bit, rejouer sur [cache Numba vierge](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md).
 

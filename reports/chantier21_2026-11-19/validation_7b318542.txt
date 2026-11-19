@@ -1,0 +1,16 @@
+VALIDATION PARALLELE -- 7b318542, 0 fichier(s) suivi(s) modifie(s)
+  python 3.15.2, 16 worker(s), ui 10, journaux : C:\Users\Fabien\AppData\Local\Temp\certus_validation_s1yg2wzt
+  ruff            PASS      0:00  
+  coherence_md    PASS      0:12  
+  check_claude_md PASS      0:00  
+  check_docs      PASS      0:00  
+  oracle          PASS      0:20  1238 passed
+  unit : 1 echec(s) en parallele, rejeu seul en serie...
+  unit            ARTEFACT  4:16  1 failed, 6374 passed, 7 skipped, 1 xfailed
+  ui              PASS      7:08  1676 passed, 12 skipped, 2 xfailed
+  rest            PASS      3:20  322 passed
+  performance     PASS      0:19  30 passed, 2 skipped
+ARTEFACT de charge ou d'ordre (unit), verts seuls en serie :
+    tests/unit/test_strat_poem_anchors_are_exact_on_request.py::test_without_the_flag_the_kernel_keeps_the_coarse_samples_bit_for_bit
+VALIDATION=GO
+La reference de CLAUDE.md section 2 reste la suite complete en serie.

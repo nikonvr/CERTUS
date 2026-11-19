@@ -10,6 +10,7 @@ penalty across a chain break, the k floor, R and R+T data, and the T ratio.
 
 from __future__ import annotations
 
+import inspect
 import sys
 import threading
 from pathlib import Path
@@ -271,3 +272,73 @@ def test_the_polish_uses_the_gradient_only_with_the_option(on: bool) -> None:
         assert objective.cost_calls < 400
     else:
         assert objective.gradient_calls == 0
+
+
+# --- the mixed polish (spline_polish_fd_prefix_maxfun) ---------------------------------------------------------------
+
+
+def _record_minimize(monkeypatch: pytest.MonkeyPatch) -> list[dict]:
+    from certus.spline import spline_polish_mixed
+
+    calls: list[dict] = []
+    real = spline_polish_mixed.minimize
+
+    def recording(fun, x0, **kwargs):
+        res = real(fun, x0, **kwargs)
+        calls.append({"jac": kwargs.get("jac"), "maxfun": kwargs["options"]["maxfun"], "nfev": int(res.nfev)})
+        return res
+
+    monkeypatch.setattr(spline_polish_mixed, "minimize", recording)
+    return calls
+
+
+def _polish_with(config: SplineOptConfig, maxfun: int) -> tuple[_CountingObjective, float, float, int]:
+    from certus.spline.spline_workers import _polish_lbfgsb_chunked
+
+    knots = _knots(config, 6)
+    objective = _CountingObjective(config, knots)
+    x0 = _point(knots, 150.0)
+    bounds = np.array([[100.0, 200.0]] + [[-14.0, 14.0]] * 6 + [[np.log(1e-6), np.log(1.0)]] * 6)
+    start = float(objective(x0))
+    _, cost, nfev = _polish_lbfgsb_chunked(objective, x0, bounds, maxfun, threading.Event())
+    return objective, start, cost, nfev
+
+
+def test_the_fd_prefix_is_off_by_default() -> None:
+    """C1: the prefix is 0 by default, so the polish makes the single L-BFGS-B call it always made."""
+    assert SplineOptConfig.spline_polish_fd_prefix_maxfun == 0
+    assert inspect.signature(SplineOptConfig.__init__).parameters["spline_polish_fd_prefix_maxfun"].default == 0
+
+
+@pytest.mark.parametrize("on", [False, True], ids=["fd", "analytic"])
+def test_without_a_prefix_the_polish_makes_one_call(monkeypatch: pytest.MonkeyPatch, on: bool) -> None:
+    calls = _record_minimize(monkeypatch)
+    _polish_with(_config(on=on), 400)
+    assert [(c["jac"], c["maxfun"]) for c in calls] == [(True if on else None, 400)]
+
+
+def test_the_prefix_runs_finite_differences_then_the_analytic_gradient(monkeypatch: pytest.MonkeyPatch) -> None:
+    """With the analytic gradient on and a prefix of 60, a finite-difference pass of at most 60 evaluations, then the
+    analytic pass with the rest of the 400; the reported count is the sum, and the result is no worse than the start."""
+    calls = _record_minimize(monkeypatch)
+    objective, start, cost, nfev = _polish_with(_config(on=True).replace(spline_polish_fd_prefix_maxfun=60), 400)
+    assert len(calls) == 2
+    first, second = calls
+    assert (first["jac"], first["maxfun"]) == (None, 60)
+    assert (second["jac"], second["maxfun"]) == (True, 400 - first["nfev"])
+    assert nfev == first["nfev"] + second["nfev"]
+    assert objective.gradient_calls > 1
+    assert cost <= start
+
+
+def test_the_prefix_needs_the_analytic_gradient(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without the analytic gradient the prefix changes nothing: one finite-difference call with the whole budget."""
+    calls = _record_minimize(monkeypatch)
+    _polish_with(_config(on=False).replace(spline_polish_fd_prefix_maxfun=60), 400)
+    assert [(c["jac"], c["maxfun"]) for c in calls] == [(None, 400)]
+
+
+def test_a_prefix_beyond_the_budget_is_a_finite_difference_polish(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = _record_minimize(monkeypatch)
+    _polish_with(_config(on=True).replace(spline_polish_fd_prefix_maxfun=10_000), 40)
+    assert [(c["jac"], c["maxfun"]) for c in calls] in ([(None, 40)], [(None, 40), (True, 40 - calls[0]["nfev"])])

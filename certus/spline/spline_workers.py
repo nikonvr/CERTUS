@@ -42,6 +42,7 @@ from certus.spline.spline_objective import (
     spline_spectral_mse_from_xy_nk,
     x_slice_n_to_physical_nodes,
 )
+from certus.spline.spline_polish_mixed import minimize_polish
 from certus.utils.certus_index_utils import (
     _ratio_theoretical_from_nk,
     _reflectance_ratio_theoretical_from_nk,
@@ -272,15 +273,8 @@ def _polish_lbfgsb_chunked(
         logging.getLogger("CERTUS").debug("Analytic gradient probe failed, falling back to numerical", exc_info=True)
 
     try:
-        res = minimize(
-            _minimize_fn,
-            x_cur,
-            method="L-BFGS-B",
-            jac=_minimize_jac,
-            bounds=bds,
-            options={"maxfun": int(maxfun_total), "ftol": 1e-12, "gtol": 1e-9},
-            callback=_cb,
-        )
+        _fd_prefix = int(getattr(_orig_obj.cfg, "spline_polish_fd_prefix_maxfun", 0) or 0)
+        res = minimize_polish(_minimize_fn, obj, x_cur, _minimize_jac, bds, int(maxfun_total), _fd_prefix, _cb)
 
         _xf = np.asarray(res.x, dtype=np.float64).ravel().copy()
 

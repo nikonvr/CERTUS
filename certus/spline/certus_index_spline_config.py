@@ -179,6 +179,7 @@ class SplineOptConfig:
     nk_profile_interp: str = "smooth"
     spline_min_delta_lambda_over_lambda_mean: float = 0.02
     spline_mono_analytic_gradient: bool = False
+    spline_polish_fd_prefix_maxfun: int = 0
 
     # --- Composed configs ---
     pglobal: SplinePGlobalConfig = field(default_factory=SplinePGlobalConfig)
@@ -222,6 +223,7 @@ class SplineOptConfig:
         nk_profile_interp="smooth",
         spline_min_delta_lambda_over_lambda_mean=0.02,
         spline_mono_analytic_gradient=False,
+        spline_polish_fd_prefix_maxfun=0,
         **kwargs,
     ):
         self.lam_nm = lam_nm
@@ -257,6 +259,7 @@ class SplineOptConfig:
         self.nk_profile_interp = nk_profile_interp
         self.spline_min_delta_lambda_over_lambda_mean = spline_min_delta_lambda_over_lambda_mean
         self.spline_mono_analytic_gradient = spline_mono_analytic_gradient
+        self.spline_polish_fd_prefix_maxfun = spline_polish_fd_prefix_maxfun
         self.pglobal = SplinePGlobalConfig()
         self.smart_init = SplineSmartInitConfig()
         self.corridor = SplineCorridorConfig()

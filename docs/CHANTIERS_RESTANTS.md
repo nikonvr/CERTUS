@@ -11,7 +11,7 @@ Chantiers ouverts uniquement (les clos sortent de la page ; bilans dans `reports
 | 32 | P3 | Moyenne | Co-conception C : contrôlabilité dans DESIGN | [Bilan 49](../reports/chantier49_2026-11-18/bilan.md) : seulement 2 plans, insuffisant pour corréler marges/dynamiques au SEEL. | Archivé si corrélation faible ; sinon critère proposé à 👤. | A §1.4 |
 | 05 | P3 | Moyenne | Ajustement Sellmeier SUBSTRATE (D6) | Tester `sellmeier_ir_pole` sur indice mesuré ([bilan](../reports/chantier05_2026-11-18/bilan.md)), puis Jacobien analytique de la variante standard. | Jacobien gardé s'il accélère. | A §4 |
 | 41 | P3 | Faible (👤) | PR Dependabot | Cinq PR CI (#10–#14 : `codeql-action`, `upload-artifact`, `setup-uv`). | 👤 fusionne ou ferme. | G §2.8 |
-| 21 | P3 | Forte | Dérivées SPLINE (D4/D5) | Polissage monotone clos ([bilan](../reports/chantier21_2026-11-19/bilan.md)). Reste : profil puis dérivées des nœuds libres et du Smart Init. | Vérifier cas limites + replis ; garder si plus rapide. | A §4 |
+| 21 | P3 | Forte | Dérivées SPLINE (D4/D5) | Profil puis dérivées des nœuds libres et du Smart Init ([bilan](../reports/chantier21_2026-11-19/bilan.md)). | Vérifier cas limites + replis ; garder si plus rapide. | A §4 |
 | 33 | P1 | Validation humaine | U13 : écran réel, Narrateur, 5 utilisateurs | Partie machine prête (`U13_protocole.md`). | Bloqué : date, testeurs, matériel. | U13 |
 
 ## Sources

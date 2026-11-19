@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CAPS = {
     "CLAUDE.md": 6_200,
     "AGENTS.md": 1_250,
-    "docs/CHANTIERS_RESTANTS.md": 2_820,
+    "docs/CHANTIERS_RESTANTS.md": 2_780,
     "docs/ETAT_acquis.md": 990,
     "docs/REGLES_reference.md": 6_200,
 }

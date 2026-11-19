@@ -15,7 +15,8 @@ l'extension IR tourne quand la bande depasse 2500 nm.
 🔑 CE QUI SE COMPARE. Quand la bande depasse 2500 nm et commence sous 2200 nm, INDEX ajuste le modele de
 Tauc-Lorentz-Urbach jusqu'a 2200 nm seulement, puis fige l'epaisseur et n, k sous 2500 nm avant l'extension IR ;
 l'application autonome ajuste le meme modele sur toute la bande. L'epaisseur et n(633) d'INDEX sont alors ceux de
-l'etage TLU. Le banc l'ecrit sur chaque ligne (`etages`).
+l'etage TLU. Le banc l'ecrit sur chaque ligne (`etages`). `--tlu-pleine-plage` allume l'option `tlu_full_range`
+d'INDEX (inactive par defaut) : un seul etage sur toute la bande, comme l'application autonome.
 
 INDEX n'est pas reproductible (generateurs non amorces, ETAT section 3) : chaque reference tourne `--runs` fois, et
 chaque execution est gardee.
@@ -111,14 +112,16 @@ def _summary(res, middle_nm: float) -> dict | None:
     }
 
 
-def fit_middle_nm(low: float, high: float) -> float:
+def fit_middle_nm(low: float, high: float, tlu_full_range: bool = False) -> float:
     """The middle of the band INDEX fits the model on: up to 2200 nm when it splits the fit in two stages."""
-    if high > 2500.0 and low < 2200.0:
-        high = 2200.0
+    from certus.core.certus_index_config import TLU_TWO_STAGE_MAX_NM, index_uses_two_stage
+
+    if index_uses_two_stage(low, high, tlu_full_range):
+        high = TLU_TWO_STAGE_MAX_NM
     return 0.5 * (low + high)
 
 
-def _one_run(ref: dict, path: Path, timeout_s: float) -> dict:
+def _one_run(ref: dict, path: Path, timeout_s: float, tlu_full_range: bool = False) -> dict:
     from PyQt6.QtCore import QEventLoop, QTimer
 
     from certus.ui.certus_index_ui import CertusIndexApp
@@ -153,7 +156,8 @@ def _one_run(ref: dict, path: Path, timeout_s: float) -> dict:
             app.sb_lmin.setValue(float(low))
         if high is not None:
             app.sb_lmax.setValue(float(high))
-        middle = fit_middle_nm(app.sb_lmin.value(), app.sb_lmax.value())
+        app._tlu_full_range = bool(tlu_full_range)
+        middle = fit_middle_nm(app.sb_lmin.value(), app.sb_lmax.value(), tlu_full_range)
         from certus.core.certus_substrate_db import SUBSTRATE_LIST
 
         settings = {
@@ -222,6 +226,8 @@ def main() -> int:
     ap.add_argument("--seulement", default="", help="noms de references separes par des virgules")
     ap.add_argument("--timeout", type=float, default=1800.0, help="secondes par execution")
     ap.add_argument("--out", default=None)
+    ap.add_argument("--tlu-pleine-plage", action="store_true",
+                    help="option tlu_full_range d'INDEX : TLU sur toute la bande au-dela de 2200 nm (inactive par defaut)")
     ap.add_argument("--garder-exports", action="store_true",
                     help="laisse dans reports/ les Report_INDEX_* qu'INDEX ecrit a chaque ajustement (par defaut : deplaces dans le dossier temporaire)")
     a = ap.parse_args()
@@ -240,7 +246,8 @@ def main() -> int:
         refs = [ref for ref in refs if ref["nom"] in wanted]
     provenance = _provenance()
     be.emit(f"BENCH_BASE_DEPOTS commit={provenance['git_commit'][:8]} dirty={provenance['git_dirty']} "
-            f"references={len(refs)} runs={a.runs}")
+            f"references={len(refs)} runs={a.runs} tlu_pleine_plage={a.tlu_pleine_plage}")
+    provenance["tlu_pleine_plage"] = bool(a.tlu_pleine_plage)
 
     results = []
     exports_before = _index_exports()
@@ -249,7 +256,7 @@ def main() -> int:
             for ref in refs:
                 path = _measurement(ref, catalogue, Path(tmp))
                 for run in range(1, a.runs + 1):
-                    out = _one_run(ref, path, a.timeout)
+                    out = _one_run(ref, path, a.timeout, a.tlu_pleine_plage)
                     middle = (out.get("reglages") or {}).get("lambda_milieu_nm")
                     n_mid_ref = None if middle is None else _n_at(SimpleNamespace(**ref["parametres"]), middle)
                     results.append({"reference": ref["nom"], "execution": run, "reference_n_milieu": n_mid_ref, **out})

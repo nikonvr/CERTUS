@@ -16,6 +16,7 @@ from certus.core.certus_core import (
     SUBSTRATE_LIST,
     get_resource_path,
 )
+from certus.core.certus_index_config import index_uses_two_stage
 from certus.core.certus_index_core import (
     _SILICON_WLS,
     OptimizationConfig,
@@ -181,7 +182,7 @@ class CertusIndexWorkerMixin:
 
         # Two-stage TLU (lambda<=2200) + IR spline only if the user window contains lambda < 2200 nm.
         # Otherwise (e.g., fit only 3500-5200 nm): a single stage over the entire range avoids 0 points.
-        use_two_stage = config.lambda_max > 2500.0 and config.lambda_min < 2200.0
+        use_two_stage = index_uses_two_stage(config.lambda_min, config.lambda_max, config.tlu_full_range)
 
         if use_two_stage:
             self.logger.info(
@@ -306,7 +307,9 @@ class CertusIndexWorkerMixin:
 
         # Check if there are spectral points in the configured range
         wls_target = self.target_data["lambda"].to_numpy(dtype=np.float64)
-        use_two_stage = self.sb_lmax.value() > 2500.0 and self.sb_lmin.value() < 2200.0
+        use_two_stage = index_uses_two_stage(
+            self.sb_lmin.value(), self.sb_lmax.value(), getattr(self, "_tlu_full_range", False)
+        )
         effective_lambda_max = self.sb_lmax.value()
         if use_two_stage:
             effective_lambda_max = 2200.0
@@ -439,6 +442,7 @@ class CertusIndexWorkerMixin:
             substrate_thickness_nm=sub_thickness_nm,
             n_sub_data=n_sub_data,
             ir_analytic_polish=getattr(self, "_ir_analytic_polish", False),
+            tlu_full_range=getattr(self, "_tlu_full_range", False),
         )
 
         # Start progress widget timing

@@ -45,6 +45,20 @@ PHASE2_IR_PGLOBAL_OVERRIDES_FAST = {
     "sub_n_samples_per_iter": 80,
 }
 
+#: Upper end of the first INDEX stage when the band crosses into the IR: Tauc-Lorentz-Urbach is fitted up to here, then
+#: thickness and index are frozen before the IR extension.
+TLU_TWO_STAGE_MAX_NM = 2200.0
+
+
+def index_uses_two_stage(lambda_min: float, lambda_max: float, tlu_full_range: bool = False) -> bool:
+    """Whether INDEX fits in two stages: a band past 2500 nm that starts under TLU_TWO_STAGE_MAX_NM.
+
+    `tlu_full_range` (off by default, lot 2d) fits the whole band in one stage, as the standalone INDEX application of the
+    deposit database does (example/database_depots/README.md).
+    """
+    return (not tlu_full_range) and lambda_max > 2500.0 and lambda_min < TLU_TWO_STAGE_MAX_NM
+
+
 class OptimizationConfig:
     """Configuration for INDEX optimization - Supports R, T, R+T, Frosted Glass, TLU and Spline modes"""
 
@@ -76,6 +90,7 @@ class OptimizationConfig:
         "target_data",
         "thickness_max",
         "thickness_min",
+        "tlu_full_range",
         "use_normalized",
         "weight_R",
         "weight_T",
@@ -111,11 +126,14 @@ class OptimizationConfig:
         n_sub_data: np.ndarray | None = None,
         random_seed: int | None = None,
         ir_analytic_polish: bool = False,
+        tlu_full_range: bool = False,
     ) -> None:
 
         self.target_data = target_data
 
         self.data_type = data_type
+
+        self.tlu_full_range = bool(tlu_full_range)
 
         self.substrate = canonicalize_substrate_label(substrate) or str(substrate)
         self.substrate_sellmeier_id = substrate_sellmeier_id(self.substrate)

@@ -84,14 +84,11 @@ jobs:
           python -c "import certus.physics.certus_opt_tmm as m, pathlib, sys; sys.exit(0 if pathlib.Path(m.__file__).is_relative_to(pathlib.Path.cwd()) else 1)"
 
       - name: Types (mypy) sur domain, physics et core
-        # S4.4. NON BLOQUANT pour l'instant : le plan le rend bloquant sur ces trois paquets une fois qu'une exécution
-        # de la CI l'aura vu vert (le poste de travail est sous Windows, la CI sous Linux : les branches `sys.platform`
-        # et les versions des bibliothèques peuvent faire apparaître ce que le poste ne montre pas). Les réglages sont
-        # dans `[tool.mypy]` de pyproject.toml ; le cliquet des annotations, lui, est un test (`fonctions_non_annotees`).
-        continue-on-error: true
+        # S4.4, BLOQUANT depuis le 2026-11-19 (D110) : 0 erreur sur les trois paquets sous Windows (mypy 2.4.1). mypy
+        # vient de l'extra `dev`, comme pytest. Les réglages sont dans `[tool.mypy]` de pyproject.toml ; le cliquet des
+        # annotations, lui, est un test (`fonctions_non_annotees`).
         run: |
           source .venv/bin/activate
-          uv pip install mypy
           python -m mypy --version
           python -m mypy
 

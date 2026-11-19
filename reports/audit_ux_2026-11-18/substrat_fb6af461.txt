@@ -1,0 +1,21 @@
+
+--- RESOLUTION: 1920x1080 ---
+MODULE                 plot%  panel   min  keys  tables  ISSUES
+----------------------------------------------------------------------------------------------------
+CERTUS_SUBSTRATE_INDEX    n/a   None  None    14     0/0  OK
+----------------------------------------------------------------------------------------------------
+modules with at least one issue: 0/1
+
+--- RESOLUTION: 1366x768 ---
+MODULE                 plot%  panel   min  keys  tables  ISSUES
+----------------------------------------------------------------------------------------------------
+CERTUS_SUBSTRATE_INDEX    n/a   None  None    14     0/0  OK
+----------------------------------------------------------------------------------------------------
+modules with at least one issue: 0/1
+
+--- RESOLUTION: 1280x720 logical, scale 1.5 ---
+MODULE                 plot%  panel   min  keys  tables  ISSUES
+----------------------------------------------------------------------------------------------------
+CERTUS_SUBSTRATE_INDEX    n/a   None  None    14     0/0  OK
+----------------------------------------------------------------------------------------------------
+modules with at least one issue: 0/1

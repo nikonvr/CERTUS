@@ -1207,10 +1207,12 @@
         </div>
         <h3>2.6 Stop model and crash causes</h3>
         <p><code>certus_strat_readings::stop_model_flags</code> selects
-            <code>exact_inversion=True</code>, <code>exact_anchors=True</code> and <code>oms_arming=2</code> by default.
+            <code>exact_inversion=True</code>, <code>exact_anchors=True</code> and <code>oms_arming=1</code> by default.
             Production callers pass these flags in Phase A and Phase B; the historical defaults in kernel signatures
             are not the production defaults. The controller cannot stop at a level crossed before the last extremum
-            is declared: under <code>ARMING_NEVER_STOPS</code>, this is <code>CRASH_NOT_ARMED</code>.</p>
+            is declared: under <code>ARMING_LATE_STOP</code> (the default) it stops late, at the reading where the extremum
+            is declared; under <code>ARMING_NEVER_STOPS</code> (<code>oms_arming=2</code>) the layer never ends, and this is
+            <code>CRASH_NOT_ARMED</code>.</p>
         <h4>Historical diagnosis before controller arming was added</h4>
         <div style="border:3px solid #b91c1c;border-radius:10px;padding:14px 18px;margin:16px 0;background:#fef2f2;">
             <p style="margin:0 0 10px;">

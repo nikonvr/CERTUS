@@ -86,7 +86,7 @@ SEEL du `RESULT` officiel ; taux de plantage de `RANK00`.
 | `index_corridor` | 0,005 en indice absolu, actif |
 | DESIGN, étape globale (2026-10-23) | mémétique, 1000 enfants, population 30 (`_memetic_children = 0` : PGLOBAL) ; champion Pareto sans couche < 5 nm, actif ([bilan](../reports/DESIGN_bs5050_2026-10-22/bilan.md)) |
 | `photometric_curvature_amp` ; `affine_scale_amp`, `affine_offset_amp` | 0,00375 ; 0,05 et 0,02 |
-| modèle d'arrêt et étalonnage de STRAT (2026-11-17, délégué par 👤) | inchangés : attente sans fin, étalonnage parfait ; arrêt au niveau ou tardif et échelle de 1 % ne changent pas l'ordre des plans déposables du juge de paix ([bilan](../reports/chantier44_etape3_2026-11-17/bilan.md)) |
+| modèle d'arrêt et étalonnage de STRAT | arrêt tardif (`oms_arming` = 1, 👤 2026-11-19), étalonnage parfait (2026-11-17, délégué par 👤) ; arrêt au niveau ou tardif et échelle de 1 % ne changent pas l'ordre des plans déposables du juge de paix ([bilan](../reports/chantier44_etape3_2026-11-17/bilan.md)) |
 | `allow_rate`, `rate_by_swing`, `rate_rescue` (`rate_rescue_few` 10) | vrais (« le cas général », 2026-10-12) |
 | `elite_rate_moves`, `elite_rate_max_candidates` | vrai, 120 (2026-10-13) |
 | `strat_local_search` | actif : recherche et contrôle à ±0,010, garde au corridor configuré (`strat_local_search_guard`, 2026-10-23) |
@@ -118,6 +118,9 @@ dépendant de T ou de λ, grenaille, bruit multiplicatif ou corrélé. Seul un r
 | date | règle | portée | raison |
 |---|---|---|---|
 | 2026-11-15 | interdit 3 (`reports/`) | retrait des `.md` réimportés par `20bd199d` (revert `e0c1fe70`) | déjà jugés obsolètes par `b6fb1939` ; copie hors dépôt dans `CERTUS/certus1111_hors_git_2026-11-15/` |
+| 2026-11-19 | C1 (paramètre inactif par défaut) | SPLINE : `spline_mono_analytic_gradient` et `spline_polish_fd_prefix_maxfun` = 3000 allumés | RMSE meilleur que l'ancien défaut sur les deux exemples ([bilan](../reports/chantier21_2026-11-19/bilan.md)) |
+| 2026-11-19 | C1 (paramètre inactif par défaut) | SUBSTRATE : `sellmeier_ir_pole` allumé | écart d'ajustement au niveau du bruit sur les substrats du catalogue ([bilan](../reports/chantier05_2026-11-18/bilan.md)) |
+| 2026-11-19 | décision D98 | STRAT : arrêt tardif (`oms_arming` = 1) au lieu de l'attente sans fin | même meilleur SEEL, 101 plans optiques purs déposables contre 0 ([rapport](../reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md)) |
 
 ### STRAT
 
@@ -126,8 +129,8 @@ dépendant de T ou de λ, grenaille, bruit multiplicatif ou corrélé. Seul un r
   infini) rejette la stratégie : consensus infini (décision de 👤 du 2026-11-15).
 - Quatre couches d'historique POEM, 16 points d'historique ; sous un nombre minimal de blocs la DP ne rend que les graines
   structurées, et le journal le dit.
-- **Arrêt** : ancre et inversion exactes de l'arrêt POEM ; **l'OMS attend sans fin** (`oms_arming` = 2) ; lecture d'arrêt
-  brute ([rapport](../reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md)).
+- **Arrêt** : ancre et inversion exactes de l'arrêt POEM ; **l'OMS s'arrête tard**, là où le dernier extremum est déclaré
+  (`oms_arming` = 1, 👤 2026-11-19) ; lecture d'arrêt brute ([rapport](../reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md)).
 - **Rate dans tous les scénarios** : couche posée au temps, à la vitesse estimée (`_rate_layer_thickness`) ; secours Rate, enfants
   d'ELITE qui gardent et déplacent les couches Rate, optique possible après du Rate ; `rate_rescue_hard` inactif (sans gain mesuré).
 - `rank_refined_first` gardé (2026-11-17, « mesurer d'abord ») : au juge de paix, classer au score final donne le même
@@ -172,7 +175,6 @@ Les précautions du cache Numba restent dans le [mode opératoire](../reports/re
 | **interface** | revoir les onze fenêtres ; teintes de marque, bande des fichiers récents, bornes des champs numériques |
 | **base de dépôts** | RE depuis un dépôt (découper `load_reverse_engineering_from_path`) ? apparier T et R d'un même échantillon nommées différemment ? INDEX phase 2 : la fenêtre λ de l'utilisateur est remplacée par toute l'étendue des données, voulu ? |
 | **ELITE « tour à tour »** | `elite_round_robin` : médiane +0,7 % sur six graines, mesurée sur un code antérieur ; inactif ; il manque le bruit d'une même graine rejouée |
-| **arrêt de STRAT (D98)** | attente sans fin (défaut) ou arrêt tardif (`oms_arming=1`) : même meilleur SEEL à la dispersion près, mais 101 plans optiques purs déposables avec l'arrêt tardif contre 0 ([rapport](../reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md)) |
 | **le Rate et l'optique pure** | le meilleur plan porte du Rate sous tous les modèles d'arrêt ; le Rate de STRAT n'a ni dérive de la source ni bruit de vitesse (§7) ; A4 : réserver des parents optiques purs à ELITE ne donne aucun plan optique pur au modèle d'arrêt par défaut ([rapport](../reports/ANALYSE_claude_2026-10-22/bilan.md) §4). Dépend de la stabilité réelle de la vitesse (A25, §6) |
 | **comportements** | D108 (lever `ValueError`), D109 (épaisseur ≥ 0 au TMM), D114 (politique des entrées invalides) : changements de comportement, test rouge d'abord |
 | **CI** (D110) | déclarer `pytest-benchmark` et `pytest-xdist` ; ajouter les trois contrôles documentaires à `lint.yml` ; rendre bloquantes les étapes mypy et `bench_kernels` |

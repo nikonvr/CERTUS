@@ -1100,7 +1100,12 @@ class CertusHub(CertusDialogMixin, QMainWindow):
             if len(candidates) == 1:
                 return candidates[0]
             if len(candidates) > 1:
-                return by_name if by_name in candidates else self._ask_module(path, candidates)
+                explicit = by_name if by_name in candidates else None
+                if set(candidates) == {"CERTUS_METAL_SINGLE.py", "CERTUS_METAL_BILAYER.py"} and not any(
+                    word in name for word in ("single", "bilayer")
+                ):
+                    explicit = None  # a bare "metal" does not say which substrate: ask
+                return explicit or self._ask_module(path, candidates)
             return by_name or "CERTUS_DESIGN.py"
         if name.endswith(".xlsx") and (by_name == "CERTUS_RE.py" or self._is_re_workbook(path)):
             return "CERTUS_RE.py"
@@ -1109,21 +1114,26 @@ class CertusHub(CertusDialogMixin, QMainWindow):
     def _ask_module(self, path: str, scripts: Sequence[str]) -> str | None:
         """Ask which of ``scripts`` should open ``path``; None when the operator declines."""
         titles = {item["script"]: item["title"] for item in self.apps}
+        subs = {item["script"]: item.get("sub", "") for item in self.apps}
         labels = [titles.get(script, Path(script).stem) for script in scripts]
-        choice, accepted = QInputDialog.getItem(
-            self, "Open with…", f"{Path(path).name} can be read by several modules. Open it with:", labels, 0, False
+        hints = "\n".join(
+            f"  {label}: {subs[script]}" for label, script in zip(labels, scripts, strict=True) if subs.get(script)
         )
+        prompt = f"{Path(path).name} can be read by several modules:\n{hints}\n\nOpen it with:" if hints else (
+            f"{Path(path).name} can be read by several modules. Open it with:"
+        )
+        choice, accepted = QInputDialog.getItem(self, "Open with…", prompt, labels, 0, False)
         return scripts[labels.index(choice)] if accepted and choice in labels else None
 
     def _dropped_paths(self, event) -> list[str]:
+        return [p for p in self._all_dropped_paths(event) if p.lower().endswith(self.DROP_EXTENSIONS)]
+
+    @staticmethod
+    def _all_dropped_paths(event) -> list[str]:
         md = event.mimeData()
         if md is None or not md.hasUrls():
             return []
-        return [
-            p
-            for p in (u.toLocalFile() for u in md.urls())
-            if p and p.lower().endswith(self.DROP_EXTENSIONS)
-        ]
+        return [p for p in (u.toLocalFile() for u in md.urls()) if p]
 
     def dragEnterEvent(self, event) -> None:
         """Accept a drop when at least one file is of a type CERTUS can read."""
@@ -1144,6 +1154,12 @@ class CertusHub(CertusDialogMixin, QMainWindow):
         if script is None:
             return
         self._log_message(f"Dropped {Path(target).name} -> launching {Path(script).stem}")
+        skipped = [Path(p).name for p in paths[1:]]
+        skipped += [Path(p).name for p in self._all_dropped_paths(event) if p not in paths]
+        if skipped:
+            note = f"Opened {Path(target).name}; not opened: {', '.join(skipped)}"
+            self._log_message(note)
+            self.statusBar().showMessage(note, 8000)
         # The module opens the file it is given; without it a drop only started an empty window.
         self.launch_module(script, files=[target])
 

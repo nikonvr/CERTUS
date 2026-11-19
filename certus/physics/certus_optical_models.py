@@ -240,18 +240,18 @@ def epsilon1_TL_overdamped_point(E: float, Eg: float, A: float, E0: float, C: fl
 
 @njit(cache=True, nogil=True, error_model="numpy")
 def _epsilon1_TL_overdamped(E_array: np.ndarray, Eg: float, A: float, E0: float, C: float, eps_inf: float) -> np.ndarray:
-    """epsilon1_TL_analytic for C >= 2 E0, with the same floor."""
+    """epsilon1_TL_analytic for C >= 2 E0 (no floor since 2026-11-19, like the underdamped branch)."""
     eps1_array = np.empty(len(E_array), dtype=np.float64)
     for i in range(len(E_array)):
         val = epsilon1_TL_overdamped_point(E_array[i], Eg, A, E0, C, eps_inf)
-        eps1_array[i] = max(val, 1.0) if np.isfinite(val) else eps_inf
+        eps1_array[i] = val if np.isfinite(val) else eps_inf
     return eps1_array
 
 
 @njit(cache=True, nogil=True, error_model="numpy")
 def epsilon1_gradient_overdamped(E_array: np.ndarray, Eg: float, A: float, E0: float, C: float, eps_inf: float) -> np.ndarray:
     """`gradient_analytic._compute_epsilon1_gradient_kernel` for C >= 2 E0: eps1 from the complex closed form, its
-    derivatives in Eg, A, E0 and C by central differences (step 1e-6 of each), with the same floor."""
+    derivatives in Eg, A, E0 and C by central differences (step 1e-6 of each), with no floor."""
     n = len(E_array)
     result = np.zeros((7, n), dtype=np.float64)
     params = np.array([Eg, A, E0, C], dtype=np.float64)
@@ -261,8 +261,6 @@ def epsilon1_gradient_overdamped(E_array: np.ndarray, Eg: float, A: float, E0: f
         if not np.isfinite(val):
             result[0, i] = eps_inf
             result[6, i] = 1.0
-        elif val < 1.0:
-            result[0, i] = 1.0
         else:
             result[0, i] = val
             for k in range(4):
@@ -345,7 +343,7 @@ def epsilon1_TL_analytic(E_array: np.ndarray, Eg: float, A: float, E0: float, C:
 
         val = eps_inf + term1 + term2 + term3 + term4 + term5
 
-        eps1_array[i] = max(val, 1.0) if np.isfinite(val) else eps_inf
+        eps1_array[i] = val if np.isfinite(val) else eps_inf
 
     return eps1_array
 

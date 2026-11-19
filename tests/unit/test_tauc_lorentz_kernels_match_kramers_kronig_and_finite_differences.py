@@ -7,7 +7,7 @@ right shape, and a fit built on it converges to the wrong place without a word.
 
 What is pinned here, against truths that do not come from the code:
 
-    EPS1 IS THE KRAMERS-KRONIG TRANSFORM OF EPS2 WHERE THAT TRANSFORM IS AT LEAST 1 (below, the model floors eps1 at 1.0 and so does the kernel, M-L1): the closed form of 120 lines of logarithms and arctangents against a numerical principal-value integral (scipy) of the
+    EPS1 IS THE KRAMERS-KRONIG TRANSFORM OF EPS2 AT EVERY ENERGY (no floor since 2026-11-19): the closed form of 120 lines of logarithms and arctangents against a numerical principal-value integral (scipy) of the
         Tauc-Lorentz absorption, at nine energies on three materials, below and above the gap, to 1e-3 (the numerical tail is the limit here: 4e-5 measured)
     EVERY DERIVATIVE IS THE DERIVATIVE OF THE VALUE: central finite differences of the same kernel, parameter by parameter, to 1e-6 of the largest derivative (1e-9 measured);
         the two that are zero by construction (eps1 does not depend on Eu, eps2 not on eps_inf) are zero
@@ -85,14 +85,10 @@ def test_eps1_is_the_kramers_kronig_transform_of_the_tauc_lorentz_absorption(nam
     Eg, A, E0, C, _Eu, eps_inf = p
     kernel = _compute_epsilon1_gradient_kernel(ENERGIES, *eps1_args(p))[0]
     numeric = np.array([kramers_kronig_eps1(E, Eg, A, E0, C, eps_inf) for E in ENERGIES])
-    # THE MODEL OF CERTUS FLOORS EPS1 AT 1.0 (`epsilon1_TL_analytic`, which the cost of the fit uses), and since the
-    # audit of 2026-11-15 (M-L1, decision of the owner: keep the floor, zero gradient there) this kernel returns the
-    # same floored value. The physical eps1 is lower above the resonance (down to -38.8 on these materials): where
-    # the Kramers-Kronig value is under 1 the kernel is NOT the physics, it is the floor, and this test says so.
-    floored = numeric < 1.0
-    np.testing.assert_allclose(kernel[~floored], numeric[~floored], rtol=0.0, atol=1e-3)
-    np.testing.assert_array_equal(kernel[floored], 1.0)
-    assert int((~floored).sum()) >= 5, "too few energies left to check the closed form against Kramers-Kronig"
+    # No floor since 2026-11-19 (decision of the owner): eps1 is the Kramers-Kronig transform at every energy, including
+    # above the resonance where it goes below 1 and below 0 (down to -38.8 on these materials).
+    np.testing.assert_allclose(kernel, numeric, rtol=0.0, atol=1e-3)
+    assert int((numeric < 1.0).sum()) >= 1, "the comparison must include energies where eps1 is under 1"
 
 
 def test_the_numerical_transform_can_tell_a_wrong_closed_form_from_a_right_one():

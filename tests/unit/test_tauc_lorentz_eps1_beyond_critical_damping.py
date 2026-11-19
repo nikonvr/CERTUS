@@ -36,7 +36,7 @@ def test_eps1_matches_kramers_kronig_when_c_exceeds_twice_e0(name: str) -> None:
     closed = epsilon1_TL_analytic(ENERGIES, Eg, A, E0, C, eps_inf)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        kk = np.maximum(np.array([kramers_kronig_eps1(e, Eg, A, E0, C, eps_inf) for e in ENERGIES]), 1.0)
+        kk = np.array([kramers_kronig_eps1(e, Eg, A, E0, C, eps_inf) for e in ENERGIES])  # no floor since 2026-11-19
 
     np.testing.assert_allclose(closed, kk, rtol=2e-5, atol=1e-6)
 

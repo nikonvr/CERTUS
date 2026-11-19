@@ -402,13 +402,11 @@ def _compute_epsilon1_gradient_kernel(
             d_term5_mid_dC = (-d_gamma2_dC * inv_zeta4) + (E_sq - gamma_sq) * (-(inv_zeta4**2) * d_zeta4_dC)
             dT5_dC = d_K5_dC * term5_mid * brack5 + K5 * d_term5_mid_dC * brack5 + K5 * term5_mid * d_brack5_dC
         val = eps_inf + T1 + T2 + T3 + T4 + T5
-        # Same floor as epsilon1_TL_analytic, which the cost uses: where epsilon1 is held at 1.0 (or falls back to
-        # eps_inf when not finite) it is flat, so every other derivative is zero (audit 2026-11-15, M-L1).
+        # Same epsilon1 as epsilon1_TL_analytic, which the cost uses: no floor since 2026-11-19 (owner decision), so the
+        # derivative is exact everywhere; where epsilon1 is not finite it falls back to eps_inf and is flat but in eps_inf.
         if not np.isfinite(val):
             result[0, i] = eps_inf
             result[6, i] = 1.0
-        elif val < 1.0:
-            result[0, i] = 1.0
         else:
             result[0, i] = val
             result[1, i] = dT1_dEg + dT2_dEg + dT3_dEg + dT4_dEg + dT5_dEg

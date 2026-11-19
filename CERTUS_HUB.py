@@ -163,6 +163,7 @@ from certus.ui.certus_ui_utils import (
     init_certus_app,
     open_documentation,
     set_certus_window_icon,
+    show_toast,
 )
 from certus.ui.certus_ui_widgets_factory import (
     create_header_logo_widget,
@@ -1125,15 +1126,36 @@ class CertusHub(CertusDialogMixin, QMainWindow):
         choice, accepted = QInputDialog.getItem(self, "Open with…", prompt, labels, 0, False)
         return scripts[labels.index(choice)] if accepted and choice in labels else None
 
-    def _dropped_paths(self, event) -> list[str]:
-        return [p for p in self._all_dropped_paths(event) if p.lower().endswith(self.DROP_EXTENSIONS)]
-
-    @staticmethod
-    def _all_dropped_paths(event) -> list[str]:
+    def _dropped_files(self, event) -> tuple[list[str], list[str]]:
+        """The local files of a drop: those of a type CERTUS reads, and the others."""
         md = event.mimeData()
         if md is None or not md.hasUrls():
-            return []
-        return [p for p in (u.toLocalFile() for u in md.urls()) if p]
+            return [], []
+        files = [p for p in (u.toLocalFile() for u in md.urls()) if p]
+        readable = [p for p in files if p.lower().endswith(self.DROP_EXTENSIONS)]
+        return readable, [p for p in files if p not in readable]
+
+    def _dropped_paths(self, event) -> list[str]:
+        return self._dropped_files(event)[0]
+
+    def _ask_dropped_file(self, paths: Sequence[str]) -> str | None:
+        """Ask which of several dropped files to open; None when the operator declines."""
+        names = [Path(p).name for p in paths]
+        labels = names if len(set(names)) == len(names) else list(paths)
+        choice, accepted = QInputDialog.getItem(
+            self,
+            "Open which file?",
+            f"{len(paths)} files were dropped; a CERTUS tool opens one file at a time. Open:",
+            labels,
+            0,
+            False,
+        )
+        return paths[labels.index(choice)] if accepted and choice in labels else None
+
+    def _tell_about_drop(self, message: str, level: str = "info") -> None:
+        """Say what became of a drop where the operator looks (a toast), and keep it in the launch log."""
+        self._log_message(message)
+        show_toast(self, message, level, duration_ms=6000)
 
     def dragEnterEvent(self, event) -> None:
         """Accept a drop when at least one file is of a type CERTUS can read."""
@@ -1143,23 +1165,31 @@ class CertusHub(CertusDialogMixin, QMainWindow):
         super().dragEnterEvent(event)
 
     def dropEvent(self, event) -> None:
-        """Open the module able to read the dropped file."""
-        paths = self._dropped_paths(event)
+        """Open the module able to read the dropped file; of several, the one the operator chooses.
+
+        Every other file is named as set aside: the hub used to open the first one and drop the rest
+        silently (UX audit 2026-11-18, item 2).
+        """
+        paths, unreadable = self._dropped_files(event)
         if not paths:
             super().dropEvent(event)
             return
         event.acceptProposedAction()
-        target = paths[0]
+        target = paths[0] if len(paths) == 1 else self._ask_dropped_file(paths)
+        if target is None:
+            self._tell_about_drop(f"Nothing opened: {len(paths)} files were dropped and none was chosen.", "warning")
+            return
         script = self._module_for_dropped_file(target)
         if script is None:
+            self._tell_about_drop(f"Nothing opened: no module was chosen for {Path(target).name}.", "warning")
             return
-        self._log_message(f"Dropped {Path(target).name} -> launching {Path(script).stem}")
-        skipped = [Path(p).name for p in paths[1:]]
-        skipped += [Path(p).name for p in self._all_dropped_paths(event) if p not in paths]
-        if skipped:
-            note = f"Opened {Path(target).name}; not opened: {', '.join(skipped)}"
-            self._log_message(note)
-            self.statusBar().showMessage(note, 8000)
+        set_aside = [f"{Path(p).name} (one file per drop)" for p in paths if p != target]
+        set_aside += [f"{Path(p).name} (not a file CERTUS reads)" for p in unreadable]
+        kept = f"1 of {len(paths) + len(unreadable)} files" if set_aside else Path(target).name
+        message = f"Opening {kept} in {Path(script).stem}: {Path(target).name}"
+        if set_aside:
+            message += f"; set aside: {', '.join(set_aside)}"
+        self._tell_about_drop(message, "warning" if set_aside else "info")
         # The module opens the file it is given; without it a drop only started an empty window.
         self.launch_module(script, files=[target])
 

@@ -115,14 +115,74 @@ def test_in_the_frozen_suite_the_file_follows_the_name_of_the_module(hub, starte
     assert Path(args[2]) == dropped
 
 
-def test_only_the_first_of_several_dropped_files_is_opened(hub, started, tmp_path) -> None:
+@pytest.fixture
+def told(monkeypatch) -> list[str]:
+    """What the hub tells the operator about a drop (the toast), recorded instead of shown."""
+    import CERTUS_HUB
+
+    messages: list[str] = []
+    monkeypatch.setattr(CERTUS_HUB, "show_toast", lambda _parent, text, *_a, **_k: messages.append(text))
+    return messages
+
+
+@pytest.fixture
+def chooser(monkeypatch):
+    """The file chooser of a multi-file drop: records what it offered and answers ``answer[0]`` (None declines)."""
+    from PyQt6.QtWidgets import QInputDialog
+
+    offered: list[list[str]] = []
+    answer: list[str | None] = [None]
+
+    def get_item(_parent, _title, _label, items, *_a, **_k):
+        offered.append(list(items))
+        return (answer[0] or "", answer[0] is not None)
+
+    monkeypatch.setattr(QInputDialog, "getItem", get_item)
+    return offered, answer
+
+
+# UX audit 2026-11-18, item 2: the hub took the first of several dropped files and silently set the others aside.
+
+
+def test_one_dropped_file_is_opened_and_said_so(hub, started, told, tmp_path) -> None:
+    hub.dropEvent(Drop(tmp_path / "my_design.json"))
+
+    assert len(started) == 1
+    [message] = told
+    assert "my_design.json" in message
+    assert "set aside" not in message
+
+
+def test_of_two_dropped_files_the_operator_chooses_which_opens(hub, started, told, chooser, tmp_path) -> None:
+    offered, answer = chooser
     first, second = tmp_path / "first_design.json", tmp_path / "second_design.json"
+    answer[0] = "second_design.json"
 
     hub.dropEvent(Drop(first, second))
 
+    assert offered == [["first_design.json", "second_design.json"]]
     [(_program, args)] = started
-    assert len(args) == 2
-    assert Path(args[1]) == first
+    assert Path(args[1]) == second
+    [message] = told
+    assert "1 of 2 files" in message
+    assert "set aside: first_design.json" in message
+
+
+def test_declining_the_choice_opens_nothing_and_says_so(hub, started, told, chooser, tmp_path) -> None:
+    hub.dropEvent(Drop(tmp_path / "first_design.json", tmp_path / "second_design.json"))
+
+    assert started == []
+    [message] = told
+    assert "Nothing opened" in message
+
+
+def test_a_file_the_suite_cannot_read_is_named_as_set_aside(hub, started, told, tmp_path) -> None:
+    hub.dropEvent(Drop(tmp_path / "my_design.json", tmp_path / "photo.png"))
+
+    [(_program, args)] = started
+    assert Path(args[1]) == tmp_path / "my_design.json"
+    [message] = told
+    assert "set aside: photo.png (not a file CERTUS reads)" in message
 
 
 def test_a_card_starts_its_module_with_nothing_to_open(hub, started) -> None:

@@ -355,7 +355,7 @@ def create_info_icon(tooltip: str, parent=None) -> QPushButton:
 
     btn = QPushButton("?", parent)
 
-    btn.setFixedSize(20, 20)
+    btn.setFixedSize(24, 24)
 
     btn.setToolTip(tooltip)
 
@@ -369,7 +369,7 @@ def create_info_icon(tooltip: str, parent=None) -> QPushButton:
 
             color: {CertusTheme.TEXT_SUB};
 
-            border-radius: 10px;
+            border-radius: 12px;
 
             font-weight: bold;
 

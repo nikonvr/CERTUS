@@ -312,12 +312,12 @@ class MetalBaseApp(CertusBaseApp):
 
             info_btn = QPushButton("?")
 
-            info_btn.setFixedSize(16, 16)
+            info_btn.setFixedSize(24, 24)
 
             info_btn.setToolTip(tooltip_text)
 
             info_btn.setStyleSheet(
-                f"border-radius: 8px; background: {CertusTheme.SECONDARY}; color: {CertusTheme.SECONDARY_LABEL}; font-weight: bold; border: none;"
+                f"border-radius: 12px; background: {CertusTheme.SECONDARY}; color: {CertusTheme.SECONDARY_LABEL}; font-weight: bold; border: none;"
             )
 
             layout.addWidget(info_btn)

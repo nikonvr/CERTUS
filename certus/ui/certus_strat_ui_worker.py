@@ -206,7 +206,7 @@ class CertusStratWorkerMixin:
         self.run_full_btn.setEnabled(True)
 
         try:
-            show_toast(self, "System ready. JIT Warmup complete.", "success")
+            show_toast(self, "Calculation engine ready.", "success")
         except Exception:
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 

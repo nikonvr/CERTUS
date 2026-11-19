@@ -106,7 +106,7 @@ class CertusAppEngineMixin:
             label.setText("Ready (JIT Compiled)")
         self._on_numba_ready()  # Mark as ready
         try:
-            show_toast(self, "System ready. JIT Warmup complete.", "success")
+            show_toast(self, "Calculation engine ready.", "success")
         except Exception:
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
@@ -135,7 +135,7 @@ class CertusAppEngineMixin:
             sl.setText("Ready")
         logging.info("[WARMUP] JIT warmup finished; spectrum eval may proceed.")
         try:
-            show_toast(self, "System ready. JIT Warmup complete.", "success")
+            show_toast(self, "Calculation engine ready.", "success")
         except Exception:
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
         self._on_numba_ready()

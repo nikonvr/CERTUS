@@ -254,7 +254,7 @@ def spectrum_eval_run_preamble(app: Any, run_eval_cb: Any) -> bool:
         # Avoids double message if multiple evals are scheduled before warmup ends.
 
         if not getattr(app, "_spectrum_eval_jit_wait_logged", False):
-            app.log("Waiting for JIT compilation...", "WARNING")
+            app.log("Preparing the calculation engine: you can load files and edit settings while it finishes...", "WARNING")
 
             app._spectrum_eval_jit_wait_logged = True
 

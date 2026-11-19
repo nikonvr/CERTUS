@@ -113,7 +113,7 @@ def _single_RTRback_mse(
 
     If eM_fixed is set: x = [n_knots..., k_knots..., lambda_internes...], eM = eM_fixed.
 
-    If t_tgt and rb_tgt are provided, returns average of R/T/Rback MSE; else R-only MSE.
+    Averages MSE over all provided target curves (R always included, T and Rback included independently when not None).
 
     min_knot_diff: if set (e.g. 1e-5), reject if any np.diff(knot_l) <= min_knot_diff.
 
@@ -197,40 +197,20 @@ def _single_RTRback_mse(
         eM_buffer, nM_complex_2d, nSub_complex_array, l_array
     )
 
-    mse_r = np.nanmean((R_calc - r_tgt) ** 2)
-
-    if t_tgt is not None and rb_tgt is not None:
-        mse_t = np.nanmean((T_calc - t_tgt) ** 2)
-
-        mse_rb = np.nanmean((Rb_calc - rb_tgt) ** 2)
-
-        total_mse = 0.0
-
-        count = 0
-
-        if np.isfinite(mse_r):
-            total_mse += mse_r
-
+    total_mse = 0.0
+    count = 0
+    for calc_arr, tgt_arr in ((R_calc, r_tgt), (T_calc, t_tgt), (Rb_calc, rb_tgt)):
+        if tgt_arr is None:
+            continue
+        diff_sq = (calc_arr - tgt_arr) ** 2
+        valid = np.isfinite(diff_sq)
+        if np.any(valid):
+            total_mse += float(np.mean(diff_sq[valid]))
             count += 1
 
-        if np.isfinite(mse_t):
-            total_mse += mse_t
-
-            count += 1
-
-        if np.isfinite(mse_rb):
-            total_mse += mse_rb
-
-            count += 1
-
-        if count == 0:
-            return 1e12
-
-        return (total_mse / count) + wiggle_penalty
-
-    mse = np.mean((R_calc - r_tgt) ** 2)
-
-    return (mse + wiggle_penalty) if np.isfinite(mse) else np.inf
+    if count == 0:
+        return 1e12 if (t_tgt is not None or rb_tgt is not None) else np.inf
+    return (total_mse / count) + wiggle_penalty
 
 
 # Moved to certus_metal_common.py for mutualization

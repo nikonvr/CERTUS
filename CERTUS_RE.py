@@ -53,6 +53,7 @@ import numpy as np
 from certus.core.certus_core import (
     create_module_environment,
 )
+from certus.ui.certus_engine_messages import ENGINE_PREPARING
 from certus.ui.certus_qt_widgets import (
     QApplication,
 )
@@ -338,7 +339,7 @@ class CertusREApp(
         # i.e. they were unreachable: RE performed no JIT warmup at all and the
         # status bar never showed the compiling message. The first evaluation
         # paid the full Numba compilation instead.
-        self.status_label.setText("Compiling JIT kernels...")
+        self.status_label.setText(ENGINE_PREPARING)
 
         self.warmup_worker = WarmupWorker()
 

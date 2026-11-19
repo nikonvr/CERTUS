@@ -7,6 +7,7 @@ from typing import Any
 from PyQt6.QtCore import pyqtSlot
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, certus_timestamp_display
+from certus.ui.certus_engine_messages import ENGINE_PREPARING, ENGINE_READY, ENGINE_READY_TOAST
 from certus.ui.certus_theme import CertusTheme
 from certus.ui.certus_ui_utils import process_log_queue_standard, show_toast
 from certus.ui.certus_ui_widgets_utils import CertusLogPanel
@@ -71,7 +72,7 @@ class CertusAppEngineMixin:
         self.sig_numba_error.connect(self._on_numba_error_ui)
         label = self._warmup_status_label()
         if label is not None:
-            label.setText("System warming up (compiling JIT)...")
+            label.setText(ENGINE_PREPARING)
         threading.Thread(target=self._warmup_numba_thread_runner, daemon=True).start()
 
     def _compile_numba_kernels(self) -> None:
@@ -103,10 +104,10 @@ class CertusAppEngineMixin:
     def _on_numba_ready_ui(self) -> None:
         label = self._warmup_status_label()
         if label is not None:
-            label.setText("Ready (JIT Compiled)")
+            label.setText(ENGINE_READY)
         self._on_numba_ready()  # Mark as ready
         try:
-            show_toast(self, "Calculation engine ready.", "success")
+            show_toast(self, ENGINE_READY_TOAST, "success")
         except Exception:
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
@@ -132,10 +133,10 @@ class CertusAppEngineMixin:
         self._spectrum_eval_jit_wait_logged = False
         sl = getattr(self, "status_label", None)
         if sl is not None:
-            sl.setText("Ready")
+            sl.setText(ENGINE_READY)
         logging.info("[WARMUP] JIT warmup finished; spectrum eval may proceed.")
         try:
-            show_toast(self, "Calculation engine ready.", "success")
+            show_toast(self, ENGINE_READY_TOAST, "success")
         except Exception:
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
         self._on_numba_ready()

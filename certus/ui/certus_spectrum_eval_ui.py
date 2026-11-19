@@ -15,6 +15,7 @@ import pyqtgraph as pg
 
 from certus.core.certus_design_worker_utils import design_substrate_thickness_nm
 from certus.physics.certus_substrate_absorption import DEFAULT_SUBSTRATE_THICKNESS_NM
+from certus.ui.certus_engine_messages import ENGINE_WAITING
 from certus.ui.certus_ui import CertusTheme
 from certus.utils.certus_copy_utils import copy_optimization_result
 
@@ -254,7 +255,7 @@ def spectrum_eval_run_preamble(app: Any, run_eval_cb: Any) -> bool:
         # Avoids double message if multiple evals are scheduled before warmup ends.
 
         if not getattr(app, "_spectrum_eval_jit_wait_logged", False):
-            app.log("Preparing the calculation engine: you can load files and edit settings while it finishes...", "WARNING")
+            app.log(ENGINE_WAITING, "WARNING")
 
             app._spectrum_eval_jit_wait_logged = True
 

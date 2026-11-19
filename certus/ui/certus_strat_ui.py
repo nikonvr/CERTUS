@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import QApplication, QMessageBox
 
 from certus.core.certus_core import setup_module_logging
 from certus.core.certus_strat_core import APP_CONTEXT, PlotCache, set_robust_material_db
+from certus.ui.certus_engine_messages import ENGINE_PREPARING
 from certus.ui.certus_strat_json_ui import JsonViewerWindow
 from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
 from certus.ui.certus_strat_multigraine_ui import CertusStratMultigraineMixin
@@ -153,7 +154,7 @@ class CertusStratApp(
 
         self.run_full_btn.setEnabled(False)
 
-        self.status_label.setText("System warming up (compiling JIT)...")
+        self.status_label.setText(ENGINE_PREPARING)
 
         # Warmup: _warmup_numba manages its own internal thread, call directly from main thread
 

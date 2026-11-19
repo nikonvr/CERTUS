@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import QApplication, QMessageBox
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, get_export_config
 from certus.core.certus_strat_config import _SPECTRUM_COUNTER
+from certus.ui.certus_engine_messages import ENGINE_READY, ENGINE_READY_TOAST
 from certus.ui.certus_overview_tab import PLACEHOLDER
 from certus.ui.certus_ui import confirm_stop_with_timeout, show_toast
 from certus.utils.certus_strat_service import APP_CONTEXT, select_best_strat_result
@@ -197,7 +198,7 @@ class CertusStratWorkerMixin:
 
         self.logger.info("✅ System Ready (Numba JIT Compiled)")
 
-        self.status_label.setText("Ready.")
+        self.status_label.setText(ENGINE_READY)
 
         self.run_step0_btn.setEnabled(True)
 
@@ -206,7 +207,7 @@ class CertusStratWorkerMixin:
         self.run_full_btn.setEnabled(True)
 
         try:
-            show_toast(self, "Calculation engine ready.", "success")
+            show_toast(self, ENGINE_READY_TOAST, "success")
         except Exception:
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 

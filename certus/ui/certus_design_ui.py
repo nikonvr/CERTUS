@@ -13,6 +13,7 @@ from certus.ui.certus_design_ui_optimization import OptimizationManager
 from certus.ui.certus_design_ui_plot import PlotManager
 from certus.ui.certus_design_ui_state import StateManager
 from certus.ui.certus_design_ui_worker import WorkerManager
+from certus.ui.certus_engine_messages import ENGINE_PREPARING
 from certus.ui.certus_qt_widgets import QApplication, Qt, QTableWidgetItem, QThread, pyqtSignal
 from certus.ui.certus_ui import CertusBaseApp, CertusTheme
 from certus.utils.errors import safe_ui_action
@@ -219,7 +220,7 @@ class CertusDesignApp(
 
         # Warmup JIT (DESIGN uses its own WarmupWorker)
 
-        self.status_label.setText("Compiling JIT kernels…")
+        self.status_label.setText(ENGINE_PREPARING)
 
         self.warmup_worker = WarmupWorker()
 

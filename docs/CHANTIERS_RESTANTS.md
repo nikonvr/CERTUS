@@ -9,9 +9,9 @@ Chantiers ouverts uniquement (les clos sortent de la page ; bilans dans `reports
 |---:|---|---|---|---|---|---|
 | 31 | P2 | Très forte | Co-conception B : épaisseurs et plan ensemble | [Bilan 49](../reports/chantier49_2026-11-18/bilan.md) : biais par couche = 6,9 % (nominal) / 2,6 % (robuste) de l'erreur². `native_evaluator` fige les épaisseurs nominales : chaque pas reconstruit l'évaluateur. Inactif par défaut (C1). | Archivé si 49 sans marge ; sinon gain sur 3 graines sans arrêt ajouté. | A §1.4 |
 | 32 | P3 | Moyenne | Co-conception C : contrôlabilité dans DESIGN | [Bilan 49](../reports/chantier49_2026-11-18/bilan.md) : seulement 2 plans, insuffisant pour corréler marges/dynamiques au SEEL. | Archivé si corrélation faible ; sinon critère proposé à 👤. | A §1.4 |
-| 05 | P3 | Moyenne | Ajustement Sellmeier SUBSTRATE (D6) | `sellmeier_ir_pole` allumé par défaut ([bilan](../reports/chantier05_2026-11-18/bilan.md)) : écart 2,8e-6 (bruit), +0,1 à +3,5 s. Pas : tester sur indice mesuré, puis Jacobien analytique de la variante standard. | Jacobien gardé s'il accélère. | A §4 |
+| 05 | P3 | Moyenne | Ajustement Sellmeier SUBSTRATE (D6) | Tester `sellmeier_ir_pole` sur indice mesuré ([bilan](../reports/chantier05_2026-11-18/bilan.md)), puis Jacobien analytique de la variante standard. | Jacobien gardé s'il accélère. | A §4 |
 | 41 | P3 | Faible (👤) | PR Dependabot | Cinq PR CI (#10–#14 : `codeql-action`, `upload-artifact`, `setup-uv`). | 👤 fusionne ou ferme. | G §2.8 |
-| 21 | P3 | Forte | Dérivées SPLINE (D4/D5) | Allumés par défaut ([bilan](../reports/chantier21_2026-11-19/bilan.md)) : `spline_mono_analytic_gradient` + `spline_polish_fd_prefix_maxfun` = 3 000 (TOTAL 0,05128 vs 0,05284 ; TSIO2 0,00195 vs 0,00283 ; 3,2 s vs 5,6 s). Reste : nœuds libres et Smart Init. | Vérifier cas limites + replis ; garder si plus rapide. | A §4 |
+| 21 | P3 | Forte | Dérivées SPLINE (D4/D5) | Polissage monotone clos ([bilan](../reports/chantier21_2026-11-19/bilan.md)). Reste : profil puis dérivées des nœuds libres et du Smart Init. | Vérifier cas limites + replis ; garder si plus rapide. | A §4 |
 | 33 | P1 | Validation humaine | U13 : écran réel, Narrateur, 5 utilisateurs | Partie machine prête (`U13_protocole.md`). | Bloqué : date, testeurs, matériel. | U13 |
 
 ## Sources

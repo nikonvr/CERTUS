@@ -95,7 +95,7 @@ Six bancs officiels du 2026-10-21, code `85a9e82f`, graine 42 ([bilan](../report
 
 ### DESIGN, INDEX, RE et logiciel
 
-- DESIGN : bornes propres aux couches opaques ; pas de pol « Avg » ; R29 (4 défauts).
+- DESIGN : bornes propres aux couches opaques ; pas de pol « Avg » ; 4 comportements par défaut acceptés (R29).
 - INDEX : absorption substrat affichée silicium seul ; stop IR garde le raffiné ; Phase 2 lit toute l'étendue des données (§5).
 - RE : 2 rayons divergence ; pénalité QWOT gardée ; avertir sans refuser extrapolation. Matériau absent refuse calcul ; Nb2O5 « Syrus » brut > 4 µm.
 - `uv sync --upgrade` ; **fastmath gardé** ; tolérance C1 `10⁻¹⁰` pour code mort ; hub sans warmup JIT.
@@ -124,7 +124,7 @@ Chantiers ouverts : [`CHANTIERS_RESTANTS.md`](CHANTIERS_RESTANTS.md). Limites : 
 | **A9** | refiger le protocole sur branche de travail avant GO |
 | **réglages STRAT** | `elite_rate_moves` (actif, ou `git revert 978b8f04`, [A2](../reports/STRAT_A2_continuation_2026-10-14/final_bilan_A2_20261014.md)), `rate_rescue_hard`, `tp_hysteresis_floor`, `strat_local_search_fresh_id` |
 | **modèles** | D69 (nouvelle définition de la couverture des noyaux) |
-| **publication** | `git push`, vitrine, autorisation écrite Tikhonravov 1996 (`example/example_design/JSON-design-reference-tikhonravov-1996-published-design.json`) |
+| **publication** | vitrine, autorisation écrite Tikhonravov 1996 (`example/example_design/JSON-design-reference-tikhonravov-1996-published-design.json`) |
 
 ## 6. Ordre de travail
 

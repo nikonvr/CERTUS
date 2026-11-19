@@ -27,8 +27,8 @@ ROOT = Path(__file__).resolve().parents[2]
 CAPS = {
     "CLAUDE.md": 6_200,
     "AGENTS.md": 1_250,
-    "docs/CHANTIERS_RESTANTS.md": 3_100,
-    "docs/ETAT_acquis.md": 2_400,
+    "docs/CHANTIERS_RESTANTS.md": 2_820,
+    "docs/ETAT_acquis.md": 990,
     "docs/REGLES_reference.md": 6_200,
 }
 #: docs/ETAT.md, whole or its section 0, has no cap: the owner's decision of 2026-10-25

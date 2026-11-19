@@ -23,6 +23,7 @@ from certus.core.certus_core import (
     T_SUB_MIN_T_NORM,
 )
 from certus.core.certus_index_core import TLU_PRIOR_TRANSPARENT_N_MIN_SOFT, TLU_SOFT_EDGE_MARGIN
+from certus.physics.gradient_utils import FASTMATH_SAFE
 from certus.utils.certus_index_utils import (
     DataType,
     _ensure_strictly_increasing,
@@ -53,7 +54,56 @@ from certus_physics import (
 )
 
 
-@njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
+@njit(cache=True, fastmath=FASTMATH_SAFE, nogil=True, error_model="numpy")
+def _ir_single_rt_and_sens(
+    wl_nm: float,
+    nr: float,
+    ni: float,
+    d: float,
+    ns: float,
+    is_frosted: bool,
+    abs_sub: bool,
+    ks: float,
+    D_sub: float,
+) -> tuple[float, float, float, float, float, float]:
+    """Compute (R, T, dTdn, dTdk, dRdn, dRdk) for one IR wavelength."""
+    DELTA = 1e-7
+    dTdn, dTdk, dRdn, dRdk = 0.0, 0.0, 0.0, 0.0
+    if is_frosted:
+        ns_cmplx = ns + 0j
+        val_R = calculate_reflection_infinite_substrate_single(wl_nm, nr, ni, d, ns_cmplx)
+        val_T = np.nan
+        vR_up_n = calculate_reflection_infinite_substrate_single(wl_nm, nr + DELTA, ni, d, ns_cmplx)
+        vR_dn_n = calculate_reflection_infinite_substrate_single(wl_nm, nr - DELTA, ni, d, ns_cmplx)
+        dRdn = (vR_up_n - vR_dn_n) / (2.0 * DELTA)
+        vR_up_k = calculate_reflection_infinite_substrate_single(wl_nm, nr, ni + DELTA, d, ns_cmplx)
+        if ni < DELTA:
+            dRdk = (vR_up_k - val_R) / DELTA
+        else:
+            vR_dn_k = calculate_reflection_infinite_substrate_single(wl_nm, nr, ni - DELTA, d, ns_cmplx)
+            dRdk = (vR_up_k - vR_dn_k) / (2.0 * DELTA)
+    elif abs_sub:
+        val_R, val_T = _calculate_RT_absorbing_sub_single(wl_nm, nr, ni, d, ns, ks, D_sub)
+        vR_up_n, vT_up_n = _calculate_RT_absorbing_sub_single(wl_nm, nr + DELTA, ni, d, ns, ks, D_sub)
+        vR_dn_n, vT_dn_n = _calculate_RT_absorbing_sub_single(wl_nm, nr - DELTA, ni, d, ns, ks, D_sub)
+        dRdn = (vR_up_n - vR_dn_n) / (2.0 * DELTA)
+        dTdn = (vT_up_n - vT_dn_n) / (2.0 * DELTA)
+        vR_up_k, vT_up_k = _calculate_RT_absorbing_sub_single(wl_nm, nr, ni + DELTA, d, ns, ks, D_sub)
+        if ni < DELTA:
+            dRdk = (vR_up_k - val_R) / DELTA
+            dTdk = (vT_up_k - val_T) / DELTA
+        else:
+            vR_dn_k, vT_dn_k = _calculate_RT_absorbing_sub_single(wl_nm, nr, ni - DELTA, d, ns, ks, D_sub)
+            dRdk = (vR_up_k - vR_dn_k) / (2.0 * DELTA)
+            dTdk = (vT_up_k - vT_dn_k) / (2.0 * DELTA)
+    else:
+        ns_cmplx = ns + 0j
+        val_R, val_T = calculate_transmission_single(wl_nm, nr, ni, d, ns_cmplx)
+        dTdn, dTdk, dRdn, dRdk, _, _ = _compute_single_layer_sensitivity_kernel(wl_nm, nr, ni, d, ns)
+    return val_R, val_T, dTdn, dTdk, dRdn, dRdk
+
+
+@njit(cache=True, fastmath=FASTMATH_SAFE, nogil=True, error_model="numpy")
 def _njit_ir_global_gradient_fused(
     lam_nm: np.ndarray,
     lam_um: np.ndarray,
@@ -77,14 +127,16 @@ def _njit_ir_global_gradient_fused(
     grad_out: np.ndarray
 ) -> None:
     n_pts = len(lam_um)
+    eff_T = use_T and not is_frosted
+    eff_norm = use_norm and not is_frosted
     w_sum_T = 0.0
     w_sum_R = 0.0
 
     for i in range(n_pts):
         if weights[i] > 1e-12:
-            if use_T and not np.isnan(target_T[i]): 
+            if eff_T and np.isfinite(target_T[i]):
                 w_sum_T += weights[i]
-            if use_R and not np.isnan(target_R[i]): 
+            if use_R and np.isfinite(target_R[i]):
                 w_sum_R += weights[i]
 
     if w_sum_T < 1e-12:
@@ -92,7 +144,6 @@ def _njit_ir_global_gradient_fused(
     if w_sum_R < 1e-12:
         w_sum_R = 1.0
 
-    DELTA = 1e-7
     _lo, _hi = -25.0, 5.0
     _mid = 0.5 * (_lo + _hi)
     _scale = 2.0
@@ -169,55 +220,16 @@ def _njit_ir_global_gradient_fused(
             if arg > 1e-12:
                 dk7 = -gauss * arg_beta * np.log(arg)
 
-        ns = n_sub[i]
-        dTdn, dTdk, dRdn, dRdk = 0.0, 0.0, 0.0, 0.0
-        
-        wl_nm = lam_nm[i]
-
-        if is_frosted:
-            ns_cmplx = ns + 0j
-            val_R = calculate_reflection_infinite_substrate_single(wl_nm, nr, ni, d, ns_cmplx)
-            val_T = np.nan
-            vR_up_n = calculate_reflection_infinite_substrate_single(wl_nm, nr + DELTA, ni, d, ns_cmplx)
-            vR_dn_n = calculate_reflection_infinite_substrate_single(wl_nm, nr - DELTA, ni, d, ns_cmplx)
-            dRdn = (vR_up_n - vR_dn_n) / (2.0 * DELTA)
-            vR_up_k = calculate_reflection_infinite_substrate_single(wl_nm, nr, ni + DELTA, d, ns_cmplx)
-            if ni < DELTA:
-                dRdk = (vR_up_k - val_R) / DELTA
-            else:
-                vR_dn_k = calculate_reflection_infinite_substrate_single(wl_nm, nr, ni - DELTA, d, ns_cmplx)
-                dRdk = (vR_up_k - vR_dn_k) / (2.0 * DELTA)
-        elif abs_sub:
-            ks = k_sub_f[i]
-            val_R, val_T = _calculate_RT_absorbing_sub_single(wl_nm, nr, ni, d, ns, ks, D_sub)
-            vR_up_n, vT_up_n = _calculate_RT_absorbing_sub_single(wl_nm, nr + DELTA, ni, d, ns, ks, D_sub)
-            vR_dn_n, vT_dn_n = _calculate_RT_absorbing_sub_single(wl_nm, nr - DELTA, ni, d, ns, ks, D_sub)
-            dRdn = (vR_up_n - vR_dn_n) / (2.0 * DELTA)
-            dTdn = (vT_up_n - vT_dn_n) / (2.0 * DELTA)
-            vR_up_k, vT_up_k = _calculate_RT_absorbing_sub_single(wl_nm, nr, ni + DELTA, d, ns, ks, D_sub)
-            if ni < DELTA:
-                dRdk = (vR_up_k - val_R) / DELTA
-                dTdk = (vT_up_k - val_T) / DELTA
-            else:
-                vR_dn_k, vT_dn_k = _calculate_RT_absorbing_sub_single(wl_nm, nr, ni - DELTA, d, ns, ks, D_sub)
-                dRdk = (vR_up_k - vR_dn_k) / (2.0 * DELTA)
-                dTdk = (vT_up_k - vT_dn_k) / (2.0 * DELTA)
-        else:
-            ns_cmplx = ns + 0j
-            val_R, val_T = calculate_transmission_single(wl_nm, nr, ni, d, ns_cmplx)
-            dTdn_corr, dTdk_corr, dRdn_corr, dRdk_corr, _, _ = _compute_single_layer_sensitivity_kernel(
-                wl_nm, nr, ni, d, ns
-            )
-            dTdn = dTdn_corr
-            dTdk = dTdk_corr
-            dRdn = dRdn_corr
-            dRdk = dRdk_corr
+        ks = k_sub_f[i] if abs_sub else 0.0
+        val_R, val_T, dTdn, dTdk, dRdn, dRdk = _ir_single_rt_and_sens(
+            lam_nm[i], nr, ni, d, n_sub[i], is_frosted, abs_sub, ks, D_sub
+        )
 
         fac_T = 0.0
         fac_R = 0.0
 
-        if use_T and not np.isnan(target_T[i]):
-            if use_norm:
+        if eff_T and np.isfinite(target_T[i]):
+            if eff_norm:
                 scale_T = 1.0 / max(T_substrate[i], 1e-6)
                 diff_T = (val_T * scale_T) - target_T[i]
             else:
@@ -225,8 +237,8 @@ def _njit_ir_global_gradient_fused(
                 diff_T = val_T - target_T[i]
             fac_T = (2.0 * w * diff_T * weight_T / w_sum_T) * scale_T
 
-        if use_R and not np.isnan(target_R[i]):
-            if use_norm:
+        if use_R and np.isfinite(target_R[i]):
+            if eff_norm:
                 scale_R = 1.0 / T_substrate[i] if T_substrate[i] >= 0.05 else 0.0
                 diff_R = (val_R * scale_R) - target_R[i]
             else:
@@ -282,7 +294,7 @@ def _njit_check_bounds_ir_global(
                 
     return True
 
-@njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
+@njit(cache=True, fastmath=FASTMATH_SAFE, nogil=True, error_model="numpy")
 def _njit_ir_global_mse_fused(
     lam_nm: np.ndarray,
     lam_um: np.ndarray,
@@ -329,13 +341,13 @@ def _njit_ir_global_mse_fused(
         if is_frosted:
             # Frosted Glass: an infinite back face (ETAT D75, decided by the owner on 2026-10-02): the front surface alone reflects, as in the gradient
             r_th = calculate_reflection_infinite_substrate_single(wl_nm, n_val, k_val, d, complex(n_sub_f[j], 0.0))
-            t_th = 0.0
+            t_th = np.nan
         elif abs_sub:
             r_th, t_th = _calculate_RT_absorbing_sub_single(wl_nm, n_val, k_val, d, n_sub_f[j], k_sub_f[j], D_sub)
         else:
             r_th, t_th = calculate_transmission_single(wl_nm, n_val, k_val, d, complex(n_sub_f[j], 0.0))
             
-        if use_norm:
+        if use_norm and not is_frosted:
             sub_t = t_sub_f[j]
             sub_t_safe = sub_t if sub_t > 1e-12 else 1.0
             if sub_t > 1e-12:
@@ -1498,53 +1510,33 @@ class TLUObjective:
             return cached["grad"]
 
         # Unpack parameters
-
         thickness = params[0]
-
         Eg, A, E0, C, Eu, eps_inf = params[1:7]
-
         grad = np.zeros(7, dtype=np.float64)
 
         # --- Penalty Gradients ---
-
         # Thickness bounds
-
         if thickness < self.thickness_bounds[0]:
             # P = 1000 * (min - t)^2 -> dP/dt = -2000 * (min - t)
-
             grad[0] += -2000.0 * (self.thickness_bounds[0] - thickness)
-
         elif thickness > self.thickness_bounds[1]:
             # P = 1000 * (t - max)^2 -> dP/dt = 2000 * (t - max)
-
             grad[0] += 2000.0 * (thickness - self.thickness_bounds[1])
 
         # E0 vs Eg constraint
-
         # if E0 <= Eg: P = 100 * (Eg - E0 + 0.1)^2
-
         # dP/dEg = 200 * (Eg - E0 + 0.1)
-
         # dP/dE0 = -200 * (Eg - E0 + 0.1)
-
         if E0 <= Eg:
             term = 200.0 * (Eg - E0 + 0.1)
-
             grad[1] += term  # Eg is params[1]
-
             grad[3] -= term  # E0 is params[3]
-
         elif E0 - Eg < 0.3:
             # P = 10 * (0.3 - (E0 - Eg))^2 = 10 * (0.3 - E0 + Eg)^2
-
             # dP/dEg = 20 * (0.3 - E0 + Eg)
-
             # dP/dE0 = -20 * (0.3 - E0 + Eg)
-
             term = 20.0 * (0.3 - E0 + Eg)
-
             grad[1] += term
-
             grad[3] -= term
 
         # Positivity constraints (soft barrier?)

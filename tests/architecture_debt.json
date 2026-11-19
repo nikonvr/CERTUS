@@ -65,10 +65,10 @@
   },
   "fonctions_non_annotees": [],
   "fichiers_longs": {
-    "certus/core/certus_index_objectives.py": 1940,
+    "certus/core/certus_index_objectives.py": 1932,
     "certus/core/certus_substrate_index.py": 1943,
     "certus/physics/certus_strat_growth.py": 1825,
-    "certus/physics/gradient_analytic.py": 1802,
+    "certus/physics/gradient_analytic.py": 1770,
     "certus/spline/certus_corridor_exploration.py": 1615,
     "certus/spline/certus_corridor_orchestrator_utils.py": 1791,
     "certus/spline/certus_index_spline_core.py": 2108,

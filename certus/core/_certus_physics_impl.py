@@ -537,6 +537,7 @@ from certus.physics.certus_tmm_core import (
     oblique_front_char_matrix_single,
     oblique_front_rt_from_char_matrix_nsub_real,
 )
+from certus.physics.gradient_utils import FASTMATH_SAFE
 
 # MATERIAL DATABASE UTILS
 
@@ -988,7 +989,7 @@ def _compute_phase2_derivatives_kernel(
     return n_arr, k_arr, dn_dp, dk_dp
 
 
-@njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
+@njit(cache=True, fastmath=FASTMATH_SAFE, parallel=True, nogil=True, error_model="numpy")
 def _compute_ir_global_cost_gradient_kernel(
     wls: np.ndarray,
     n_arr: np.ndarray,
@@ -1019,22 +1020,19 @@ def _compute_ir_global_cost_gradient_kernel(
     """
 
     n_pts = len(wls)
-    n_valid_T = 1
-    n_valid_R = 1
-    count_T = 0
-    count_R = 0
+    eff_norm = use_normalized and not is_frosted_glass
+    w_sum_T = 0.0
+    w_sum_R = 0.0
 
     for i in range(n_pts):
         if weights[i] > 1e-12:
-            if use_T:
-                count_T += 1
-            if use_R:
-                count_R += 1
+            if use_T and not is_frosted_glass and np.isfinite(target_T[i]):
+                w_sum_T += weights[i]
+            if use_R and np.isfinite(target_R[i]):
+                w_sum_R += weights[i]
 
-    if count_T > 0:
-        n_valid_T = count_T
-    if count_R > 0:
-        n_valid_R = count_R
+    w_safe_T = w_sum_T if w_sum_T > 1e-12 else 1.0
+    w_safe_R = w_sum_R if w_sum_R > 1e-12 else 1.0
 
     n_n = dn_dp.shape[0]
     n_k = dk_dp.shape[0]
@@ -1124,17 +1122,17 @@ def _compute_ir_global_cost_gradient_kernel(
         fac_T = 0.0
         fac_R = 0.0
 
-        if use_T:
-            if use_normalized:
+        if use_T and not is_frosted_glass and np.isfinite(target_T[i]) and np.isfinite(val_T):
+            if eff_norm:
                 scale_T = 1.0 / max(T_substrate[i], 1e-6)
                 diff_T = (val_T * scale_T) - target_T[i]
             else:
                 scale_T = 1.0
                 diff_T = val_T - target_T[i]
-            fac_T = (2.0 * w * diff_T * weight_T / n_valid_T) * scale_T
+            fac_T = (2.0 * w * diff_T * weight_T / w_safe_T) * scale_T
 
-        if use_R:
-            if use_normalized:
+        if use_R and np.isfinite(target_R[i]) and np.isfinite(val_R):
+            if eff_norm:
                 if T_substrate[i] >= 0.05:
                     scale_R = 1.0 / T_substrate[i]
                 else:
@@ -1143,7 +1141,7 @@ def _compute_ir_global_cost_gradient_kernel(
             else:
                 scale_R = 1.0
                 diff_R = val_R - target_R[i]
-            fac_R = (2.0 * w * diff_R * weight_R / n_valid_R) * scale_R
+            fac_R = (2.0 * w * diff_R * weight_R / w_safe_R) * scale_R
 
         if compute_thickness_gradient:
             grad_per_wl[i, 0] = (fac_T * dTdd + fac_R * dRdd) if (use_T or use_R) else 0.0

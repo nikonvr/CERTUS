@@ -25,7 +25,7 @@ from certus.physics.certus_optical_models import epsilon1_gradient_overdamped, e
 #
 # `gradient_utils` only imports numpy, numba and the TMM facade: no cycle. (It used to re-export `make_cost_function`
 # from this module at the end of its file, and `gradient_analytic` could not be imported first.)
-from certus.physics.gradient_utils import cost_numba_fast
+from certus.physics.gradient_utils import FASTMATH_SAFE, cost_numba_fast
 
 # ⚠️ `Target` under TYPE_CHECKING, and this is not just for show: importing
 # `certus_physics.structures` would first execute the `__init__.py` of the PACKAGE
@@ -963,7 +963,7 @@ def _compute_single_layer_sensitivity_array(
     return dTdn, dTdk, dRdn, dRdk, dTdd, dRdd
 
 
-@njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
+@njit(cache=True, fastmath=FASTMATH_SAFE, parallel=True, nogil=True, error_model="numpy")
 def _compute_index_cost_gradient_kernel(
     wls: np.ndarray,
     n_arr: np.ndarray,
@@ -990,84 +990,52 @@ def _compute_index_cost_gradient_kernel(
     match certus_core.T_SUB_MIN_T_NORM and T_SUB_MIN_R_NORM; literals kept here for Numba."""
 
     n_pts = len(wls)
-    count_T = 0
-    n_valid_T = 1
-    count_R = 0
-    n_valid_R = 1
-
+    w_sum_T = 0.0
+    w_sum_R = 0.0
     for i in range(n_pts):
         if weights[i] > 1e-12:
-            if use_T:
-                count_T += 1
-
-            if use_R:
-                count_R += 1
-
-    if count_T > 0:
-        n_valid_T = count_T
-
-    if count_R > 0:
-        n_valid_R = count_R
+            if use_T and np.isfinite(target_T[i]):
+                w_sum_T += weights[i]
+            if use_R and np.isfinite(target_R[i]):
+                w_sum_R += weights[i]
+    w_safe_T = w_sum_T if w_sum_T > 1e-12 else 1.0
+    w_safe_R = w_sum_R if w_sum_R > 1e-12 else 1.0
 
     # Per-wavelength gradient (avoid race condition on shared grad)
-
     grad_per_wl = np.zeros((n_pts, 7), dtype=np.float64)
-
     for i in prange(n_pts):
         wl = wls[i]
-
         if weights[i] < 1e-12:
             continue
-
         nr = n_arr[i]
-
         ni = k_arr[i]
-
         ns = n_sub[i]
-
         dTdn, dTdk, dRdn, dRdk, dTdd, dRdd = _compute_single_layer_sensitivity_kernel(wl, nr, ni, d, ns)
-
         w = weights[i]
-
         fac_T = 0.0
-
         fac_R = 0.0
-
         # Fused R+T single call (same values as cost)
-
         val_R, val_T = tmm_core.calculate_transmission_single(wl, nr, ni, d, ns)
-
-        if use_T:
+        if use_T and np.isfinite(target_T[i]):
             if use_normalized:
                 scale_T = 1.0 / max(T_substrate[i], 1e-6)
-
                 diff_T = (val_T * scale_T) - target_T[i]
-
             else:
                 scale_T = 1.0
-
                 diff_T = val_T - target_T[i]
-
-            fac_T = (2.0 * w * diff_T * weight_T / n_valid_T) * scale_T
-
-        if use_R:
+            fac_T = (2.0 * w * diff_T * weight_T / w_safe_T) * scale_T
+        if use_R and np.isfinite(target_R[i]):
             if use_normalized:
                 # Physics Guard: Avoid explosion when T -> 0
-
                 if T_substrate[i] >= 0.05:
                     scale_R = 1.0 / T_substrate[i]
-
                 else:
                     scale_R = 0.0  # Effectively ignore this point in gradient
-
                 diff_R = (val_R * scale_R) - target_R[i]
-
             else:
                 scale_R = 1.0
-
                 diff_R = val_R - target_R[i]
-
-            fac_R = (2.0 * w * diff_R * weight_R / n_valid_R) * scale_R
+            fac_R = (2.0 * w * diff_R * weight_R / w_safe_R) * scale_R
 
         grad_per_wl[i, 0] = (fac_T * dTdd + fac_R * dRdd) if use_T or use_R else 0.0
 

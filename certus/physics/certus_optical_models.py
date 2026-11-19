@@ -9,6 +9,8 @@ from scipy.interpolate import CubicSpline
 
 from certus.domain.constants import PI
 
+_FASTMATH_SAFE = {"nsz", "arcp", "contract", "afn", "reassoc"}
+
 if TYPE_CHECKING:
     from threading import Lock
 
@@ -58,7 +60,16 @@ def sellmeier_n_array(
 
             w2 = w * w
 
-            n2 = 1.0 + B1 * w2 / (w2 - C1) + B2 * w2 / (w2 - C2) + B3 * w2 / (w2 - C3)
+            d1 = w2 - C1
+            if abs(d1) < SMALL_EPSILON:
+                d1 = SMALL_EPSILON if d1 >= 0.0 else -SMALL_EPSILON
+            d2 = w2 - C2
+            if abs(d2) < SMALL_EPSILON:
+                d2 = SMALL_EPSILON if d2 >= 0.0 else -SMALL_EPSILON
+            d3 = w2 - C3
+            if abs(d3) < SMALL_EPSILON:
+                d3 = SMALL_EPSILON if d3 >= 0.0 else -SMALL_EPSILON
+            n2 = 1.0 + B1 * w2 / d1 + B2 * w2 / d2 + B3 * w2 / d3
 
             res[i] = np.sqrt(max(n2, 1.0))
 
@@ -95,9 +106,15 @@ def get_nk_cauchy(n4: float, n7: float, wls: np.ndarray) -> np.ndarray:
 
 
 @lru_cache(maxsize=1024)
-def _get_nk_cauchy_cached(n4: float, n7: float, wls_tuple: tuple) -> np.ndarray:
+def _get_nk_cauchy_cached_readonly(n4: float, n7: float, wls_tuple: tuple[float, ...]) -> np.ndarray:
     wls_arr = np.array(wls_tuple, dtype=np.float64)
-    return get_nk_cauchy(n4, n7, wls_arr)
+    arr = get_nk_cauchy(n4, n7, wls_arr)
+    arr.setflags(write=False)
+    return arr
+
+
+def _get_nk_cauchy_cached(n4: float, n7: float, wls_tuple: tuple[float, ...]) -> np.ndarray:
+    return _get_nk_cauchy_cached_readonly(n4, n7, wls_tuple).copy()
 
 
 def get_nk_cauchy_wrapper(n4: float, n7: float, wls: np.ndarray) -> np.ndarray:
@@ -167,6 +184,34 @@ def epsilon2_TLU_array(E_array: np.ndarray, Eg: float, A: float, E0: float, C: f
     return result
 
 
+@njit(cache=True, nogil=True, error_model="numpy", inline="always")
+def _tl_log_terms(
+    E: float,
+    E_sq: float,
+    Eg: float,
+    Eg_sq: float,
+    A: float,
+    E0: float,
+    C: float,
+    zeta4: float,
+    denom_log_norm: float,
+) -> tuple[float, float]:
+    """Return (term1, term2) of Tauc-Lorentz eps1 with continuous removable singularity at E == Eg."""
+    pref = A * E0 * C / (PI * zeta4)
+    if abs(Eg - E) < SMALL_EPSILON:
+        sum_e = Eg + E
+        if sum_e <= SMALL_EPSILON:
+            return 0.0, 0.0
+        term1 = pref * (E_sq + Eg_sq) / E * np.log(sum_e) if E > SMALL_EPSILON else 0.0
+        term2 = 2.0 * pref * Eg * np.log(sum_e / denom_log_norm) if denom_log_norm > SMALL_EPSILON else 0.0
+        return term1, term2
+    term1 = 0.0
+    if E > SMALL_EPSILON:
+        term1 = -pref * (E_sq + Eg_sq) / E * np.log(np.abs((Eg - E) / (Eg + E)))
+    term2 = 2.0 * pref * Eg * np.log(np.abs((Eg - E) * (Eg + E)) / denom_log_norm)
+    return term1, term2
+
+
 @njit(cache=True, nogil=True, error_model="numpy")
 def epsilon1_TL_overdamped_point(E: float, Eg: float, A: float, E0: float, C: float, eps_inf: float) -> float:
     """Unfloored eps1 of the Jellison-Modine closed form, valid for any C, written for C >= 2 E0.
@@ -184,11 +229,8 @@ def epsilon1_TL_overdamped_point(E: float, Eg: float, A: float, E0: float, C: fl
     zeta4 = max((E_sq - E0_sq) ** 2 + C_sq * E_sq, SMALL_EPSILON)
     al = (Eg_sq - E0_sq) * E_sq + Eg_sq * C_sq - E0_sq * (E0_sq + 3.0 * Eg_sq)
     aa = (E_sq - E0_sq) * (E0_sq + Eg_sq) + Eg_sq * C_sq
-    term1 = 0.0
-    if E > SMALL_EPSILON:
-        term1 = -A * E0 * C * (E_sq + Eg_sq) / (PI * zeta4 * E) * np.log(np.abs((Eg - E) / (Eg + E)))
     denom_log_norm = np.sqrt((E0_sq - Eg_sq) ** 2 + C_sq * Eg_sq)
-    term2 = 2.0 * A * E0 * C * Eg / (PI * zeta4) * np.log(np.abs((Eg - E) * (Eg + E)) / denom_log_norm)
+    term1, term2 = _tl_log_terms(E, E_sq, Eg, Eg_sq, A, E0, C, zeta4, denom_log_norm)
     term3 = (A * C * al) / (2.0 * PI * zeta4 * alpha * E0) * np.log((E0_sq + Eg_sq + alpha * Eg) / (E0_sq + Eg_sq - alpha * Eg))
     term4 = -(A * aa) / (PI * zeta4 * E0) * (PI - np.arctan((2.0 * Eg + alpha) / C) - np.arctan((2.0 * Eg - alpha) / C))
     term5 = (4.0 * A * E0 * Eg * (E_sq - gamma_sq)) / (PI * zeta4 * alpha) * (PI / 2.0 - np.arctan(2.0 * (Eg_sq - gamma_sq) / (alpha * C)))
@@ -235,7 +277,7 @@ def epsilon1_gradient_overdamped(E_array: np.ndarray, Eg: float, A: float, E0: f
     return result
 
 
-@njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
+@njit(cache=True, fastmath=_FASTMATH_SAFE, parallel=True, nogil=True, error_model="numpy")
 def epsilon1_TL_analytic(E_array: np.ndarray, Eg: float, A: float, E0: float, C: float, eps_inf: float) -> np.ndarray:
 
     if 4.0 * E0 * E0 - C * C < 1e-12:
@@ -258,10 +300,6 @@ def epsilon1_TL_analytic(E_array: np.ndarray, Eg: float, A: float, E0: float, C:
 
     denom_log_norm = np.sqrt((E0_sq - Eg_sq) ** 2 + C_sq * Eg_sq)
 
-    A_E0_C = A * E0 * C
-
-    two_A_E0_C_Eg = 2.0 * A_E0_C * Eg
-
     inv_PI = 1.0 / PI
 
     for i in prange(n):
@@ -280,16 +318,7 @@ def epsilon1_TL_analytic(E_array: np.ndarray, Eg: float, A: float, E0: float, C:
 
         aa = (E_sq - E0_sq) * (E0_sq + Eg_sq) + Eg_sq * C_sq
 
-        term1 = 0.0
-
-        if E > SMALL_EPSILON:
-            val_log1 = np.log(np.abs((Eg - E) / (Eg + E)))
-
-            term1 = -A_E0_C * (E_sq + Eg_sq) * inv_PI * inv_zeta4 / E * val_log1
-
-        val_log2 = np.log(np.abs((Eg - E) * (Eg + E)) / denom_log_norm)
-
-        term2 = two_A_E0_C_Eg * inv_PI * inv_zeta4 * val_log2
+        term1, term2 = _tl_log_terms(E, E_sq, Eg, Eg_sq, A, E0, C, zeta4, denom_log_norm)
 
         arg_log3_num = E0_sq + Eg_sq + alpha * Eg
 
@@ -333,7 +362,7 @@ def extinction_from_epsilon(e1: float, e2: float, eps_mag: float, n_val: float) 
     return np.sqrt(max((eps_mag - e1) / 2.0, 0.0))
 
 
-@njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
+@njit(cache=True, parallel=True, nogil=True, error_model="numpy")
 def epsilon_to_nk(
     eps1: np.ndarray, eps2: np.ndarray, n_min: float, n_max: float, k_max: float
 ) -> tuple[np.ndarray, np.ndarray, bool]:
@@ -344,27 +373,26 @@ def epsilon_to_nk(
 
     k_arr = np.empty(n_pts, dtype=np.float64)
 
-    is_valid = True
+    invalid_count = 0
 
     for i in prange(n_pts):
         e1 = eps1[i]
-
         e2 = eps2[i]
 
-        eps_mag = np.sqrt(e1 * e1 + e2 * e2)
+        if not np.isfinite(e1) or not np.isfinite(e2):
+            invalid_count += 1
+            n_arr[i] = np.nan
+            k_arr[i] = np.nan
+        else:
+            eps_mag = np.sqrt(e1 * e1 + e2 * e2)
+            n_val = np.sqrt(max((eps_mag + e1) / 2.0, SMALL_EPSILON))
+            k_val = extinction_from_epsilon(e1, e2, eps_mag, n_val)
+            if not np.isfinite(n_val) or not np.isfinite(k_val) or n_val < n_min or n_val > n_max or k_val > k_max:
+                invalid_count += 1
+            n_arr[i] = n_val
+            k_arr[i] = k_val
 
-        n_val = np.sqrt(max((eps_mag + e1) / 2.0, SMALL_EPSILON))
-
-        k_val = extinction_from_epsilon(e1, e2, eps_mag, n_val)
-
-        if n_val < n_min or n_val > n_max or k_val > k_max:
-            is_valid = False
-
-        n_arr[i] = n_val
-
-        k_arr[i] = k_val
-
-    return n_arr, k_arr, is_valid
+    return n_arr, k_arr, invalid_count == 0
 
 
 # =============================================================================

@@ -7,7 +7,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
-import scipy.optimize
 from PyQt6.QtWidgets import (
     QApplication,
     QTableWidgetItem,

@@ -12,7 +12,6 @@ from typing import Any
 
 import numpy as np
 import pyqtgraph as pg
-import scipy.optimize
 from PyQt6.QtCore import QEvent, QObject, Qt, QThread, QTimer, pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import (
     QFrame,

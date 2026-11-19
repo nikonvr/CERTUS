@@ -3,7 +3,6 @@ import logging
 from typing import Any
 
 import pyqtgraph as pg
-import scipy.optimize
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QAbstractSpinBox,

@@ -5,7 +5,6 @@ _QS_INDEX_APP = "INDEX"
 _QS_INDEX_WEIGHT_T = "cost_weight_t"
 _QS_INDEX_WEIGHT_R = "cost_weight_r"
 
-import scipy.optimize
 from PyQt6.QtWidgets import (
     QMessageBox,
 )

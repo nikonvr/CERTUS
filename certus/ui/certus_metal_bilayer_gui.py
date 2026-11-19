@@ -10,7 +10,6 @@ from types import SimpleNamespace
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
-import scipy.optimize
 from PyQt6.QtCore import QObject, Qt, QTimer, pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import (
     QApplication,

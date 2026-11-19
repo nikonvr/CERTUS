@@ -3,7 +3,6 @@ import pandas as pd
 
 # JIT Warmup (reduces first-call latency by ~90%)
 # JIT Warmup moved to main() with SplashScreen
-import scipy.optimize
 from PyQt6.QtCore import QThread
 
 from certus.core.certus_core import (

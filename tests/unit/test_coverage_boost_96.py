@@ -667,6 +667,7 @@ def test_analytic_gradient_reflection_and_mono_band():
         weight_t=1.0,
         weight_r=0.0,
         substrate_name="SiO2",
+        spline_mono_analytic_gradient=False,  # on by default since 2026-11-19; off, the mono band has no gradient
     )
     obj_mono = SplinePWLObjective(cfg_mono, sk)
     grad_mono = obj_mono.analytic_gradient(x)

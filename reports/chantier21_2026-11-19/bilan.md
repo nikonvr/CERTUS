@@ -57,3 +57,21 @@ d'évaluations. Puis la passe analytique repart de sa fin avec le reste du budge
 
   Sous charge, les durées étaient : TOTAL 2,86 s contre 5,46 s par défaut, TSIO2 3,24 s contre 2,19 s. **Je ne les ai pas
   remesurées sur une machine libre.**
+
+## Chronométrage sur machine libre (2026-11-19, 10 h 27)
+
+[`p21_mixed_option.py 5`](p21_mixed_option.py), aucun autre processus python ; un calcul de chauffe, puis cinq tours
+alternés ([sortie](p21_mixed_option.txt)). « Ancien défaut » : les deux options forcées à l'arrêt ; « nouveau défaut » :
+gradient analytique et préfixe 3 000, les valeurs du code depuis `fda3d9d6`.
+
+| exemple | réglage | médiane (min–max) | coûts | RMSE | d (nm) |
+|---|---|---|---:|---:|---:|
+| TOTAL | ancien défaut | 5,63 s (5,40–6,09) | 10 024 | 0,0528398 | 1700,40 |
+| TOTAL | analytique seul | 1,10 s (1,06–1,49) | 972 | 0,0549209 | 1752,84 |
+| TOTAL | **nouveau défaut** | **3,22 s** (2,88–3,59) | 4 713 | **0,0512780** | 1729,79 |
+| TSIO2 | ancien défaut | 2,37 s (2,21–2,48) | 10 024 | 0,0028304 | 1699,43 |
+| TSIO2 | analytique seul | 2,07 s (2,03–2,23) | 2 549 | 0,0019482 | 1667,49 |
+| TSIO2 | **nouveau défaut** | **2,65 s** (2,59–2,89) | 5 555 | **0,0019472** | 1667,66 |
+
+Par rapport à l'ancien défaut, le nouveau gagne en RMSE sur les deux exemples (−3,0 % et −31,2 %). En durée, TOTAL
+gagne 43 %, TSIO2 perd 12 % ; les plages ne se recouvrent pas. RMSE et coûts sont ceux de la mesure sous charge.

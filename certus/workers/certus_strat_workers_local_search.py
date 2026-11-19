@@ -108,7 +108,7 @@ def run_local_search(
         strategy = copy.deepcopy(plan)
         strategy.update(origin="LOCAL_SEARCH", origin_details=f"LOCAL_SEARCH(parent={origin.get('strategy_id')})",
                         n_blocks=len(strategy["blocks"]))
-        fresh_id = bool(params.get("strat_local_search_fresh_id", False))
+        fresh_id = bool(params.get("strat_local_search_fresh_id", True))
         if fresh_id:
             from certus.core.certus_strat_ranking import next_refinement_strategy_id
             strategy.update(strategy_id=next_refinement_strategy_id(rows, len(strategy["blocks"])),
@@ -130,7 +130,7 @@ def rank_refined_first(refined: dict[str, Any], results: list[dict[str, Any]], r
                        check_ids: bool = False) -> list[dict[str, Any]]:
     """The refined plan first, the others in the ranker's order.
 
-    The ranker checks the ids of the others only. With `check_ids` (`strat_local_search_fresh_id`, off by default) the
+    The ranker checks the ids of the others only. With `check_ids` (`strat_local_search_fresh_id`, on by default) the
     whole list goes through `validate_unique_strategy_ids`: without a fresh id the refined row carries its parent's id
     (8 accepted benches of 8, reports/ANALYSE_claude_2026-10-22), which that check exists to withhold.
     """

@@ -1,4 +1,5 @@
-"""The refined plan of the local search, its id and the uniqueness check (`strat_local_search_fresh_id`, off by default).
+"""The refined plan of the local search, its id and the uniqueness check (`strat_local_search_fresh_id`, ON by default since
+2026-11-19, owner decision and C1 exception in docs/ETAT.md section 3).
 
 Measured 2026-10-22 (reports/ANALYSE_claude_2026-10-22): the LOCAL_SEARCH row carried its parent's id on 8 accepted benches
 of 8, outside `validate_unique_strategy_ids`, which withholds a table with a duplicate id.
@@ -30,3 +31,10 @@ def test_a_fresh_id_is_unique_and_passes_the_check():
     refined = _row(next_refinement_strategy_id(rows, 2))
     assert refined["strategy"]["strategy_id"] not in {5, 6, 7}
     assert rank_refined_first(refined, [*rows, refined], lambda r: r, check_ids=True)[0] is refined
+
+
+def test_the_fresh_id_is_on_by_default():
+    from certus.core.certus_strat_leviers import LEVIERS
+
+    (levier,) = [lv for lv in LEVIERS if lv.cle == "strat_local_search_fresh_id"]
+    assert levier.defaut is True

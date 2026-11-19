@@ -409,10 +409,11 @@ LEVIERS: tuple[Levier, ...] = (
     Levier(
         cle="strat_local_search_fresh_id",
         libelle="Recherche locale : identifiant neuf pour le plan affine",
-        defaut=False,
+        defaut=True,
         genre="bool",
-        statut=NON_MESURE,
-        mesure="Analyse du 2026-10-22 : sans lui, la ligne LOCAL_SEARCH garde l'identifiant de son parent (8 bancs acceptes sur 8).",
+        statut=VALIDE,
+        mesure="Analyse du 2026-10-22 : sans lui, la ligne LOCAL_SEARCH garde l'identifiant de son parent (8 bancs acceptes sur 8). "
+               "Actif par defaut depuis le 2026-11-19 (decision de l'utilisateur, exception C1 dans docs/ETAT.md section 3).",
         reserve="Change l'identifiant exporte du plan affine (le parent est garde dans `parent_strategy_id`) et controle "
                 "l'unicite sur toute la liste. `false` retablit le chemin d'avant.",
     ),

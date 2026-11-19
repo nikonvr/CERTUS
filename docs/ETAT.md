@@ -85,6 +85,7 @@ Six bancs officiels du 2026-10-21, code `85a9e82f`, graine 42 ([bilan](../report
 |---|---|---|---|
 | 2026-11-19 | C1 (paramètre inactif par défaut) | SPLINE : `spline_mono_analytic_gradient` et `spline_polish_fd_prefix_maxfun` = 3000 allumés | RMSE meilleur sur les deux exemples ([bilan](../reports/chantier21_2026-11-19/bilan.md)) |
 | 2026-11-19 | C1 (paramètre inactif par défaut) | SUBSTRATE : `sellmeier_ir_pole` allumé | écart au niveau du bruit sur substrats du catalogue ([bilan](../reports/chantier05_2026-11-18/bilan.md)) |
+| 2026-11-19 | C1 (paramètre inactif par défaut) | STRAT : `strat_local_search_fresh_id` allumé (l'identifiant exporté du plan affiné change, le parent dans `parent_strategy_id`) | identifiants uniques contrôlés sur toute la liste (8 bancs sur 8 portaient l'identifiant du parent, [analyse](../reports/ANALYSE_claude_2026-10-22/bilan.md)) |
 | 2026-11-19 | décision D98 | STRAT : arrêt tardif (`oms_arming` = 1) au lieu de l'attente sans fin | même meilleur SEEL, 101 plans optiques purs déposables contre 0 ([rapport](../reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md)) |
 
 ### STRAT

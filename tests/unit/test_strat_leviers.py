@@ -42,7 +42,9 @@ NOYAU = Path(__file__).resolve().parents[2] / "certus" / "core" / "certus_strat_
 SRC = "\n".join(
     p.read_text(encoding="utf-8")
     for p in [*sorted(NOYAU.parent.glob("certus_strat_robustness*.py")), NOYAU.with_name("certus_strat_consensus.py"),
-              NOYAU.with_name("certus_strat_local_search.py")]
+              NOYAU.with_name("certus_strat_local_search.py"),
+              # the local search reads `strat_local_search_fresh_id` in its worker (on by default since 2026-11-19)
+              NOYAU.parents[1] / "workers" / "certus_strat_workers_local_search.py"]
 )
 
 

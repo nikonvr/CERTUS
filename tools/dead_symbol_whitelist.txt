@@ -157,8 +157,6 @@ certus.ui.certus_theme:CertusTheme.get_danger_button_stylesheet
 certus.ui.certus_ui_widgets_factory:create_colored_label
 # Collapsible state query; test_certus_ui and test_certus_ux_battery check it.
 certus.ui.certus_ui_widgets_layout:CertusCollapsible.is_expanded
-# Status pill setter; test_certus_ui and test_certus_ui_ux_boost check its states.
-certus.ui.certus_ui_widgets_utils:CertusStatusPill.set_level
 # Excel table export API; test_certus_ui writes and checks a workbook.
 certus.ui.certus_ui_widgets_utils:ExcelTableWidget.export_to_excel
 # Command registration API; test_certus_ui_ux_boost invokes it on a real mixin host.

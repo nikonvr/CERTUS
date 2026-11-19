@@ -16,6 +16,7 @@ from certus.core.certus_core import (
     get_resource_path,
 )
 from certus.core.certus_metrology import ValidationStatus
+from certus.ui.certus_export_outcome import ExportOutcome, show_export_outcome
 from certus.ui.certus_ui import certus_get_save_file_name
 from certus.utils.certus_atomic_io import atomic_save_workbook
 from certus.utils.certus_copy_utils import copy_optimization_result
@@ -82,23 +83,28 @@ class ExportManager:
 
             # 1. EXCEL EXPORT
 
-            self._export_results_excel(manifest_dict, rmse_val, excel_path)
-
-            # 2.HTML EXPORT
-            self._export_results_html(manifest_dict, rmse_val, html_path)
-
-            self.ui.status_label.setText(f"✓ Saved: {base_name}")
+            outcome = ExportOutcome(
+                base_name,
+                str(Path(excel_path).parent),
+                {
+                    "xlsx": lambda: self._export_results_excel(manifest_dict, rmse_val, excel_path),
+                    "html": lambda: self._export_results_html(manifest_dict, rmse_val, html_path),
+                },
+                self.ui.logger,
+            )
+            outcome.run()
+            show_export_outcome(self.ui, outcome)
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             logging.error("Export error: %s", e, exc_info=True)
 
-    def _export_results_excel(self, manifest_dict: dict[str, Any], rmse_val: float, excel_path: str) -> None:
-        """Write the Excel report workbook when openpyxl is available."""
+    def _export_results_excel(self, manifest_dict: dict[str, Any], rmse_val: float, excel_path: str) -> bool:
+        """Write the Excel report workbook when openpyxl is available; True when it was written."""
 
         if not OPENPYXL_AVAILABLE:
             self.ui.log("[DESIGN._export_results_excel] Excel export skipped: openpyxl not available", "WARNING")
 
-            return
+            return False
 
         import openpyxl
 
@@ -176,9 +182,10 @@ class ExportManager:
         atomic_save_workbook(wb, excel_path)
 
         self.ui.log(f"Excel saved: {Path(excel_path).name}", "SUCCESS")
+        return True
 
-    def _export_results_html(self, manifest_dict: dict[str, Any], rmse_val: float, html_path: str) -> None:
-        """Write the HTML report for design optimization results."""
+    def _export_results_html(self, manifest_dict: dict[str, Any], rmse_val: float, html_path: str) -> bool:
+        """Write the HTML report for design optimization results; True when it was written."""
 
         ep = self.ui.ep_current if self.ui.ep_current is not None else []
 
@@ -256,6 +263,8 @@ class ExportManager:
 
         if generate_html_report(html_path, "CERTUS-DESIGN Report", all_sections, figures):
             self.ui.log(f"HTML saved: {Path(html_path).name}", "SUCCESS")
+            return True
+        return False
 
     def _build_export_manifest(self) -> dict[str, Any]:
         """Build a run manifest for report export."""

@@ -41,6 +41,17 @@ jobs:
       - name: Ruff check
         run: ruff check .
 
+      # Les trois controles documentaires de CLAUDE.md, section 2 (D110) : la CI lance le meme perimetre que la
+      # validation locale. Bibliotheque standard seule : aucune dependance a installer.
+      - name: Coherence des fichiers markdown
+        run: python scripts/coherence_md.py
+
+      - name: CLAUDE.md
+        run: python scripts/check_claude_md.py
+
+      - name: Documentation
+        run: python scripts/check_docs.py
+
       # Pas de `ruff format --check .` : `ruff format` n'est pas applique au depot
       # (510 fichiers non conformes le 2026-09-08, voir [tool.ruff.format] dans
       # pyproject.toml), et un job rouge en permanence n'est pas un garde-fou. A

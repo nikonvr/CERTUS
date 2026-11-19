@@ -115,6 +115,11 @@ class DesignPhysicsBridge:
         total_err = 0.0
         total_weight = 0.0
         for config in self.oblique_configs:
+            n_back_cfg = (
+                self.n_back_T[config["all_clues"], :]
+                if (self.has_back_stack and self.n_back_T is not None and "all_clues" in config)
+                else self.n_back_T
+            )
             R_config, T_config = optim_calc_oblique_selected(
                 config["wls_config"],
                 config["n_layers_T_config"],
@@ -125,7 +130,7 @@ class DesignPhysicsBridge:
                 has_back_calc=self.has_back_calc,
                 has_back_stack=self.has_back_stack,
                 d_back=self.d_back,
-                n_back_T=self.n_back_T,
+                n_back_T=n_back_cfg,
                 substrate_thickness_nm=self.substrate_thickness_nm,
                 calc_spectrum_full_oblique_exact=calc_spectrum_full_oblique_exact,
                 calc_spectrum_oblique_backside_vectorized=calc_spectrum_oblique_backside_vectorized,

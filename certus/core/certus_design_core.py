@@ -251,6 +251,11 @@ def _design_compute_oblique_error_common(app: Any, ep_test: np.ndarray) -> Any:
     total_weight = 0.0
 
     for config in app._oblique_configs:
+        n_back_cfg = (
+            app._n_back_T[config["all_clues"], :]
+            if (app._has_back_stack and app._n_back_T is not None and "all_clues" in config)
+            else app._n_back_T
+        )
         # Compute R & T ONCE for all targets at this (angle, pol)
         R_config, T_config = optim_calc_oblique_selected(
             config["wls_config"],
@@ -262,7 +267,7 @@ def _design_compute_oblique_error_common(app: Any, ep_test: np.ndarray) -> Any:
             has_back_calc=app._has_back_calc,
             has_back_stack=app._has_back_stack,
             d_back=app._d_back,
-            n_back_T=app._n_back_T,
+            n_back_T=n_back_cfg,
             substrate_thickness_nm=substrate_thickness_of(app),
             calc_spectrum_full_oblique_exact=calc_spectrum_full_oblique_exact,
             calc_spectrum_oblique_backside_vectorized=calc_spectrum_oblique_backside_vectorized,
@@ -623,7 +628,7 @@ def _design_optimization_callback_common(app: Any, sample: Any) -> None:
                             has_back_calc=app._has_back_calc,
                             has_back_stack=app._has_back_stack,
                             d_back=app._d_back,
-                            n_back_T=app._n_back_T,
+                            n_back_T=app._n_back_T_disp,
                             substrate_thickness_nm=substrate_thickness_of(app),
                             calc_spectrum_full_oblique_exact=calc_spectrum_full_oblique_exact,
                             calc_spectrum_oblique_backside_vectorized=calc_spectrum_oblique_backside_vectorized,
@@ -711,7 +716,7 @@ def _design_optimization_callback_common(app: Any, sample: Any) -> None:
                             has_back_calc=app._has_back_calc,
                             has_back_stack=app._has_back_stack,
                             d_back=app._d_back,
-                            n_back_T=app._n_back_T,
+                            n_back_T=app._n_back_T_disp,
                             substrate_thickness_nm=substrate_thickness_of(app),
                             calc_spectrum_full_oblique_exact=calc_spectrum_full_oblique_exact,
                             calc_spectrum_oblique_backside_vectorized=calc_spectrum_oblique_backside_vectorized,

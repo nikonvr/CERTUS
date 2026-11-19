@@ -749,7 +749,8 @@ class NeedleWorker(QObject):
                     total_wt = 0.0
                     for config in oblique_configs_needle:
                         n_layers_T_config = n_layers_T_test[config['all_clues'], :]
-                        R_config, T_config = optim_calc_oblique_selected(config['wls_config'], n_layers_T_config, ep_test, config['n_sub_config'], config['angle'], config['pol'], has_back_calc=has_back, has_back_stack=has_back_stack, d_back=d_back, n_back_T=n_back_T, calc_spectrum_full_oblique_exact=calc_spectrum_full_oblique_exact, calc_spectrum_oblique_backside_vectorized=calc_spectrum_oblique_backside_vectorized, calc_spectrum_oblique_vectorized=calc_spectrum_oblique_vectorized, substrate_thickness_nm=self._substrate_thickness_nm)
+                        n_back_cfg = n_back_T[config['all_clues'], :] if (has_back_stack and n_back_T is not None and 'all_clues' in config) else n_back_T
+                        R_config, T_config = optim_calc_oblique_selected(config['wls_config'], n_layers_T_config, ep_test, config['n_sub_config'], config['angle'], config['pol'], has_back_calc=has_back, has_back_stack=has_back_stack, d_back=d_back, n_back_T=n_back_cfg, calc_spectrum_full_oblique_exact=calc_spectrum_full_oblique_exact, calc_spectrum_oblique_backside_vectorized=calc_spectrum_oblique_backside_vectorized, calc_spectrum_oblique_vectorized=calc_spectrum_oblique_vectorized, substrate_thickness_nm=self._substrate_thickness_nm)
                         _sw_cfg = optim_oblique_config_weights(config)
                         for tgt_data in config['targets']:
                             local_positions = tgt_data['local_positions']

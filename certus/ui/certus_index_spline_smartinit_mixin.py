@@ -18,6 +18,7 @@ from certus.spline.certus_index_spline_core import (
 )
 from certus.spline.spline_smart_init import (
     interp_n_L_pwlnk_to_sigmas,
+    optimize_smart_init_thickness,
     pick_best_manual_material_preset,
     recalc_smart_init_spectral_preview,
     smart_init_sweep_node_thickness_rmse,
@@ -164,17 +165,9 @@ class CertusIndexSplineSmartInitMixin:
             except (TypeError, ValueError, IndexError):
                 logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
-        from scipy.optimize import minimize_scalar
-
-        def obj_d_only(dv: float) -> float:
-            _, rm = rmse_at_spline_stage_x0_init(
-                cfg, state.sk, state.n_phys, state.L_nodes, float(dv), relax_n_mono=relax_si_mono
-            )
-            return float(rm)
-
-        res_d = minimize_scalar(obj_d_only, bounds=(cfg.d_lo, cfg.d_hi), method="bounded", options={"xatol": 0.01})
-        if res_d.success:
-            state.preview_d_nm = float(res_d.x)
+        opt_d = optimize_smart_init_thickness(cfg, state.sk, state.n_phys, state.L_nodes, relax_n_mono=relax_si_mono)
+        if opt_d is not None:
+            state.preview_d_nm = opt_d
 
     def _execute_smart_init_run_auto(
         self,

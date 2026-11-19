@@ -10,6 +10,8 @@ This module imports neither PyQt6, nor pyqtgraph, nor certus.ui. The root
 launcher CERTUS_METAL_SINGLE.py re-exports it.
 """
 
+from functools import lru_cache
+
 import numpy as np
 from scipy.interpolate import CubicSpline
 
@@ -23,7 +25,7 @@ from certus.metal.certus_metal_defaults import (
     DEFAULT_NK_MIN,
 )
 from certus_physics import (
-    _compute_single_layer_sensitivity_kernel,
+    _compute_single_layer_sensitivity_array,
     calculate_RTRback_incoherent_vectorized,
     get_nk_from_spline,
 )
@@ -319,6 +321,22 @@ def objective_function_fixed_eM(
     )
 
 
+@lru_cache(maxsize=64)
+def _natural_spline_basis_cached(knot_key: tuple[float, ...], wl_key: tuple[float, ...]) -> np.ndarray:
+    """Cache the (num_knots, n_wl) natural cubic-spline basis matrix for fixed knot positions."""
+    knot_l = np.asarray(knot_key, dtype=np.float64)
+    l_arr = np.asarray(wl_key, dtype=np.float64)
+    num_knots = len(knot_key)
+    basis = np.zeros((num_knots, len(wl_key)), dtype=np.float64)
+    for i in range(num_knots):
+        unit_vals = np.zeros(num_knots, dtype=np.float64)
+        unit_vals[i] = 1.0
+        spline_basis = CubicSpline(knot_l, unit_vals, bc_type="natural", extrapolate=False)
+        basis[i, :] = np.nan_to_num(spline_basis(l_arr), nan=0.0)
+    basis.setflags(write=False)
+    return basis
+
+
 def gradient_function_fixed_eM(
     x,
     eM_fixed,
@@ -379,30 +397,19 @@ def gradient_function_fixed_eM(
 
     fac_r = 2.0 / n_pts
 
-    dJ_dn = np.zeros_like(n_calc, dtype=np.float64)
-
-    dJ_dk = np.zeros_like(k_calc, dtype=np.float64)
-
+    l_arr_f64 = np.asarray(l_array, dtype=np.float64)
+    n_sub_f64 = np.ascontiguousarray(np.real(nSub_complex_array), dtype=np.float64)
     nM_complex_2d = (n_calc - 1j * k_calc).reshape(-1, 1)
 
     R_calc, _, _ = calculate_RTRback_incoherent_vectorized(
-        np.array([eM_val], dtype=np.float64), nM_complex_2d, nSub_complex_array, l_array
+        np.array([eM_val], dtype=np.float64), nM_complex_2d, nSub_complex_array, l_arr_f64
     )
-
-    for i, wl in enumerate(l_array):
-        nr = float(n_calc[i])
-
-        ki = float(k_calc[i])
-
-        ns = float(np.real(nSub_complex_array[i]))
-
-        _, _, dRdn, dRdk, _, _ = _compute_single_layer_sensitivity_kernel(wl, nr, ki, eM_val, ns)
-
-        dr = float(R_calc[i] - r_tgt_array[i])
-
-        dJ_dn[i] = fac_r * dr * dRdn
-
-        dJ_dk[i] = fac_r * dr * dRdk
+    _, _, dRdn_arr, dRdk_arr, _, _ = _compute_single_layer_sensitivity_array(
+        l_arr_f64, n_calc, k_calc, eM_val, n_sub_f64
+    )
+    dr_vec = fac_r * (R_calc - r_tgt_array)
+    dJ_dn = dr_vec * dRdn_arr
+    dJ_dk = dr_vec * dRdk_arr
 
     # The smoothness penalty the objective adds, 1e-2 times the squared second differences of n and of k on the
     # wavelength grid, has its derivative here too (D76): without it the gradient was the data term's alone.
@@ -412,24 +419,8 @@ def gradient_function_fixed_eM(
         dJ[1:-1] -= 4e-2 * d2
         dJ[2:] += 2e-2 * d2
 
-    # Spline basis mapping (same strategy as bilayer analytic wrapper)
-
-    basis = np.zeros((num_knots, len(l_array)), dtype=np.float64)
-
-    for i in range(num_knots):
-        unit_vals = np.zeros(num_knots, dtype=np.float64)
-
-        unit_vals[i] = 1.0
-
-        spline_basis = CubicSpline(knot_l, unit_vals, bc_type="natural", extrapolate=False)
-
-        basis_vals = spline_basis(l_array)
-
-        basis[i, :] = np.nan_to_num(basis_vals, nan=0.0)
-
-    for i in range(num_knots):
-        grad[i] = np.dot(dJ_dn, basis[i, :])
-
-        grad[num_knots + i] = np.dot(dJ_dk, basis[i, :])
+    basis = _natural_spline_basis_cached(tuple(knot_l.tolist()), tuple(l_arr_f64.tolist()))
+    grad[:num_knots] = basis @ dJ_dn
+    grad[num_knots:] = basis @ dJ_dk
 
     return grad

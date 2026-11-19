@@ -1194,3 +1194,20 @@ def optimize_smart_init_nkd_packet(
 
     res = minimize(loss, x0, method="L-BFGS-B", bounds=bounds, options={"maxfun": 150})
     return SmartInitNkdPacketResult(idx_list=idx_list, result=res)
+
+
+def optimize_smart_init_thickness(
+    cfg: SplineOptConfig,
+    sk: np.ndarray,
+    n_phys: np.ndarray,
+    L_nodes: np.ndarray,
+    *,
+    relax_n_mono: bool = False,
+) -> float | None:
+    """Polish film thickness in nm for the current Smart Init nodes without Qt."""
+    def obj_d_only(dv: float) -> float:
+        _, rm = rmse_at_spline_stage_x0_init(cfg, sk, n_phys, L_nodes, float(dv), relax_n_mono=relax_n_mono)
+        return float(rm)
+
+    res_d = minimize_scalar(obj_d_only, bounds=(cfg.d_lo, cfg.d_hi), method="bounded", options={"xatol": 0.01})
+    return float(res_d.x) if res_d.success else None

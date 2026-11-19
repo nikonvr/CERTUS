@@ -50,6 +50,17 @@ Le script copie les fichiers du dossier dans `bruts/`, écrit leurs mesures dans
 Il lui faut `xlrd` pour les `.xls`. `tests/unit/test_the_deposit_database_holds_together.py` vérifie que chaque entrée
 se charge comme le catalogue l'annonce.
 
+## Une référence dans RE
+
+```bat
+python scriptse_depuis_depot.py sb2s3-silice
+```
+
+Écrit le classeur que RE lit (`measurement`, `design`, `index`) : les voies mesurées, la couche de la référence en
+un QWOT sur son substrat, et ses n, k de Tauc-Lorentz-Urbach (`certus/utils/certus_depots_re.py`). Une référence
+normalisée (T/T_sub) est refusée : RE modélise R et T absolus, et dénormaliser demande un modèle de substrat (décision
+de l'utilisateur). Une seule des onze références est absolue (`sb2s3-silice`).
+
 ## Les références d'INDEX et le banc
 
 `references_index.json` relève les ajustements certifiés de l'application CERTUS INDEX autonome

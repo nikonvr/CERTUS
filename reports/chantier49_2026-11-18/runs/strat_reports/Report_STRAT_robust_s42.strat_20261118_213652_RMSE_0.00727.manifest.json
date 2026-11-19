@@ -1,0 +1,52 @@
+{
+  "run_id": "run_20261118T203652Z",
+  "started_at_utc": "2026-11-18T20:36:52.180789+00:00",
+  "app_id": "CERTUS_STRAT",
+  "app_version": "26_05",
+  "seed": 42,
+  "software_env": {
+    "python": "3.15.2",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "numba": "0.68.0",
+    "pyqt": "6.11.0",
+    "openpyxl": "3.1.5",
+    "matplotlib": "3.11.2",
+    "os": "Windows 11",
+    "certus_version": "26_05"
+  },
+  "numba_version": "0.68.0",
+  "numpy_version": "2.5.3",
+  "threading_layer": "omp",
+  "env_locale": "fr_FR.cp1252",
+  "cpu_brand": "AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD",
+  "os_release": "11",
+  "input_fingerprints": [
+    {
+      "path": "C:\\dev\\certus1111\\reports\\chantier49_2026-11-18\\runs\\robust_s42.strat.json",
+      "sha256": "842a38c7b1e85c48c2c691452df3b6713319b126e58e0955a50dd7f1a7066054",
+      "size": 4887,
+      "mtime_utc": "2026-11-18T17:18:57.541747+00:00"
+    },
+    {
+      "path": "C:\\dev\\certus1111\\example\\database_index\\indices.xlsx",
+      "sha256": "cd6b97cd02e30cf6bca937a170dd35c746981f49e59a4ceeceb142374d5ea5ac",
+      "size": 442835,
+      "mtime_utc": "2026-11-17T19:35:42.214141+00:00"
+    }
+  ],
+  "params": {
+    "config_repr": "{'module': 'CERTUS_STRAT', 'params': {'nH_id': 'H800-Nb2O5', 'nL_id': 'H800-SiO2', 'nSub_id': 'SiO2', 'substrate_choice': 'SiO2', 'h_material_file': 'H800-Nb2O5', 'l_material_file': 'H800-SiO2', 'l0': 550.0, 'stack_string': '1.665974,1.10723,0.226585,0.323904,0.839664,1.767133,1.49568,1.467454,1.35045,1.421917,1.433977,1.412717,1.511091,1.707974,3.887521,0.115787,2.111748,1.788175,2.045545,0.217036,3.429205,0.174291,3.610602,0.085672,4.220888,1.742447,0.443036,1.954724,5.018944,3.23317,3.793071,0.458137,1.784315,1.816874,2.111296,3.393139,1.614045,0.652918,2.114498,1.542502,3.82875,0.334231,7.41333,1.294404,1.468059,1.50245,1.490323,0.738317,1.581993,1.624861,1.464923,0.687966,1.944935,0.659639,2.07589,0.800868,1.953606,0.472552,4.400385,0.411633,2.188566,0.362869,2.669045,0.198003,2.367627,0.179908,0.527933,1.89724,8.845543,0.130891,2.721664,0.090903,2.490511,0.19269,2.167166,0.30276,2.103731,1.849891,5.3351,0.21512,0.422061,2.410176,0.322923,0.339567,9.039898,0.192461,2.064282,1.681343,1.459703,0.769561', 'wl_range': (400.0, 728.849591640315), 'wl_step': 0.5, 'scan_wl_min': 430.0, 'scan_wl_max': 900.0, 'scan_wl_step': 1.0, 'dynamics_threshold': 0.025, 'min_transmission_floor': 0.1, 'strict_min_transmission_floor': True, 'enforce_best_strategy_tmin_check': True, 'mc_runs_block': 200, 'iter_divider_start': 18.0, 'iter_divider_end': 5.0, 'reality_sim_params': {'trigger_tolerance': 0.05, 'noise_distribution': 'gaussian'}, 'thickness_tolerance_nm': None, 'sim_thickness_probe_offset_ratio': 80.0, 'non_monotonic_error_factor': 2.0, 'non_monotonic_mode': 0, 'wavelength_change_penalty': 1.0, 'robustness_noise_factors': [0.5, 1.0, 2.0], 'robustness_num_runs': 300, 'nucleation_mc_runs': 150, 'mining_candidates_limit': 10000, 'n_screen_runs': 50, 'k_keep_survivors': 25, 'top_k_parents': 80, 'max_fusions_per_parent': 15, 'phase_a_scan_limit': 300, 'nucleation_max_rmse': 1.0, 'nucleation_degradation': 1.4, 'show_plots': True, 'export_excel': True, 'poem_anchor_noise': True, 'poem_anchor_noise_phase_a': True, 'tp_hysteresis_factor': 1.66, 'tp_hysteresis_floor': 0.000415, 'strat_local_search': True, 'strat_local_search_rounds': 1, 'phase_a_level_margin_factor': 1.66, 'affine_scale_amp': 0.0, 'affine_offset_amp': 0.0, 'poem_enabled': True, 'reading_smoothing_window': 1, 'witness_reset_layers': [], 'monochromator_resolution_nm': 2.0, 'allow_rate': True, 'index_corridor': 0.005, 'slit_bias_enabled': True, 'search_resolution': False, 'photometric_curvature_amp': 0.00375, 'crash_gate_confidence': 0.0, 'screen_seed_list': '', 'injected_strategies': '', 'enable_wl_diversity': False, 'wl_diversity_top_k': 0, 'enable_wl_coverage': False, 'wl_coverage_top_k': 0, 'rate_tail_sweep': [], 'rate_layer_sets': [], 'rate_by_swing': True, 'rate_tail_keep_optical': 0, 'rate_rules_final_only': False, 'rate_min_layer': 0, 'rate_max_optical_thickness_nm': 0.0, 'rate_max_fraction': 0.0, 'rate_rescue': True, 'rate_rescue_few': 10, 'elite_rate_moves': True, 'elite_rate_max_candidates': 120, 'require_turning_point': 0, 'optical_prefix_sweep': [], 'elite_min_improvement': 0.0, 'elite_wl_neighbor_span': 1, 'elite_max_candidates': 120, 'elite_stop_on_no_gain': True, 'elite_max_full_evals': 36, 'targets': None, 'logger': <Logger CERTUS-STRAT (INFO)>, 'materials_db': <certus.physics.certus_material_db.MaterialDatabase object at 0x0000024AF4284D70>, 'force_first_layer_same_wl': True, 'include_secondary_rmse_stats': False, 'keep_full_mc_top_k': 30, 'robustness_seed': 42, 'phase_a_seed': 42, 'sym_enable': True, 'sym_weight': 0.5, 'sym_same_wl_bonus': 0.2, 'sym_extrema_window': 5.0, 'sym_continuity_weight': 0.1, 'sym_adaptive_same_wl': True, 'sym_allow_hybrid': False, 'sym_prefer_on_tie': True, 'sym_tie_epsilon': 1e-12, 'sym_tie_epsilon_rel': 1e-06, 'sym_scoring_mode': 'post', 'enable_consensus_ranking': True, 'consensus_num_seeds': 3, 'consensus_seed_list': '41,42,43', 'consensus_seed_stride': 1, 'consensus_top_k': 12, 'consensus_num_runs': 300, 'consensus_std_weight': 0.35, 'consensus_score_mode': 'mean_std', 'execution_mode': 'deep', 'elite_rounds': 3, 'dp_top_k': 100}}",
+    "run_id": null,
+    "initiated_by": null,
+    "created_at": null,
+    "metadata": {}
+  },
+  "params_hash": "fd743a8045640019cf3f3c69d041b1c9314470c5ea7cd77682c3c76953904ded",
+  "materials_db_hash": "d2ce255df1af017d3f132f399b3db906ee45e2ee816ffae9e1a2fef3ab6b71aa",
+  "db_version": "d2ce255df1af",
+  "git_commit": "b217c138683f873c7dd862a9521ef595d2038e23",
+  "git_dirty": false,
+  "warnings": [],
+  "status": "OK"
+}

@@ -1,0 +1,66 @@
+{
+  "run": "nominal_s42",
+  "design": "best_design_needle_swap_90_nominal.json",
+  "robustness_num_runs": 300,
+  "replay_p95_by_seed": {
+    "41": [
+      0.005827905016997901,
+      0.00600408893218458,
+      0.0064786263383234954
+    ],
+    "42": [
+      0.005855257448843541,
+      0.0060246971738567336,
+      0.0067200514668729235
+    ],
+    "43": [
+      0.005775524497908561,
+      0.0057180773419659185,
+      0.006419940988233078
+    ]
+  },
+  "holdout_seeds": [
+    2026111801,
+    2026111802,
+    2026111803
+  ],
+  "draws_per_seed": 400,
+  "noise_level_index": 1,
+  "seel_nm": 0.1641617583694802,
+  "p95_by_level": [
+    0.005780669320688411,
+    0.005849231187636411,
+    0.0067372707277399005
+  ],
+  "stops_by_level": [
+    0,
+    0,
+    0
+  ],
+  "rms_completed": 0.004158687117050166,
+  "strategy_id": 909050788,
+  "blocks": 90,
+  "rate_layers": 64,
+  "layers": 90,
+  "max_rel_thickness_gap": 5.366716823374359e-06,
+  "wl_range": [
+    400.0,
+    728.849591640315
+  ],
+  "index_corridor": 0.005,
+  "rescore_seconds": 6.7823715999984415,
+  "provenance": {
+    "certus_version": "26_05",
+    "git_commit": "b217c138683f873c7dd862a9521ef595d2038e23",
+    "git_dirty": true,
+    "python": "3.15.2",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "numba": "0.68.0",
+    "numba_cache_key": "cb1236d34d29",
+    "numba_cache_keyed": true,
+    "platform": "Windows-11-10.0.26200-SP0",
+    "machine": "AMD64",
+    "generated_at_utc": "2026-11-18T20:45:54+00:00"
+  }
+}

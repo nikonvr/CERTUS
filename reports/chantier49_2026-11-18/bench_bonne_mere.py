@@ -69,8 +69,10 @@ def holdout(design: dict, pre_calc_data: dict, params: dict, plan: dict, runs: i
 
     ep = np.asarray(pre_calc_data["p_thick_nominal"], dtype=np.float64)
     d = np.asarray(design["thickness_nm"], dtype=np.float64)
-    if ep.shape != d.shape or not np.allclose(ep, d, rtol=1e-9, atol=0.0):
-        raise RuntimeError("STRAT did not deposit the thicknesses of the design")
+    # STRAT's layer table reads back six decimal places of QWOT (as in scripts/bench_codesign.py).
+    max_rounding_nm = 0.5e-6 * float(params["l0"]) / (4.0 * 1.4)  # both indices at l0 are above 1.4 (1.4868, 2.3579)
+    if ep.shape != d.shape or np.max(np.abs(ep - d)) > max_rounding_nm + 1e-10:
+        raise RuntimeError(f"STRAT did not deposit the thicknesses of the design (max gap {np.max(np.abs(ep - d)):.3g} nm)")
     if params.get("nSub_id") != SUBSTRATE:
         raise RuntimeError("The silica substrate did not reach STRAT")
     study_range = json.loads(STUDY.read_text(encoding="utf-8"))["wl_range"]

@@ -1,24 +1,17 @@
 # AGENTS.md — point d'entrée de toute IA
 
-Chaque octet lu ou imprimé est un coût. Règles : [`CLAUDE.md`](CLAUDE.md) ; état : section 0 de [`docs/ETAT.md`](docs/ETAT.md).
+Règles : [`CLAUDE.md`](CLAUDE.md) ; état : [`docs/ETAT.md`](docs/ETAT.md) §0.
 
 ```bat
 python scripts\preflight.py
 python scripts\orient.py
 ```
 
-La première doit finir par `PREFLIGHT=GO`. `orient.py` donne la tête git, l'arbre, les autres processus python (une mesure
-lancée pendant qu'une autre tourne rend `RESULT=None`), la dernière validation et le coût de chaque document ; `--carte`
-ajoute leurs titres et lignes.
+`preflight.py` doit finir par `PREFLIGHT=GO`. `orient.py` donne tête git, arbre, processus python actifs (une mesure parallèle rend `RESULT=None`), dernière validation et coût des docs (`--carte` ajoute les titres).
 
-1. **À la demande seulement** : `docs/CHANTIERS_RESTANTS.md`, `docs/ETAT_acquis.md`, `docs/REGLES_reference.md`.
-2. **Jamais en entier** : `reports/`, `studies/` ; cherche par identifiant (`rg -n "RICL" docs/CHANTIERS_RESTANTS.md`),
-   ouvre le `bilan.md` ou le `README.md` d'un dossier. `.rgignore` les cache à ripgrep.
-3. **Une sortie de commande se paie** : `pytest -q --no-cov` (`-x` pour s'arrêter au premier échec), jamais `--verbose` ;
-   `git status -sb`, `git log --oneline -n 10`, `git diff --stat` avant `git diff` ; au-delà d'une page, un fichier dont tu
-   lis la fin.
-4. **Lis ce dont tu as besoin** (`offset`, `limit`) ; ne relis pas ce que tu viens d'écrire ; Read et Grep plutôt que
-   `cat`, `find`, `grep -r`.
-5. **Une action, son résultat, la suivante** : ni agents ni processus en parallèle pour explorer ; une seule mesure ou
-   validation à la fois.
-6. **Écris court** : un fait, un seul endroit ; le rapport d'une campagne va dans `reports/`.
+1. **À la demande** : `docs/CHANTIERS_RESTANTS.md`, `docs/ETAT_acquis.md`, `docs/REGLES_reference.md`.
+2. **Jamais en entier** : `reports/`, `studies/` (cachés à ripgrep par `.rgignore`) ; chercher par id (`rg -n "RICL" docs/CHANTIERS_RESTANTS.md`) ou lire `bilan.md`/`README.md`.
+3. **Sortie sobre** : `pytest -q --no-cov` (`-x`), jamais `--verbose` ; `git status -sb`, `git log --oneline -n 10`, `git diff --stat` avant `git diff`.
+4. **Lire ciblé** (`offset`, `limit`) ; ne pas relire ce qu'on vient d'écrire ; préférer Read/Grep.
+5. **Une action, son résultat, la suivante** : ni agents ni mesures en parallèle.
+6. **Écrire court** : un fait, un seul endroit ; rapport de campagne dans `reports/`.

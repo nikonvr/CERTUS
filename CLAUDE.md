@@ -1,23 +1,15 @@
 # CERTUS — règles de travail
 
-Suite de **couches minces optiques** (PyQt6, NumPy/SciPy, Numba) : indice, design, stratégie de dépôt. Le code calcule
-de la **physique réelle** qui sert à fabriquer des filtres : une erreur silencieuse ne plante pas, elle donne un
-**résultat faux qui a l'air juste**, et quelqu'un fabrique une pièce avec.
+Suite de **couches minces optiques** (PyQt6, NumPy/SciPy, Numba) : physique réelle — une erreur silencieuse fausse les résultats sans planter.
 
-**Trois documents vivants** : les règles qui annulent un travail, ici ; la référence, lue en touchant le sujet, sous les
-mêmes numéros de section, [`docs/REGLES_reference.md`](docs/REGLES_reference.md) ; l'état, [`docs/ETAT.md`](docs/ETAT.md)
-(lire sa section 0 avant de travailler et la tenir à jour). `reports/` : mesures datées. Un « CLAUDE.md §N » cité par le code
-peut venir d'une ancienne version : chercher la règle par son sujet.
-
-Sobriété de lecture, pour toute IA : @AGENTS.md
+- Règles ici ; détails par section dans [`docs/REGLES_reference.md`](docs/REGLES_reference.md) ; état dans [`docs/ETAT.md`](docs/ETAT.md) (lire §0 avant d'agir).
+- Sobriété : @AGENTS.md
 
 ## 1. Démarrage
 
-`python scripts\preflight.py` doit finir par `PREFLIGHT=GO` : `import certus` résout **dans l'arbre où tu édites**.
+`python scripts\preflight.py` doit finir par `PREFLIGHT=GO` (`import certus` dans l'arbre édité).
 
-🔴 **Le dépôt est PUBLIC** (`github.com/nikonvr/CERTUS`) : ni secret (clé, mot de passe, jeton), ni donnée personnelle
-d'un **autre** que 👤, ni œuvre d'un tiers dans l'index, métadonnées des classeurs Excel comprises. **Pousser publie :
-seulement sur ordre de 👤.** Committer ne publie pas si `git config --get core.hooksPath` est vide (référence §1).
+🔴 **Dépôt PUBLIC** (`github.com/nikonvr/CERTUS`) : aucun secret, donnée tierce ni œuvre tierce (métadonnées Excel comprises). **Pousser publie : uniquement sur ordre de 👤.** Committer est local si `git config --get core.hooksPath` est vide (référence §1).
 
 ## 2. Valider — seul critère : `0 failed`
 
@@ -32,95 +24,76 @@ python scripts\check_claude_md.py
 python scripts\check_docs.py
 ```
 
-Itérer : `-m "not slow"` (liste dans `tests/slow_tests.json`) ; la validation finale reste la suite entière. Un test
-rouge avant toute modification : arrête-toi et signale-le. Calcul optique : oracle avant et après ; noyau :
-`python scripts\c1_diff.py HEAD` avant commit. Échecs ambigus, annotations, gel : référence §2.
+Itérer : `-m "not slow"` (`tests/slow_tests.json`) ou `python scripts\verify_changed.py` ; validation finale = suite entière (dont `tests/ui/`). Test déjà rouge : s'arrêter et signaler. Calcul optique : oracle avant/après + `python scripts\c1_diff.py HEAD` sur noyau (détails : référence §2).
 
 ## 3. Les onze interdits — aucune exception sans ordre de 👤
 
-Une IA ne s'en accorde jamais : elle s'arrête et demande (§11). Pour 6, 7 et 9, une exception exige en plus une mesure.
+Aucune auto-exception (§11 ; pour 6, 7 et 9 : mesure obligatoire en plus).
 
-1. **Jamais `ruff check --fix`** : beaucoup d'imports « inutilisés » sont des ré-exports volontaires.
-2. **Jamais agrandir `extend-ignore`** dans `pyproject.toml` ; un cliquet le surveille.
-3. **Jamais supprimer `reports/`** : résultats scientifiques versionnés de 👤.
-4. **`example/example_strat/JSON-strat-example.json` ne se modifie que pour DURCIR** ; pour essayer autre chose,
-   injecter après coup (`scripts\probe_anchor_noise_pipeline.py`).
-5. **Jamais « corriger » `except A, B:`** : syntaxe PEP 758 de Python 3.14, voulue.
-6. **Jamais inverser `n̂ = n − ik`** (k ≥ 0) : l'inverse crée de l'énergie (`R + T > 1`).
-7. **Jamais réimplémenter une formule TMM** : source unique `certus/physics/certus_opt_tmm.py::compute_RT_from_matrix`
-   (cliquet `tests/oracle/test_tmm_formula_has_one_source.py`).
-8. **Jamais découper `certus/core/_certus_physics_impl.py`** (`DO NOT SPLIT` : visibilité mutuelle des noyaux compilés).
-9. **Jamais affirmer un résultat non mesuré** : tu colles la sortie de la commande, ou tu écris « je n'ai pas mesuré ».
-10. **Jamais de rapport de session à la racine** ; une sortie de campagne va dans `reports/`.
-11. **Jamais de français dans les commentaires, docstrings et journaux de `certus/`**, sauf les mots utilisés comme
-    données (`certus_re_helpers.py`), les clés JSON persistées (`seuil1`/`seuil2`), les formats de journal que des
-    scripts analysent (compteurs ELITE) et les libellés vus par l'utilisateur
-    (garde-fou `tests/unit/test_certus_is_written_in_english.py`).
+1. **Jamais `ruff check --fix`** : des imports servent de ré-exports.
+2. **Jamais agrandir `extend-ignore`** (`pyproject.toml`, surveillé par cliquet).
+3. **Jamais supprimer `reports/`**.
+4. **`example/example_strat/JSON-strat-example.json` ne se modifie que pour DURCIR** (sinon injecter via `scripts\probe_anchor_noise_pipeline.py`).
+5. **Jamais « corriger » `except A, B:`** (PEP 758 Python 3.14+).
+6. **Jamais inverser `n̂ = n − ik`** (`k >= 0` ; sinon gain `R + T > 1`).
+7. **Jamais réimplémenter une formule TMM** : source unique `certus/physics/certus_opt_tmm.py::compute_RT_from_matrix` (`tests/oracle/test_tmm_formula_has_one_source.py`).
+8. **Jamais découper `certus/core/_certus_physics_impl.py`** (`DO NOT SPLIT` : visibilité Numba).
+9. **Jamais affirmer un résultat non mesuré** : coller la sortie réelle.
+10. **Jamais de rapport à la racine** : campagnes dans `reports/`.
+11. **Jamais de français dans commentaires, docstrings et journaux de `certus/`** (hors données `certus_re_helpers.py`, clés JSON persistées `seuil1`/`seuil2`, compteurs ELITE et libellés UI ; `tests/unit/test_certus_is_written_in_english.py`).
 
 ## 4. Les erreurs qui annulent un travail
 
 | erreur | conséquence |
 |---|---|
-| modifier un arbre et en mesurer un autre | tout est faux, sans message ; `.claude/worktrees/` sont des copies du dépôt dans le dépôt : balaye les fichiers **suivis** (`git ls-files`) |
-| conclure avant la mesure | annulé à la relecture |
-| changer deux choses à la fois | personne ne sait laquelle a agi (**C3**) |
-| croire un chiffre de bruit qui ne varie pas avec le bruit | artefact : divise le bruit par 100 et remesure |
-| lancer une mesure pendant qu'autre chose tourne | le banc rend `RESULT=None`, qui ressemble à un résultat ; cherche `WAIT_TIMEOUT=` |
-| vérifier une non-régression « aux tests près » | les tests ne prouvent pas l'identité numérique : il faut le **bit** |
-| un paramètre visible qui n'atteint pas le calcul | une fausse explication : **vérifie qu'il arrive avant de lui attribuer un effet** |
+| modifier un arbre, en mesurer un autre | résultats faux ; balayer `git ls-files`, pas `.claude/worktrees/` |
+| conclure avant mesure | annulé |
+| changer deux choses à la fois | cause perdue (**C3**) |
+| bruit constant quand le bruit varie | artefact (vérifier à bruit ÷ 100) |
+| lancer deux mesures/processus ensemble | banc rend `RESULT=None` (`WAIT_TIMEOUT=`) |
+| prouver une non-régression par simple tolérance | il faut le **bit** |
+| attribuer un effet à un paramètre non câblé | vérifier d'abord qu'il atteint le calcul |
 
 ## 5. La règle d'or et les trois contraintes
 
 > **Tout nouveau paramètre est inactif par défaut, et le chemin inactif rend exactement les mêmes bits qu'avant.** (C1)
 
-- **C1** s'éprouve au bit, pas par le `RESULT` du banc : `python scripts\c1_diff.py HEAD` avant de committer un
-  changement de noyau, froid contre froid (mode d'emploi : référence §5).
-- **C2** — croissance et notation voient **la même réalisation** de chaque perturbation : tout tirage est une fonction
-  pure de (graine, tirage, index physique), **jamais** de la stratégie
-  (`certus/physics/certus_strat_math.py::_seeded_noise_sample`).
-- **C3** — une chose à la fois, un commit chacune.
-- Un test ajouté pour un correctif **doit échouer sur le code d'avant**.
+- **C1** : prouver au bit via `python scripts\c1_diff.py HEAD` avant commit noyau (froid vs froid ; référence §5).
+- **C2** : croissance et notation voient la même perturbation pure de `(graine, tirage, index physique)` (`certus/physics/certus_strat_math.py::_seeded_noise_sample`).
+- **C3** : une chose par commit. Tout correctif commence par un **test rouge sur le code d'avant**.
 
 ## 6. Pièges d'exécution
 
-→ Référence §6 : DTO `params`, cache Numba (`numba_cache_key`), caches de classe et fixture `qapp`, `atomic_open` et
-`except` larges, thème Qt (jamais un hexadécimal), premier calcul qui compile Numba.
+→ Référence §6 : DTO `params`, cache Numba (`numba_cache_key`), caches de classe et `qapp`, `atomic_open` et `except`, thème `CertusTheme` (jamais d'hexadécimal), premier appel Numba à chauffer.
 
 ## 7. Conventions physiques
 
-- Convention de Macleod `n̂ = n − ik`, k ≥ 0, partout.
+- Macleod `n̂ = n − ik`, `k >= 0`, partout.
 - `calculate_transmission_single` inclut **délibérément** la face arrière (`DO NOT REMOVE THE BACKSIDE TERM`).
-- `tests/oracle/tmm_reference.py` est une référence TMM **indépendante** (Macleod, chap. 2), sans une ligne partagée
-  avec `certus.physics` : sers-t'en. Un marqueur `LOCKED` n'est pas une preuve.
-- 🔴 **QWOT ≠ point tournant** : compte les points tournants par la forme fermée (`scripts\probe_turning_points.py`),
-  jamais par l'épaisseur (référence §7).
+- `tests/oracle/tmm_reference.py` est l'oracle TMM indépendant ; un marqueur `LOCKED` ne prouve rien.
+- 🔴 **QWOT ≠ point tournant** : compter par forme fermée (`scripts\probe_turning_points.py`), référence §7.
 
 ## 8. Architecture — frontières à respecter
 
-- `certus.core`, `certus.physics`, `certus.domain` n'importent **jamais** PyQt6 ni `certus.ui`.
-- `certus.ui` et `CERTUS_HUB.py` ne contiennent **aucun** algorithme de calcul.
-- Les inversions existantes (`utils → ui`, `core → workers`, cycle `physics ↔ core`) : **n'en crée aucune nouvelle** ;
-  le symbole doit descendre dans `domain/` ou `core/`.
-- Seul `certus/domain/` a un `__init__.py` (paquets PEP 420) : le projet s'utilise en source. Gel et points d'entrée :
-  référence §8.
+- `certus.core`, `certus.physics`, `certus.domain` n'importent jamais PyQt6 ni `certus.ui`.
+- `certus.ui` et `CERTUS_HUB.py` ne portent aucun algorithme de calcul.
+- Inversions existantes (`utils → ui`, `core → workers`, cycle `physics ↔ core`) : n'en créer aucune nouvelle ; descendre le symbole dans `domain/` ou `core/`.
+- Seul `certus/domain/` a `__init__.py` (PEP 420). Gel et points d'entrée : référence §8.
 
 ## 9. Vocabulaire
 
-→ Référence §9. Le SEEL (en nm) est **la** grandeur qu'on rapporte, jamais le RMSE seul.
+→ Référence §9. Le **SEEL** (nm) est la métrique rapportée, jamais le RMSE seul.
 
 ## 10. Tenir la documentation
 
-→ Référence §10, avant de toucher un `.md` ou une page de `pages/`. Un fait, un seul endroit ; le moins de mots possible.
+→ Référence §10. Un fait, un seul endroit ; le moins de mots possible.
 
 ## 11. Quand s'arrêter et demander
 
-Une instruction ambiguë · un test dont tu ne sais pas s'il a tort · une mesure qui s'écarte nettement de l'annoncé · la
-tentation de violer un interdit · plus de trois fichiers pour une seule action · **un résultat meilleur que prévu** — le
-plus souvent, on mesure la mauvaise chose. S'arrêter n'est jamais un échec ; inventer, si.
+S'arrêter sur : ambiguïté · test ambigu · écart fort aux prévisions · tentation d'interdit · > 3 fichiers pour 1 action · **résultat meilleur que prévu** (souvent mauvaise mesure).
 
-Une exception s'accorde par 👤, pour un cas nommé, et s'inscrit dans `docs/ETAT.md` §3 avec sa date, sa portée et sa
-raison. Elle n'élargit pas la règle ; si elle se répète, c'est la règle qu'il faut changer.
+Toute exception est accordée par 👤, datée et motivée dans [`docs/ETAT.md`](docs/ETAT.md) §3 (et ne s'étend pas).
 
 ## 12. Vérifier le travail d'un autre agent
 
-→ Référence §12 : un rapport est une déclaration, pas une preuve. Ne déplace pas l'étiquette `depart-gemini`.
+→ Référence §12 : rapport ≠ preuve. Ne pas déplacer l'étiquette `depart-gemini`.

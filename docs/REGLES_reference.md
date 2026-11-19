@@ -1,120 +1,60 @@
-# CERTUS — référence : pièges d'exécution, gel, vocabulaire, documentation, revue d'un agent
+# CERTUS — référence (à la demande)
 
-> Extrait de [`CLAUDE.md`](../CLAUDE.md) le 2026-10-18 (convention de `scripts/extraire_section.py`). Ce contenu **fait autorité** ; `CLAUDE.md`
-> n'en garde qu'un renvoi par section, sous le même numéro. **Un fait, un seul endroit** : corrige ici, ne recopie pas ailleurs, mets un lien.
-> Les `§N` nus qui renvoient aux règles qui annulent un travail sont écrits `CLAUDE.md §N`. À lire en touchant le sujet, pas à chaque session.
+Complément de [`CLAUDE.md`](../CLAUDE.md) (même numérotation `CLAUDE.md §N`). Un fait, un seul endroit.
 
 ## 1. Démarrage et publication
 
-`preflight.py` vérifie aussi que l'interpréteur importe les dépendances ; aucun chemin n'y est écrit en dur : ils se
-périmaient.
-
-Committer ne publie **pas** par défaut : le hook `.githooks/post-commit` ne s'arme que par
-`git config core.hooksPath .githooks`, réglage local jamais hérité. Vérifie avec `git config --get core.hooksPath`
-et `git status -sb`, ne le suppose pas. Les données de 👤 lui-même sont son choix : il assume de tout publier.
+- `preflight.py` vérifie l'import `certus` et ses dépendances sans chemin en dur.
+- Committer est local : le hook `.githooks/post-commit` ne s'active que via `git config core.hooksPath .githooks`. Vérifier `git config --get core.hooksPath` et `git status -sb`. Les données de 👤 sont son choix.
 
 ## 2. Valider — pièges
 
-- Un échec au premier run d'un arbre neuf peut venir du cache Numba : relancer une fois ; persistant, il est réel.
-- Un test Qt qui meurt sans traceback peut signaler un worker encore actif : relancer avec
-  `QT_FORCE_STDERR_LOGGING=1` et `-s`. Un test isolé vert mais rouge en suite signale souvent un état partagé.
-- Un nouveau module typé dans `domain`, `physics` ou `core` suit le registre d'annotations `tests/architecture_debt.json`.
-- Itérer : `python scripts\verify_changed.py` joue les tests que touchent les symboles modifiés (`--list` dit
-  pourquoi). `VERIF_CIBLEE=GO` suffit à un commit local ; la suite complète, à une fusion.
-- Après modification du gel ou d'un point d'entrée que STRAT importe : `powershell tools\build_frozen.ps1` et
-  `python tools\release_checks.py --check-frozen --check-frozen-run`. Retirer ensuite `dist/` et `build/`,
-  jamais `reports/`.
+- Un échec isolé au premier run sur arbre neuf peut venir du cache Numba : relancer une fois avant de conclure.
+- Test Qt mort sans traceback = worker encore actif : relancer avec `QT_FORCE_STDERR_LOGGING=1` et `-s`. Vert seul / rouge en suite = état partagé.
+- Tout module typé dans `domain`/`physics`/`core` suit `tests/architecture_debt.json`.
+- Itérer : `python scripts\verify_changed.py` (`--list` explique ; `VERIF_CIBLEE=GO` suffit pour un commit local ; suite entière pour une fusion).
+- Après modif du gel ou d'un point d'entrée de STRAT : `powershell tools\build_frozen.ps1` puis `python tools\release_checks.py --check-frozen --check-frozen-run`. Nettoyer `dist/` et `build/`, jamais `reports/`.
 
 ## 5. C1 au bit — mode d'emploi de `c1_diff`
 
-C1 s'éprouve au bit, pas par le `RESULT` du banc : **une recompilation décale les derniers chiffres**.
-`python scripts\c1_diff.py HEAD` compare l'arbre de travail à un commit (corpus fixe, interpréteurs neufs, caches Numba
-vierges) ; il ne prouve que ce que son corpus appelle. Compare **froid à froid** : un noyau relu du cache n'a pas
-toujours les bits du noyau compilé à l'instant (`fastmath`). **Couper un noyau `fastmath` déplace ses derniers bits** ;
-`inline="always"` sur le morceau extrait, boucles fusionnées gardées fusionnées, les préserve. Un corpus se valide contre
-lui-même : `python scripts\c1_diff.py X --tete X --sans-cache` doit rendre 0.
+Une recompilation décale les derniers bits (`fastmath`). `python scripts\c1_diff.py HEAD` compare l'arbre de travail à un commit dans des interpréteurs neufs à caches Numba vierges (prouve uniquement les appels de son corpus). Toujours comparer froid à froid ; ne pas découper un noyau `fastmath` sauf `inline="always"` en gardant les boucles fusionnées. Auto-contrôle du corpus : `python scripts\c1_diff.py X --tete X --sans-cache` = `0`.
 
 ## 6. Pièges d'exécution
 
-- `params` peut être un DTO Pydantic : `get` et `[]` marchent,
-  `setdefault` non. Un import de paquet exécute `__init__.py` ;
-  depuis `certus/physics`, importer `certus_physics.X` peut créer un cycle.
-- **Numba** met en cache le code machine de l'appelant, y compris un appelé
-  d'un autre fichier et les tableaux de module. `numba_cache_key` dans
-  `certus/core/certus_core.py` clé le cache par les sources ; les modules
-  qui donnent une constante ou une façade aux noyaux doivent mentionner
-  numba dans leur texte. Garde :
-  `tests/unit/test_the_cache_key_covers_what_the_kernels_read.py`.
-- Les tests partagent des caches de classe : les restaurer par fixture.
-  Un test Qt prend la fixture `qapp`, jamais une `QApplication` locale.
-  `tests/headless/test_design.py` et `test_strat.py` simulent le calcul : mesurer avec `scripts/bench_examples.py`.
-- La Phase A se lit dans `reports/STRAT_observability_*.json`.
-  Dans INDEX SPLINE, `d_lo`/`d_hi` désignent nominale/tolérance au widget,
-  mais des bornes dans `SplineOptConfig` : vérifier le dialogue Smart Init.
-- Un export passe par `atomic_open` (`certus/utils/certus_atomic_io.py`).
-  Un `except` large journalise l'exception ou se restreint aux erreurs
-  attendues ; les tests `test_exports_are_written_atomically.py` et
-  `test_no_broad_exception_is_swallowed_in_silence.py` gardent ces règles.
-- **Qt/thème** : toujours `apply_certus_theme()` et les jetons `CertusTheme`, jamais un
-  hexadécimal. Une feuille locale de `create_styled_button` prime sur celle de
-  l'application. L'encre d'un bouton plein est `CertusTheme.label_on`, une transparence
-  `CertusTheme.tint(couleur, 0.18)`, jamais une concaténation ; `refresh_widget_sheets()` actualise les feuilles
-  au changement de thème. Vérifier les pixels (`widget.grab()`) : `scripts/audit_ux_certus.py`
-  ne lit que les feuilles déclarées.
-- Outils (`scripts/`) : paramètre inerte, `check_inert_params.py` (jamais lu) puis `check_param_effect.py` (sans
-  effet) ; nettoyage d'imports, `lint_ns_snapshot.py` inchangé ; `tests/ui/ux_skeleton.json`, `regenerer_squelette.py
-  --ecrire` dans le commit du libellé ; fenêtre fermée retenue, `sonde_retenants_fenetre.py`.
-- Le premier calcul compile Numba : chauffer avant un chronométrage.
-  Ne pas citer dans le code le motif littéral qu'un garde-fou cherche
-  (couleur, règle QSS) : il se déclencherait.
+- `params` (DTO Pydantic) : `get` et `[]` marchent, pas `setdefault`. Dans `certus/physics`, éviter `certus_physics.X` (cycle via `__init__.py`).
+- **Cache Numba** (`numba_cache_key` dans `certus/core/certus_core.py`) : inclure `numba` dans le texte de tout module exposant une constante/façade aux noyaux (`tests/unit/test_the_cache_key_covers_what_the_kernels_read.py`). Chauffer Numba avant tout chronométrage.
+- **Qt / tests** : restaurer les caches de classe par fixture ; utiliser la fixture `qapp` (jamais de `QApplication` locale). `tests/headless/test_design.py` et `test_strat.py` simulent ; mesurer avec `scripts/bench_examples.py`.
+- Phase A : `reports/STRAT_observability_*.json`. Dans INDEX SPLINE, `d_lo`/`d_hi` = nominale/tolérance au widget mais bornes dans `SplineOptConfig`.
+- **I/O & erreurs** : écrire tout export via `atomic_open` (`certus/utils/certus_atomic_io.py`) ; tout `except` large journalise ou se restreint (`test_exports_are_written_atomically.py`, `test_no_broad_exception_is_swallowed_in_silence.py`).
+- **Qt / thème** : `apply_certus_theme()` + jetons `CertusTheme` (jamais d'hexadécimal) ; encre bouton plein `CertusTheme.label_on`, transparence `CertusTheme.tint(couleur, 0.18)` ; `refresh_widget_sheets()` au changement de thème ; vérifier le rendu (`widget.grab()`, `scripts/audit_ux_certus.py`).
+- **Outils `scripts/`** : paramètre inerte -> `check_inert_params.py`, `check_param_effect.py` ; imports -> `lint_ns_snapshot.py` ; UX -> `tests/ui/ux_skeleton.json` + `regenerer_squelette.py --ecrire`, modales -> `sonde_retenants_fenetre.py`. Ne pas écrire le motif littéral d'un garde-fou dans le code.
 
 ## 7. QWOT et point tournant
 
-Le QWOT est l'épaisseur optique d'**une couche** (`m = 4nd/λ`) ; le point tournant est l'instant où l'admittance du
-**système entier** devient réelle, `tan 2δ = R/Q`. Leur période commune vaut un quart d'onde à λ_mon, mais le **départ**
-est décalé de `½·arctan(R/Q)`, fixé par l'empilement du dessous. Les deux ne coïncident que sur la couche 1 d'un substrat
-nu, ou sur un empilement tout en QWOT à λ_mon.
+QWOT = épaisseur optique d'une couche (`m = 4nd/λ`) ; point tournant = admittance système réelle (`tan 2δ = R/Q`). Même période d'un quart d'onde à `λ_mon`, mais déphasage initial `½·arctan(R/Q)` fixé par l'empilement dessous (coïncidence uniquement sur couche 1 sur substrat nu ou empilement tout QWOT).
 
-## 8. Architecture — le gel et les points d'entrée (suite de la section 8 de CLAUDE.md)
+## 8. Architecture — gel et points d'entrée (CLAUDE.md §8)
 
-- Le gel (`certus_hub.spec`) est **un** exécutable : `CERTUS_HUB.exe` lance le hub, et
-  `CERTUS_HUB.exe --run-module NOM [fichier]` un module. Son point d'entrée est `tools/frozen_entry.py`,
-  **jamais** un fichier de `certus/core/` : PyInstaller cherche d'abord dans le dossier de son script
-  d'entrée, qui masquerait `certus_substrate_index.py`. Un script de `scripts/` importé au démarrage doit
-  être dans les `datas` du spec, avec ce qu'il importe (`test_the_frozen_spec_bundles_the_suite` le suit).
-- `certus_curve_smoother.py` et `certus_substrate_index.py`, à la racine, sont des points d'entrée
-  que le hub lance ; le second recopie aussi les globales de `certus.core.certus_substrate_index`.
+- Gel (`certus_hub.spec`) : un exécutable unique (`CERTUS_HUB.exe`, `--run-module NOM [fichier]`). Point d'entrée `tools/frozen_entry.py`, jamais un fichier de `certus/core/` (masquerait `certus_substrate_index.py`). Tout script `scripts/` importé au boot doit être dans `datas` (`test_the_frozen_spec_bundles_the_suite`).
+- Points d'entrée racine : `certus_curve_smoother.py` et `certus_substrate_index.py` (ré-exporte les globales de `certus.core.certus_substrate_index`).
 
 ## 9. Vocabulaire
 
 | terme | sens |
 |---|---|
-| juge de paix | le dichroïque 48 couches, `example/example_strat/JSON-strat-example.json` — un repère, pas le seul composant |
-| λ de contrôle, bloc | la longueur d'onde surveillée ; un bloc = des couches consécutives à la même λ |
+| juge de paix | dichroïque 48 couches `example/example_strat/JSON-strat-example.json` |
+| λ de contrôle, bloc | longueur d'onde surveillée ; couches consécutives sur la même λ |
 | POEM | arrêt à un pourcentage de l'amplitude entre les deux derniers points tournants |
-| plantage, rendement | un dépôt qui ne se termine pas ; la part de ceux qui se terminent (objectif 95 %) |
-| Phase A, Phase B | choix d'une λ par couche ; regroupement en blocs et test Monte-Carlo |
-| SEEL | erreur d'épaisseur équivalente par couche, en nm — **la** grandeur qu'on rapporte, jamais le RMSE seul |
+| plantage, rendement | dépôt non terminé ; part terminée (objectif 95 %) |
+| Phase A, Phase B | choix d'une λ par couche ; regroupement en blocs + Monte-Carlo |
+| SEEL | erreur d'épaisseur équivalente par couche (nm) — grandeur rapportée |
 
 ## 10. Tenir la documentation
 
-- **Un fait, un seul endroit** : état dans `docs/ETAT.md`, règle ici.
-- **Cite une fonction, jamais un numéro de ligne** : les lignes bougent.
-- Pas de récit dans les documents vivants (« cette ligne disait… ») : `git log` le garde.
-- Les trois contrôles documentaires de CLAUDE.md §2 ne lisent pas les phrases : « 0 point à instruire » ne
-  veut pas dire « tout est cohérent ».
-- `pages/*.html` sont des rapports scientifiques **en anglais**, fidèles à ce que le code fait, sans
-  affirmation non étayée : chaque page doit répondre « oui » à *décrit-elle exactement ce que fait le
-  code, sans enjolivement ?*
-- La vitrine `pages/CERTUS_STRAT.html` a un régime strict : tout nombre sourçable dans le code
-  ou dans `reports/`, la limite montrée, la structure revérifiée (`python scripts\verifier_html.py pages\CERTUS_STRAT.html`).
+- Un fait, un endroit (`docs/ETAT.md` = état, ici = règle) ; citer des fonctions, jamais des numéros de ligne ; pas de récit (« disait… »).
+- Les 3 scripts doc de `CLAUDE.md §2` vérifient la mécanique, pas la vérité des phrases.
+- `pages/*.html` : rapports scientifiques **en anglais**, strictement fidèles au code ; `pages/CERTUS_STRAT.html` sourçable et contrôlée par `python scripts\verifier_html.py pages\CERTUS_STRAT.html`.
 
 ## 12. Vérifier le travail d'un autre agent
 
-Un rapport est une déclaration, pas une preuve : essaie de la **casser**. Trois questions, dans
-l'ordre : le diff correspond-il à la déclaration ? la mesure se reproduit-elle ? la conclusion
-suit-elle de la mesure ? Puis cinq contrôles : le nouveau paramètre est-il inerte au bit ? les
-tests ajoutés échouent-ils sur le code d'avant ? les grandeurs de bruit suivent-elles le bruit ?
-chaque filtre rejette-t-il réellement quelque chose (**compte les rejets**) ? les conclusions
-dépassent-elles les mesures ? Le repère d'origine est l'étiquette `depart-gemini` : ne la
-déplace pas.
+Un rapport est une déclaration, pas une preuve : vérifier (1) diff vs déclaration, (2) reproductibilité de la mesure, (3) validité de la conclusion. Contrôler : paramètre nouveau inerte au bit, test rouge avant correctif, sensibilité au bruit, comptes réels de rejets, absence d'extrapolation. Ne pas déplacer `depart-gemini`.

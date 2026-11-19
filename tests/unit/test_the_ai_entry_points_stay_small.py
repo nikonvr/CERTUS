@@ -23,13 +23,13 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 
-#: bytes of the file as git stores it (LF), measured 2026-10-18; CLAUDE.md and the reference re-measured 2026-10-19
+#: bytes of the file as git stores it (LF), re-measured 2026-11-19 after compaction
 CAPS = {
-    "CLAUDE.md": 7_900,
-    "AGENTS.md": 1_600,
-    "docs/CHANTIERS_RESTANTS.md": 16_000,
-    "docs/ETAT_acquis.md": 12_500,
-    "docs/REGLES_reference.md": 8_600,  # 2026-10-19: CLAUDE.md §1, §2, §5, §7 detail moved here, read on demand
+    "CLAUDE.md": 6_200,
+    "AGENTS.md": 1_250,
+    "docs/CHANTIERS_RESTANTS.md": 3_100,
+    "docs/ETAT_acquis.md": 2_400,
+    "docs/REGLES_reference.md": 6_200,
 }
 #: docs/ETAT.md, whole or its section 0, has no cap: the owner's decision of 2026-10-25
 #: a root document above this size has to be hidden from the default searches

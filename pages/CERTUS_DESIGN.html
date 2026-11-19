@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CERTUS-DESIGN | Scientific Technical Report</title>
+    <title>CERTUS-DESIGN | Thin-film design, optimization and tolerance analysis</title>
     <script>
         window.MathJax = {
             tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
@@ -20,9 +20,10 @@
 </head>
 
 <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
 
-<nav class="navbar">
-        <a href="CERTUS_HUB.html" class="certus-logo">
+<nav aria-label="CERTUS documentation" class="navbar">
+        <a href="CERTUS_HUB.html" class="certus-logo" aria-label="CERTUS documentation home">
             <svg height="55" viewBox="0 0 820 170" xmlns="http://www.w3.org/2000/svg">
                 <g transform="translate(120, 90)">
                     <path
@@ -44,7 +45,7 @@
         </a>
         <div class="nav-links">
             <a href="CERTUS_HUB.html">HUB</a>
-            <a href="CERTUS_DESIGN.html" class="active">DESIGN</a>
+            <a href="CERTUS_DESIGN.html" class="active" aria-current="page">DESIGN</a>
             <a href="CERTUS_RE.html">RE</a>
             <a href="CERTUS_STRAT.html">STRAT</a>
             <a href="CERTUS_INDEX.html">INDEX</a>
@@ -52,60 +53,86 @@
             <a href="CERTUS_FIELD.html">FIELD</a>
             <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
             <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
-            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
+            <a href="CERTUS_METAL_BILAYER.html">METAL BILAYER</a>
             <a href="metrology.html">Metrology</a>
             <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
         </div>
     </nav>
 
-    <div class="container">
+    <main class="container" id="main-content" tabindex="-1">
         <header>
             <h1>CERTUS-DESIGN</h1>
-            <p style="font-size: 1.3em; color: #7f8c8d; font-weight: 300;">Memetic Optical Synthesis, Local Refinement &amp; Structure Search</p>
-            <p style="font-size: 1.0em; color: #95a5a6; font-weight: 300;">Updated 2026-11-14 &bull; Reference runtime Python 3.15.2</p>
+            <p>Design a multilayer coating for a specified reflectance or transmittance spectrum.
+                This guide follows a design from its target bands to a thickness table and a tolerance estimate.</p>
         </header>
 
-        <div class="abstract">
-            <strong>Executive Summary:</strong> CERTUS-DESIGN synthesizes optical multilayers against spectral targets.
-            The normal-incidence global stage uses a <strong>memetic population search</strong> by default, followed by
-            local refinement, cleanup and structure search. PGLOBAL remains available as the alternative global stage
-            and is still used in oblique mode.
-            <br><br>
-            <div style="background-color: #f8f9fa; border-left: 4px solid #6c757d; padding: 10px; margin-bottom: 15px;">
-                <strong>Interpretation of “global”:</strong> Population search and local refinement explore the bounded design space.
-                A reported best fit is the best solution found under the configured budget; neither global stage certifies a global optimum.
-            </div>
-            The memetic stage combines population evolution with local descent; the PGLOBAL branch uses density-based clustering.
-            Implemented mechanisms include <strong>analytic gradient</strong> computation (<a href="https://en.wikipedia.org/wiki/Adjoint_state_method" target="_blank" rel="noopener noreferrer">adjoint method</a>) for $O(N)$
-            local refinement, <strong>Topological Deep Search</strong> (Needle Method) for automatic structure
-            evolution, and <strong>incoherent backside correction</strong> for real-world glass substrates.
-        </div>
-
         <nav class="toc-nav" aria-label="DESIGN contents">
+            <strong>On this page</strong>
             <ul>
-                <li><a href="#current-design">Workflow and benchmarks</a></li>
-                <li><a href="#design-setup">Set up a design</a></li>
-                <li><a href="#design-options">Optimization and sampling</a></li>
-                <li><a href="#design-robust-search">Robustness-aware search</a></li>
-                <li><a href="#design-diagnostics">Diagnostics and tolerance analysis</a></li>
-                <li><a href="#design-physics">Transfer matrices and derivatives</a></li>
-                <li><a href="#design-completion">Review and export</a></li>
+                <li><a href="#design-example">Work through a 50/50 splitter</a></li>
+                <li><a href="#design-setup">Set up materials and targets</a></li>
+                <li><a href="#current-design">Choose a search</a></li>
+                <li><a href="#design-options">Set the wavelength grid</a></li>
+                <li><a href="#design-robust-search">Design for thickness errors</a></li>
+                <li><a href="#design-diagnostics">Inspect a candidate</a></li>
+                <li><a href="#design-benchmarks">Read the benchmarks</a></li>
+                <li><a href="#design-physics">Transfer matrices</a></li>
+                <li><a href="#design-merit">Spectral merit and colour</a></li>
+                <li><a href="#design-completion">Save and export</a></li>
             </ul>
         </nav>
 
-        <section id="current-design">
-            <h2>Current workflow and measured results</h2>
-            <p>DESIGN takes a material model, a starting layer sequence and one or more spectral targets.
-                Global search varies thicknesses within the allowed bounds. The workflow can then insert, merge or
-                remove layers and retain a better stack for the same layer budget. The resulting design can be
-                evaluated on a fresh grid and passed to STRAT for deposition planning.</p>
+        <section id="design-example">
+            <h2>First design · a 50/50 beam splitter</h2>
+            <p>Open the <a href="../example/example_design/JSON-design-reference-tikhonravov-1996.json">supplied 50/50 design file</a>.
+                Its target is constant 50% transmission from 400 to 1200 nm at normal incidence.
+                The model uses lossless materials and excludes the rear face of the glass.</p>
             <ol>
-                <li>Read materials, spectral targets and layer constraints.</li>
-                <li>Run the memetic global stage at normal incidence, or PGLOBAL when the memetic stage is disabled or incidence is oblique.</li>
-                <li>Refine locally, clean up the stack and explore structure changes through Needle insertion.</li>
-                <li>Retain the best eligible Pareto design and restart from it while the improvement threshold and restart budget allow.</li>
-                <li>Restore the best round and export the structure associated with its score.</li>
+                <li><strong>Check the target row.</strong> Both endpoint values are <code>0.5</code> and the weight is <code>1</code>.
+                    The example requests 108 wavelength samples per target. The target band spans 400–1200 nm.
+                    The separate 500 nm setting is the reference wavelength for layer thickness.</li>
+                <li><strong>Check the starting stack.</strong> There are 34 variable layers alternating H and L on glass of index 1.52.
+                    Every row starts at 0.9 QWOT. The first H layer (index 2.35) is 47.87 nm thick,
+                    and the next L layer (index 1.45) is 77.59 nm thick. These values let you check the unit conversion after loading.</li>
+                <li><strong>Inspect the baseline.</strong> Select <strong>Evaluate (Ctrl+E)</strong> to draw the starting spectrum.
+                    Follow its departures from 0.5 across the band. The optimization changes the layer thicknesses to reduce those departures.</li>
+                <li><strong>Run and compare.</strong> Select <strong>PGLOBAL (global)</strong> to launch the full workflow.
+                    For this normal-incidence file the default global search is memetic. Check the restored layer count against
+                    the 34-layer limit, then evaluate the final stack on the same fine grid before comparing it with
+                    the <a href="#design-benchmarks">published campaign values</a>.</li>
             </ol>
+        </section>
+
+        <section id="design-setup">
+            <h2>Set up a design</h2>
+            <ol>
+                <li>Choose the materials and substrate. The complex index follows the Macleod convention
+                    $\hat n=n-ik$ with $k\ge 0$. Set the rear-face calculation and rear coating to match the part.</li>
+                <li>Set the reference wavelength $\lambda_0$ and the substrate-first sequence. The native
+                    thickness field uses $4n_4d/\lambda_0$, with $n_4$ the material index at 400 nm.
+                    Mark the layers that the optimizer may vary and check the physical thicknesses in nm.</li>
+                <li>Enter active target bands, their endpoint values and relative weights. DESIGN interpolates a ramp
+                    linearly in wavelength between its endpoints. Normal-incidence rows specify transmission as a fraction from 0 to 1.
+                    In oblique mode each row specifies an angle in degrees, s or p polarization, and R or T.
+                    To constrain both polarizations, enter a separate target for each. Each row then contributes its own error.</li>
+                <li>Set the layer and optical-thickness constraints, choose the optimization grid, and inspect the
+                    initial spectrum before starting the global workflow or a local fit.</li>
+            </ol>
+            <p>Reproducible inputs are available in the <a href="../example/example_design/JSON-design-example.json">bundled design</a>
+                or in the <a href="#design-example">50/50 example above</a>.</p>
+        </section>
+
+        <section id="current-design">
+            <h2>Choose a search</h2>
+            <table>
+                <caption>Actions in the DESIGN window</caption>
+                <thead><tr><th scope="col">Action</th><th scope="col">When to use it</th></tr></thead>
+                <tbody>
+                    <tr><th scope="row">Evaluate (Ctrl+E)</th><td>Calculate the current stack spectrum with the selected materials, targets and rear-face settings.</td></tr>
+                    <tr><th scope="row">Polish local (+/-2 nm)</th><td>Fine-tune the variable thicknesses near their current values with bounded L-BFGS-B. Start here when the existing stack is close to its targets.</td></tr>
+                    <tr><th scope="row">PGLOBAL (global)</th><td>Explore a wider range of thicknesses. The normal-incidence default evolves a population and polishes its members. Oblique mode uses <a href="#design-pglobal">PGLOBAL sampling and clustering</a>. Enabling layer growth allows Needle insertions during the workflow.</td></tr>
+                </tbody>
+            </table>
             <table>
                 <caption>Delivered normal-incidence workflow</caption>
                 <thead><tr><th scope="col">Stage</th><th scope="col">Current behavior</th></tr></thead>
@@ -124,93 +151,18 @@
                         <code>_memetic_children = 0</code> on the window selects PGLOBAL.</td></tr>
                 </tbody>
             </table>
-            <p>Implementation: <code>certus_design_memetic.run_memetic</code>,
-                <code>OptimWorker._run_memetic_global</code> and <code>OptimizationManager._restart_from_best</code>.
-                Oblique mode follows PGLOBAL rather than the memetic branch.</p>
+            <p>The global workflow retains the best eligible structure found within the configured search budget.
+                Use <a href="#design-robust-search">thickness-error analysis</a> to test how a candidate behaves under deposition errors.</p>
 
-            <h3 id="design-benchmarks">Measured synthesis benchmarks</h3>
-            <table>
-                <caption>Campaign of 2026-10-22/23; transmission RMSE evaluated on a fixed 0.5 nm grid</caption>
-                <thead><tr><th scope="col">Problem and conditions</th><th scope="col">Measured result</th><th scope="col">Budget and scope</th></tr></thead>
-                <tbody>
-                    <tr><td>50/50 splitter, 400–1200 nm; H/L materials unchanged, at most 34 layers and 30 QWOT</td>
-                        <td>RMSE 0.000135–0.000165; 32–34 layers, 26.2–26.6 QWOT, layers at least 5 nm</td>
-                        <td>Delivered example; 21–48 minutes on eight threads</td></tr>
-                    <tr><td>Tikhonravov et al. 1996 problem, 34 layers</td>
-                        <td>RMSE 8.6 × 10<sup>−5</sup>, versus 1.77 × 10<sup>−4</sup> for their design evaluated in the campaign</td>
-                        <td>26.4 versus 31.4 QWOT; 47 minutes for the CERTUS run</td></tr>
-                </tbody>
-            </table>
-            <p>Source and reproduction details:
-                <a href="../reports/DESIGN_bs5050_2026-10-22/bilan.md">campaign summary</a> and
-                <a href="../reports/DESIGN_bs5050_2026-10-22/tikhonravov/README.md">literature comparison</a>.
-                The nominal results were cross-checked with the independent TMM oracle.
-                Under the campaign's thickness-error model (0.1% + 0.2 nm at 2σ), mean RMSE is about 0.003
-                (spread about 0.0015): nominal fit quality is not a manufacturing-tolerance guarantee.</p>
-            <p>The 2026-11-13 paired comparison used seeds 42, 77 and 202 on the same 50/50 problem. The hybrid
-                polisher reduced the median fixed-grid RMSE by 24% and increased median runtime by 13% compared
-                with L-BFGS-B. One of the three seeds was worse by the fixed-grid judge.
-                <a href="../reports/audits_2026-11-13/bilan.md#36-comparaison-avec-graines-du-mémétique-appariées">Paired results and protocol</a>.</p>
-            <p>In the 2026-11-14 RICL three-band probe, adaptive sampling with repeated polishing used 1,064
-                wavelengths for the final polish from the 101-layer record. The resulting RMSE was
-                9.58 × 10<sup>−5</sup> on both the 0.01 nm and 0.001 nm evaluation grids to three significant figures.
-                The independent oracle agreed on the 0.01 nm grid. This probe used the DESIGN kernels in the RICL
-                engine. A replay of the adaptive design gave 101 layers, a 9.52 nm minimum physical thickness
-                and a 14,166.47 nm total optical thickness. The structure meets the RICL resource limits.
-                In a separate run at the same total optical thickness of 14,171 nm and a 5 nm layer floor,
-                the resolved merit was 0.35108% for the starting design, 0.20856% after fixed-grid polishing
-                and 0.10983% after adaptive polishing. All three designs passed the resource checks, and
-                the independent oracle agreed on the common 0.0001 nm grid. These results cover one starting design.
-                <a href="../reports/questions_design_2026-11-13/bilan.md#10-grille-automatique-sur-le-tri-bande-ricl">Three starts, reference grids and oracle check</a>.</p>
-            <table>
-                <caption>50/50 workflow, 2026-11-14, medians over seeds 42, 77 and 202</caption>
-                <thead><tr><th scope="col">Option</th><th scope="col">Nominal RMSE</th><th scope="col">Runtime</th>
-                    <th scope="col">RMS with thickness errors</th><th scope="col">95th percentile</th></tr></thead>
-                <tbody>
-                    <tr><td>Fixed grid</td><td>7.715 × 10<sup>−5</sup></td><td>271.5 s</td><td>0.02344</td><td>0.03236</td></tr>
-                    <tr><td>Automatic grid</td><td>7.757 × 10<sup>−5</sup></td><td>269.1 s</td><td>0.02307</td><td>0.03221</td></tr>
-                    <tr><td>Robust population selection</td><td>4.134 × 10<sup>−4</sup></td><td>262.8 s</td><td>0.01903</td><td>0.02750</td></tr>
-                </tbody>
-            </table>
-            <p>These runs used 16 parallel polishes and no automatic restart. All final designs were evaluated on
-                the same 0.5 nm grid. The tolerance test used 400 independent Gaussian thickness-error draws with
-                a standard deviation of 1 nm per layer and a disjoint seed. Robust selection reduced the median
-                RMS under those errors by 18.8%, with a 5.36-fold increase in median nominal RMSE. Two robust
-                designs used 30 layers versus 34 for their controls. The sole equal-layer-count pair also
-                improved under the same error model (0.02344 to 0.01903 in RMS). The adaptive grid and robust
-                selection remain optional. A comparison under optical monitoring requires STRAT simulations.
-                <a href="../reports/questions_design_2026-11-13/bilan.md#11-grille-et-sélection-robuste-sur-le-5050">Protocol and individual results</a>.</p>
-
-            <h3 id="design-limits">Known limits that affect interpretation</h3>
+            <h3 id="design-limits">Checks before accepting a candidate</h3>
             <ul>
-                <li><strong>Oblique sampling:</strong> ALG-03 remains open: the densified grid is not passed to the worker;
-                    the audited case used two points instead of 135. Re-evaluate on the intended dense grid.</li>
-                <li><strong>Minimum thickness:</strong> inspect fixed layers and the cleanup log. Oblique runs and
-                    files with <code>final_cleanup: false</code> use the 5 nm rule.</li>
-                <li><strong>Score comparison:</strong> the difference between the window's RMSE and fixed-grid RMSE is
-                    unresolved (ALG-22). Compare exported structures on the same independent grid.</li>
+                <li>Review the cleanup log for fixed layers below the requested floor. Oblique runs and files with
+                    <code>final_cleanup: false</code> follow the legacy 5 nm rule.</li>
+                <li>For a narrow passband or notch, inspect the spectrum between optimization points.
+                    The <a href="#design-diagnostics">Resonances tool</a> can locate features that a coarse grid misses.</li>
+                <li>Compare candidates on the same evaluation grid, with the same active bands, weights, geometry and substrate.
+                    Record the optimizer's score separately from this comparison.</li>
             </ul>
-            <p>The <a href="../docs/CHANTIERS_RESTANTS.md">current work list</a> records the remaining proposals
-                from the November 12–14 review. The technical sections below explain the shared physics and the PGLOBAL branch;
-                PGLOBAL's clustering description is not the default memetic algorithm.</p>
-        </section>
-
-        <section id="design-setup">
-            <h2>Set up a design</h2>
-            <ol>
-                <li>Choose the materials and substrate. The complex index follows the Macleod convention
-                    $\hat n=n-ik$ with $k\ge 0$. Set the rear-face calculation and rear coating to match the part.</li>
-                <li>Set the reference wavelength $\lambda_0$ and the substrate-first sequence. The native
-                    thickness field uses $4n_4d/\lambda_0$, with $n_4$ the material index at 400 nm.
-                    Mark the layers that the optimizer may vary and check the physical thicknesses in nm.</li>
-                <li>Enter active target bands, their endpoint values and relative weights. DESIGN interpolates a ramp
-                    linearly in wavelength between its endpoints. The normal path uses transmission. Oblique targets
-                    specify angle, polarization and whether the observable is reflectance or transmittance.</li>
-                <li>Set the layer and optical-thickness constraints, choose the optimization grid, and inspect the
-                    initial spectrum before starting the global workflow or a local fit.</li>
-            </ol>
-            <p>Reproducible inputs are available in the <a href="../example/example_design/JSON-design-example.json">bundled design</a>
-                and the <a href="../example/example_design/JSON-design-reference-tikhonravov-1996.json">50/50 reference problem</a>.</p>
         </section>
 
         <section id="design-options">
@@ -234,7 +186,7 @@
                             Gauss–Newton approximation for independent thickness errors.</td></tr>
                     <tr><td><code>auto_wavelength_grid</code></td><td><code>false</code></td>
                         <td>The <strong>Automatic wavelength grid</strong> checkbox selects the adaptive
-                            normal-incidence grid. Oblique runs use the manual point count.</td></tr>
+                            normal-incidence grid. Oblique runs start from the manual point count.</td></tr>
                     <tr><td><code>auto_grid_rel_tol</code></td><td>0.01</td>
                         <td>Relative tolerance for the estimated quadrature error of the squared residual.</td></tr>
                     <tr><td><code>final_cleanup</code></td><td><code>true</code></td>
@@ -254,6 +206,10 @@
                 lies between all sample points and midpoints can escape detection. Check narrow features on a
                 denser independent grid or with the resonance tool.
                 <a href="../reports/questions_design_2026-11-13/bilan.md">Sampling and robust selection study</a>.</p>
+            <p><strong>Oblique final refinement.</strong> When refinement increases the point count, DESIGN rebuilds
+                the target groups on the denser grid and evaluates the starting stack there. The cost, gradient and reported
+                refinement RMSE then use the same wavelengths. Keep angle, polarization and the choice of R or T fixed
+                when reproducing the result on an independent grid.</p>
         </section>
 
         <section id="design-robust-search">
@@ -308,7 +264,7 @@
                     their second-order estimated RMSE under the configured error model. Its log recommends
                     a layer count; inspect and validate that candidate before export.</li>
             </ol>
-            <p>The <a href="#design-benchmarks">paired 50/50 measurement above</a> found an 18.8% reduction
+            <p>The <a href="#design-benchmarks">paired 50/50 measurement</a> found an 18.8% reduction
                 in median RMS under 1 nm errors, with higher nominal RMSE. That result covers three seeds and
                 400 fresh Monte Carlo draws per stack. Recheck the trade-off for each target and process.</p>
             <p>The <a href="../reports/codesign_2026-11-14/bilan.md">DESIGN and STRAT campaign</a> estimates the
@@ -346,10 +302,65 @@
                 stacks. It uses a different observable from spectral RMSE.</p>
         </section>
 
+        <section id="design-benchmarks">
+            <h2>Measured synthesis benchmarks</h2>
+            <table>
+                <caption>Campaign of 2026-10-22/23; transmission RMSE evaluated on a fixed 0.5 nm grid</caption>
+                <thead><tr><th scope="col">Problem and conditions</th><th scope="col">Measured result</th><th scope="col">Budget and scope</th></tr></thead>
+                <tbody>
+                    <tr><td>50/50 splitter, 400–1200 nm; H/L materials unchanged, at most 34 layers and 30 QWOT</td>
+                        <td>RMSE 0.000135–0.000165; 32–34 layers, 26.2–26.6 QWOT, layers at least 5 nm</td>
+                        <td>Delivered example; 21–48 minutes on eight threads</td></tr>
+                    <tr><td>Tikhonravov et al. 1996 problem, 34 layers</td>
+                        <td>RMSE 8.6 × 10<sup>−5</sup>, versus 1.77 × 10<sup>−4</sup> for their design evaluated in the campaign</td>
+                        <td>26.4 versus 31.4 QWOT; 47 minutes for the CERTUS run</td></tr>
+                </tbody>
+            </table>
+            <p>Source and reproduction details:
+                <a href="../reports/DESIGN_bs5050_2026-10-22/bilan.md">campaign summary</a> and
+                <a href="../reports/DESIGN_bs5050_2026-10-22/tikhonravov/README.md">literature comparison</a>.
+                The nominal results were cross-checked with the independent TMM oracle.
+                Under the campaign's thickness-error model (0.1% + 0.2 nm at 2σ), mean RMSE is about 0.003
+                (spread about 0.0015): nominal fit quality is not a manufacturing-tolerance guarantee.</p>
+            <p>The 2026-11-13 paired comparison used seeds 42, 77 and 202 on the same 50/50 problem. The hybrid
+                polisher reduced the median fixed-grid RMSE by 24% and increased median runtime by 13% compared
+                with L-BFGS-B. One of the three seeds was worse by the fixed-grid judge.
+                <a href="../reports/audits_2026-11-13/bilan.md#36-comparaison-avec-graines-du-mémétique-appariées">Paired results and protocol</a>.</p>
+            <p>In the 2026-11-14 RICL three-band probe, adaptive sampling with repeated polishing used 1,064
+                wavelengths for the final polish from the 101-layer record. The resulting RMSE was
+                9.58 × 10<sup>−5</sup> on both the 0.01 nm and 0.001 nm evaluation grids to three significant figures.
+                The independent oracle agreed on the 0.01 nm grid. This probe used the DESIGN kernels in the RICL
+                engine. A replay of the adaptive design gave 101 layers, a 9.52 nm minimum physical thickness
+                and a 14,166.47 nm total optical thickness. The structure meets the RICL resource limits.
+                In a separate run at the same total optical thickness of 14,171 nm and a 5 nm layer floor,
+                the resolved merit was 0.35108% for the starting design, 0.20856% after fixed-grid polishing
+                and 0.10983% after adaptive polishing. All three designs passed the resource checks, and
+                the independent oracle agreed on the common 0.0001 nm grid. These results cover one starting design.
+                <a href="../reports/questions_design_2026-11-13/bilan.md#10-grille-automatique-sur-le-tri-bande-ricl">Three starts, reference grids and oracle check</a>.</p>
+            <table>
+                <caption>50/50 workflow, 2026-11-14, medians over seeds 42, 77 and 202</caption>
+                <thead><tr><th scope="col">Option</th><th scope="col">Nominal RMSE</th><th scope="col">Runtime</th>
+                    <th scope="col">RMS with thickness errors</th><th scope="col">95th percentile</th></tr></thead>
+                <tbody>
+                    <tr><td>Fixed grid</td><td>7.715 × 10<sup>−5</sup></td><td>271.5 s</td><td>0.02344</td><td>0.03236</td></tr>
+                    <tr><td>Automatic grid</td><td>7.757 × 10<sup>−5</sup></td><td>269.1 s</td><td>0.02307</td><td>0.03221</td></tr>
+                    <tr><td>Robust population selection</td><td>4.134 × 10<sup>−4</sup></td><td>262.8 s</td><td>0.01903</td><td>0.02750</td></tr>
+                </tbody>
+            </table>
+            <p>These runs used 16 parallel polishes and no automatic restart. All final designs were evaluated on
+                the same 0.5 nm grid. The tolerance test used 400 independent Gaussian thickness-error draws with
+                a standard deviation of 1 nm per layer and a disjoint seed. Robust selection reduced the median
+                RMS under those errors by 18.8%, with a 5.36-fold increase in median nominal RMSE. Two robust
+                designs used 30 layers versus 34 for their controls. The sole equal-layer-count pair also
+                improved under the same error model (0.02344 to 0.01903 in RMS). The adaptive grid and robust
+                selection remain optional. A comparison under optical monitoring requires STRAT simulations.
+                <a href="../reports/questions_design_2026-11-13/bilan.md#11-grille-et-sélection-robuste-sur-le-5050">Protocol and individual results</a>.</p>
+        </section>
+
         <!-- ================================================================ -->
         <!--  0. GLOBAL PIPELINE                                               -->
         <!-- ================================================================ -->
-        <h2>1. Detailed Algorithmic Flowchart — PGLOBAL Branch</h2>
+        <h2 id="design-pglobal">1. PGLOBAL search and structure refinement</h2>
 
         <div class="mermaid">
             flowchart TD
@@ -370,7 +381,7 @@
             EVAL --> SORT["4. Sort by RMSE<br>Keep top σ% lowest-error"]:::process
             SORT --> DC["5. Critical distance d_c<br>from Γ, D, N, α"]:::process
             DC --> CLUSTER["6. Single-Linkage Clustering<br>dist &lt; d_c AND descent"]:::process
-            CLUSTER --> NEW{"7. New basin?"}:::decision
+            CLUSTER --> NEW{"7. Eligible local start?"}:::decision
                 NEW -->|"Yes"| LBFGS["8. L-BFGS-B Refinement<br>Analytic gradient ∇MSE<br>(Adjoint Method, O(N))"]:::highlight
                 NEW -->|"No"| SKIP["Discard"]:::process
                 LBFGS --> UPDATE["9. Update global best"]:::process
@@ -428,8 +439,8 @@
             <span class="algo-title">PGLOBAL Branch — Step by Step</span>
             <strong>Phase 1 — Global Exploration (PGLOBAL):</strong> Repeatedly sample the thickness
             hypercube, evaluate via Numba-JIT TMM kernels, cluster points into basins of attraction using
-            single-linkage clustering, and refine new basins with L-BFGS-B using the $O(N)$ analytic gradient.
-            Hyperparameters optimized via Bayesian HPO (Optuna, 50 trials).<br><br>
+            single-linkage clustering, and refine selected starts with L-BFGS-B using the $O(N)$ analytic gradient.
+            <br><br>
             <strong>Phase 2 — Cleanup & Healing:</strong> Remove very thin layers (< 1 nm) and merge adjacent identical
                 materials. If layers were removed, heal the design in two guaranteed steps: (a) restricted PGLOBAL
                 within $\pm\Delta d=\lambda_0/(10 n)$ per layer (~40% QWOT) to explore nearby basins after topology
@@ -450,64 +461,29 @@
         <!-- ================================================================ -->
         <!--  1. THE OPTIMIZATION LANDSCAPE                                    -->
         <!-- ================================================================ -->
-        <h2>2. The Optimization Landscape</h2>
-        <p>
-            The Merit Function (RMSE) for a multilayer optical coating is non-convex and highly multimodal. For a stack
-            of $N$ layers, the solution space contains approximately $2^N$ local minima.
-            Traditional gradient descent (L-BFGS, Levenberg-Marquardt) is strictly local; it cannot escape the initial
-            "valley."
-            CERTUS-DESIGN employs a global strategy to map the topology of the $N$-dimensional hypercube before
-            committing computational resources to refinement.
-        </p>
+        <h2>2. Why starting thicknesses matter</h2>
+        <p>Changing a layer’s thickness changes the phase accumulated in that layer. Different thickness vectors
+            can place interference peaks at similar wavelengths. A bounded local polish may therefore converge to
+            different solutions from different starting stacks. The number of search coordinates is the number of
+            variable layers. Fixed layers still contribute to the optical response.</p>
 
-        <div class="highlight-box">
-            <strong>Problem Dimension:</strong> A 40-layer anti-reflection coating has a 40-dimensional parameter
-            space. With thicknesses ranging from 5 to 500 nm, the volume of this hypercube is
-            $\sim 495^{40} \approx 10^{107}$. Exhaustive search is impossible; intelligent sampling is essential.
-        </div>
-
-        <!-- ================================================================ -->
-        <!--  2. PGLOBAL                                                       -->
-        <!-- ================================================================ -->
-        <h2>3. PGLOBAL Alternative: Mathematical Formulation</h2>
-        <p>
-            The core algorithm fits into the class of "Multi-Start with Single-Linkage Clustering" methods, enhanced
-            with stochastic exploration reminiscent of Simulated Annealing (SA) during boundary escapes.
-        </p>
-
-        <div class="eq-box">
-            $$ P_{accept}(\Delta E, T) = \exp\left( - \frac{\Delta E}{k \cdot T_n} \right) \quad \text{with} \quad T_n = T_0 \cdot \gamma^n $$
-        </div>
-        <p>
-            Where $\Delta E$ is the variation in Merit Function (RMSE), $T_0$ is the initial temperature, and $\gamma \in (0, 1)$ is the exponential cooling rate across $n$ iterations. This mechanism prevents the stochastic sampling from getting trapped in shallow local minima.
-        </p>
-
-        <div class="mermaid" style="background: transparent;">
+        <h2>3. How PGLOBAL chooses local starts</h2>
+        <p>PGLOBAL samples thickness vectors inside the bounds, evaluates their merit, then keeps the
+            lower-cost part of each batch. Clustering limits repeated local searches near promising starts.
+            The worker retains the best result it finds within its evaluation and stopping limits.</p>
+        <div class="mermaid">
             flowchart TD
-            classDef node fill:#f8fafc,stroke:#94a3b8,stroke-width:2px,color:#333
-            classDef stochastic fill:#fef08a,stroke:#eab308,stroke-width:2px,color:#854d0e
-            classDef local fill:#e0f2fe,stroke:#2563eb,stroke-width:2px,color:#1e40af
-            classDef topology fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#166534
-
-            START((Population N)):::node --> SAMP["Stochastic Sampling &<br>Simulated Annealing Accept"]:::stochastic
-            SAMP --> CLUST["Single-Linkage Clustering<br>dist < d_c"]:::node
-            
-            CLUST --> BASIN{"New Basin?"}
-            BASIN -->|No| DISCARD["Discard"]:::node
-            BASIN -->|Yes| LBFGS["L-BFGS-B Polish<br>Analytic Gradient ∇MSE"]:::local
-            
-            LBFGS --> COMP{"Best vs Global?"}
-            COMP -->|Improvement| UPDATE["Update Global Best"]:::node
-            
-            UPDATE --> NEEDLE{"Topological<br>Derivative P(z) < 0?"}
-            NEEDLE -->|Yes| SPLIT["Insert Needle<br>Mutate Topology"]:::topology
-            SPLIT --> LBFGS
-            
-            NEEDLE -->|No| SAMP
+            A["Draw bounded thickness vectors with scrambled Sobol sampling"] --> B["Evaluate the objective and retain lower-cost candidates"]
+            B --> C["Sort candidates by increasing cost"]
+            C --> D{"Is a lower-cost seed or batch point within the clustering radius?"}
+            D -->|Yes| E["Skip a redundant local start"]
+            D -->|No| F["Candidate for bounded local refinement"]
+            F --> G["Record the local result and update the best design"]
+            E --> H{"Stopping condition reached?"}
+            G --> H
+            H -->|No| A
+            H -->|Yes| I["Return the best result to the design workflow"]
         </div>
-        <p style="font-size: 0.9em; text-align: center; color: #64748b; margin-top: -10px; margin-bottom: 20px;">
-            <em>PGLOBAL stochastic tree: Competition between exploration, local L-BFGS-B descent, and topological mutation via the Needle method.</em>
-        </p>
 
         <h3>3.1 Critical Clustering Distance</h3>
         <p>
@@ -522,25 +498,23 @@
         </div>
 
         <ul>
-            <li>$D$: Dimension of the problem (number of layers).</li>
-            <li>$N$: Number of samples in the current population.</li>
-            <li>$\alpha$: Clustering density parameter (typically $0.1 - 0.5$).</li>
+            <li>$D$ is the number of variable thicknesses in the global search.</li>
+            <li>$N$ is the cumulative evaluation count supplied to the clustering step, with a minimum of two.</li>
+            <li>$\alpha$ sets the clustering radius. The implementation caps $d_c$ at $\sqrt{D}/2$, half the diagonal of the normalized search space.</li>
             <li>$\Gamma$: The Gamma function, extending factorial to real numbers.</li>
         </ul>
 
         <h3>3.2 Clustering Kernel</h3>
-        <p>
-            A point $\mathbf{x}$ is absorbed into a cluster with seed $\mathbf{x}_{seed}$ if and only if:
-        </p>
-        <div class="algo-step">
-            <span class="algo-title">Absorption Criteria</span>
-            1. <strong>Proximity:</strong> $\|\mathbf{x} - \mathbf{x}_{seed}\|_{2} &lt; d_c$<br>
-            2. <strong>Descent:</strong> $\text{Cost}(\mathbf{x}_{seed}) &lt; \text{Cost}(\mathbf{x})$
+        <p>The distance is measured after dividing the thickness difference on each variable layer by that
+            layer’s permitted thickness range. A 1 nm difference therefore counts more for a tightly bounded
+            layer than for one with a wide range. For variable-layer bounds $[l_j,u_j]$, the comparison uses</p>
+        <div class="eq-box">
+            $$ r(\mathbf{x},\mathbf{y})^2 =
+            \sum_{j=1}^{D}\left(\frac{x_j-y_j}{u_j-l_j}\right)^2 . $$
         </div>
-        <p>
-            This ensures that we only group points that are geometrically close AND locally descending
-            towards the same minimum. Each undiscovered basin triggers a new L-BFGS-B refinement.
-        </p>
+        <p>A candidate is screened out when a prior seed or another point in its batch has both strictly lower cost
+            and $r &lt; d_c$. Points that pass are eligible for a local search. This distance test saves evaluations
+            when nearby starts are likely to converge to similar designs.</p>
 
         <!-- ================================================================ -->
         <!--  3. TMM PHYSICAL MODEL                                            -->
@@ -640,8 +614,9 @@
         </div>
         <p>
             Where $\frac{\partial S_{calc}}{\partial d_j}$ is extracted directly from the components of $\frac{\partial \mathbf{M}_{total}}{\partial d_j}$. This explicit Jacobian $\nabla_{\mathbf{d}} \text{MSE}$ is what feeds the L-BFGS-B quasi-Newton step.
-            Here $V$ contains valid weighted target points. The backside path uses the same sum of valid weights
-            in its cost and gradient; dividing the gradient by the number of points would scale it incorrectly.
+            Here $V$ contains valid weighted target points. The sum of their weights normalizes both the spectral cost and its gradient.
+            For the front-only and backside paths, a positive layer thickness below the configured minimum also incurs a quadratic penalty.
+            L-BFGS-B receives the derivative of that penalty for each variable layer.
         </p>
         <div class="mermaid">
             flowchart LR
@@ -835,7 +810,7 @@
         <!-- ================================================================ -->
         <!--  7. COST FUNCTION                                                 -->
         <!-- ================================================================ -->
-        <h2>8. Cost Function & Merit</h2>
+        <h2 id="design-merit">8. Spectral merit and colour analysis</h2>
 
         <h3>8.1 Spectral RMSE</h3>
         <div class="eq-box">
@@ -888,7 +863,7 @@
             <tr>
                 <td><strong>Cost Function</strong></td>
                 <td>Numba JIT (<code>parallel=True</code>)</td>
-                <td>TMM evaluation in Float64 / Complex128 with AVX2/FMA vectorization.</td>
+                <td>Compute the stack response and weighted spectral error on the selected wavelength grid.</td>
             </tr>
             <tr>
                 <td><strong>Gradient</strong></td>
@@ -980,31 +955,32 @@
         <!-- ================================================================ -->
         <!--  PRO 2026 ERGONOMICS & UX                                         -->
         <!-- ================================================================ -->
-        <h2 id="design-completion">10. Review and export</h2>
-        <p>
-            The DESIGN window presents optimization controls, progress and plots while workers perform the fit.
-            <code>CertusDesignApp</code> extends the shared <code>CertusBaseApp</code> base class and uses shared
-            logging and window controls.
-        </p>
-        <ol>
-            <li>Check the completion state and the restored stack. Review the cleanup log for removals,
-                changes to thin layers and fixed layers below the configured floor.</li>
-            <li>Evaluate the saved stack on a fixed grid fine enough for the features of interest.
-                Record geometry, substrate treatment, wavelength step, targets, layer count and total optical thickness.</li>
-            <li>Save the native design to preserve materials, targets, structure and options. Use the exported
-                physical thicknesses and material sequence for the independent check and the hand-off to STRAT.</li>
-        </ol>
-        <p>The <code>scripts/design_bench.py</code> runner records the nominal fit on a common 0.5 nm grid for
-            the normal-incidence front-face benchmark and compares it with the independent oracle.
-            It reports the optimizer's score separately.</p>
+        <h2 id="design-completion">10. Save the design and read its reports</h2>
+        <p>Review the restored stack and the cleanup log, then save the native design file. Saving preserves the
+            layer sequence currently shown in the table, including any fixed thin layers.
+            Keep that file alongside the reports so the materials, targets and optimization settings can be reloaded.</p>
+        <table>
+            <caption>Where to find the result of a DESIGN run</caption>
+            <thead><tr><th scope="col">Question</th><th scope="col">What to read</th></tr></thead>
+            <tbody>
+                <tr><th scope="row">Which stack was exported?</th><td>The workbook’s <strong>Summary</strong> sheet lists materials in layer order, QWOT, physical thickness in nm and the variable flag. The HTML report also includes the stack table. Use the native file for numerical reproduction because the report rounds physical thickness to two decimal places.</td></tr>
+                <tr><th scope="row">Which RMSE appears in the filename?</th><td>The exporter uses the best valid workflow RMSE, falling back to the last result’s RMSE when needed. The filename rounds it to five decimal places. To compare two designs, recompute their scores on the same grid.</td></tr>
+                <tr><th scope="row">How did other layer counts compare?</th><td>When a Pareto history exists, the <strong>Pareto Catalog</strong> sheet gives the saved layer counts, RMSE values and corresponding stacks. Select a candidate and assess its tolerance to thickness errors.</td></tr>
+                <tr><th scope="row">How can I trace the run?</th><td>The workbook’s <strong>Manifest</strong> sheet records run metadata. Keep the input file, seed when available and the evaluation settings with the exported stack.</td></tr>
+            </tbody>
+        </table>
+        <p>For the normal-incidence, front-face reference comparison, <code>scripts/design_bench.py</code> records the optimizer's score
+            and a separate fixed-grid score checked against the independent oracle.
+            For deposition planning, transfer the selected material sequence and physical thicknesses to
+            <a href="CERTUS_STRAT.html#strat-operation">STRAT</a>.</p>
 
         <div class="footer">
             <p>Updated from the <a href="../docs/ETAT.md">project state</a>,
-                <a href="../reports/DESIGN_bs5050_2026-10-22/bilan.md">DESIGN campaign</a> and current implementation &mdash; 2026-11-14.
+                <a href="../reports/DESIGN_bs5050_2026-10-22/bilan.md">DESIGN campaign</a> and current implementation. Guide revised 2026-11-19.
             </p>
             <p>&copy; CERTUS Scientific Suite &bull; Scientific Analysis Report</p>
         </div>
-    </div>
+    </main>
 
 </body>
 </html>

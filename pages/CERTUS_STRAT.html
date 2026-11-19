@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CERTUS-STRAT | Scientific Report</title>
+    <title>CERTUS-STRAT | Deposition monitoring and strategy selection</title>
+    <meta name="description" content="Set up a thin-film deposition, compare monitoring strategies, interpret simulated yield and confirm a fixed plan in CERTUS-STRAT.">
     <script>
         window.MathJax = {
             tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
@@ -15,14 +16,19 @@
     <script src="assets/certus_report_init.js"></script>
     <link rel="stylesheet" href="assets/certus_report.css">
     <style>
-        [id^="strat-"], #current-strat { scroll-margin-top: 180px; }
+        .toc-nav details { margin-top: .8rem; padding-top: .6rem; border-top: 1px solid #cbd5e1; }
+        #strat-operation li + li, #strat-results li + li { margin-top: .5rem; }
+        @media (min-width: 1251px) {
+            .container [id] { scroll-margin-top: 8rem; }
+        }
     </style>
 </head>
 
 <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
 
-<nav class="navbar">
-        <a href="CERTUS_HUB.html" class="certus-logo">
+<nav aria-label="CERTUS documentation" class="navbar">
+        <a href="CERTUS_HUB.html" class="certus-logo" aria-label="CERTUS documentation home">
             <svg height="55" viewBox="0 0 820 170" xmlns="http://www.w3.org/2000/svg">
                 <g transform="translate(120, 90)">
                     <path
@@ -46,40 +52,137 @@
             <a href="CERTUS_HUB.html">HUB</a>
             <a href="CERTUS_DESIGN.html">DESIGN</a>
             <a href="CERTUS_RE.html">RE</a>
-            <a href="CERTUS_STRAT.html" class="active">STRAT</a>
+            <a href="CERTUS_STRAT.html" class="active" aria-current="page">STRAT</a>
             <a href="CERTUS_INDEX.html">INDEX</a>
             <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a>
             <a href="CERTUS_FIELD.html">FIELD</a>
             <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
             <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
-            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
+            <a href="CERTUS_METAL_BILAYER.html">METAL BILAYER</a>
             <a href="metrology.html">Metrology</a>
             <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
         </div>
     </nav>
 
-    <div class="container">
+    <main class="container" id="main-content" tabindex="-1">
         <header>
             <h1>CERTUS-STRAT</h1>
-            <p style="font-size: 1.2em; color: #555;">Advanced Optical Monitoring &amp; Error Compensation Logic</p>
-            <p style="font-size: 1.0em; color: #777; font-weight: 300;">Updated 2026-11-14 &bull;
-                Reference runtime Python 3.15.2</p>
+            <p>Choose how to monitor each layer of an optical coating during deposition. STRAT simulates where growth will stop and how the resulting thickness errors will affect the finished spectrum.</p>
         </header>
 
+        <nav class="toc-nav" aria-label="STRAT contents">
+            <strong>Using STRAT</strong>
+            <ul>
+                <li><a href="#strat-operation">Run the 48-layer example</a></li>
+                <li><a href="#strat-results">Read the results table</a></li>
+                <li><a href="#strat-refinement">Confirm a plan</a></li>
+                <li><a href="#strat-recovery">Reopen a saved plan</a></li>
+                <li><a href="#current-strat">Settings and benchmarks</a></li>
+            </ul>
+            <details>
+                <summary>Physics, algorithms and historical campaigns</summary>
+                <ol start="0">
+                    <li><a href="#sec-0">Algorithmic overview</a></li>
+                    <li><a href="#sec-1">Transfer-matrix model</a></li>
+                    <li><a href="#sec-2">Monitoring and stop detection</a></li>
+                    <li><a href="#sec-3">Phase A · wavelengths for each layer</a></li>
+                    <li><a href="#sec-4">Phase B · block formation and robustness</a></li>
+                    <li><a href="#sec-5">Smart nucleation</a></li>
+                    <li><a href="#sec-6">Software architecture</a></li>
+                    <li><a href="#sec-7">Post-optimization analysis</a></li>
+                    <li><a href="#sec-8">Implementation and performance</a></li>
+                    <li><a href="#sec-9">Interface and execution modes</a></li>
+                    <li><a href="#sec-10">Strategy ranking and campaign results</a></li>
+                    <li><a href="#sec-11">Growth model and numerical performance</a></li>
+                </ol>
+                <p>Historical campaigns retain the model and settings used at the time. For the current comparison values, use the <a href="#strat-current-benchmarks">dated reference table</a>.</p>
+                <ul>
+                    <li><a href="#sec-10-13">Scope of the experiments</a></li>
+                    <li><a href="#sec-10-14">Block monitoring</a></li>
+                    <li><a href="#sec-10-15">99-layer bandpass</a></li>
+                    <li><a href="#sec-10-16">Multiple witnesses</a></li>
+                    <li><a href="#sec-10-17">Search depth</a></li>
+                    <li><a href="#sec-10-18">2 nm slit</a></li>
+                    <li><a href="#sec-10-19">Search initialization</a></li>
+                    <li><a href="#sec-10-20">Thickness scaling</a></li>
+                    <li><a href="#sec-10-21">False turning points at low noise</a></li>
+                </ul>
+            </details>
+        </nav>
+
+        <section id="strat-operation">
+            <h2>Run the 48-layer dichroic example</h2>
+            <p>Load the <a href="../example/example_strat/JSON-strat-example.json">bundled configuration</a> with <kbd>Ctrl</kbd> + <kbd>O</kbd>. It describes the stack to deposit and the monitoring conditions. STRAT will search for layer stop rules and monitoring wavelengths for this fixed design.</p>
+            <ol>
+                <li><strong>Check the stack.</strong> The profile has 48 layers, with H800-Nb2O5 and H800-SiO2 on SiO₂. The thickness entries are quarter-wave multipliers at 550 nm. For example, the first entry is 1.556, giving a physical thickness of 1.556 × 550 / (4<i>n</i>) nm using the first layer’s index at 550 nm.</li>
+                <li><strong>Check the two wavelength grids.</strong> The simulation covers 400–700 nm. Candidate monitoring wavelengths cover 450–700 nm. Both grids have a 1 nm step and the monochromator resolution is 2 nm. A simulated point at 425 nm can contribute to the spectrum but lies outside the candidate monitoring band.</li>
+                <li><strong>Inspect the effective mode.</strong> The file stores <code>robustness_num_runs = 300</code> and selects Premium. Premium applies 150 robustness draws per noise level. Check the mode summary in the run log when comparing two results. The <a href="../example/example_strat/README.md">configuration reference</a> lists the settings controlled by the mode.</li>
+            </ol>
+            <h3>Which control to use</h3>
+            <table>
+                <thead><tr><th scope="col">Control</th><th scope="col">What to inspect</th></tr></thead>
+                <tbody>
+                    <tr><th scope="row">Step 1 (Nominal)</th><td>Check the nominal spectrum and physical layer thicknesses before searching. The technical sections refer to this calculation as Step 0.</td></tr>
+                    <tr><th scope="row">Step 2 (Opti)</th><td>Search for usable monitoring wavelengths and groups of consecutive layers. A block shares one monitoring wavelength. Check the proposed block boundaries and Rate layers.</td></tr>
+                    <tr><th scope="row">Step 3 (Rob)</th><td>Evaluate the available strategies under simulated perturbations. This control becomes available after the search returns strategies.</td></tr>
+                    <tr><th scope="row">Run full workflow</th><td>Run the search and robustness evaluation in sequence. Use <kbd>F5</kbd> or <kbd>Ctrl</kbd> + <kbd>R</kbd> for the search step on its own.</td></tr>
+                </tbody>
+            </table>
+            <p>For a different stack, check the material dispersion over the simulated band, permitted Rate layers and witness changes. At a witness change the optical monitor sees a fresh substrate while deposition continues on the component.</p>
+        </section>
+
+        <section id="strat-results">
+            <h2>Read a strategy in the results table</h2>
+            <ol>
+                <li><strong>Yield %.</strong> This is the share of simulated depositions that complete at the worst tested noise level. A displayed yield of 98% corresponds to a worst-case non-completion rate of 2%. Hover over the cell for the nominal-noise rate, when available, and the <a href="#strat-stop-causes">four failure categories</a>. A completed deposition can still miss the spectral specification.</li>
+                <li><strong>Robust Score and SEEL.</strong> A warning symbol in the yield cell marks a strategy restored because its group had no surviving score. Its fallback score is the worst finite RMSE. Compare robustness scores among surviving plans. For those plans, read the individual SEEL columns by noise level and use the <a href="#strat-seel-calibration">conversion for that display</a> when comparing with a campaign.</li>
+                <li><strong>Critical layer.</strong> A cell such as <samp>L12 @ 1.40 A</samp> points to the twelfth layer, with a margin of 1.4 times the readout-noise amplitude. Hover for the limiting cause. This identifies where to inspect the growth curve even when the simulation observed zero crashes.</li>
+                <li><strong>Blocks, Unique lambda and Rate layers.</strong> Read these together to see how many groups must be deposited, which monitoring wavelengths are reused, and how many layers rely on open-loop thickness control. Check the slit and witness changes against the equipment available.</li>
+            </ol>
+            <p>With the layer assignments fixed, use fresh simulation draws to judge the selected plan. The <a href="#strat-refinement">paired 48-layer example</a> shows both the change in spectral error and the number of lost depositions.</p>
+        </section>
+
+        <section id="strat-refinement">
+            <h2>Final local search and independent confirmation</h2>
+            <p>The final stage tries joint wavelength and mode changes using the native robustness evaluator.
+                Search, checks and confirmation use separate seed streams. The configured-corridor guard
+                checks the candidate at the index uncertainty used for the production ranking.
+                A rejected proposal can leave the accepted starting plan in place.</p>
+            <p>Set <code>strat_local_search_rounds</code> in the STRAT JSON to allow further rounds. A new round
+                begins from the preceding accepted plan and shifts its search, check and confirmation seeds.
+                The search stops at the first rejected round. The setting travels with the configuration.</p>
+            <table>
+                <caption>Paired 48-layer dichroic simulation, 2026-11-10. Each corridor used 12,000 holdout draws across three noise levels.</caption>
+                <thead>
+                    <tr><th rowspan="2" scope="col">Fixed plan</th><th colspan="2">Index corridor ±0.005</th><th colspan="2">Index corridor ±0.010</th></tr>
+                    <tr><th scope="col">SEEL (nm)</th><th scope="col">Lost runs</th><th scope="col">SEEL (nm)</th><th scope="col">Lost runs</th></tr>
+                </thead>
+                <tbody>
+                    <tr><th scope="row">Production reference</th><td>0.1556</td><td>0</td><td>0.1718</td><td>0</td></tr>
+                    <tr><th scope="row">Second round, fresh seeds (F2)</th><td>0.1522</td><td>0</td><td>0.1648</td><td>2</td></tr>
+                    <tr><th scope="row">Third round, fresh seeds (F3)</th><td>0.1506</td><td>0</td><td>0.1611</td><td>0</td></tr>
+                </tbody>
+            </table>
+            <p>At the wider index corridor, F2 reduced SEEL while two simulated depositions failed to complete. F3 reduced SEEL by 0.0107 nm relative to the production reference and completed all 12,000 draws there. It used 37 blocks, 18 distinct wavelengths and 14 Rate layers. The reference used 34 blocks, 14 wavelengths and 13 Rate layers.</p>
+            <p>The fourth fresh-seed round showed no gain on its check draws and was rejected. These results describe one component and one starting search seed. <a href="../reports/AUDIT_STRAT_top8_apparie_2026-11-10/bilan.md">Paired results and protocol</a>.</p>
+        </section>
+
+        <section id="strat-recovery">
+            <h2>Resume a session or a multi-seed campaign</h2>
+            <p>To change settings and search again, reopen the saved configuration from the home screen or load its JSON with <kbd>Ctrl</kbd> + <kbd>O</kbd>. To evaluate a previously exported strategy, first load its matching stack, then select <strong>Import Strat.</strong> and the strategy JSON. The importer checks the strategy ID and block coverage against the loaded stack before evaluation.</p>
+            <p>After exporting, read the status message. A partial export names the artifacts that were saved and those that failed. Check the named files before sharing a result. Keep the stack configuration, selected plan, effective mode, seed and report together so the evaluation can be repeated.</p>
+            <p>The multi-seed runner reuses completed seed artifacts whose slit, kernel cache key and Git
+                revision match a clean tree. Unusable artifacts are measured again, with the reason in the log.
+                The completed candidates are combined and scored on a disjoint seed. The campaign can resume
+                between completed seeds. A robustness simulation in progress, a DESIGN PGLOBAL search and an
+                INDEX SPLINE corridor still restart their in-progress calculation.
+                <a href="../reports/refactor_corridors_2026-11-11/U12_specification.md">Recovery scope and acceptance checks</a>.</p>
+        </section>
 
 
-        <div class="abstract">
-            <strong>Abstract:</strong> CERTUS-STRAT evaluates optical monitoring strategies by simulating nominal
-            depositions with the configured noise model and cumulative error propagation. The objective is to identify strategies
-            that remain within specification despite deposition variability.
-        </div>
 
         <section id="current-strat">
             <h2>Current settings, reference measurements and limits</h2>
-            <p>STRAT takes a fixed optical design and searches for deposition plans. A plan assigns monitoring
-                wavelengths and optical or Rate control to the layers. The simulator checks whether growth stops
-                correctly and how the accumulated thickness errors change the finished spectrum.
-                <a href="../docs/ETAT.md">Project state and operating profile</a>.</p>
 
             <h3 id="strat-current-settings">Delivered monitoring and search settings</h3>
             <table>
@@ -92,13 +195,15 @@
                     <tr><td>Turning-point detection</td><td><code>tp_hysteresis_factor = 1.66</code> and
                         <code>tp_hysteresis_floor = 0.000415</code>. The floor was retained on 2026-10-23;
                         it does not remove the low-noise false-turning-point defect described below.</td></tr>
+                    <tr><td>Stop after the last extremum</td><td>The default <code>oms_arming = 1</code> uses late stopping.
+                        If the target level has already been crossed when the final extremum is declared, the controller stops at that reading.</td></tr>
                     <tr><td>Selection margin and index uncertainty</td><td><code>phase_a_level_margin_factor = 1.66</code>;
                         active <code>index_corridor = 0.005</code> in absolute refractive index.</td></tr>
                     <tr><td>Slit and photometric bias</td><td>Slit bias enabled, nominal width 2 nm;
                         <code>photometric_curvature_amp = 0.00375</code>. The chosen profile determines whether slit width is searched.</td></tr>
                     <tr><td>Rate fallback</td><td><code>allow_rate</code>, <code>rate_by_swing</code> and
                         <code>rate_rescue</code> enabled; <code>rate_rescue_few = 10</code>.
-                        Rate is forbidden on physical layers 0 and 1. Later Rate layers inherit open-loop thickness error.</td></tr>
+                        Rate is forbidden on the first two physical layers (indices 0 and 1). Later Rate layers inherit open-loop thickness error.</td></tr>
                     <tr><td>Final local search</td><td>Enabled with <code>strat_local_search_guard</code> at the configured
                         index corridor. <code>strat_local_search_rounds</code> defaults to one round.
                         <a href="#strat-refinement">Search and acceptance protocol</a>.</td></tr>
@@ -138,7 +243,7 @@
                 <a href="../reports/STRAT_A3_99c_grille_2026-10-24/bilan.md">2026-10-24 fixed-domain campaign</a>,
                 code <code>339e9cb3</code>, seeds 101, 42 and 202, with <code>index_corridor_fixed_domain</code> enabled.
                 Its 0.300 nm target was not reached. Earlier 99-layer assembly scores invalidated by the C2 checks are not current references.</p>
-            <p><strong>How to read these campaign values:</strong> their SEEL uses 2 × √score, in nm. The GUI calibration is a separate conversion (see §7.5 and §10.6). Compare only the same component,
+            <p><strong>How to read these campaign values:</strong> their SEEL uses 2 × √score, in nm. The GUI uses a <a href="#strat-seel-calibration">separate calibration</a>. Compare only the same component,
                 scoring domain and noise model. These rows include slit bias. Search minima are not independent confirmations
                 of fixed plans; a zero crash rate in <code>fast</code> does not establish a validated production strategy.
                 Keep the official <code>RESULT</code> score and <code>RANK00</code> crash statistics separate.</p>
@@ -150,108 +255,12 @@
                 <li><strong>False turning points at low noise:</strong> the noise-dependent threshold can fall below
                     slit-bias ripple. The <a href="../reports/ANALYSE_claude_2026-10-22/bilan.md">independent reanalysis</a>
                     identifies premature stops at the 0.5× noise level. A final-search gain must be judged with that defect in view.</li>
-                <li><strong>Model feasibility:</strong> Rate fallback and multiple witnesses can make a plan feasible in
-                    simulation. They do not establish physical manufacturability or an all-optical monitoring solution.</li>
+                <li><strong>Model feasibility:</strong> Rate fallback introduces open-loop layers, and a multiple-witness plan requires the specified witness changes. Check these assumptions against the deposition equipment.</li>
             </ul>
             <p>The remaining November 12–14 proposals are tracked in <a href="../docs/CHANTIERS_RESTANTS.md">the current work list</a>.
                 The technical derivations and dated campaign narratives below retain their original assumptions.
                 Use this section and its Markdown sources for the current defaults and reference measurements.</p>
         </section>
-
-        <section id="strat-operation">
-            <h2>Prepare and review a deposition plan</h2>
-            <ol>
-                <li>Load the layer sequence, physical thicknesses, material dispersion and substrate. Verify that
-                    the material names and measurement grid match the design and the intended witnesses.</li>
-                <li>Set the monitoring wavelength range, step, slit width, noise profile, index corridor and
-                    Rate permissions. A witness reset belongs at a layer boundary and changes the optical history
-                    seen by the controller. Leave the reset list empty for a single witness.</li>
-                <li>Phase A screens wavelengths per layer for usable dynamics and stop margins, then propagates
-                    representative thickness errors. Phase B groups consecutive layers, generates complete plans,
-                    evaluates them under paired perturbations and can refine the best plan locally.</li>
-                <li>Inspect the simulation's yield, crash causes, limiting layers, critical margins and SEEL.
-                    Check which layers run in Rate and where each witness is replaced before exporting the plan.</li>
-            </ol>
-            <p>For a first run, use the <a href="../example/example_strat/JSON-strat-example.json">bundled STRAT profile</a>.
-                Record the effective run settings and source revision with the exported plan. Fixed-plan
-                confirmation uses a disjoint seed and the same physical model as the search.</p>
-        </section>
-
-        <section id="strat-refinement">
-            <h2>Final local search and independent confirmation</h2>
-            <p>The final stage tries joint wavelength and mode changes using the native robustness evaluator.
-                Search, checks and confirmation use separate seed streams. The configured-corridor guard
-                checks the candidate at the index uncertainty used for the production ranking.
-                A rejected proposal can leave the accepted starting plan in place.</p>
-            <p>Set <code>strat_local_search_rounds</code> in the STRAT JSON to allow further rounds. A new round
-                begins from the preceding accepted plan and shifts its search, check and confirmation seeds.
-                The search stops at the first rejected round. The setting travels with the configuration.</p>
-            <table>
-                <caption>Paired 48-layer dichroic holdout, 2026-11-10</caption>
-                <thead><tr><th scope="col">Plan</th><th scope="col">SEEL at ±0.005</th><th scope="col">SEEL at ±0.010</th></tr></thead>
-                <tbody>
-                    <tr><td>Production plan after one local search</td><td>0.1556 nm</td><td>0.1718 nm</td></tr>
-                    <tr><td>After the second round with fresh seeds</td><td>0.1522 nm</td><td>0.1648 nm</td></tr>
-                    <tr><td>After the third round with fresh seeds</td><td>0.1506 nm</td><td>0.1611 nm</td></tr>
-                </tbody>
-            </table>
-            <p>The fourth round was rejected. The third-round plan recorded zero stops in 12,000 holdout draws
-                per corridor across the three noise levels. These results describe one component and one search
-                seed. <a href="../reports/AUDIT_STRAT_top8_apparie_2026-11-10/bilan.md">Paired results and protocol</a>.</p>
-        </section>
-
-        <section id="strat-recovery">
-            <h2>Resume a session or a multi-seed campaign</h2>
-            <p>The session snapshot preserves the window configuration. The home screen offers to reopen that
-                configuration. Open the saved plan or session as appropriate and inspect the parameters before
-                starting a new calculation.</p>
-            <p>The multi-seed runner reuses completed seed artifacts whose slit, kernel cache key and Git
-                revision match a clean tree. Unusable artifacts are measured again, with the reason in the log.
-                The completed candidates are combined and scored on a disjoint seed. The campaign can resume
-                between completed seeds. A robustness simulation in progress, a DESIGN PGLOBAL search and an
-                INDEX SPLINE corridor still restart their in-progress calculation.
-                <a href="../reports/refactor_corridors_2026-11-11/U12_specification.md">Recovery scope and acceptance checks</a>.</p>
-        </section>
-
-        <div class="toc-nav" style="margin:0 0 34px;border:1px solid #dae1e7;border-radius:8px;padding:16px 20px;background:#f8fafc;">
-            <div style="font-weight:700;color:#0284c7;margin:0 0 10px;letter-spacing:0.02em;">Contents</div>
-            <ol style="margin:0;padding-left:22px;line-height:1.95;columns:2;column-gap:34px;">
-                <li><a href="#current-strat">Current settings, reference measurements and limits</a></li>
-                <li><a href="#strat-operation">Prepare and review a deposition plan</a></li>
-                <li><a href="#strat-refinement">Final local search and independent confirmation</a></li>
-                <li><a href="#strat-recovery">Session and campaign recovery</a></li>
-                <li><a href="#sec-0">Algorithmic overview</a></li>
-                <li><a href="#sec-1">Physical model — transfer matrix method</a></li>
-                <li><a href="#sec-2">Optical monitoring simulation</a></li>
-                <li><a href="#sec-3">Phase A — layer-by-layer candidate search</a></li>
-                <li><a href="#sec-4">Phase B — block grouping and robustness screening</a></li>
-                <li><a href="#sec-5">Smart nucleation</a></li>
-                <li><a href="#sec-6">Architecture and dependency injection</a></li>
-                <li><a href="#sec-7">Post-optimisation analysis</a></li>
-                <li><a href="#sec-8">Implementation and performance</a></li>
-                <li><a href="#sec-9">Ergonomics and UI</a></li>
-                <li><a href="#sec-10">What makes a good deposition strategy</a></li>
-                <li><a href="#sec-11">Making it fast</a></li>
-            </ol>
-            <div style="margin:12px 0 0;padding-top:10px;border-top:1px solid #e2e8f0;font-size:0.94em;">
-                <b>Historical campaign accounts (retain their original models and conditions):</b>
-                <a href="#sec-10-14">§10.14</a> the measured gain of block monitoring on two reference
-                components, <a href="#sec-10-15">§10.15</a> where the method runs out — a 99-layer
-                five-cavity filter — <a href="#sec-10-16">§10.16</a> how multiple-testglass monitoring
-                makes that filter feasible in simulation, <a href="#sec-10-17">§10.17</a> a stack that
-                looked impossible and was not, where the limit turned out to be the search rather than
-                the physics, <a href="#sec-10-18">&sect;10.18</a> the same stack at the nominal 2 nm slit
-                &mdash; and the honest name for what made it work,
-                <a href="#sec-10-19">&sect;10.19</a> the launch pads dropped &mdash; the same figure
-                reached with nothing told to the code in advance,
-                <a href="#sec-10-20">&sect;10.20</a> the thickness-scale series re-measured, where three
-                verdicts turned out to describe a realisation and not a stack,
-                <a href="#sec-10-21">&sect;10.21</a> the crash rate that <i>falls</i> when the noise rises
-                &mdash; and the detector of our own that turned out to cause it, and
-                <a href="#sec-10-13">&sect;10.13</a> what is deliberately <i>not</i>
-                claimed.
-            </div>
-        </div>
 
         <!-- ================================================================ -->
         <!--  0. GLOBAL PIPELINE OVERVIEW                                      -->
@@ -1205,7 +1214,7 @@
                 the current model also distinguishes non-monotonic rejection and arming (see §2.6).
             </p>
         </div>
-        <h3>2.6 Stop model and crash causes</h3>
+        <h3 id="strat-stop-causes">2.6 Stop model and crash causes</h3>
         <p><code>certus_strat_readings::stop_model_flags</code> selects
             <code>exact_inversion=True</code>, <code>exact_anchors=True</code> and <code>oms_arming=1</code> by default.
             Production callers pass these flags in Phase A and Phase B; the historical defaults in kernel signatures
@@ -3417,7 +3426,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     $T_{tol}$ is the trigger tolerance. The worst layer is reported in the output.
                 </p>
 
-                <h3>7.2 Phase A Observability JSON Export</h3>
+                <h3 id="strat-phase-a-report">7.2 Phase A Observability JSON Export</h3>
                 <div class="new-badge">
                     <code>_export_phase_a_observability_json</code> saves a lightweight JSON report to
                     <code>reports/STRAT_observability_{timestamp}.json</code> after every run unless
@@ -3425,47 +3434,17 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     best P95 cost, Monte Carlo run count, and scan wavelength count.
                 </div>
 
-                <h3>7.3 What the operator sees — yield at the head of the table</h3>
-                <div style="border:3px solid #15803d;border-radius:10px;padding:14px 18px;margin:16px 0;background:#f0fdf4;">
-                    <p style="margin:0 0 10px;font-style:italic;border-left:4px solid #15803d;padding-left:12px;">
-                        "If 95% of depositions work, we win."
-                        <br><span style="font-style:normal;">— the physicist</span>
-                    </p>
-                    <p style="margin:0 0 10px;">
-                        🔴 The crash rate was computed, served as a guillotine, then <b>disappeared</b>: the
-                        only criterion that speaks to a manufacturer appeared <b>nowhere</b> in the strategy
-                        comparison table, which showed resolution, number of blocks, changes, unique
-                        &lambda;s, score and symmetry.
-                    </p>
-                    <p style="margin:0 0 10px;">
-                        A <b><code>Yield&nbsp;%</code></b> column has been inserted <b>before</b> the score — in
-                        the order the decision is made, not in the order the code computes. It equals
-                        $100\,(1-p)$, is colored based on the <b>threshold that actually eliminates</b>
-                        (<code>CRASH_RATE_TOLERANCE</code>, imported rather than copied: a column coloring
-                        on another threshold would lie to the operator), and its tooltip details the
-                        <b>three failure modes separately</b> — level never reached, divergent turning
-                        point counting, non-monotonic $T(d)$.
-                    </p>
-                    <p style="margin:0;">
-                        ⚠️ <b>In headless mode, Phase A is silent by design</b>, and you need to know this before
-                        concluding from a silence. Two families of loggers coexist:
-                        <code>logging.getLogger("W{n}")</code> writes to the console — hence the
-                        <code>[ROBUSTNESS]</code> and <code>[ELITE]</code> lines visible in screenshots — while the
-                        application logger, built by <code>setup_gui_logger</code>, only carries
-                        <b>a <code>QueueHandler</code> to the "Show Details" panel</b>. Yet it is THIS logger
-                        that Phase A uses. 📏 Verified on a full run: only
-                        <code>[ROBUSTNESS]</code> and <code>[ELITE]</code> appeared; it was necessary to go through the
-                        observability JSON to prove that a Phase A filter had actually bitten. The testbench
-                        now attaches a console handler to this logger.
-                    </p>
-                </div>
+                <h3>7.3 Yield, crash diagnostics and the Phase A log</h3>
+                <p>The yield tooltip reports four causes of simulated non-completion. An unreachable level means the trace never reaches the intended stop level. A turning-point miscount means the detected sequence of extrema differs from the expected sequence. A non-monotonic rejection concerns the path in the monitored interval. The fourth category records a crossing before the controller was armed under the no-stop arming rule. The <a href="#strat-stop-causes">stop model</a> describes the default late-stop behavior.</p>
+                <p>The yield cell uses the observed worst-case crash rate for its color and also flags rescued rows. By default the robustness filter rejects a rate at or above 5%. When <code>crash_gate_confidence</code> is enabled, the filter compares a one-sided lower confidence bound with 5%. Read the row’s rescue status alongside its color. See <a href="#strat-results">how to read a strategy</a> for the effect on its score.</p>
+                <p>In the GUI, open <strong>Show Details</strong> to inspect Phase A messages. For a headless run, the available console output depends on the handlers installed by the runner. Use the <a href="#strat-phase-a-report">Phase A observability report</a>, when enabled, to inspect candidate counts per layer.</p>
 
                 <h3>7.4 Step 0 Sensitivity Matrix</h3>
                 <p><code>StratStrategyService.run_step_0</code> calls <code>calculate_sensitivity_matrix</code>
                     separately from Phase B robustness scoring. It perturbs thicknesses and maps spectral sensitivity;
                     this analysis is still active rather than replaced by the Phase B score.</p>
 
-                <h3>7.5 Step 0 SEEL Calibration</h3>
+                <h3 id="strat-seel-calibration">7.5 Step 0 SEEL Calibration</h3>
                 <p><code>calculate_seel_analysis</code> evaluates six thickness-error levels
                     (0.05, 0.1, 0.3, 0.6, 1.2 and 2.0 nm), with three batches of 50 draws per level.
                     The current fit uses <code>fit_alpha=1</code>. In
@@ -6016,7 +5995,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     </p>
                     <p>&copy; CERTUS Scientific Suite • Scientific Report</p>
                 </div>
-        </div>
+        </main>
 
 </body>
 </html>

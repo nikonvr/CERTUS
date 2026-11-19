@@ -17,8 +17,9 @@
 </head>
 
 <body>
-<nav class="navbar">
-        <a href="CERTUS_HUB.html" class="certus-logo">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+<nav aria-label="CERTUS documentation" class="navbar">
+        <a href="CERTUS_HUB.html" class="certus-logo" aria-label="CERTUS documentation home">
             <svg height="55" viewBox="0 0 820 170" xmlns="http://www.w3.org/2000/svg">
                 <g transform="translate(120, 90)">
                     <path
@@ -48,18 +49,29 @@
             <a href="CERTUS_FIELD.html">FIELD</a>
             <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
             <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
-            <a href="CERTUS_METAL_BILAYER.html" class="active">METAL</a>
+            <a href="CERTUS_METAL_BILAYER.html" class="active" aria-current="page">METAL BILAYER</a>
             <a href="metrology.html">Metrology</a>
             <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
         </div>
     </nav>
 
-    <div class="container">
+    <main class="container" id="main-content" tabindex="-1">
         <header>
             <h1>CERTUS-METAL BILAYER</h1>
             <p style="font-size: 1.3em; color: #546e7a; font-weight: 300;">Spline-based optical constant extraction and beam analysis</p>
             <p style="font-size: 1.0em; color: #78909c; font-weight: 300;">Implementation review: 2026-10-03</p>
         </header>
+
+        <nav class="toc-nav" aria-label="On this page">
+            <strong>On this page</strong>
+            <ul>
+                <li><a href="#measurement-limits">Measurement limits</a></li>
+                <li><a href="#bilayer-model">Bilayer model</a></li>
+                <li><a href="#fitting-workflow">Fitting workflow</a></li>
+                <li><a href="#thickness-diagnostic">Thickness diagnostic</a></li>
+                <li><a href="#interface-and-reports">Interface and reports</a></li>
+            </ul>
+        </nav>
 
         <div class="abstract">
             <strong>Abstract:</strong> CERTUS-METAL BILAYER characterizes opaque or semi-transparent metallic layers
@@ -71,7 +83,7 @@
         <!-- ================================================================ -->
         <!--  1. SCIENTIFIC PROBLEM                                            -->
         <!-- ================================================================ -->
-        <h2>1. Measurement Context and Identifiability</h2>
+        <h2 id="measurement-limits">1. Measurement Context and Identifiability</h2>
         <p>
             Reflectance-only inversion of an absorbing film can admit several thickness and optical-constant combinations
             with similar spectra. The result therefore depends on the measured wavelength range, the parameter bounds,
@@ -82,10 +94,14 @@
             diagnostic. Neither stage establishes uniqueness from reflectance alone.
         </p>
 
+        <h3>Read a reflectance-only bilayer fit</h3>
+        <p>The <a href="../example/example_metal_bilayer/JSON-metal-bilayer-example.json">bilayer configuration</a> uses a 10–30 nm metal film, a dielectric thickness of 900 ± 20 nm and four optical-constant knots. Its <a href="../example/example_metal_bilayer/CSV-metal-example.csv">target spectrum</a> starts at 880 nm with 41.664108% reflectance. The next sample is at 878 nm. Keep each reflectance paired with its wavelength when reading this descending grid.</p>
+        <p>At 880 nm, compare the fitted front reflectance with 0.416641 on a fractional scale. The file contains one measured channel. Inspect the residuals across the band, then read the <a href="#thickness-diagnostic">thickness scan</a> to see which metal thicknesses can reproduce that curve under the allowed dielectric and spline bounds.</p>
+
         <!-- ================================================================ -->
         <!--  2. THEORETICAL MODEL                                             -->
         <!-- ================================================================ -->
-        <h2>2. Theoretical Model</h2>
+        <h2 id="bilayer-model">2. Theoretical Model</h2>
 
         <h3>2.1 Layer Structure</h3>
         <p>The model assumes a standardized test structure for characterization:</p>
@@ -219,7 +235,7 @@
         <!-- ================================================================ -->
         <!--  4. ALGORITHMIC WORKFLOW                                           -->
         <!-- ================================================================ -->
-        <h2>4. Algorithmic Workflow</h2>
+        <h2 id="fitting-workflow">4. Algorithmic Workflow</h2>
 
         <div class="mermaid">
             flowchart TD
@@ -254,7 +270,7 @@
         <!-- ================================================================ -->
         <!--  5. BEAM ANALYSIS                                                 -->
         <!-- ================================================================ -->
-        <h2>5. Beam Analysis: Local Thickness-Profile Diagnostic</h2>
+        <h2 id="thickness-diagnostic">5. Beam Analysis: Local Thickness-Profile Diagnostic</h2>
         <p><code>BeamAnalysisWorker.run_beam_analysis</code> starts at the fitted metal thickness and scans outward
             in both directions with a default 0.5 nm step. At each fixed metal thickness, bounded L-BFGS-B refits
             the remaining vector: SiO₂ thickness, $n_\infty$, $A$, metal $n/k$ knot values, and internal knot
@@ -283,7 +299,7 @@
             They are not statistically calibrated confidence intervals and do not establish parameter uniqueness.</p>
 
         <h2>6. Robust Polishing Strategy</h2>
-        <p>The bilayer objective is nonlinear; local polishing can stop in different basins.</p>
+        <p>Different starting thicknesses can give different local fits. In a thickness scan, compare the refitted reflectance error across the allowed interval before interpreting the best-fit metal thickness.</p>
         <p>For polishing and beam exploration, CERTUS-METAL BILAYER uses a cascaded strategy:</p>
         <ol>
             <li><strong>Beam refit:</strong> uses an analytic objective/gradient pair with bound constraints.</li>
@@ -294,7 +310,7 @@
         <!-- ================================================================ -->
         <!--  7. KEY ADVANTAGES                                                -->
         <!-- ================================================================ -->
-        <h2>7. Key Advantages</h2>
+        <h2>7. Interpreting the reconstruction</h2>
 
         <h3>7.1 Empirical Metal Dispersion</h3>
         <p>
@@ -348,7 +364,7 @@
         <!-- ================================================================ -->
         <!--  PRO 2026 ERGONOMICS & UX                                         -->
         <!-- ================================================================ -->
-        <h2>8. Interface and Reporting</h2>
+        <h2 id="interface-and-reports">8. Interface and Reporting</h2>
         <p>
             The fit and optional beam analysis run in workers and report progress to the GUI.
         </p>
@@ -364,7 +380,7 @@
                 <code>certus_metal_bilayer_physics.py</code>, <code>pglobal_adapter.py</code>.</p>
             <p>&copy; CERTUS Scientific Suite v26-04 &bull; Scientific Analysis Report</p>
         </div>
-    </div>
+    </main>
 
 </body>
 </html>

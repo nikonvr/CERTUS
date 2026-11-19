@@ -32,25 +32,38 @@
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <a href="CERTUS_HUB.html" class="certus-logo">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <nav aria-label="CERTUS documentation" class="navbar">
+        <a href="CERTUS_HUB.html" class="certus-logo" aria-label="CERTUS documentation home">
             <svg height="55" viewBox="0 0 820 170" xmlns="http://www.w3.org/2000/svg">
                 <g transform="translate(120, 90)"><path d="M 70,0 C 70,-40 40,-70 0,-70 C -40,-70 -70,-40 -70,0 C -70,40 -40,70 0,70 C 20,70 40,50 40,50" fill="none" stroke="#05103b" stroke-width="30" stroke-linecap="round" transform="rotate(-30)" /><path d="M -90,0 C -80,-90 -70,-50 -60,0 S -40,90 -30,0 S -10,-90 0,0 S 20,90 30,0 S 50,-90 60,0 S 80,90 90,0" fill="none" stroke="#00f0ff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" /></g>
                 <g transform="translate(220, 25)"><text x="0" y="70" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="80" fill="#05103b" letter-spacing="2">CERTUS</text><text x="0" y="110" font-family="Arial, Helvetica, sans-serif" font-weight="300" font-size="18" fill="#000000" letter-spacing="1.2">THIN FILM OPTIMAL STRATEGY FINDER</text></g>
             </svg>
         </a>
         <div class="nav-links">
-            <a href="CERTUS_HUB.html">HUB</a><a href="CERTUS_DESIGN.html">DESIGN</a><a href="CERTUS_RE.html">RE</a><a href="CERTUS_STRAT.html">STRAT</a><a href="CERTUS_INDEX.html">INDEX</a><a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a><a href="CERTUS_FIELD.html" class="active">FIELD</a><a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a><a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a><a href="CERTUS_METAL_BILAYER.html">METAL</a><a href="metrology.html">Metrology</a><a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
+            <a href="CERTUS_HUB.html">HUB</a><a href="CERTUS_DESIGN.html">DESIGN</a><a href="CERTUS_RE.html">RE</a><a href="CERTUS_STRAT.html">STRAT</a><a href="CERTUS_INDEX.html">INDEX</a><a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a><a href="CERTUS_FIELD.html" class="active" aria-current="page">FIELD</a><a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a><a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a><a href="CERTUS_METAL_BILAYER.html">METAL BILAYER</a><a href="metrology.html">Metrology</a><a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
         </div>
     </nav>
 
-    <div class="container">
+    <main class="container" id="main-content" tabindex="-1">
         <header class="hero">
             <h1 style="font-size:3.1rem;margin-bottom:.15rem;">CERTUS-FIELD</h1>
-            <h2 style="border:none;margin-top:0;color:#dbeafe;">Physical electromagnetic propagation and active LIDT minimization</h2>
+            <h2 style="border:none;margin-top:0;color:#dbeafe;">Electric-field profiles and damage-threshold weighting</h2>
             <p class="subtitle">CERTUS-FIELD solves the spatial wave equation layer by layer. It extracts peak intensities $|E_{\max, j}|^2$, tracks spectral performance $R(\lambda)$, and actively minimizes laser-induced field hotspots using a minimax cost formulation.</p>
             <div class="badge-row"><span class="badge">Transfer Matrix Method (TMM)</span><span class="badge">LIDT-Weighted Minimax</span><span class="badge">S & P Polarizations</span><span class="badge">Overview UI Dashboard</span></div>
         </header>
+
+        <nav class="toc-nav" aria-label="On this page">
+            <strong>On this page</strong>
+            <ul>
+                <li><a href="#mirror-example">Mirror example</a></li>
+                <li><a href="#field-equations">Field equations</a></li>
+                <li><a href="#transfer-matrices">Transfer matrices</a></li>
+                <li><a href="#optimization-workflow">Optimization workflow</a></li>
+                <li><a href="#lidt-weights">LIDT weights</a></li>
+                <li><a href="#compare-field-profiles">Compare field profiles</a></li>
+            </ul>
+        </nav>
 
         <section class="quick-grid" aria-label="Key facts">
             <div class="metric-card"><div class="label">Mathematical Engine</div><div class="value">TMM Propagation</div><div class="desc">Analytical resolving of forward/backward field components.</div></div>
@@ -61,10 +74,20 @@
 
         <div class="abstract"><strong>Abstract</strong><br>CERTUS-FIELD models the electric-field distribution inside multilayer optical coatings for the supported incidence angles and s/p polarizations. Complex admittance recurrences provide field profiles and peak intensities. A minimax objective can reduce the computed field relative to user-supplied LIDT weights while the interface compares initial and optimized curves. This calculation is a design diagnostic, not a measured damage threshold.</div>
 
+        <section id="mirror-example">
+            <h2>Inspect the field inside a high reflector</h2>
+            <p>Load the <a href="../example/example_field/test_hr_mirror.json">14-layer mirror configuration</a>. It places Ta₂O₅ and SiO₂ layers between air and BK7, with a reference wavelength of 1064 nm. The saved incidence is 45° and the polarization is p (TM).</p>
+            <ol>
+                <li>Calculate the initial profiles at 1064, 532 and 355 nm. At each wavelength, identify the layer that contains the largest normalized field intensity and record the reflectance at that wavelength.</li>
+                <li>After optimization, compare the initial and optimized profiles at the same angle, wavelength and polarization. Check both the location of the peak and its height relative to that layer’s threshold weight. A peak can move into a material with a different weight.</li>
+                <li>Read the reflectance overlay alongside the field profile. The former measures the fraction of incident power reflected by the stack. The latter shows where the standing wave concentrates inside it. Experimental damage thresholds require a separate measurement.</li>
+            </ol>
+        </section>
+
         <section class="two-col">
             <div>
-                <h2>1. Electromagnetic Formulation in Multilayers</h2>
-                <p>When high-power lasers interrogate a dielectric stack, the physical damage mechanism is driven by local peak intensities rather than average spatial energy. Calculating the internal field profile requires solving Maxwell's equations for a plane wave incident at angle $\theta_0$ from a superstrat of index $n_0$ onto a stack of $N$ layers ending in a substrate $n_s$.</p>
+                <h2 id="field-equations">1. Electromagnetic Formulation in Multilayers</h2>
+                <p>A standing wave can concentrate intensity inside a layer even when the stack meets its reflectance target. Calculating the internal field profile requires solving Maxwell's equations for a plane wave incident at angle $\theta_0$ from an incident medium of index $n_0$ onto a stack of $N$ layers ending in a substrate $n_s$.</p>
                 <div class="section-callout"><strong>Physical Principle:</strong> The wave field inside each thin-film layer is represented as a linear combination of right-propagating (forward) and left-propagating (backward) harmonic components. The phase accumulation and interface boundaries are computed using the complex Transfer Matrix Method (TMM).</div>
                 <p>By enforcing continuity of the tangential electric ($E$) and magnetic ($H$) fields at each interface, the algorithm translates the boundary conditions into a chain of matrix multiplications, mapping the incident wave amplitude to the transmitted state in the substrate.</p>
             </div>
@@ -79,7 +102,7 @@
             </div>
         </section>
 
-        <h2>3. Mathematical Foundations of TMM Field Solver</h2>
+        <h2 id="transfer-matrices">3. Mathematical Foundations of TMM Field Solver</h2>
         <p>The core solver operates inside <code>certus_field_core.py</code>. It supports oblique propagation and lossy materials by defining all parameters in the complex plane.</p>
 
         <h3>3.1 Snell-Descartes Law and Complex Angles</h3>
@@ -161,7 +184,7 @@
             </ul>
             In summary, the exact spatial peak intensity for a non-absorbing layer is:
             $$ |E_{\max, j}|^2 = \max\left( I_j(0), \,\, I_j(d_j), \,\, (|A_j| + |B_j|)^2 \text{ if } \phi_{\text{diff}} \le 2 \text{Re}(\delta_j) \right) $$
-            If the layer has absorption, the phase thickness is complex, and the solver falls back to a fine grid evaluation of $I_j(z)$ to guarantee accuracy.
+            If the layer has absorption, the phase thickness is complex, and the solver falls back to a fine grid evaluation of $I_j(z)$ to estimate the maximum over the sampled depths.
             
             <h4>3.5.4 Integrated and Average Descriptors</h4>
             <ul>
@@ -170,7 +193,7 @@
             </ul>
         </div>
 
-        <h2>4. Optimization Workflow and Algorithms</h2>
+        <h2 id="optimization-workflow">4. Optimization Workflow and Algorithms</h2>
         <div class="workflow">
             <div class="mermaid">
             flowchart TD
@@ -225,7 +248,7 @@
             <li><strong>Hotspot and Spectral Variance:</strong> Computes the envelope of the electric field intensity profiles and spectral variations, showing how the physical damage thresholds are affected by layer thickness errors.</li>
         </ul>
 
-        <h2>5. LIDT-Weighted Optimization Mathematics</h2>
+        <h2 id="lidt-weights">5. LIDT-Weighted Optimization Mathematics</h2>
         <p>In high-power laser systems, the Laser-Induced Damage Threshold (LIDT) defines the maximum energy density a material can withstand. In multi-layer stacks, H-index and L-index layers possess different mechanical and chemical bonding strengths, resulting in distinct threshold values $LIDT_H$ and $LIDT_L$ (represented by the user controls <code>seuil_int_1</code> and <code>seuil_int_2</code>).</p>
 
         <p>The total cost function is the sum of a reflectance constraint term $Cost_R$ and a field penalty term. The reflectance constraint is defined as:
@@ -255,7 +278,7 @@
             <strong>Key Consequence:</strong> The peak-intensity term remains active below the nominal damage thresholds. The optimizer can therefore seek lower modeled hotspots even when the barrier objective would contribute zero.
         </div>
 
-        <h2>6. Visual Overlay and Comparison</h2>
+        <h2 id="compare-field-profiles">6. Visual Overlay and Comparison</h2>
         <p>To help engineers evaluate the optimization trade-offs, the module implements a dual-curve comparison system:</p>
         <ul>
             <li><strong>Initial State (Dashed Lines):</strong> The pre-optimized curves ($|E|^2$ profile and spectral reflectance $R(\lambda)$) are cached when optimization is triggered. They are rendered as thin dashed lines (style <code>Qt.PenStyle.DashLine</code>) for direct visual screening.</li>
@@ -265,6 +288,6 @@
 
         <h2>7. Summary</h2>
         <p>By combining TMM wave propagation with an active minimax optimizer, CERTUS-FIELD lets engineers explore spectral response and modeled spatial field hotspots together. The predicted field reduction does not by itself establish a measured laser-damage threshold.</p>
-    </div>
+    </main>
 </body>
 </html>

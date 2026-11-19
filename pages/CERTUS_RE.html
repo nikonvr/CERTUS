@@ -17,8 +17,9 @@
 </head>
 
 <body>
-<nav class="navbar">
-        <a href="CERTUS_HUB.html" class="certus-logo">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+<nav aria-label="CERTUS documentation" class="navbar">
+        <a href="CERTUS_HUB.html" class="certus-logo" aria-label="CERTUS documentation home">
             <svg viewBox="0 0 320 160" xmlns="http://www.w3.org/2000/svg">
                 <rect width="320" height="160" fill="#ffffff" />
                 <g transform="translate(160, 75)">
@@ -43,26 +44,37 @@
         <div class="nav-links">
             <a href="CERTUS_HUB.html">HUB</a>
             <a href="CERTUS_DESIGN.html">DESIGN</a>
-            <a href="CERTUS_RE.html" class="active">RE</a>
+            <a href="CERTUS_RE.html" class="active" aria-current="page">RE</a>
             <a href="CERTUS_STRAT.html">STRAT</a>
             <a href="CERTUS_INDEX.html">INDEX</a>
             <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a>
             <a href="CERTUS_FIELD.html">FIELD</a>
             <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
             <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
-            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
+            <a href="CERTUS_METAL_BILAYER.html">METAL BILAYER</a>
             <a href="metrology.html">Metrology</a>
             <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
         </div>
     </nav>
 
-    <div class="container">
+    <main class="container" id="main-content" tabindex="-1">
         <header>
             <h1>CERTUS-RE</h1>
             <p style="font-size: 1.2em; color: #555;">Reverse Engineering from Measured Spectra</p>
             <p style="font-size: 1.0em; color: #777; font-weight: 300;">Implementation review: 2026-10-03 — RE worker &amp;
                 Batch Tooling</p>
         </header>
+
+        <nav class="toc-nav" aria-label="On this page">
+            <strong>On this page</strong>
+            <ul>
+                <li><a href="#workflows">Workflows</a></li>
+                <li><a href="#workbook-setup">Workbook setup</a></li>
+                <li><a href="#objective-function">Objective function</a></li>
+                <li><a href="#read-the-logs">Read the logs</a></li>
+                <li><a href="#operational-checklist">Operational checklist</a></li>
+            </ul>
+        </nav>
 
         <div class="abstract">
             <strong>Executive Summary:</strong> CERTUS-RE solves a <a href="https://en.wikipedia.org/wiki/Non-linear_least_squares" target="_blank" rel="noopener noreferrer"><strong>constrained nonlinear least-squares</strong></a>
@@ -90,7 +102,7 @@
             representation, oblique TMM, and material tables from the shared physics layer.
         </div>
 
-        <h2>2. End-to-End User Workflows</h2>
+        <h2 id="workflows">2. End-to-End User Workflows</h2>
 
         <h3>2.1 Interactive GUI workflow</h3>
         <div class="mermaid">
@@ -161,7 +173,7 @@
             vector; weights and wavelength masks are applied <em>per target band</em> as defined in the workbook.
         </div>
 
-        <h2>4. Excel Workbook — Concrete Data Flow</h2>
+        <h2 id="workbook-setup">4. Excel Workbook — Concrete Data Flow</h2>
         <p>
             The RE spreadsheet encodes: (1) stack order and nominal thicknesses (starting point \(d^{(0)}\)); (2) material
             IDs mapping to tabulated \(n(\lambda)\); (3) one or more <strong>target strips</strong> — each with type R or T,
@@ -171,8 +183,13 @@
             <code>RE_OPTIM_POINTS_PER_TARGET = 1</code>: effectively one objective sample per active target row per
             wavelength index after masking (see source for exact alignment with measurement columns).
         </p>
+        <h3>Read the first row of the six-layer example</h3>
+        <p>In the <a href="../example/example_RE/AR_filter_6layers_H800.xlsx">six-layer AR workbook</a>, <code>measurement</code> contains <code>R-8-avg-noBK</code>. The first sample is 54.1721% reflectance at 1500.05 nm. Compare it with 0.541721 on a fractional scale, using 8° incidence, the mean of s and p, and the front surface only.</p>
+        <p>The <code>design</code> sheet sets the reference wavelength to 1500 nm and names silicon as the substrate. The <code>index</code> sheet gives wavelength-dependent <i>n</i> and <i>k</i> for the coating materials. After fitting, inspect the reflectance residual across the measured band, then read the layer-by-layer optical thickness changes at the 1500 nm reference. Those two checks tell you how well the stack matches the data and how far it moved from the nominal design.</p>
+
         <h3>4.1 What you should verify before clicking “Run”</h3>
         <ul>
+            <li><strong>Material tables.</strong> Check that their wavelength ranges cover the targets. Outside a measured table, RE holds the nearest endpoint value constant and emits a warning. The model uses the convention $n-ik$.</li>
             <li><strong>Angles / pol</strong> match the spectrometer configuration; mixed groups are handled but cost more
                 forward models.</li>
             <li><strong>\(\lambda\) range</strong> overlaps the spline knot design (IR knots exist up to 4800 nm in the
@@ -181,7 +198,7 @@
                 interpretation of “quarter-wave” drift (logged as <code>lambda_ref</code>).</li>
         </ul>
 
-        <h2>5. Objective Function — Spectral + QWOT (How RMSE∑ Is Built)</h2>
+        <h2 id="objective-function">5. Objective Function — Spectral + QWOT (How RMSE∑ Is Built)</h2>
         <h3>5.1 Spectral channel (log-wavelength quadrature)</h3>
         <p>
             For each target, contributions inside its wavelength mask use weights from
@@ -501,7 +518,7 @@
             block (<code>BATCH_WINNER_BASE</code>) and only varies multistarts × top-K × shake rounds (27 combos).
         </p>
 
-        <h2>9. Reading the Logs (Science + Debugging)</h2>
+        <h2 id="read-the-logs">9. Reading the Logs (Science + Debugging)</h2>
         <ul>
             <li><code>RE context</code> — \(\lambda\) grid extent, active target count, incidence, phase-1 thickness
                 radius.</li>
@@ -590,7 +607,7 @@
             </tbody>
         </table>
 
-        <h2>12. Operational Checklist</h2>
+        <h2 id="operational-checklist">12. Operational Checklist</h2>
         <ul>
             <li><strong>Reproducibility:</strong> Archive workbook, git commit, Python version, full cfg dict, and JSON
                 batch output.</li>
@@ -642,7 +659,7 @@
             <p>CERTUS Optical Framework — RE Module Technical Datasheet</p>
             <p>Implementation review: 2026-10-04 | CERTUS_RE.py · certus_re_workers.py · certus_re_helpers.py · certus_re_worker_utils.py · certus_re_budget.py</p>
         </div>
-    </div>
+    </main>
 
 </body>
 </html>

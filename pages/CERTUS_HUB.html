@@ -17,8 +17,9 @@
 </head>
 
 <body>
-<nav class="navbar">
-        <a href="CERTUS_HUB.html" class="certus-logo">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+<nav aria-label="CERTUS documentation" class="navbar">
+        <a href="CERTUS_HUB.html" class="certus-logo" aria-label="CERTUS documentation home">
             <svg height="55" viewBox="0 0 820 170" xmlns="http://www.w3.org/2000/svg">
                 <g transform="translate(120, 90)">
                     <path
@@ -39,7 +40,7 @@
             </svg>
         </a>
         <div class="nav-links">
-            <a href="CERTUS_HUB.html" class="active">HUB</a>
+            <a href="CERTUS_HUB.html" class="active" aria-current="page">HUB</a>
             <a href="CERTUS_DESIGN.html">DESIGN</a>
             <a href="CERTUS_RE.html">RE</a>
             <a href="CERTUS_STRAT.html">STRAT</a>
@@ -48,13 +49,13 @@
             <a href="CERTUS_FIELD.html">FIELD</a>
             <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
             <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
-            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
+            <a href="CERTUS_METAL_BILAYER.html">METAL BILAYER</a>
             <a href="metrology.html">Metrology</a>
             <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
         </div>
     </nav>
 
-    <div class="container">
+    <main class="container" id="main-content" tabindex="-1">
         <header>
             <h1>CERTUS-HUB</h1>
             <p style="font-size: 1.3em; color: #475569; font-weight: 300;">Runtime Environment Supervisor & Unified
@@ -62,10 +63,20 @@
             <p style="font-size: 1.0em; color: #64748b; font-weight: 300;">Implementation review: 2026-10-03</p>
         </header>
 
+        <nav class="toc-nav" aria-label="On this page">
+            <strong>On this page</strong>
+            <ul>
+                <li><a href="#suite-architecture">Suite architecture</a></li>
+                <li><a href="#inputs-and-outputs">Inputs and outputs</a></li>
+                <li><a href="#keyboard-controls">Keyboard controls</a></li>
+                <li><a href="#module-guides">Module guides</a></li>
+                <li><a href="#help-and-status">Help and status</a></li>
+            </ul>
+        </nav>
+
         <div class="abstract">
             <strong>Executive Summary:</strong> CERTUS-HUB lists the suite's scientific modules and support tools,
-            prepares the Numba environment, and launches each selected module in its own process. It passes a file
-            dropped on a module card to that module's command line and reports process startup or exit errors.
+            prepares the Numba environment, and launches each selected module in its own process. When a file is dropped on the hub window, it identifies a module and passes the file to that process. The hub also reports startup and exit errors.
         </div>
 
         <div class="abstract" style="border-left-color:#f59e0b;">
@@ -93,7 +104,7 @@
         <!-- ================================================================ -->
         <!--  2. SUITE ARCHITECTURE                                            -->
         <!-- ================================================================ -->
-        <h2>2. Suite Architecture</h2>
+        <h2 id="suite-architecture">2. Suite Architecture</h2>
         <p>The catalogue in <code>certus_hub_config.py</code> describes scientific workflows and support tools.
             <code>ApplicationCard</code> and <code>GroupedApplicationCard</code> render those entries; the hub
             starts the selected script rather than importing its scientific solver into the hub window.</p>
@@ -142,7 +153,7 @@
         <!-- ================================================================ -->
         <!--  5. INPUTS & OUTPUTS                                              -->
         <!-- ================================================================ -->
-        <h2>5. Inputs and Outputs</h2>
+        <h2 id="inputs-and-outputs">5. Inputs and Outputs</h2>
         <p>The hub reads its catalogue, a user-selected or dropped file path, and display/export preferences.
             <code>launch_module</code> passes the selected file as a command-line argument to the child process.
             The child module reads its own measurements and material data and decides whether to write a report.</p>
@@ -150,7 +161,11 @@
             a preference consumed by modules that implement export; it does not guarantee an Excel or HTML report
             for every operation.</p>
 
-        <h2>6. User Interface and Keyboard Controls</h2>
+        <h3>Which module opens a dropped file?</h3>
+        <p>Drop the <a href="../example/example_RE/AR_filter_6layers_H800.xlsx">six-layer workbook</a> on the hub window. The measurement, design and index worksheets identify it as an RE input. The <a href="../example/example_index/H400-RTNBrel-sapphire.xlsx">sapphire spectrum</a> has a single worksheet and opens in INDEX. To send a spectrum to another fitter, use <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>O</kbd> and choose the module.</p>
+        <p>For a JSON configuration, the hub inspects its keys. When both metal fitters can read it and the filename leaves the geometry ambiguous, select SINGLE or BILAYER for the measured stack. For a multi-file drop the hub opens the first supported file and lists the others in the status bar and log. Open those files individually to process them.</p>
+
+        <h2 id="keyboard-controls">6. User Interface and Keyboard Controls</h2>
         <p>These bindings are installed by <code>CERTUS_HUB._setup_shortcuts</code> and the File/Help menus:</p>
         <table>
             <tr><th>Shortcut</th><th>Action</th></tr>
@@ -175,7 +190,7 @@
         <!-- ================================================================ -->
         <!--  8. MODULE SUMMARY                                                -->
         <!-- ================================================================ -->
-        <h2>8. Module Summary</h2>
+        <h2 id="module-guides">8. Module Summary</h2>
 
         <table>
             <tr>
@@ -185,8 +200,8 @@
             </tr>
             <tr>
                 <td><strong><a href="CERTUS_DESIGN.html">DESIGN</a></strong></td>
-                <td>PGLOBAL + L-BFGS-B + Needle</td>
-                <td>Stochastic global synthesis with density clustering and topological derivative</td>
+                <td>Memetic search or PGLOBAL, followed by local refinement</td>
+                <td>Fit layer thicknesses to spectral targets and refine the stack structure. Normal incidence uses memetic search by default.</td>
             </tr>
             <tr>
                 <td><strong><a href="CERTUS_RE.html">RE</a></strong></td>
@@ -206,30 +221,43 @@
             <tr>
                 <td><strong><a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a></strong></td>
                 <td>L-BFGS-B + Spline PWL</td>
-                <td>Deterministic knot control and exact analytic gradients via Fused Cost & Grad</td>
+                <td>Fit thickness and optical constants with staged spline refinement and profile the admissible thickness range.</td>
             </tr>
             <tr>
                 <td><strong><a href="CERTUS_FIELD.html">FIELD</a></strong></td>
                 <td>L-BFGS-B + PGLOBAL + Monte Carlo + Needle</td>
-                <td>Analytical electric-field peak calculation and minimax LIDT hotspot minimization</td>
+                <td>Peak field intensity by layer and minimax optimization with material damage-threshold weights</td>
             </tr>
             <tr>
                 <td><strong><a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a></strong></td>
                 <td>PGLOBAL + L-BFGS-B + Splines</td>
-                <td>Spline n,k from R, with T and Rback used together when both are supplied</td>
+                <td>Single-film thickness and spline n,k from front reflectance, with transmission and back reflectance included independently when available</td>
             </tr>
             <tr>
                 <td><strong><a href="CERTUS_METAL_BILAYER.html">METAL BILAYER</a></strong></td>
                 <td>PGLOBAL + L-BFGS-B + Splines</td>
                 <td>Spline n,k from R-only on Si/SiO₂ with a local thickness-profile diagnostic</td>
             </tr>
+            <tr>
+                <td><strong><a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a></strong></td>
+                <td>Bare-substrate inversion and dispersion fitting</td>
+                <td>Estimate the substrate index before fitting a coated sample.</td>
+            </tr>
         </table>
+
+        <h3>Measurement and inversion references</h3>
+        <ul>
+            <li><a href="metrology.html">Measurement protocol and uncertainty budget</a> for bare and coated samples.</li>
+            <li><a href="alternative_swanepoel.html">Envelope amplitudes and fringe positions</a> explains which calibration each method needs.</li>
+            <li><a href="APPLIED_OPTICS_ALGO_UNCERTAINTY.html">Spline inversion and uncertainty</a> describes the objective, derivatives and thickness profiles.</li>
+            <li><a href="rapport_certus_complet.html">Synthetic fringe-inversion example</a> shows the extrema and index errors for one archived run.</li>
+        </ul>
 
 
         <!-- ================================================================ -->
         <!--  PRO 2026 ERGONOMICS & UX                                         -->
         <!-- ================================================================ -->
-        <h2>9. Help and Module Status</h2>
+        <h2 id="help-and-status">9. Help and Module Status</h2>
         <p>The hub groups launcher cards by workflow and support-tool role. The File menu offers both automatic
             file-to-module selection and an explicit “Open file with…” choice. <kbd>F1</kbd> opens the hub's
             shortcuts help.</p>
@@ -240,7 +268,7 @@
             <p>Implementation paths: <code>CERTUS_HUB.py</code>, <code>certus/core/certus_hub_config.py</code> and <code>certus/core/certus_core.py</code>. Review: 2026-10-03.</p>
             <p>&copy; CERTUS Scientific Suite v26-04 &bull; Scientific Analysis Report</p>
         </div>
-    </div>
+    </main>
 
 </body>
 </html>

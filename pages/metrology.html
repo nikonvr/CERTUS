@@ -25,9 +25,10 @@
     </style>
 </head>
 <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
 
-    <nav class="navbar">
-        <a href="CERTUS_HUB.html" class="certus-logo">
+    <nav aria-label="CERTUS documentation" class="navbar">
+        <a href="CERTUS_HUB.html" class="certus-logo" aria-label="CERTUS documentation home">
             <svg height="55" viewBox="0 0 820 170" xmlns="http://www.w3.org/2000/svg">
                 <g transform="translate(120, 90)">
                     <path
@@ -57,13 +58,13 @@
             <a href="CERTUS_FIELD.html">FIELD</a>
             <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
             <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
-            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
-            <a href="metrology.html" class="active">Metrology</a>
+            <a href="CERTUS_METAL_BILAYER.html">METAL BILAYER</a>
+            <a href="metrology.html" class="active" aria-current="page">Metrology</a>
             <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
         </div>
     </nav>
 
-    <div class="container">
+    <main class="container" id="main-content" tabindex="-1">
 
         <header>
             <h1>CERTUS-METROLOGY</h1>
@@ -72,7 +73,19 @@
             <p>Illustrative measurement assumptions and numerical budgets are shown below; no source dataset or reproduction script is linked from this page.</p>
         </header>
 
-    <h2>1 Prior determination of substrate index ($n_{s}$): choosing transmission vs. reflection</h2>
+        <nav class="toc-nav" aria-label="On this page">
+            <strong>On this page</strong>
+            <ul>
+                <li><a href="#bare-substrate">Bare substrate</a></li>
+                <li><a href="#acquire-spectra">Acquire spectra</a></li>
+                <li><a href="#fit-envelopes">Fit envelopes</a></li>
+                <li><a href="#propagate-uncertainty">Propagate uncertainty</a></li>
+                <li><a href="#example-budget">Example budget</a></li>
+                <li><a href="#measurement-artifacts">Measurement artifacts</a></li>
+            </ul>
+        </nav>
+
+    <h2 id="bare-substrate">1. Choosing transmission or reflection for the bare substrate</h2>
     <p>The envelope method relies on accurate knowledge of the bare-substrate refractive index ($n_{s}$). Experimentally it can be obtained from transmission ($T_{sub}$) or reflection ($R_{sub}$). Each path has a distinct trade-off against instrumental (non-linearity) and physical (absorption) limits.</p>
 
     <h3>1.1 Transmission (T): photometric linearity and vulnerability</h3>
@@ -111,7 +124,7 @@
 
     <p><strong>Metrology summary:</strong> use <i>R</i> to flag absorption bands and secure <i>n</i> at spectral edges; use <i>T</i> in the strictly transparent window for better linearity.</p>
 
-    <h2>2. Experimental context and acquisition strategy</h2>
+    <h2 id="acquire-spectra">2. Experimental context and acquisition strategy</h2>
     <p>The goal is residual absorption (<i>k</i> &lt; 10<sup>-3</sup>) and refractive index <i>n</i> of dielectric films on sapphire (Al<sub>2</sub>O<sub>3</sub>). Following <strong>H.A. Macleod</strong>, thick films (~3 &mu;m) make weak absorption visible in the spectrum.</p>
 
     <h3>2.1 Deposition: Helios 800 (PARMS)</h3>
@@ -130,7 +143,7 @@
     <p>Major error source: sapphire absorption (UV/IR tails). Use differential transmission ratio <i>R<sub>raw</sub></i> = <i>T<sub>sample</sub></i> / <i>T<sub>bare</sub></i>.</p>
     <p>On <strong>double-sided polished</strong> substrates, <i>T<sub>bare</sub></i> already includes back-side Fresnel and bulk attenuation, so the ratio largely cancels sapphire absorption. Moderate index (~7.6% per interface) keeps second-order errors from the coated front small.</p>
 
-    <h2>3. Swanepoel envelope formalism</h2>
+    <h2 id="fit-envelopes">3. Swanepoel envelope formalism</h2>
     <p>Envelopes are defined by optical phase (Swanepoel):</p>
     <ul>
         <li><strong>Half-wave envelope (<i>T<sub>1/2</sub></i>):</strong> optical thickness multiple of &lambda;/2; film is “optically absent”. <strong>Layer absorption is read on this envelope.</strong></li>
@@ -141,6 +154,9 @@
         <li><strong>Nb<sub>2</sub>O<sub>5</sub> (<i>n &gt; n<sub>s</sub></i>):</strong> quarter-wave raises reflectance → <strong><i>T<sub>1/4</sub> &lt; T<sub>1/2</sub></i></strong>.</li>
         <li><strong>SiO<sub>2</sub> (<i>n &lt; n<sub>s</sub></i>):</strong> quarter-wave acts as AR → <strong><i>T<sub>1/4</sub> &gt; T<sub>1/2</sub></i></strong>.</li>
     </ul>
+
+    <p>For a comparison with methods that fit the wavelengths of the extrema, see
+        <a href="alternative_swanepoel.html">envelope amplitudes and fringe positions</a>.</p>
 
     <h2>4. Rigorous algebraic extraction</h2>
     <p>Work with envelope ratios of <i>r = T/T<sub>bare</sub></i>: <i>r<sub>M</sub></i> (upper), <i>r<sub>m</sub></i> (lower). Bare-substrate transmission:</p>
@@ -154,7 +170,7 @@
     <p>Both roots are evaluated; the physical root satisfies <i>0 &lt; x &lt; 1</i>.</p>
     <div class="equation"><i>k</i>(&lambda;) = - [ &lambda; / (4&pi; <i>d</i>) ] ln(<i>x</i>)<span class="eq-num">(6)</span></div>
 
-    <h2>5. Analytical uncertainty propagation (full case)</h2>
+    <h2 id="propagate-uncertainty">5. Analytical uncertainty propagation (full case)</h2>
     <h3>5.1 Photometric non-linearity and n<sub>s</sub></h3>
     <p>&Delta;<i>T</i> depends on detector non-linearity; it is smallest (~0.05%) when measured flux is near reference (~100%).</p>
     <p><i>n<sub>s</sub></i> is derived from bare sapphire <i>T<sub>n</sub></i> &approx; 86%, so &Delta;<i>T<sub>n</sub></i> &approx; 0.1–0.2%. Propagation:</p>
@@ -180,34 +196,35 @@
     <p>Treating substrate attenuation as a simple Beer–Lambert factor is not rigorous. In Swanepoel’s stack model the substrate is an active element: internal transmittance <i>x<sub>s</sub></i> couples with incoherent multiple reflections between film/substrate and substrate/air. Uncertainty &Delta;<i>x<sub>s</sub></i> propagates nonlinearly into layer <i>x</i>.</p>
     <h3>6.2 Numerical example</h3>
     <p>Take &Delta;<i>x<sub>s</sub></i> = 0.005 (&pm;0.5% transparency knowledge).</p>
-    <div class="table-caption">Table 1: &Delta;k comparison (Nb<sub>2</sub>O<sub>5</sub> on sapphire, d = 3000 nm)</div>
     <table>
+        <caption>Uncertainty in <i>k</i> for a 3000 nm Nb₂O₅ film on sapphire</caption>
         <tr><th>&lambda; (nm)</th><th>&Delta;k (relative)</th><th>&Delta;k (absolute)</th><th>Degradation factor</th></tr>
         <tr><td>400</td><td>1.4e-5</td><td>1.5e-4</td><td class="highlight-row"><strong>&times;11</strong></td></tr>
         <tr><td>1000</td><td>3.6e-5</td><td>1.7e-4</td><td class="highlight-row"><strong>&times;5</strong></td></tr>
         <tr><td>4500</td><td>2.1e-4</td><td>8.2e-4</td><td class="highlight-row"><strong>&times;4</strong></td></tr>
     </table>
-    <p><strong>Conclusion:</strong> absolute mode cannot reach optical-grade precision; substrate transparency uncertainty dominates thin-film absorption. <strong>Relative measurement subtracts substrate “noise” and isolates the deposited material.</strong></p>
+    <p>At 1000 nm the assumed uncertainty in substrate transparency gives an absolute-mode Δ<i>k</i> of 1.7 × 10<sup>−4</sup>. Referencing the coated sample to bare sapphire reduces this to 3.6 × 10<sup>−5</sup> in this example. The gain depends on the substrate and the acquisition uncertainties.</p>
 
-    <h2>7. Realistic scenario and numeric budget</h2>
+    <h2 id="example-budget">7. Worked uncertainty budget</h2>
     <p>Relative scenario: &Delta;<i>T<sub>1/2</sub></i> = 0.05%; &Delta;<i>T<sub>1/4</sub></i> and &Delta;<i>T<sub>n</sub></i> scaled by non-linearity; d = 3000 nm.</p>
-    <div class="table-caption">Table 2: Nb<sub>2</sub>O<sub>5</sub> (high index, T<sub>1/4</sub> &approx; 75%)</div>
     <table>
-        <tr><th>&lambda;</th><th>&Delta;T<sub>1/2</sub>/T<sub>1/4</sub>/T<sub>n</sub></th><th>&Delta;n<sub>s</sub></th><th>&Delta;n</th><th>&Delta;k</th></tr>
+        <caption>Nb₂O₅ film with quarter-wave transmission about 75% of the bare reference</caption>
+        <tr><th scope="col">λ (nm)</th><th scope="col">ΔT<sub>1/2</sub> / ΔT<sub>1/4</sub> / ΔT<sub>n</sub></th><th>&Delta;n<sub>s</sub></th><th>&Delta;n</th><th>&Delta;k</th></tr>
         <tr><td>400</td><td>0.05%/0.15%/0.10%</td><td>&pm;0.0038</td><td><strong>&pm;0.011</strong></td><td><strong>&pm;1.4e-5</strong></td></tr>
         <tr><td>1000</td><td>0.05%/0.15%/0.10%</td><td>&pm;0.0040</td><td><strong>&pm;0.013</strong></td><td><strong>&pm;3.6e-5</strong></td></tr>
         <tr><td>4500</td><td>0.10%/0.25%/0.20%</td><td>&pm;0.0088</td><td><strong>&pm;0.028</strong></td><td><strong>&pm;2.1e-4</strong></td></tr>
     </table>
-    <div class="table-caption">Table 3: SiO<sub>2</sub> (AR-like, T<sub>1/4</sub> &approx; 110%)</div>
     <table>
-        <tr><th>&lambda;</th><th>&Delta;T<sub>1/2</sub>/T<sub>1/4</sub>/T<sub>n</sub></th><th>&Delta;n<sub>s</sub></th><th>&Delta;n</th><th>&Delta;k</th></tr>
+        <caption>SiO₂ film with quarter-wave transmission about 110% of the bare reference</caption>
+        <tr><th scope="col">λ (nm)</th><th scope="col">ΔT<sub>1/2</sub> / ΔT<sub>1/4</sub> / ΔT<sub>n</sub></th><th>&Delta;n<sub>s</sub></th><th>&Delta;n</th><th>&Delta;k</th></tr>
         <tr><td>400</td><td>0.05%/0.08%/0.10%</td><td>&pm;0.0038</td><td><strong>&pm;0.034</strong></td><td><strong>&pm;1.5e-5</strong></td></tr>
         <tr><td>1000</td><td>0.05%/0.08%/0.10%</td><td>&pm;0.0040</td><td><strong>&pm;0.036</strong></td><td><strong>&pm;3.8e-5</strong></td></tr>
         <tr><td>4500</td><td>0.10%/0.15%/0.20%</td><td>&pm;0.0088</td><td><strong>&pm;0.078</strong></td><td><strong>&pm;2.3e-4</strong></td></tr>
     </table>
-    <p><strong>Budget:</strong> &Delta;<i>n<sub>s</sub></i> weighs heavily on &Delta;<i>n</i>, especially for silica. Thick-film (3 &mu;m) data still locks <i>k</i> to ~10<sup>-5</sup> uncertainty, enabling weak-absorption characterization.</p>
+    <p>At 1000 nm the budget gives Δ<i>n</i> of ±0.013 for Nb₂O₅ and ±0.036 for SiO₂. The corresponding Δ<i>k</i> values are ±3.6 × 10<sup>−5</sup> and ±3.8 × 10<sup>−5</sup>. By 4500 nm they reach ±2.1 × 10<sup>−4</sup> and ±2.3 × 10<sup>−4</sup>. Use the row closest to the wavelength of interest when reporting weak absorption.</p>
+    <p>A coated sample transmitting 88% against a bare reference transmitting 80% would yield a relative transmission of 110%. Use absolute bare-plate transmission when estimating the substrate index. The <a href="CERTUS_SUBSTRATE_INDEX.html#sapphire-plate">sapphire example</a> shows the two-surface inversion on one measured row.</p>
 
-    <h2>8. Method limits and experimental artifacts</h2>
+    <h2 id="measurement-artifacts">8. Method limits and experimental artifacts</h2>
     <p>Algebra uses ideal Swanepoel formulas; Macleod notes that thick films expose measurements to artifacts that distort <i>T<sub>1/4</sub></i> and <i>T<sub>1/2</sub></i>.</p>
     <h3>8.1 Perfect homogeneity assumption</h3>
     <p>PVD often yields columnar growth and index gradients; inhomogeneity pinches fringes and can mimic higher <i>k</i>.</p>
@@ -218,12 +235,12 @@
     <h3>8.4 Surface scattering</h3>
     <p>Loss on <i>T<sub>1/2</sub></i> is attributed to absorption; rough thick films scatter light out of the detector acceptance, inflating apparent <i>k</i>.</p>
 
-    <h2>9. Global numerical refinement on continuous spectrum</h2>
-    <p>Envelope algebra is discrete at extrema. For smooth dispersion and noise averaging, a <strong>global optimization</strong> step is used.</p>
+    <h2>9. Refinement over the measured spectrum</h2>
+    <p>The envelope fit supplies initial estimates at the extrema. A bounded least-squares fit then uses the full measured spectrum to refine thickness and dispersion.</p>
     <h3>9.1 Envelopes as initial guess (seed)</h3>
     <p>Thick-film spectra have many fringes; random starts trap in wrong interference orders. Discrete <i>n(&lambda;)</i>, <i>k(&lambda;)</i>, <i>d</i> from envelopes provide a physically anchored starting point.</p>
     <h3>9.2 B-splines and RMSE on differential ratio</h3>
-    <p>Dispersion is parameterized with <a href="https://en.wikipedia.org/wiki/B-spline" target="_blank" rel="noopener noreferrer"><strong>B-splines</strong></a> for <i>n</i> and <i>k</i>. The merit function must <strong>not</strong> fit absolute sample transmission (Section 6). Minimize RMSE between theoretical <i>T<sub>calc,sample</sub>/T<sub>calc,bare</sub></i> and measured <i>R<sub>raw</sub></i> over all wavelengths.</p>
+    <p>Dispersion is parameterized with <a href="https://en.wikipedia.org/wiki/B-spline" target="_blank" rel="noopener noreferrer"><strong>B-splines</strong></a> for <i>n</i> and <i>k</i>. The merit function must <strong>not</strong> fit absolute sample transmission (Section 6). Report the RMSE between theoretical <i>T<sub>calc,sample</sub>/T<sub>calc,bare</sub></i> and measured <i>R<sub>raw</sub></i> over all wavelengths.</p>
     <div class="equation"><i>RMSE</i> = [ (1/<i>N</i>) &sum; ( <i>Ratio<sub>calc</sub></i> - <i>R<sub>raw</sub></i> )<sup>2</sup> ]<sup>1/2</sup></div>
     <h3>9.3 Phase coupling and constrained relaxation</h3>
     <p>Fixing <i>n<sub>s</sub></i> with small systematic error forces non-physical twists in <i>n(&lambda;)</i> over ~100 fringes. Use <strong>bounded relaxation</strong>: film via free B-splines and &plusmn;2% on <i>d</i>; substrate via rigid <a href="https://en.wikipedia.org/wiki/Sellmeier_equation" target="_blank" rel="noopener noreferrer">Sellmeier</a> plus vertical offset &Delta;<i>n<sub>s</sub></i> capped at &plusmn;0.005 (Section 1). Thick Fabry–Perot fringes can self-calibrate <i>n<sub>s</sub></i> better than bare-substrate measurement alone.</p>
@@ -234,44 +251,21 @@
         <li>Smooth <i>n,k</i> from B-splines with physical Sellmeier substrate.</li>
     </ul>
 
-    <h2>10 Step-by-step algorithmic implementation (Python)</h2>
-    <p>The robust Swanepoel extraction framework follows a strict automated pipeline utilizing <code>numpy</code>, <code>scipy.signal</code>, and <code>scipy.optimize</code>.</p>
-    
+    <h2>10. Reduction and fitting workflow</h2>
+    <p>This example uses peak finding to initialize a bounded fit. Its Cauchy loss limits the influence of large residuals during refinement. The RMSE in §9.2 summarizes the resulting fit to the transmission ratio.</p>
     <div class="mermaid">
         flowchart TD
-        classDef default fill:#ffffff,stroke:#0ea5e9,stroke-width:2px,color:#0f172a
-        classDef process fill:#f8fafc,stroke:#0ea5e9,stroke-width:2px
-        classDef highlight fill:#e0f2fe,stroke:#2563eb,stroke-width:3px
-        classDef decision fill:#fff3e0,stroke:#f59e0b,stroke-width:2px,color:#9333ea
-        classDef terminal fill:#0f172a,stroke:none,color:#ffffff,font-weight:bold
-
-        START(["Input Data:<br>T_sample(λ), T_bare(λ),<br>Sellmeier n_s(λ), Initial d₀"]):::terminal
-        
-        START --> RATIO["Step 1: Pre-processing<br>Target Ratio R_raw = T_sample / T_bare<br>Cancel substrate bulk attenuation"]:::process
-        
-        RATIO --> EXTREMA["Step 2A: Fringe Analysis<br>find_peaks(R_raw) → Maxima<br>find_peaks(-R_raw) → Minima"]:::process
-        
-        EXTREMA --> ENV["Step 2B: Build Envelopes<br>Cubic splines to form<br>T_{1/4}(λ) and T_{1/2}(λ)"]:::process
-        
-        ENV --> SW ["Step 2C: Algebraic Extraction<br>Apply precise Swanepoel formulas<br>→ n_seed(λ), k_seed(λ), initial thickness"]:::highlight
-        
-        SW --> BSPLINE["Step 3: B-Spline Parameterization<br>7-10 n knots, 10-15 k knots<br>Log spacing in λ (denser in UV)"]:::process
-        
-        BSPLINE --> TMM["Step 4: Numba TMM Engine<br>Construct characteristic matrices<br>Compute theoretical Ratio_calc(λ)"]:::process
-        
-        TMM --> OPT{"Step 5: Global Optimization<br>least_squares(method='trf', loss='cauchy')"}:::decision
-        
-        OPT --> OPT1["Optimize B-Spline Coeffs<br>Positivity limits [0, +inf]"]:::process
-        OPT --> OPT2["Optimize Thickness<br>Bounded d_opt ± 2%"]:::process
-        OPT --> OPT3["Optimize Slab Offset<br>Δn_s ± 0.005"]:::process
-        
-        OPT1 --> FINAL
-        OPT2 --> FINAL
-        OPT3 --> FINAL
-        
-        FINAL(["Final Optical Profile:<br>d, n(λ), k(λ) globally minimized<br>RMSE converged"]):::terminal
+        A["Coated and bare transmission spectra, substrate index and nominal thickness"] --> B["Form the coated-to-bare transmission ratio"]
+        B --> C["Locate maxima and minima with find_peaks"]
+        C --> D["Interpolate the two envelopes and assign their optical phases"]
+        D --> E["Estimate initial film index, extinction and thickness"]
+        E --> F["Set 7–10 index knots and 10–15 extinction knots"]
+        F --> G["Calculate the transmission ratio with the transfer-matrix model"]
+        G --> H["Fit the ratio by bounded least squares with Cauchy loss"]
+        H --> I["Adjust spline values, thickness within ±2% and substrate index offset within ±0.005"]
+        I --> J["Inspect residuals, RMSE and the fitted thickness and dispersion"]
     </div>
 
-    </div>
+    </main>
 </body>
 </html>

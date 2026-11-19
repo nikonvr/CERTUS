@@ -116,8 +116,9 @@
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <a href="CERTUS_HUB.html" class="certus-logo">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <nav aria-label="CERTUS documentation" class="navbar">
+        <a href="CERTUS_HUB.html" class="certus-logo" aria-label="CERTUS documentation home">
             <svg height="55" viewBox="0 0 820 170" xmlns="http://www.w3.org/2000/svg">
                 <g transform="translate(120, 90)">
                     <path d="M 70,0 C 70,-40 40,-70 0,-70 C -40,-70 -70,-40 -70,0 C -70,40 -40,70 0,70 C 20,70 40,50 40,50" fill="none" stroke="#05103b" stroke-width="30" stroke-linecap="round" transform="rotate(-30)" />
@@ -140,22 +141,33 @@
             <a href="CERTUS_FIELD.html">FIELD</a>
             <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
             <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
-            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
+            <a href="CERTUS_METAL_BILAYER.html">METAL BILAYER</a>
             <a href="metrology.html">Metrology</a>
             <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
-            <a href="APPLIED_OPTICS_ALGO_UNCERTAINTY.html" class="active">Algorithm & Uncertainty</a>
+            <a href="APPLIED_OPTICS_ALGO_UNCERTAINTY.html" class="active" aria-current="page">Algorithm & Uncertainty</a>
         </div>
     </nav>
 
-    <div class="container">
+    <main class="container" id="main-content" tabindex="-1">
         <div class="paper-shell">
             <header>
                 <h1>4. Algorithmic Implementation and Uncertainty Analysis</h1>
                 <div class="meta">Applied Optics draft section focused on relative transmittance inversion with spline-based thin-film reconstruction</div>
                 <p class="lead">
-                    The optical inversion is formulated as a staged spline-based estimation problem in which the film thickness, refractive-index dispersion, absorptive structure, and uncertainty corridors are inferred from the measured relative transmittance spectrum $T_{rel}(\lambda)$. The numerical design is intended to remain flexible enough to represent non-canonical spectral structures while preserving the geometric and physical constraints required for stable optimization.
+                    The inversion fits film thickness and wavelength-dependent optical constants to relative transmittance $T_{rel}(\lambda)$. Successive stages release additional spline parameters. A thickness profile then shows how far the fitted thickness can vary under the selected acceptance criterion. The <a href="CERTUS_INDEX_SPLINE.html">INDEX-SPLINE guide</a> describes the corresponding software settings.
                 </p>
             </header>
+
+        <nav class="toc-nav" aria-label="On this page">
+            <strong>On this page</strong>
+            <ul>
+                <li><a href="#coordinate-scaling">Coordinate scaling</a></li>
+                <li><a href="#knot-placement">Knot placement</a></li>
+                <li><a href="#optimization-stages">Optimization stages</a></li>
+                <li><a href="#objective-and-jacobian">Objective and Jacobian</a></li>
+                <li><a href="#uncertainty-corridors">Uncertainty corridors</a></li>
+            </ul>
+        </nav>
 
             <figure class="figure-card">
                 <div class="mermaid">
@@ -181,7 +193,7 @@ flowchart TD
                 </figcaption>
             </figure>
 
-            <h2>4.1 Numerical framework and coordinate scaling</h2>
+            <h2 id="coordinate-scaling">4.1 Numerical framework and coordinate scaling</h2>
             <p>
                 The inversion is not performed directly in linear wavelength coordinates. Over a broad spectral range, uniform sampling in $\lambda$ is poorly matched to the actual optical complexity of thin-film dispersion: the ultraviolet region usually contains the steepest refractive and absorptive variations, whereas the long-wavelength region is comparatively smoother. To better distribute model flexibility across the physically relevant structures, the computational domain is expressed in reciprocal wavelength,
             </p>
@@ -205,7 +217,7 @@ flowchart TD
                 In this representation, the optimizer acts on the unconstrained field $L(\sigma)$, whereas the forward optical model always receives a strictly non-negative extinction coefficient. Extremely weak absorption is thus represented smoothly through large negative values of $L$ rather than through discontinuous clipping of $k$ at zero. The pair $(\sigma, L)$ therefore defines a numerically stable coordinate system for broadband spline inversion.
             </p>
 
-            <h2>4.2 Log-proportion spatial encoding</h2>
+            <h2 id="knot-placement">4.2 Log-proportion spatial encoding</h2>
             <p>
                 Once knot positions are allowed to move, a central numerical difficulty is to preserve their monotonic ordering. Direct optimization of the physical coordinates $\sigma_i$ can lead to node crossing, i.e., configurations for which $\sigma_{i+1} < \sigma_i$, which invalidates the interpolation geometry. To remove this failure mode at the parametrization level, the knot distribution is encoded through normalized positive proportions rather than through direct coordinates.
             </p>
@@ -227,7 +239,7 @@ flowchart TD
                 The practical role of this encoding is not merely numerical convenience: it makes free-knot optimization feasible without imposing a large number of explicit inequality constraints on the optimizer.
             </div>
 
-            <h2>4.3 Sequence-gated optimization pipeline</h2>
+            <h2 id="optimization-stages">4.3 Sequence-gated optimization pipeline</h2>
             <p>
                 The inverse problem is highly correlated because thickness and refractive index can partially compensate each other through the optical phase product. For this reason, all degrees of freedom are not released simultaneously. Instead, the algorithm uses a sequence-gated pipeline in which progressively richer parameterizations are activated only after a lower-dimensional subproblem has been stabilized.
             </p>
@@ -278,7 +290,7 @@ flowchart TD
                 After the piecewise-linear exploratory stages, the final solution is re-optimized on the chosen mesh using a smooth spline representation in reciprocal wavelength. This last refinement removes residual staircase effects inherited from intermediate parameterizations and produces the final nominal curves used for reporting thickness, refractive index, extinction coefficient, and profiled uncertainty bounds.
             </p>
 
-            <h2>4.4 Density-corrected objective and analytic Jacobian</h2>
+            <h2 id="objective-and-jacobian">4.4 Density-corrected objective and analytic Jacobian</h2>
             <p>
                 The merit function compares the experimental relative transmittance $T_{rel,exp}(\lambda)$ to the transfer-matrix prediction $T_{rel,th}(\lambda; d,n,k)$. Because experimental spectra are commonly sampled on irregular wavelength grids, the residual sum cannot be interpreted as a physically fair broadband misfit unless the sampling density is corrected. For this reason, the objective function uses quadrature weights $w_{pix}(\lambda_m)$ defined on the masked wavelength grid,
             </p>
@@ -317,7 +329,7 @@ flowchart LR
                 Local optimization is accelerated by analytic sensitivities of the optical model. Instead of relying exclusively on finite-difference perturbations, the implementation evaluates explicit derivatives of the transfer-matrix response with respect to thickness and spline parameters. This substantially improves efficiency and numerical robustness in the high-dimensional local stages, especially once free-knot relocation has been activated.
             </p>
 
-            <h2>4.5 Thickness-profile corridors and optional likelihood-ratio mode</h2>
+            <h2 id="uncertainty-corridors">4.5 Thickness-profile corridors and optional likelihood-ratio mode</h2>
             <p>
                 The implementation profiles thickness through local refits of the remaining spline parameters. The default <code>ProfileCorridorConfig.mode="alpha"</code> uses a heuristic RMSE acceptance threshold, with an adaptive absolute-delta policy by default. This threshold has no probability or confidence-level interpretation. The optional <code>mode="lr"</code> applies a likelihood-ratio threshold using constant <code>sigma_t</code> and <code>sigma_r</code> values. Both modes measure how far thickness can be displaced while the other spline degrees of freedom re-accommodate the spectral fit.
             </p>
@@ -338,6 +350,10 @@ flowchart LR
                 \Delta\chi^2 = \chi^2(d) - \chi^2(d_{opt}) \le \chi^2_{1,0.95}.
                 $$
             </div>
+            <h3>Read a profiled thickness interval</h3>
+            <p>Suppose local refits at two trial thicknesses give increases in χ² of 2.0 and 5.0 above the reference fit. In likelihood-ratio mode at 95% with one profiled parameter, the cutoff is about 3.84. The first trial is accepted and the second is rejected. Use this confidence interpretation only with a calibrated noise model and the assumptions behind the likelihood-ratio approximation.</p>
+            <p>If the last tested thickness is still accepted at a configured bound, the data have not located the threshold crossing on that side. Report the bound, fitted wavelength interval, measured channels and noise scales along with the interval. For the default RMSE mode, report the actual acceptance tolerance.</p>
+
             <figure class="figure-card">
                 <div class="mermaid">
 flowchart TD
@@ -371,9 +387,7 @@ flowchart TD
                 Specific HTML draft generated for the Applied Optics manuscript section on algorithmic implementation and uncertainty analysis.
             </div>
         </div>
-    </div>
-    <script>
-        mermaid.initialize({ startOnLoad: true, theme: 'default' });
-    </script>
+    </main>
+    <script src="assets/certus_report_init.js"></script>
 </body>
 </html>

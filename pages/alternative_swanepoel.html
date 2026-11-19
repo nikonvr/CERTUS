@@ -1,101 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CERTUS - Spectral Topology vs Swanepoel</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <script src="assets/certus_report_init.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;0,700!display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        body { font-family: 'Crimson Pro', serif; background-color: #f8fafc; color: #0f172a; line-height: 1.7; }
-        h1, h2, h3, h4, h5, .font-sans { font-family: 'Inter', sans-serif; }
-        .hero-pattern { background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 20px 20px; }
-        .math-box { overflow-x: auto; background-color: #fff; padding: 1.5rem; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border-left: 4px solid #eb4899; margin: 1.5rem 0; }
-        .swanepoel-box { border-left: 4px solid #94a3b8; background-color: #f1f5f9; padding: 1.5rem; border-radius: 0.75rem; }
-        .flowchart-frame { overflow-x: auto; background: white; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1rem; margin: 0 0 3rem; }
-        @media (max-width: 820px) {
-            .flowchart-frame::before { content: "Swipe sideways to read the flowchart"; display: block; font: 0.8rem Inter, sans-serif; color: #475569; }
-            .flowchart-frame .mermaid svg { min-width: 760px; max-width: none !important; }
-        }
-    </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Envelope amplitudes and fringe positions | CERTUS</title>
+    <link rel="stylesheet" href="assets/certus_report.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script defer src="assets/certus_report_init.js"></script>
 </head>
-<body class="antialiased">
-
-<nav class="bg-white border-b border-slate-200">
-    <div class="max-w-5xl mx-auto px-6 py-3 flex flex-wrap justify-between items-center gap-y-3">
-        <a href="CERTUS_HUB.html" class="flex items-center text-slate-800 font-bold font-sans text-xl tracking-wider hover:text-pink-600 transition-colors">
-            <span class="text-pink-600 mr-2">◭</span> CERTUS
-        </a>
-        <div class="text-sm font-sans flex flex-wrap w-full md:w-auto justify-start md:justify-end gap-x-4 gap-y-2 text-slate-600 font-medium">
-            <a href="CERTUS_HUB.html" class="hover:text-pink-600 transition-colors">HUB</a>
-            <a href="CERTUS_DESIGN.html" class="hover:text-pink-600 transition-colors">DESIGN</a>
-            <a href="metrology.html" class="hover:text-pink-600 transition-colors">Metrology</a>
-            <a href="CERTUS_Optical_Theory_Guide.html" class="hover:text-pink-600 transition-colors">Theory</a>
-            <a href="APPLIED_OPTICS_ALGO_UNCERTAINTY.html" class="hover:text-pink-600 transition-colors">Algorithm</a>
+<body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <nav class="navbar" aria-label="CERTUS documentation">
+        <a class="docs-home" href="CERTUS_HUB.html">CERTUS documentation</a>
+        <div class="nav-links">
+            <a href="CERTUS_DESIGN.html">Design</a>
+            <a href="metrology.html">Metrology</a>
+            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
+            <a href="APPLIED_OPTICS_ALGO_UNCERTAINTY.html">Algorithm</a>
         </div>
-    </div>
-</nav>
-
-<header class="bg-slate-900 text-white relative overflow-hidden">
-    <div class="absolute inset-0 opacity-10 hero-pattern"></div>
-    <div class="max-w-5xl mx-auto px-6 py-20 relative z-10">
-        <div class="text-pink-500 font-sans font-bold tracking-widest text-xs mb-6 uppercase">Methodology & Statistical Inversion</div>
-        <h1 class="text-4xl md:text-6xl font-black font-sans tracking-tight leading-tight mb-6">
-            Overcoming Photometric Amplitude
-        </h1>
-        <p class="text-xl md:text-2xl font-light text-slate-300 font-sans max-w-3xl leading-relaxed">
-            A comparison of fringe-position and envelope-amplitude methods, with a historical synthetic result whose run data are not linked here.
-        </p>
-    </div>
-</header>
-
-<main class="max-w-5xl mx-auto px-6 py-16">
-
-    <section class="grid md:grid-cols-2 gap-12 mb-20 items-start">
-        <div class="swanepoel-box">
-            <h2 class="text-2xl font-bold font-sans text-slate-800 mb-4 flex items-center">
-                <svg class="w-6 h-6 mr-2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                The Swanepoel Limit
-            </h2>
-            <p class="mb-4 text-slate-700">
-                The Swanepoel envelope method estimates optical constants from measured transmission maxima and minima. Amplitude calibration, scattering and spectral resolution can affect those envelopes.
-            </p>
-            <p class="mb-4 text-slate-700">
-                Transmission amplitude can be affected by roughness, alignment, finite spectral resolution and detector response. These effects need an uncertainty budget before an envelope-derived $n$ or $k$ is interpreted.
-            </p>
-            <p class="text-slate-700">
-                If unmodeled transmission loss is attributed entirely to film absorption, an envelope inversion can bias $k$ and $n$. The size and direction of that bias depend on the measurement and model.
-            </p>
-        </div>
-
-        <div class="bg-pink-50 p-6 rounded-xl border border-pink-100 shadow-sm">
-            <h2 class="text-2xl font-bold font-sans text-pink-900 mb-4 flex items-center">
-                <svg class="w-6 h-6 mr-2 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                Fringe-Position Approach
-            </h2>
-            <p class="mb-4 text-pink-800">
-                A position-based approach uses the wavelengths of detected interference extrema. Those positions can provide information about optical thickness, provided the fringes remain resolved and correctly assigned.
-            </p>
-            <p class="mb-4 text-pink-800">
-                Peak locations are not invariant to asymmetric noise, overlapping features or convolution. A position-based method therefore needs a check of wavelength calibration and peak-detection uncertainty.
-            </p>
-            <ul class="list-disc list-inside space-y-2 text-pink-800">
-                <li>Less direct dependence on absolute intensity calibration</li>
-                <li>Dependence on resolved fringe positions and wavelength calibration</li>
-                <li>Need for an explicit position-error model</li>
-            </ul>
-        </div>
-    </section>
-
-    <section aria-labelledby="method-flow-title">
-        <h2 id="method-flow-title" class="text-2xl font-bold font-sans text-slate-800 mb-4">How the two methods use a spectrum</h2>
-        <p class="mb-4 text-slate-700">This is a comparison of required checks, not a claim that either route succeeds on the archived data below.</p>
-        <div class="flowchart-frame"><div class="mermaid">
+    </nav>
+    <main class="container" id="main-content" tabindex="-1">
+        <header>
+            <h1>Envelope amplitudes and fringe positions</h1>
+            <p>Both methods start from the extrema of a transmission spectrum. The measurement used at each extremum determines which calibration matters most.</p>
+        </header>
+        <section aria-labelledby="method-flow-title">
+            <h2 id="method-flow-title">How the two methods use a spectrum</h2>
+            <table>
+                <thead><tr><th scope="col">Method</th><th scope="col">Observable</th><th scope="col">Measurements to check</th></tr></thead>
+                <tbody>
+                    <tr><th scope="row">Swanepoel envelopes</th><td>Transmission at maxima and minima</td><td>Intensity calibration, scattering and spectral resolution. Assigning unmodelled loss to absorption can bias the inferred index and extinction coefficient.</td></tr>
+                    <tr><th scope="row">Fringe positions</th><td>Wavelengths of successive extrema, which constrain optical thickness</td><td>Wavelength calibration, fringe order and peak-location uncertainty. Overlap and asymmetric broadening can shift a detected extremum.</td></tr>
+                </tbody>
+            </table>
+            <p>The <a href="metrology.html#fit-envelopes">metrology guide</a> gives the envelope equations and the associated uncertainty budget.</p>
+            <div class="mermaid">
             flowchart LR
             A["Measured transmission spectrum"] --> B{"Which observable is used?"}
             B -->|Envelope amplitude| C["Locate maxima and minima; estimate envelopes"]
@@ -104,72 +43,27 @@
             E --> F["Check wavelength calibration and peak-position uncertainty"]
             D --> G["Infer optical constants with an uncertainty budget"]
             F --> G
-        </div></div>
-    </section>
-
-    <!-- Rest of the report with static placeholder for json data -->
-    <section>
-        <h2 class="text-3xl font-bold font-sans text-slate-800 mb-6">Historical Synthetic Inversion Snapshot</h2>
-        <p class="mb-6 text-xl text-slate-600 font-light max-w-4xl">
-            The table below is a preserved synthetic snapshot for a six-parameter spline-and-thickness inversion. Its generating script and input files are not linked in this page, so the values should be treated as historical results rather than a reproduced benchmark. The rows themselves show no valid inversion at every listed nonzero wavelength-noise level.
-        </p>
-        
-        <div class="grid md:grid-cols-3 gap-6 mb-12">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <div class="text-slate-400 text-sm font-sans uppercase font-bold tracking-wider mb-2">Target variables</div>
-                <div class="text-2xl font-bold text-slate-800">6 Parameters (Spline)</div>
-                <div class="text-sm mt-2 text-slate-500">d, n₁, Δn₁, Δn₂, lk₁, lk₂</div>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <div class="text-slate-400 text-sm font-sans uppercase font-bold tracking-wider mb-2">Analyzed Spectral Noise</div>
-                <div class="text-2xl font-bold text-slate-800">σ_λ from 0 to 0.5 nm</div>
-                <div class="text-sm mt-2 text-slate-500">Simulates grating / slit tolerance</div>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <div class="text-slate-400 text-sm font-sans uppercase font-bold tracking-wider mb-2">Iterations per level</div>
-                <div class="text-2xl font-bold text-slate-800">Run data unavailable</div>
-                <div class="text-sm mt-2 text-slate-500">The zero-noise row reports 100/100; its sampling protocol is not linked.</div>
-            </div>
-        </div>
-
-        <h3 class="text-2xl font-bold font-sans text-slate-800 mb-6 border-b border-slate-200 pb-2">Statistical Uncertainties ($\pm 1\sigma$) on Optical Parameters</h3>
-        <p class="mb-6 text-slate-700">Exploration priors: ± 5% on nominal thickness ($2.85\,\mu\text{m} - 3.15\,\mu\text{m}$); ± 0.05 on initial index.</p>
-        
-        <div class="overflow-x-auto bg-white rounded-xl shadow-sm border border-slate-200">
-            <table class="w-full text-left font-sans">
-                <thead>
-                    <tr class="bg-slate-50 text-slate-500 text-sm uppercase tracking-wider">
-                        <th class="p-4 border-b">Noise $\sigma_\lambda$</th>
-                        <th class="p-4 border-b">Thickness d (µm)</th>
-                        <th class="p-4 border-b">Nominal index (n₁)</th>
-                        <th class="p-4 border-b">Reported outcome</th>
-                    </tr>
-                </thead>
-                <tbody id="stats-body" class="text-slate-800">
-                    <!-- JSON data starts -->
-    <tr class="hover:bg-slate-50 transition-colors">
-        <td class="p-4 border-b font-mono font-bold text-pink-600">0.0 nm</td>
-        <td class="p-4 border-b font-mono">3.037533 ± 0.029543 um <span class="text-xs text-slate-400">(0.98%)</span></td>
-        <td class="p-4 border-b font-mono">2.539715 ± 0.025028</td>
-        <td class="p-4 border-b"><span class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs font-bold uppercase">100/100 OK</span></td>
-    </tr><tr><td class="p-4 border-b font-mono font-bold text-pink-600">0.05 nm</td><td colspan="3" class="p-4 border-b text-red-400 italic font-mono">No valid inversion (MSE criterion &lt; 1.0)</td></tr>
-<tr><td class="p-4 border-b font-mono font-bold text-pink-600">0.1 nm</td><td colspan="3" class="p-4 border-b text-red-400 italic font-mono">No valid inversion (MSE criterion &lt; 1.0)</td></tr>
-<tr><td class="p-4 border-b font-mono font-bold text-pink-600">0.2 nm</td><td colspan="3" class="p-4 border-b text-red-400 italic font-mono">No valid inversion (MSE criterion &lt; 1.0)</td></tr>
-<tr><td class="p-4 border-b font-mono font-bold text-pink-600">0.5 nm</td><td colspan="3" class="p-4 border-b text-red-400 italic font-mono">No valid inversion (MSE criterion &lt; 1.0)</td></tr>
-
-                    <!-- JSON data ends -->
+        </section>
+        <section aria-labelledby="noise-study">
+            <h2 id="noise-study">Archived inversion at five wavelength-noise levels</h2>
+            <p>The fit varied six parameters (d, n₁, Δn₁, Δn₂, lk₁ and lk₂). The search allowed thicknesses from 2.85 to 3.15 µm and an initial index within ±0.05 of its nominal value. The original inputs and sampling protocol are unavailable here.</p>
+            <table>
+                <caption>Reported thickness and index, with one standard deviation. The acceptance criterion was MSE &lt; 1.0.</caption>
+                <thead><tr><th scope="col">Wavelength noise σ (nm)</th><th scope="col">Thickness (µm)</th><th scope="col">Index n₁</th><th scope="col">Outcome</th></tr></thead>
+                <tbody id="stats-body">
+                    <tr><td>0.0</td><td>3.037533 ± 0.029543 (0.98%)</td><td>2.539715 ± 0.025028</td><td>100 of 100 accepted</td></tr>
+                    <tr><td>0.05</td><td colspan="3">No accepted inversion</td></tr>
+                    <tr><td>0.1</td><td colspan="3">No accepted inversion</td></tr>
+                    <tr><td>0.2</td><td colspan="3">No accepted inversion</td></tr>
+                    <tr><td>0.5</td><td colspan="3">No accepted inversion</td></tr>
                 </tbody>
             </table>
-        </div>
-        
-        <div class="mt-8 bg-sky-50 border border-sky-100 p-8 rounded-2xl">
-            <h3 class="text-xl font-bold font-sans text-sky-900 mb-4">What This Table Supports</h3>
-            <p class="text-sky-800 font-sans">
-                The zero-noise row reports a thickness standard deviation of 0.029543 µm and an index standard deviation of 0.025028. All four nonzero-noise rows report “No valid inversion” under the stated MSE criterion. These entries do not establish robustness at 0.5 nm or a general advantage over an envelope method; that comparison would require a reproducible, matched benchmark.
-            </p>
-        </div>
-
-    </section>
-</main>
+            <h3>What the zero-noise trials establish</h3>
+            <p>The mean fitted thickness lies 37.533 nm above the nominal 3.00 µm. The reported standard deviation of 29.543 nm describes the spread among accepted fits. All 100 zero-noise trials passed the MSE cutoff even with this offset. Report the offset and the spread separately when judging recovery of the nominal thickness.</p>
+            <p>At each of the four nonzero noise settings, the archive records no accepted fit. It gives no fitted thickness for those rows. Comparing the two inversion methods would require fitting both to the same spectra under the same noise model.</p>
+            <p>See the <a href="rapport_certus_complet.html">archived single-run diagnostic</a> for an example of how errors vary with wavelength.</p>
+        </section>
+    </main>
 </body>
 </html>

@@ -17,9 +17,10 @@
 </head>
 
 <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
 
-<nav class="navbar">
-        <a href="CERTUS_HUB.html" class="certus-logo">
+<nav aria-label="CERTUS documentation" class="navbar">
+        <a href="CERTUS_HUB.html" class="certus-logo" aria-label="CERTUS documentation home">
             <svg height="55" viewBox="0 0 820 170" xmlns="http://www.w3.org/2000/svg">
                 <g transform="translate(120, 90)">
                     <path
@@ -44,18 +45,18 @@
             <a href="CERTUS_DESIGN.html">DESIGN</a>
             <a href="CERTUS_RE.html">RE</a>
             <a href="CERTUS_STRAT.html">STRAT</a>
-            <a href="CERTUS_INDEX.html" class="active">INDEX</a>
+            <a href="CERTUS_INDEX.html" class="active" aria-current="page">INDEX</a>
             <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a>
             <a href="CERTUS_FIELD.html">FIELD</a>
             <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
             <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
-            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
+            <a href="CERTUS_METAL_BILAYER.html">METAL BILAYER</a>
             <a href="metrology.html">Metrology</a>
             <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
         </div>
     </nav>
 
-    <div class="container">
+    <main class="container" id="main-content" tabindex="-1">
         <header>
             <h1>CERTUS-INDEX</h1>
             <p style="font-size: 1.3em; color: #6a1b9a; font-weight: 300;">Advanced Tauc-Lorentz-Urbach Characterization
@@ -63,21 +64,45 @@
             <p style="font-size: 1.0em; color: #ab47bc; font-weight: 300;">Implementation review: 2026-10-03 — algorithm documentation</p>
         </header>
 
+        <nav class="toc-nav" aria-label="On this page">
+            <strong>On this page</strong>
+            <ul>
+                <li><a href="#prepare-fit">Prepare a fit</a></li>
+                <li><a href="#tlu-model">TLU model</a></li>
+                <li><a href="#other-dispersion-models">Other dispersion models</a></li>
+                <li><a href="#fitting-workflow">Fitting workflow</a></li>
+                <li><a href="#infrared-spectra">Infrared spectra</a></li>
+                <li><a href="#frosted-glass">Frosted glass</a></li>
+                <li><a href="#interface-controls">Interface controls</a></li>
+            </ul>
+        </nav>
+
         <div class="abstract">
-            <strong>Executive Summary:</strong> CERTUS-INDEX is a high-level scientific tool for extracting the optical
-            constants ($n, k$) of semiconductors and dielectrics over the full VIS–IR spectral range (300–5000 nm).
-            It combines a rigorous <a href="CERTUS_Optical_Theory_Guide.html" target="_blank" rel="noopener noreferrer"><strong>Tauc-Lorentz-Urbach (TLU) global fit</strong></a> (<a href="https://en.wikipedia.org/wiki/Kramers%E2%80%93Kronig_relations" target="_blank" rel="noopener noreferrer">Kramers-Kronig consistent</a>)
-            with an optional <a href="CERTUS_INDEX_SPLINE.html"><strong>Spline Refinement pipeline</strong></a>.
-            Fit error depends on the material, measurement channels, spectral mask and selected model; no universal
-            RMSE threshold is implied.
-            When the spectrum extends beyond 2500 nm, a <strong>two-stage pipeline</strong> runs automatically: TLU is
-            fitted on 1000–2200 nm only, then <strong>IR Global Model (Phase 2)</strong> refines $n$, $k$ over the full
-            range: <strong>Stage 0–2</strong> (<a href="https://en.wikipedia.org/wiki/Sellmeier_equation" target="_blank" rel="noopener noreferrer">Sellmeier</a> 5p + empirical k 8p with PGlobal + <a href="https://en.wikipedia.org/wiki/Limited-memory_BFGS" target="_blank" rel="noopener noreferrer">L-BFGS-B</a>), then
-            <strong>Phase 2.3</strong> (<a href="https://en.wikipedia.org/wiki/B-spline" target="_blank" rel="noopener noreferrer">spline</a> $k$ in $\log k$ with knot deduction, Pass 1 + Pass 2, optional knot
-            reduction 8→4), then <strong>Phase 2.1</strong> (90% T / 10% R refinement from the spline result).
-            The optional Spline stage (spectrum ≤2500 nm) uses pointwise IR inversion, L-BFGS-B knot optimization,
-            and a final joint re-optimization of thickness, knot positions, and $n$/$k$ values.
+            CERTUS-INDEX estimates film thickness $d$, refractive index $n(\lambda)$ and extinction coefficient $k(\lambda)$
+            from measured reflectance, transmittance or both. Start with the dispersion model and substrate that match the sample.
+            The fitted wavelength interval determines which infrared refinement is available.
         </div>
+
+        <section id="prepare-fit">
+            <h2>Prepare a fit and read the result</h2>
+            <ol>
+                <li><strong>Identify the measured quantity.</strong> Check which columns contain wavelength, transmission and reflectance,
+                    and whether the instrument reported absolute signals or ratios to bare-substrate transmission.
+                    A percentage describes the scale of a column. It does not tell you which reference was measured.</li>
+                <li><strong>Match the substrate and back face.</strong> Select the substrate used for the coating.
+                    For a frosted back face, the interface selects front reflectance, sets the transmission weight to zero and disables normalization.
+                    The <a href="CERTUS_SUBSTRATE_INDEX.html">bare-substrate guide</a> covers estimating the substrate dispersion from a witness.</li>
+                <li><strong>Set the wavelength and thickness bounds.</strong> Inspect the loaded spectra over the chosen interval.
+                    Record any excluded band. The <a href="#infrared-spectra">wavelength-window table</a> shows when the fit will offer the infrared extension.</li>
+                <li><strong>Inspect each measured channel.</strong> Compare fitted and measured curves on the same scale.
+                    Look for displaced fringes and bands with systematic residuals. When comparing a spline with the initial fit,
+                    keep the mask, channel weights and substrate convention fixed so that the two RMSE values describe the same data.</li>
+            </ol>
+            <h3 id="sapphire-example">Reading the sapphire workbook</h3>
+            <p>The <a href="../example/example_index/H400-RTNBrel-sapphire.xlsx">H400 sapphire workbook</a> contains 406 wavelength samples from 1149.97 to 5199.88 nm. At the first wavelength the columns read 30.8642 under <code>R</code> and 85.2543 under <code>T</code>. On a fractional scale these become 0.308642 and 0.852543.</p>
+            <p>Check the acquisition reference before calculating absorption. In the relative setting, both columns use bare-substrate transmission as their denominator. Their sum can exceed one. To recover absolute reflectance and transmittance, multiply each ratio by the bare-substrate transmission at that wavelength. Keep the same convention when you compare the Stage 1 and spline residuals.</p>
+
+        </section>
 
         <h2>1. The Scientific Problem: Absorption & Physical Causality</h2>
         <p>
@@ -90,7 +115,7 @@
             Interband Transitions ($E_g$) and the exponential "Urbach Tail" ($E_u$) representing defect states.
         </p>
 
-        <h2>2. Theoretical Foundation: The TLU Model</h2>
+        <h2 id="tlu-model">2. Theoretical Foundation: The TLU Model</h2>
         <p>The Tauc-Lorentz-Urbach model combines Tauc-Lorentz oscillator physics above the band gap with an Urbach
             exponential tail below, ensuring smooth transitions and physical causality.</p>
 
@@ -163,8 +188,7 @@
             $$ a_{\tan} = (E^2 - E_0^2)(E_0^2 + E_g^2) + E_g^2 C^2 $$
         </div>
 
-        <p><strong>Implementation note:</strong> CERTUS uses a Numba JIT-compiled implementation
-            (<code>epsilon1_TL_analytic</code>) ensuring evaluation in $\sim$10 µs per wavelength point.</p>
+        <p>At a sampled energy exactly equal to the band gap, <code>epsilon1_TL_analytic</code> evaluates the continuous limit of the logarithmic terms. The band-edge sample can stay in the fit.</p>
 
         <h3>2.4 Urbach Tail Contribution to $\epsilon_1$</h3>
         <p>For the sub-bandgap Urbach region, the KK integral yields an additional term:</p>
@@ -195,7 +219,7 @@
             <tr>
                 <td>$E_g$</td>
                 <td>eV</td>
-                <td><strong>Band gap</strong>: Energy threshold for direct optical transitions</td>
+                <td><strong>Band gap</strong>: Onset parameter for interband absorption in the Tauc–Lorentz model</td>
             </tr>
             <tr>
                 <td>$A$</td>
@@ -238,9 +262,9 @@
             caused by polarization, while the extinction coefficient $k$ reflects energy dissipation (absorption)
             due to the phase lag between the field and the electronic response.</p>
 
-        <h2>3. Alternative Dispersion Models and Metallic Extensions</h2>
+        <h2 id="other-dispersion-models">3. Alternative Dispersion Models and Metallic Extensions</h2>
         <p>
-            Although the TLU model is optimal for amorphous semiconductors and dielectrics with a band gap,
+            The TLU model describes a band-edge absorption onset in amorphous films, but
             CERTUS recognizes the mathematical need for other formalisms to handle additional material
             classes, notably metals and phononic crystals.
         </p>
@@ -750,7 +774,7 @@
         derivatives are well conditioned; it does not certify convergence or a global minimum.</li>
 </ul>
 
-<h2>5. Optimization Pipeline — Two-Stage Architecture</h2>
+<h2 id="fitting-workflow">5. Optimization Pipeline — Two-Stage Architecture</h2>
 
 <div class="mermaid">
     flowchart TD
@@ -782,7 +806,7 @@
     KNOTS["Knot placement:<br>15 n-curvature + 15 k-curvature knots<br>+ 6 IR extension knots (2500-5000nm)"]:::process --> PW["Phase 2a: Pointwise IR Inversion<br>L-BFGS-B per wavelength at fixed d_TLU<br>80% most-informative lambda selected"]:::process
     PW --> LBFGSB2["Phase 2b: Spline L-BFGS-B<br>VIS bounds +/-0.05/+/-0.01<br>IR bounds +/-0.03/+/-0.01"]:::process
     LBFGSB2 --> REOPT["Phase 2c: Final Joint Re-opt<br>d +/-1%, IR knot pos +/-400nm,<br>n +/-0.03, k +/-0.01"]:::highlight
-    REOPT --> SPLINE_DONE["Spline solution: d, n(λ), k(λ)<br>RMSE &lt; 0.005 typical"]:::highlight
+    REOPT --> SPLINE_DONE["Inspect fitted d, n(λ), k(λ)<br>and residuals in each measured channel"]:::highlight
     end
 
     TLU_DONE --> EXPORT
@@ -791,11 +815,8 @@
 </div>
 
 <div class="highlight-box">
-    <strong>Spectrum &gt; 2500 nm:</strong> When the wavelength range extends beyond 2500 nm, the software
-    automatically runs a <strong>two-stage pipeline</strong>: Stage 1 TLU is restricted to 1000–2200 nm
-    (<code>lambda_max_fit = 2200</code>), then <strong>IR Global Model (Phase 2)</strong> runs on the full range
-    (Section 6): Stages 0–2 (Sellmeier + k_8p), Phase 2.3 (spline $k$ in $\log k$, knot reduction), then Phase 2.1
-    (90% T / 10% R). The optional Spline Refinement (Section 7) is a separate path for spectra ≤2500 nm.
+    This diagram follows the TLU fit and optional spline refinement.
+    For a window spanning the short-wave and infrared bands, use the <a href="#infrared-spectra">IR workflow</a>.
 </div>
 
 <h3>5.1 Stage 1 — TLU Global Fit</h3>
@@ -891,23 +912,23 @@
     <li>The analytic gradient supports local polishing; convergence depends on the objective and stopping criteria.</li>
 </ol>
 
-<h2>6. IR Pipeline (Spectrum &gt; 2500 nm) — Workflow and Implementation</h2>
+<h2 id="infrared-spectra">6. IR Pipeline (Spectrum &gt; 2500 nm) — Workflow and Implementation</h2>
 
-<p>
-    When the spectral range extends beyond 2500 nm, CERTUS-INDEX runs a <strong>two-stage pipeline</strong>.
-    <strong>Stage 1 (TLU)</strong> is executed with <code>lambda_max_fit = 2200</code> nm, so the TLU model is fitted
-    only on 1000–2200 nm. The thickness and TLU solution from Stage 1 are then fixed; the second stage,
-    implemented by <code>IRGlobalModelWorker</code>, refines $n(\lambda)$ and $k(\lambda)$ over the
-    <strong>full wavelength range</strong> using a global parametric model, then a spline representation of $k$
-    in $\log k$, and finally an optional 90% T / 10% R refinement. The following describes the exact code flow
-    so a reader can understand everything that was implemented.
-</p>
+<table>
+    <caption>Pipeline selected from the wavelength window in the INDEX interface</caption>
+    <thead><tr><th scope="col">Selected limits</th><th scope="col">What runs</th></tr></thead>
+    <tbody>
+        <tr><td>Upper limit ≤ 2500 nm</td><td>Standard fit on the selected window.</td></tr>
+        <tr><td>Lower limit &lt; 2200 nm and upper limit &gt; 2500 nm</td><td>Fit TLU from the selected lower limit to 2200 nm, then offer the IR Global Model.</td></tr>
+        <tr><td>Lower limit ≥ 2200 nm and upper limit &gt; 2500 nm</td><td>Single-stage fit on the selected window. For example, 3500–5200 nm stays entirely in the infrared.</td></tr>
+    </tbody>
+</table>
+<p>In the two-stage workflow, the GUI displays the TLU fit and asks whether to continue.
+    Choosing <strong>No</strong> keeps that result. The dialog selects <strong>Yes</strong> after five seconds.
+    The IR worker holds the fitted thickness fixed while refining the optical constants against the full spectrum.</p>
 
-<h3>6.1 Trigger and Data Preparation</h3>
+<h3>6.1 Data passed to the IR worker</h3>
 <ul>
-    <li><strong>Trigger:</strong> <code>config.lambda_max &gt; 2500.0</code>. The UI logs: &quot;Spectrum &gt; 2500 nm
-        detected: launching automatic two-stage TLU + Spline pipeline.&quot; (The word &quot;Spline&quot; in the message
-        is legacy; the actual second stage is the IR Global Model + Phase 2.3 spline $k$ + Phase 2.1.)</li>
     <li><strong>Stage 1 TLU:</strong> Runs on data restricted to <code>lambda_min</code>–2200 nm. Phase 5 yields optimal
         thickness $d$ and TLU $n$, $k$ (extrapolated beyond 2200 nm for display).</li>
     <li><strong>Phase 2 input:</strong> Full-range wavelengths <code>l_full</code> (e.g. 1000–5200 nm), same target T/R
@@ -1043,7 +1064,7 @@
             <li><strong>Knot reduction:</strong> <code>RMSE_RATIO_MAX = 1.10</code>, <code>MIN_KNOTS = 4</code>. While
                 current number of knots &gt; 4: merge the closest consecutive knot pair via <code>_merge_closest_knot_pair</code>
                 (new position = midpoint, new $\log k$ = average of the two). Re-run Pass 1 (2–10 s) then Pass 2. If
-                $\mathrm{RMSE}_{new} \leq 1.10^2 \times \mathrm{best\_mse}$, accept and continue; otherwise reject and stop.
+                the new fit satisfies $\mathrm{MSE}_{new} \leq 1.10^2 \times \mathrm{MSE}_{best}$, the merge meets the error criterion. This allows up to a 10% increase in RMSE for that merge.
                 This yields a parsimonious spline (4–8 knots) with controlled RMSE loss.</li>
         </ul>
         If Phase 2.3 does not improve over the Stage 2 (k_8p) result, the k_8p solution is kept and
@@ -1094,9 +1115,7 @@
 <h2>7. Stage 2 — Spline Refinement Pipeline</h2>
 
 <p>
-    When the spectrum is <strong>≤ 2500 nm</strong>, the optional second stage is this Spline Refinement.
-    When the spectrum <strong>&gt; 2500 nm</strong>, the automatic second stage is the <strong>IR Global Model</strong>
-    (Section 6); the Spline pipeline below is a separate optional path, not used in the default &gt;2500 nm flow.
+    This section describes the optional spline fit following TLU. For the global infrared extension and its wavelength selection rules, see the <a href="#infrared-spectra">IR workflow</a>.
 </p>
 <p>
     After the TLU global fit converges, the optional <strong>Spline Refinement</strong> stage
@@ -1244,16 +1263,16 @@
     </tr>
 </table>
 <div class="highlight-box">
-    <strong>Benchmark — RTNBrel-sapphire.xlsx (reference dataset):</strong>
+    <strong>Historical RTNBrel-sapphire fit</strong> · <a href="#sapphire-example">Workbook units and reference</a>
     <ul>
         <li>Stage 1 TLU: 14.5 s — RMSE ≈ 0.086</li>
         <li>Phase 2b Spline L-BFGS-B: RMSE ≈ 0.034</li>
-        <li>Phase 2c Final re-opt: <strong>RMSE = 0.0050</strong> ✓ (&lt;0.01 target)</li>
+        <li>Phase 2c Final re-opt: <strong>RMSE = 0.0050</strong> on this fit</li>
         <li>Total pipeline: ~25 s</li>
     </ul>
 </div>
 
-<h2>8. Frosted Glass Mode</h2>
+<h2 id="frosted-glass">8. Frosted Glass Mode</h2>
 
 <h3>8.1 Physical Problem</h3>
 <p>For a deliberately roughened back face, the measured specular reflectance can be modeled without a returning
@@ -1392,8 +1411,7 @@
     </tr>
     <tr>
         <td><strong>Spline Refinement</strong></td>
-        <td>Post-TLU stage (optional). For spectrum &gt;2500 nm the default second stage is
-            <strong>IR Global Model</strong> (Phase 2/2, Section 6). Spline remains available as an alternative path.
+        <td>Optional post-TLU fit of thickness and spline dispersion. The <a href="#infrared-spectra">IR Global Model</a> has its own spline stage for absorption.
         </td>
     </tr>
     <tr>
@@ -1429,7 +1447,7 @@
 <!-- ================================================================ -->
 <!--  PRO 2026 ERGONOMICS & UX                                         -->
 <!-- ================================================================ -->
-<h2>11. Interface Controls</h2>
+<h2 id="interface-controls">11. Interface Controls</h2>
 <p>The INDEX window registers shortcuts through <code>install_standard_shortcuts</code> for actions whose callbacks
     are available in the current window.</p>
 <h3>11.1 INDEX Keyboard Shortcuts</h3>
@@ -1448,7 +1466,7 @@
         <code>certus_pointwise_ir.py</code> &mdash; implementation review: 2026-10-03</p>
     <p>&copy; CERTUS Scientific Suite v26-04 &bull; Scientific Analysis Report</p>
 </div>
-    </div>
+    </main>
 
 </body>
 </html>

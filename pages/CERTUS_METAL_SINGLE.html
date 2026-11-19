@@ -17,8 +17,9 @@
 </head>
 
 <body>
-<nav class="navbar">
-        <a href="CERTUS_HUB.html" class="certus-logo">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+<nav aria-label="CERTUS documentation" class="navbar">
+        <a href="CERTUS_HUB.html" class="certus-logo" aria-label="CERTUS documentation home">
             <svg height="55" viewBox="0 0 820 170" xmlns="http://www.w3.org/2000/svg">
                 <g transform="translate(120, 90)">
                     <path
@@ -47,19 +48,30 @@
             <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a>
             <a href="CERTUS_FIELD.html">FIELD</a>
             <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
-            <a href="CERTUS_METAL_SINGLE.html" class="active">METAL SINGLE</a>
-            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
+            <a href="CERTUS_METAL_SINGLE.html" class="active" aria-current="page">METAL SINGLE</a>
+            <a href="CERTUS_METAL_BILAYER.html">METAL BILAYER</a>
             <a href="metrology.html">Metrology</a>
             <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
         </div>
     </nav>
 
-    <div class="container">
+    <main class="container" id="main-content" tabindex="-1">
         <header>
             <h1>CERTUS-METAL SINGLE</h1>
             <p style="font-size: 1.3em; color: #546e7a; font-weight: 300;">Single-layer optical constant extraction on a transparent substrate</p>
             <p style="font-size: 1.0em; color: #78909c; font-weight: 300;">Implementation review: 2026-10-03</p>
         </header>
+
+        <nav class="toc-nav" aria-label="On this page">
+            <strong>On this page</strong>
+            <ul>
+                <li><a href="#measurement-channels">Measurement channels</a></li>
+                <li><a href="#fitting-workflow">Fitting workflow</a></li>
+                <li><a href="#thickness-diagnostic">Thickness diagnostic</a></li>
+                <li><a href="#prepare-the-inputs">Prepare the inputs</a></li>
+                <li><a href="#read-the-outputs">Read the outputs</a></li>
+            </ul>
+        </nav>
 
         <div class="abstract">
             <strong>Abstract:</strong> CERTUS-METAL SINGLE estimates the complex refractive index of a single metallic
@@ -71,7 +83,7 @@
         <!-- ================================================================ -->
         <!--  1. THE SINGLE LAYER CHALLENGE                                    -->
         <!-- ================================================================ -->
-        <h2>1. Measurement Context</h2>
+        <h2 id="measurement-channels">1. Measurement Context</h2>
         <p>
             A single absorbing layer on a transparent substrate provides three complementary observables. The
             transparent substrate enables transmission measurements in addition to front reflectance and backside
@@ -157,11 +169,11 @@
         <!-- ================================================================ -->
         <!--  3. OPTIMIZATION WORKFLOW                                         -->
         <!-- ================================================================ -->
-        <h2>3. Detailed Algorithmic Flowchart</h2>
+        <h2 id="fitting-workflow">3. Detailed Algorithmic Flowchart</h2>
 
         <div class="mermaid">
             flowchart TD
-            A(["Measured R; T and Rback as a pair when both supplied; substrate and bounds"])
+            A(["Front R, optional T, optional back R, substrate and bounds"])
             B["Load spectral channels and normalize their units"]
             C["Continue from 2 knots to the requested knot count"]
             D["At each knot count: PGLOBAL explores bounded parameters"]
@@ -200,12 +212,12 @@
         </ul>
 
         <h3>3.2 Objective for the Available Channels</h3>
-        <p><code>_single_RTRback_mse</code> averages the finite MSE terms for $R$, $T$, and $R_{back}$ when both optional channels are supplied. Otherwise it uses $R$ alone. The objective then penalizes rapid changes in the reconstructed spline curves:</p>
+        <p><code>_single_RTRback_mse</code> computes a mean squared error for each supplied channel using its finite residuals. Front reflectance, transmission and back reflectance each contribute one term when they have usable data. The objective adds a curvature penalty to the channel average.</p>
         <div class="eq-box">
             $$ J = \frac{1}{|C|}\sum_{c\in C}\operatorname{nanmean}\bigl[(S_c^{calc}-S_c^{meas})^2\bigr]
             + 10^{-2}\left(\sum_j(\Delta^2 n_j)^2+\sum_j(\Delta^2 k_j)^2\right). $$
         </div>
-        <p>$C$ contains only channels with finite residuals when the $T$/$R_{back}$ pair is present. If either optional channel is absent, the current objective uses reflectance alone. The displayed RMSE is the square root of the complete objective.</p>
+        <p>For example, a workbook with front reflectance and transmission contributes two channel means. With front reflectance alone, its mean supplies the entire spectral term. The displayed RMSE is the square root of the complete objective.</p>
 
         <h3>3.3 PGLOBAL and Knot Continuation</h3>
         <p>The current global search calls the native <code>PGlobalOptimizer</code> through
@@ -219,7 +231,7 @@
         <!-- ================================================================ -->
         <!--  4. BEAM ANALYSIS                                                 -->
         <!-- ================================================================ -->
-        <h2>4. Beam Analysis: Local Fit Diagnostic</h2>
+        <h2 id="thickness-diagnostic">4. Beam Analysis: Local Fit Diagnostic</h2>
 
         <h3>4.1 Uniqueness Assessment</h3>
         <p>
@@ -270,7 +282,7 @@
         <!-- ================================================================ -->
         <!--  5. USAGE GUIDE                                                   -->
         <!-- ================================================================ -->
-        <h2>5. Usage Guide</h2>
+        <h2 id="prepare-the-inputs">5. Usage Guide</h2>
 
         <h3>5.1 Input Data Format</h3>
         <p>CSV or Excel file with up to four auto-detected columns:</p>
@@ -302,6 +314,10 @@
             </tr>
         </table>
 
+        <h3>Check the titanium example at 400 nm</h3>
+        <p>Load the <a href="../example/example_metal_single/JSON-metal-example.json">single-metal configuration</a> and its <a href="../example/example_metal_single/Target_Titane_Simu_20nm.xlsx">simulated titanium spectrum</a>. The preset allows metal thicknesses of 15–25 nm and uses four knots. The first row gives front reflectance 49.2%, transmission 10.8% and reverse reflectance 33.8%.</p>
+        <p>For front illumination the inferred absorbed fraction in this simulation is 1 − 0.492 − 0.108 = 0.400. Compare the separate reverse-illumination curve against 0.338. Inspect residuals for each supplied channel and check where the fitted thickness falls within its bounds before comparing it with the simulated nominal value of 20 nm.</p>
+
         <h3>5.2 Configuration Guidelines</h3>
         <ul>
             <li><strong>Knots:</strong> start with two or three knots for simple metals. Increase the knot count only
@@ -315,7 +331,7 @@
         <!-- ================================================================ -->
         <!--  6. OUTPUT                                                        -->
         <!-- ================================================================ -->
-        <h2>6. Output and Reporting</h2>
+        <h2 id="read-the-outputs">6. Output and Reporting</h2>
         <ul>
             <li><strong>Excel report:</strong> fit summary, calculated spectra, and derived $n$ and $k$ tables.</li>
             <li><strong>Visualization tabs:</strong>
@@ -368,7 +384,7 @@
         <!-- ================================================================ -->
         <!--  PRO 2026 ERGONOMICS & UX                                         -->
         <!-- ================================================================ -->
-        <h2>8. Pro 2026 Ergonomics & UI Upgrades</h2>
+        <h2>8. Interface controls and keyboard shortcuts</h2>
         <p>
             The fit runs in a worker and reports progress while the GUI remains responsive. Numerical kernels use
             NumPy and Numba on the paths called by the model.
@@ -385,7 +401,7 @@
             <p>Implementation paths: <code>certus_metal_single_app.py</code>, <code>certus_metal_single_physics.py</code>, <code>pglobal_adapter.py</code>, and <code>calculate_RTRback_incoherent_vectorized</code>.</p>
             <p>&copy; CERTUS Scientific Suite v26-04 &bull; Scientific Report</p>
         </div>
-    </div>
+    </main>
 
 </body>
 </html>

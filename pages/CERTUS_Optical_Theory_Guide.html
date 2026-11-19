@@ -16,33 +16,48 @@
         };
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="stylesheet" href="assets/certus_report.css">
     <style>
         /* ═══════════════════════════════════════════
            CERTUS Scientific Document — LaTeX Style
            ═══════════════════════════════════════════ */
 
         :root {
-            --primary-color: #0f172a; /* Slate 900 */
-            --secondary-color: #0284c7; /* Light Blue 600 */
-            --accent-color: #f59e0b;
-            --bg-color: #f8fafc;
-            --text-color: #334155;
-            --code-bg: #e2e8f0;
-            --nav-bg: #ffffff;
-            --nav-text: #0f172a;
-            --nav-hover: #0ea5e9;
+            --sans: Inter, "Segoe UI", sans-serif;
+            --serif: "STIX Two Text", Georgia, serif;
+            --mono: "Source Code Pro", Consolas, monospace;
+            --heading: #0f172a;
+            --text: #263548;
+            --text-secondary: #475569;
+            --bg: #fff;
+            --bg-alt: #f1f5f9;
+            --bg-code: #1e293b;
+            --bg-formula: #f8fafc;
+            --accent: #075985;
+            --accent-light: #03658f;
+            --link: #075985;
+            --border: #cbd5e1;
+            --border-light: #dbe3eb;
+            --warn-bg: #fffbeb;
+            --warn-border: #92400e;
+            --warn-text: #713f12;
+            --pedagogy-bg: #f0f9ff;
+            --pedagogy-border: #03658f;
+            --pedagogy-text: #164e63;
+            --adv-bg: #f5f3ff;
+            --adv-border: #6d48a1;
         }
 
         *, *::before, *::after { box-sizing: border-box; }
 
-        body {
+        .theory-guide {
             font-family: var(--serif);
             font-size: 16px;
             line-height: 1.75;
             color: var(--text);
-            max-width: 880px;
+            max-width: 56rem;
             margin: 0 auto;
-            padding: 40px 24px 60px;
+            padding: clamp(1rem, 3vw, 2.5rem);
             background-color: var(--bg);
             -webkit-font-smoothing: antialiased;
         }
@@ -77,7 +92,7 @@
         h2 { font-family: var(--sans); font-size: 19px; font-weight: 600; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 6px; }
         h3 { font-family: var(--sans); font-size: 15px; font-weight: 600; margin-top: 1.8em; }
 
-        p { margin: 0.8em 0; text-align: justify; hyphens: auto; }
+        p { margin: 0.8em 0; text-align: start; hyphens: auto; }
 
         /* ── Formula Boxes ── */
         .formula-box {
@@ -182,13 +197,15 @@
         tr:nth-child(even) { background-color: var(--bg-alt); }
         tr:hover { background-color: #edf2f7; }
 
+        .theory-guide [id] { scroll-margin-top: 6rem; }
         .toc { background: var(--bg-alt); padding: 24px 28px; border-radius: 3px; border: 1px solid var(--border); margin: 0 0 40px; }
-        .toc h3 { font-family: var(--sans); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin: 0 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+        .toc strong { display: block; font-family: var(--sans); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin: 0 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
         .toc a { font-family: var(--sans); font-size: 14px; text-decoration: none; color: var(--link); display: block; margin: 4px 0; transition: color 0.15s; }
         .toc a:hover { color: var(--accent-light); text-decoration: underline; }
 
         /* ── SVG Diagrams ── */
         svg { max-width: 100%; height: auto; }
+        @media print { .toc { display: none; } .theory-guide { max-width: none; padding: 0; } }
         .theory-flow { max-width: 100%; overflow-x: auto; text-align: center; -webkit-overflow-scrolling: touch; }
         @media (max-width: 820px) {
             details.advanced-box { max-width: 100%; overflow-x: auto; }
@@ -210,12 +227,12 @@
             white-space: nowrap;
         }
     </style>
-    <link rel="stylesheet" href="assets/certus_report.css">
 </head>
 
 <body>
-    <nav class="navbar" style="margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-        <a href="CERTUS_HUB.html" class="certus-logo">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <nav aria-label="CERTUS documentation" class="navbar" style="margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <a href="CERTUS_HUB.html" class="certus-logo" aria-label="CERTUS documentation home">
             <svg height="55" viewBox="0 0 820 170" xmlns="http://www.w3.org/2000/svg">
                 <g transform="translate(120, 90)">
                     <path d="M 70,0 C 70,-40 40,-70 0,-70 C -40,-70 -70,-40 -70,0 C -70,40 -40,70 0,70 C 20,70 40,50 40,50" fill="none" stroke="#05103b" stroke-width="30" stroke-linecap="round" transform="rotate(-30)" />
@@ -238,33 +255,34 @@
             <a href="CERTUS_FIELD.html">FIELD</a>
             <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
             <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
-            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
+            <a href="CERTUS_METAL_BILAYER.html">METAL BILAYER</a>
             <a href="metrology.html">Metrology</a>
-            <a href="CERTUS_Optical_Theory_Guide.html" class="active">Theory</a>
+            <a href="CERTUS_Optical_Theory_Guide.html" class="active" aria-current="page">Theory</a>
         </div>
     </nav>
+    <main id="main-content" class="theory-guide" tabindex="-1">
     <div class="doc-header">
         <h1>Theory Guide — Thin-Film Optics</h1>
         <p class="subtitle">CERTUS implementation · Macleod matrix formalism</p>
-        <p style="font-family: var(--sans); font-size: 12px; color: #8899aa; text-transform: uppercase; margin-top: 16px;">Full edition (Beginner &amp; Advanced) · CERTUS Suite v1602</p>
+        <p style="font-family: var(--sans); font-size: 12px; color: #8899aa; text-transform: uppercase; margin-top: 16px;">Introduction, worked examples and implementation notes</p>
     </div>
     
     <p>This document describes the physics and equations used by the CERTUS suite to compute the optical properties of a thin-film stack. It is meant to take you from basic intuition (for newcomers) to sharp implementation details (for developers, tucked inside “Advanced” blocks).</p>
 
-    <div class="toc">
-        <h3>Contents</h3>
+    <nav class="toc" aria-label="Theory guide contents">
+        <strong>Contents</strong>
         <a href="#intro">0. Beginner introduction (intuition &amp; interference)</a>
         <a href="#conventions">1. Conventions and core notation</a>
         <a href="#tmm">2. Transfer-matrix method (TMM)</a>
         <a href="#polarization">3. Polarization (s and p) and oblique incidence</a>
         <a href="#coeffs">4. Fresnel coefficients and power (R, T)</a>
         <a href="#finite_sub">5. Front surface, back surface, and finite substrate</a>
-        <a href="#efield">6. [Advanced] Absorption and electric-field profile</a>
+        <a href="#efield">Advanced · Absorption and electric-field profile</a>
         <a href="#simple_example">6. Simple example: antireflection quarter-wave layer ($\lambda/4$)</a>
         <a href="#ref_example">7. Reference numerical example (5 layers)</a>
-        <a href="#code_example">8. Complete generalized Python code</a>
-        <a href="#workflow">10. CERTUS software architecture and workflow</a>
-    </div>
+        <a href="#code_example">8. Reproduce the five-layer calculation</a>
+        <a href="#workflow">9. CERTUS software architecture and workflow</a>
+    </nav>
 
     <!-- 0. PEDAGOGICAL INTRODUCTION -->
     <h2 id="intro">0. Beginner introduction</h2>
@@ -582,8 +600,8 @@
     <h2 id="simple_example">6. Simple example: quarter-wave antireflection layer</h2>
     
     <div class="pedagogy-box">
-        <span class="box-title">Goal: cancel reflection (R=0)</span>
-        To wipe out glass’s ~4% natural reflectance, add a thin layer that makes the wave reflected at the top surface interfere destructively with the wave from the bottom of that layer.
+        <span class="box-title">Cancel the front-surface reflection at one wavelength</span>
+        At normal incidence, reflections from the two interfaces of a quarter-wave coating interfere destructively when their amplitudes match.
     </div>
 
     <p>The layer must add a round-trip phase of half a wave. Its one-way optical thickness is therefore quarter-wave (<strong>QWOT</strong>): $n \cdot d = \frac{\lambda_0}{4}$, so $\delta = \pi/2$.</p>
@@ -592,11 +610,11 @@
         Simplified matrix: $$ M_{QWOT} = \begin{pmatrix} 0 & \frac{i}{n} \\ i n & 0 \end{pmatrix} $$
     </div>
 
-    <p>Reflectance vanishes if $n_{layer} = \sqrt{n_{air} \cdot n_{glass}}$. For glass one would need $n \approx 1.23$. Magnesium fluoride (MgF₂, $n=1.38$) is close—that is the typical purple tint on eyeglasses.</p>
+    <p>For air and lossless glass of index 1.52, the uncoated front surface reflects about 4.26%. At 550 nm an ideal layer of index $\sqrt{1.52}$ (about 1.233) and physical thickness $550/(4\sqrt{1.52})$ (about 111.5 nm) cancels that reflection. A finite glass plate also reflects from its rear surface.</p>
 
     <!-- 8. 5 layers example -->
     <h2 id="ref_example">7. Reference numerical example (5 layers)</h2>
-    <p>Full validation case including absorbing metal and oblique angles.</p>
+    <p>The same five-layer stack is illuminated from air in all three rows. Read across a row to see how a bare, incoherent rear surface changes the reflected and transmitted power.</p>
 
     <div style="background-color: #f8f9fa; border: 1px solid #ddd; padding: 15px; border-radius: 5px;">
         <h4>Structure ($\lambda$ = 550 nm)</h4>
@@ -605,7 +623,7 @@
             <li><strong>Stack (substrate to air):</strong>
                 <ol>
                     <li>TiO₂ ($n=2.35$), 85 nm</li>
-                    <li>SiO₂ ($n=1.46$), 110 nm</li>
+                    <li>SiO₂ ($n=1.46$), 90 nm</li>
                     <li><strong>Ag ($n=0.12 - 3.45i$), 15 nm</strong> (absorbing)</li>
                     <li>TiO₂ ($n=2.35$), 85 nm</li>
                     <li>SiO₂ ($n=1.46$), 90 nm</li>
@@ -613,117 +631,44 @@
             </li>
         </ul>
         <table style="width:100%; margin-top: 15px;">
+            <caption>Power fractions at 550 nm, rounded to six decimal places</caption>
             <tr>
                 <th rowspan="2">Angle / pol.</th>
                 <th colspan="2">No back surface</th>
                 <th colspan="2">With back surface</th>
             </tr>
             <tr><th>R</th><th>T</th><th>R</th><th>T</th></tr>
-            <tr><td><strong>0°</strong></td><td class="code-val">0.497085</td><td class="code-val">0.418256</td><td class="code-val">0.504712</td><td class="code-val">0.410038</td></tr>
-            <tr><td><strong>45° (s)</strong></td><td class="code-val">0.663521</td><td class="code-val">0.257191</td><td class="code-val">0.670396</td><td class="code-val">0.249618</td></tr>
+            <tr><td><strong>0°</strong></td><td class="code-val">0.497085</td><td class="code-val">0.418256</td><td class="code-val">0.504713</td><td class="code-val">0.410039</td></tr>
+            <tr><td><strong>45° (s)</strong></td><td class="code-val">0.663521</td><td class="code-val">0.257192</td><td class="code-val">0.670397</td><td class="code-val">0.249619</td></tr>
             <tr><td><strong>45° (p)</strong></td><td class="code-val">0.565641</td><td class="code-val">0.367651</td><td class="code-val">0.566913</td><td class="code-val">0.366277</td></tr>
         </table>
     </div>
 
     <!-- 9. CODE GENERALISE -->
-    <h2 id="code_example">8. Complete generalized Python code</h2>
-    <p>This robust snippet covers absorption, oblique incidence, polarization, field profile, and incoherent back reflections.</p>
+    <h2 id="code_example">8. Reproduce the five-layer calculation</h2>
+    <p>Run the following example in the CERTUS Python environment from the repository root. The columns of the layer-index array follow deposition order, from the substrate toward air. Each row corresponds to one wavelength. Both functions return reflected and transmitted power fractions in that order.</p>
+    <pre><code id="five-layer-python">import numpy as np
+from certus.physics.certus_tmm_oblique import (
+    calc_spectrum_oblique_backside_vectorized,
+    calc_spectrum_oblique_vectorized,
+)
 
-    <details class="advanced-box" open>
-        <summary>Show full Python source</summary>
-        <div>
-<pre>
-import numpy as np
+wavelength_nm = np.array([550.0])
+layer_indices = np.array([[2.35, 1.46, 0.12 - 3.45j, 2.35, 1.46]])
+thickness_nm = np.array([85.0, 90.0, 15.0, 85.0, 90.0])
+substrate = np.array([1.52 + 0j])
 
-def compute_tmm_general(n_inc, n_exit, n_layers, d_layers, wavelength, theta0=0.0, pol='s', compute_field=False):
-    """
-    Generalized TMM (Macleod n−ik).
-    Returns: dict with 'R', 'T', 'A', and optional 'E_profile'.
-    """
-    # 0. Macleod convention (n − ik) — safety check
-    def enforce_macleod(n): return n if n.imag <= 0 else n.real - 1j*n.imag
-    
-    n_inc = enforce_macleod(n_inc)
-    n_exit = enforce_macleod(n_exit)
-    n_layers = [enforce_macleod(n) for n in n_layers]
-    k0 = 2 * np.pi / wavelength
-    
-    # 1. Snell's law and branch-cut fix (Byrnes)
-    S0 = n_inc * np.sin(theta0) 
-    
-    def safe_cos_th(n):
-        n_cos_th = np.sqrt(n**2 - S0**2 + 0j)
-        if n_cos_th.imag > 0: n_cos_th = -n_cos_th 
-        return n_cos_th / n
-
-    cos_inc = np.cos(theta0) 
-    cos_exit = safe_cos_th(n_exit)
-    cos_layers = [safe_cos_th(n) for n in n_layers]
-    
-    # 2. Modified admittances (eta)
-    def get_eta(n, cos_th, pol):
-        return n * cos_th if pol.lower() == 's' else n / cos_th
-            
-    eta_inc = get_eta(n_inc, cos_inc, pol)
-    eta_exit = get_eta(n_exit, cos_exit, pol)
-    eta_layers = [get_eta(n_layers[i], cos_layers[i], pol) for i in range(len(n_layers))]
-    
-    # 3. Matrix multiplication
-    M_sys = np.eye(2, dtype=complex)
-    if compute_field: matrices = []
-        
-    for i in range(len(n_layers)):
-        delta = k0 * n_layers[i] * d_layers[i] * cos_layers[i]
-        c, s = np.cos(delta), 1j * np.sin(delta)
-        eta = eta_layers[i]
-        
-        M_i = np.array([[c, s/eta], [s*eta, c]], dtype=complex)
-        if compute_field: matrices.append(M_i)
-        M_sys = np.dot(M_i, M_sys)
-
-    # 4. Final coefficients
-    B = M_sys[0,0] + M_sys[0,1] * eta_exit
-    C = M_sys[1,0] + M_sys[1,1] * eta_exit
-    
-    r = (eta_inc * B - C) / (eta_inc * B + C)
-    t = (2.0 * eta_inc) / (eta_inc * B + C)
-    
-    R = abs(r)**2
-    T_factor = (eta_exit.real) / (eta_inc.real) if eta_inc.real > 1e-12 else 0.0
-    T = T_factor * abs(t)**2
-    
-    res = {'R': R, 'T': T, 'A': 1 - R - T}
-
-    # 5. E-field profile E(z)
-    if compute_field:
-        vec_curr = np.array([t, eta_exit * t])
-        z_coords, E_sq = [0.0], [abs(vec_curr[0])**2]
-        z_accum = 0.0
-        
-        for i in range(len(n_layers)):
-            res['E_profile'] = (z_coords, E_sq)
-        
-    return res
-
-def apply_incoherent_backside(R_front, T_front, R_back, T_back, thickness_sub=0.0, alpha_sub=0.0, R_front_prime=None):
-    """Total R, T including incoherent back surface and substrate absorption."""
-    if R_front_prime is None:
-        R_front_prime = R_front # Approximation (exact if layers are lossless)
-        
-    A = np.exp(-alpha_sub * thickness_sub)
-    denom = 1.0 - R_front_prime * R_back * A**2
-    if abs(denom) < 1e-10: denom = 1.0
-        
-    R_tot = R_front + (T_front**2 * R_back * A**2) / denom 
-    T_tot = (T_front * T_back * A) / denom
-    return R_tot, T_tot
-</pre>
-        </div>
-    </details>
+for angle, pol in [(0.0, "s"), (45.0, "s"), (45.0, "p")]:
+    args = (wavelength_nm, layer_indices, thickness_nm, substrate, angle, pol)
+    r_front, t_front = calc_spectrum_oblique_vectorized(*args)
+    r_plate, t_plate = calc_spectrum_oblique_backside_vectorized(*args)
+    print(angle, pol, f"{r_front[0]:.6f}", f"{t_front[0]:.6f}",
+          f"{r_plate[0]:.6f}", f"{t_plate[0]:.6f}")</code></pre>
+    <p>At normal incidence the front-only result gives an absorbed fraction of about 0.08466 from 1 − <i>R</i> − <i>T</i>. To locate an intensity maximum inside a layer, use the spatial calculation described in the <a href="CERTUS_FIELD.html#mirror-example">FIELD mirror example</a>.</p>
 
     <!-- 10. ARCHITECTURE CERTUS -->
     <h2 id="workflow">9. CERTUS architecture and workflow</h2>
-    <p>The CERTUS suite embeds these relations in its physics core (<strong>Numba JIT</strong> optimized to evaluate millions of stacks per second).</p>
+    <p>CERTUS evaluates these relations in its shared physics core using Numba-compiled kernels.</p>
 
     <details class="advanced-box">
         <summary>TMM computation flow diagram</summary>
@@ -840,7 +785,7 @@ def apply_incoherent_backside(R_front, T_front, R_back, T_back, thickness_sub=0.
                     <linearGradient id="grad-engine" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#37474f" /><stop offset="100%" style="stop-color:#546e7a" /></linearGradient>
                     <!-- filtre « shadow » defini plus haut (l.735), identique : un id duplique est ignore par le navigateur -->
                 </defs>
-                <text x="450" y="30" text-anchor="middle" font-size="18" font-weight="bold" fill="#2c3e50">Architecture CERTUS Suite 1602</text>
+                <text x="450" y="30" text-anchor="middle" font-size="18" font-weight="bold" fill="#2c3e50">Selected CERTUS workflows</text>
                 <rect x="300" y="50" width="300" height="50" rx="10" fill="url(#grad-mod-purple)" stroke="#7b1fa2" stroke-width="2" filter="url(#shadow)" />
                 <text x="450" y="75" text-anchor="middle" font-weight="bold" font-size="14" fill="#4a148c">CERTUS_HUB</text>
                 <line x1="350" y1="100" x2="120" y2="150" stroke="#9e9e9e" stroke-width="1.5" stroke-dasharray="4" />
@@ -849,7 +794,7 @@ def apply_incoherent_backside(R_front, T_front, R_back, T_back, thickness_sub=0.
                 <line x1="550" y1="100" x2="780" y2="150" stroke="#9e9e9e" stroke-width="1.5" stroke-dasharray="4" />
                 <rect x="30" y="150" width="180" height="100" rx="8" fill="url(#grad-mod-blue)" stroke="#1565c0" stroke-width="2" filter="url(#shadow)" />
                 <text x="120" y="175" text-anchor="middle" font-weight="bold" font-size="13" fill="#0d47a1">INDEX & SPLINE</text>
-                <text x="120" y="195" text-anchor="middle" font-size="10" fill="#1565c0">Metrology & Synthesis</text>
+                <text x="120" y="195" text-anchor="middle" font-size="10" fill="#1565c0">Optical-constant fitting</text>
                 <text x="120" y="240" text-anchor="middle" font-size="9" fill="#78909c">L-BFGS-B / Spline knots</text>
                 <rect x="250" y="150" width="180" height="100" rx="8" fill="url(#grad-mod-green)" stroke="#2e7d32" stroke-width="2" filter="url(#shadow)" />
                 <text x="340" y="175" text-anchor="middle" font-weight="bold" font-size="13" fill="#1b5e20">CERTUS_DESIGN</text>
@@ -862,7 +807,7 @@ def apply_incoherent_backside(R_front, T_front, R_back, T_back, thickness_sub=0.
                 <rect x="690" y="150" width="180" height="100" rx="8" fill="url(#grad-mod-purple)" stroke="#7b1fa2" stroke-width="2" filter="url(#shadow)" />
                 <text x="780" y="175" text-anchor="middle" font-weight="bold" font-size="13" fill="#4a148c">CERTUS_METAL</text>
                 <text x="780" y="195" text-anchor="middle" font-size="10" fill="#7b1fa2">Low-E / Filters</text>
-                <text x="780" y="240" text-anchor="middle" font-size="9" fill="#78909c">Differential evolution</text>
+                <text x="780" y="240" text-anchor="middle" font-size="9" fill="#78909c">PGLOBAL and local refinement</text>
                 <line x1="120" y1="250" x2="120" y2="310" stroke="#546e7a" stroke-width="2" />
                 <line x1="340" y1="250" x2="340" y2="310" stroke="#546e7a" stroke-width="2" />
                 <line x1="560" y1="250" x2="560" y2="310" stroke="#546e7a" stroke-width="2" />
@@ -872,19 +817,12 @@ def apply_incoherent_backside(R_front, T_front, R_back, T_back, thickness_sub=0.
                 <line x1="450" y1="355" x2="450" y2="390" stroke="#546e7a" stroke-width="2.5" marker-end="url(#arrow-flow)" />
                 <rect x="100" y="395" width="700" height="90" rx="10" fill="url(#grad-engine)" stroke="#263238" stroke-width="2" filter="url(#shadow)" />
                 <text x="450" y="435" text-anchor="middle" font-weight="bold" font-size="16" fill="#ffffff">Physics engine: certus_physics (Numba JIT)</text>
-                <text x="450" y="465" text-anchor="middle" font-size="12" fill="#b0bec5">Ultra-fast TMM (vectorized, batch, exact backside)</text>
+                <text x="450" y="465" text-anchor="middle" font-size="12" fill="#b0bec5">Transfer matrices and substrate back-surface corrections</text>
             </svg>
         </div>
         
         <div style="margin-top: 20px;">
-            <h4>Per-module computation flow</h4>
-            <table style="font-size: 13px;">
-                <tr><th>Module</th><th>Purpose</th><th>TMM kernel</th><th>Optimizer</th></tr>
-                <tr><td><strong>INDEX / SPLINE</strong></td><td>Metrology & index fitting</td><td><code>cost_and_grad</code> (Fused gradients)</td><td>L-BFGS-B (SciPy/Fortran bindings)</td></tr>
-                <tr><td><strong>DESIGN</strong></td><td>H/L QWOT thickness synthesis</td><td><code>calculate_RT_vectorized_real_HL</code></td><td>PGLOBAL + needle insertion</td></tr>
-                <tr><td><strong>STRAT</strong></td><td>Optical monitoring strategy</td><td><code>compute_dynamics_kernel</code></td><td>Monte Carlo + adaptive nucleation</td></tr>
-                <tr><td><strong>METAL</strong></td><td>Metallic stack (low-E, filters)</td><td><code>compute_TMM_generic</code></td><td>Differential evolution (SciPy)</td></tr>
-            </table>
+            <p>The <a href="CERTUS_HUB.html#module-guides">module guide table</a> lists the fitting and optimization methods used by each application.</p>
         </div>
     </details>
 
@@ -892,5 +830,6 @@ def apply_incoherent_backside(R_front, T_front, R_back, T_back, thickness_sub=0.
     <footer>
         <p><em>CERTUS training document — based on H.A. Macleod, <i>Thin-Film Optical Filters</i>.</em></p>
     </footer>
+</main>
 </body>
 </html>

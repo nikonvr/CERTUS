@@ -17,9 +17,10 @@
 </head>
 
 <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
 
-<nav class="navbar">
-        <a href="CERTUS_HUB.html" class="certus-logo">
+<nav aria-label="CERTUS documentation" class="navbar">
+        <a href="CERTUS_HUB.html" class="certus-logo" aria-label="CERTUS documentation home">
             <svg height="55" viewBox="0 0 820 170" xmlns="http://www.w3.org/2000/svg">
                 <g transform="translate(120, 90)">
                     <path
@@ -47,15 +48,15 @@
             <a href="CERTUS_INDEX.html">INDEX</a>
             <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a>
             <a href="CERTUS_FIELD.html">FIELD</a>
-            <a href="CERTUS_SUBSTRATE_INDEX.html" class="active">SUBSTRATE</a>
+            <a href="CERTUS_SUBSTRATE_INDEX.html" class="active" aria-current="page">SUBSTRATE</a>
             <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
-            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
+            <a href="CERTUS_METAL_BILAYER.html">METAL BILAYER</a>
             <a href="metrology.html">Metrology</a>
             <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
         </div>
     </nav>
 
-    <div class="container">
+    <main class="container" id="main-content" tabindex="-1">
         <header>
             <h1>CERTUS-SUBSTRATE-INDEX</h1>
             <p style="font-size: 1.3em; color: #37474f; font-weight: 300;">Bare-substrate spectra → $n(\lambda)$
@@ -63,6 +64,16 @@
             <p style="font-size: 1.0em; color: #546e7a; font-weight: 300;">Module <code>certus_substrate_index.py</code>
                 · Implementation review: 2026-10-03</p>
         </header>
+
+        <nav class="toc-nav" aria-label="On this page">
+            <strong>On this page</strong>
+            <ul>
+                <li><a href="#identify-workbook-columns">Identify workbook columns</a></li>
+                <li><a href="#convert-transmission-to-index">Convert transmission to index</a></li>
+                <li><a href="#compare-dispersion-laws">Compare dispersion laws</a></li>
+                <li><a href="#run-the-fit">Run the fit</a></li>
+            </ul>
+        </nav>
 
         <div class="abstract">
             <strong>Executive Summary:</strong> This tool extracts the <strong>refractive index of an uncoated
@@ -94,7 +105,7 @@
                 CERTUS material DB (results stay in the tool / export paths provided by the UI).</li>
         </ul>
 
-        <h2>2. Column Detection &amp; Hygiene</h2>
+        <h2 id="identify-workbook-columns">2. Column Detection &amp; Hygiene</h2>
         <p>
             Headers are normalized (accents stripped, separators unified) and matched against include/exclude patterns so
             that <strong>coated stack</strong> or <strong>target</strong> columns are rejected while <strong>bare
@@ -106,7 +117,7 @@
             after load.
         </div>
 
-        <h2>3. From Transmission to $n(\lambda)$</h2>
+        <h2 id="convert-transmission-to-index">3. From Transmission to $n(\lambda)$</h2>
         <p>
             For a thick transparent plate with incoherent multiple reflections, transmission is related to $n$ by the
             standard two-surface formula (air–substrate–air). The implementation follows the same photometric conventions
@@ -122,7 +133,11 @@
             edge noise does not dominate the Sellmeier fit.
         </p>
 
-        <h2>4. Three Laws &amp; Sellmeier Auto Mode</h2>
+        <h3 id="sapphire-plate">Invert one measured sapphire row</h3>
+        <p>In the <a href="../example/exemple_substrate_index/exemple_substrate_index.xlsx">double-polished sapphire workbook</a>, select the bare transmission column on the <code>measurement</code> sheet. At 400 nm, the recorded 84.555% gives <i>T</i> = 0.84555 and the two-surface equation above gives <i>n</i> ≈ 1.8141. This is the raw point to compare with the dispersion fit.</p>
+        <p>The companion reflectance is 15.445% for the whole plate. In the equation above, <i>R</i> denotes reflection at one air–substrate interface. The two recorded percentages sum to 100% in this row, as expected for the transparent-plate example.</p>
+
+        <h2 id="compare-dispersion-laws">4. Three Laws &amp; Sellmeier Auto Mode</h2>
         <div class="mermaid" style="background: transparent;">
             flowchart TD
             classDef node fill:#f8fafc,stroke:#94a3b8,stroke-width:2px,color:#333
@@ -154,13 +169,13 @@
                     $$ n^2(\lambda) - 1 = \frac{B_1 \lambda^2}{\lambda^2 - L_1^2} + \frac{B_2 \lambda^2}{\lambda^2 - L_2^2} + \frac{B_3 \lambda^2}{\lambda^2 - L_3^2} $$
                 </div>
                 Optimized via multistart least squares + L-BFGS-B polish (log-reparameterization is disabled in favor of strict linear bounds). Catalogue priors from <code>SELLMEIER_COEFFS_BY_ID</code> can seed the search when
-                the material name hints a known glass.</li>
+                the material name identifies a known glass. The default <code>sellmeier_ir_pole</code> option also tests a catalogue-form fit with an infrared pole. The solver selects the accepted candidate with the lowest weighted RMSE over the fit window.</li>
             <li><strong>Spline:</strong> non-parametric smooth representation for comparison RMSE.</li>
             <li><strong>Sellmeier full auto:</strong> hides advanced time/iteration budgets; uncheck to tune DE/L-BFGS-B
                 / least_squares evaluation limits for difficult bands.</li>
         </ul>
 
-        <h2>5. Workflow in the GUI</h2>
+        <h2 id="run-the-fit">5. Workflow in the GUI</h2>
         <ol>
             <li><strong>Load Data</strong> — <code>.xlsx</code> / <code>.xls</code>; interactive mapping if needed
                 (<code>open_measurement_excel_interactive</code>).</li>
@@ -181,6 +196,6 @@
         <footer style="margin-top: 48px; padding-top: 24px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 0.9em;">
             <p><em>CERTUS-SUBSTRATE-INDEX is available in the HUB support-tool catalogue and can also be launched via <code>python certus_substrate_index.py</code>. Keep this page beside the other <code>pages/</code> assets for packaging. Implementation review: 2026-10-03.</em></p>
         </footer>
-    </div>
+    </main>
 </body>
 </html>

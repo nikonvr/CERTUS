@@ -36,8 +36,9 @@
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <a href="CERTUS_HUB.html" class="certus-logo">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <nav aria-label="CERTUS documentation" class="navbar">
+        <a href="CERTUS_HUB.html" class="certus-logo" aria-label="CERTUS documentation home">
             <svg height="55" viewBox="0 0 820 170" xmlns="http://www.w3.org/2000/svg">
                 <g transform="translate(120, 90)">
                     <path d="M 70,0 C 70,-40 40,-70 0,-70 C -40,-70 -70,-40 -70,0 C -70,40 -40,70 0,70 C 20,70 40,50 40,50" fill="none" stroke="#05103b" stroke-width="30" stroke-linecap="round" transform="rotate(-30)" />
@@ -55,27 +56,49 @@
             <a href="CERTUS_RE.html">RE</a>
             <a href="CERTUS_STRAT.html">STRAT</a>
             <a href="CERTUS_INDEX.html">INDEX</a>
-            <a href="CERTUS_INDEX_SPLINE.html" class="active">INDEX SPLINE</a>
+            <a href="CERTUS_INDEX_SPLINE.html" class="active" aria-current="page">INDEX SPLINE</a>
             <a href="CERTUS_FIELD.html">FIELD</a>
             <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
             <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
-            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
+            <a href="CERTUS_METAL_BILAYER.html">METAL BILAYER</a>
             <a href="metrology.html">Metrology</a>
             <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
         </div>
     </nav>
 
-    <div class="container">
+    <main class="container" id="main-content" tabindex="-1">
         <header style="margin-top:20px;">
             <h1 style="font-size: 3rem; margin-bottom:0;">CERTUS-INDEX-SPLINE</h1>
             <h2 style="border:none; color: #0f172a; margin-top: 10px;">Scientific report on the spline-based index inversion pipeline</h2>
             <p style="font-size: 1.2em; font-weight: 300;">This document describes the mathematical structure, parameterization, optimization flow, and uncertainty analysis used by CERTUS-INDEX-SPLINE (implementation review: 2026-10-03).</p>
         </header>
 
+        <nav class="toc-nav" aria-label="On this page">
+            <strong>On this page</strong>
+            <ul>
+                <li><a href="#transmission-example">Transmission-only example</a></li>
+                <li><a href="#spectral-coordinates">Spectral coordinates</a></li>
+                <li><a href="#swanepoel-initialization">Swanepoel initialization</a></li>
+                <li><a href="#free-knots">Free knots</a></li>
+                <li><a href="#objective-function">Objective function</a></li>
+                <li><a href="#thickness-corridors">Thickness corridors</a></li>
+                <li><a href="#interface-controls">Interface controls</a></li>
+            </ul>
+        </nav>
+
         <div class="abstract" style="margin-top: 30px;">
             <strong>Abstract</strong><br>
             CERTUS-INDEX-SPLINE reconstructs the optical constants using a spline-based parameterization rather than a rigid oscillator model. The inverse problem is solved through a staged optimization pipeline that preserves numerical stability while allowing flexible reconstructions of $n(\lambda)$ and $k(\lambda)$. The method operates in reciprocal wavelength ($\sigma$) and uses a logarithmic absorption variable ($L = \ln k$) to preserve the positivity of $k$.
         </div>
+
+        <section id="transmission-example">
+            <h2>Fitting a transmission-only spectrum</h2>
+            <ol>
+                <li>Open the <a href="../example/example_index_spline/TSIO2-1700-1.xlsx">TSIO2 workbook</a>. On <code>Feuil1</code>, use the first column for wavelength and the second for transmission. At 249.99 nm the recorded value is 93.2134%, or 0.932134 on a fractional scale. Leave reflection unmeasured.</li>
+                <li>Confirm the reference used during acquisition and select the matching substrate and back-face model. Set the thickness range from the deposition record or an independent measurement. The sample name alone does not establish a physical thickness.</li>
+                <li>Inspect the fringe alignment over the fitted wavelength range. If several thicknesses fit, use the <a href="#thickness-corridors">thickness profile</a> to see how much the fitted <i>n</i> and <i>k</i> can change while reproducing the measured transmission. Report the acceptance threshold and any endpoint set by a search bound.</li>
+            </ol>
+        </section>
 
         <h2>1. Motivation for a Model-Free Spline Representation</h2>
         <p>
@@ -94,15 +117,15 @@
             CERTUS-INDEX-SPLINE uses floating spatial nodes so that the reconstructed optical functions can follow the measured transmission and reflection data with minimal analytic constraint.
         </div>
 
-        <h2>Section 2: Fundamental Parameter Mapping Context</h2>
+        <h2 id="spectral-coordinates">Section 2: Reciprocal wavelength and absorption coordinates</h2>
         <p>
-            Optimizing free points across a spectrum necessitates an highly optimized physical coordinate scale to map against. Using purely linear wavelength ($\lambda$ in $\text{nm}$) spreads points uniformly across vast flat IR tails while grossly under-representing the extreme UV dynamics where the most violent structural index changes occur.
+            The fit places knots in reciprocal wavelength. Equal steps in this coordinate give closer wavelength spacing at the short-wavelength end of the measured band.
         </p>
-        <h3>2.1 The Coordinate Proportional Inverse Map: $\sigma$</h3>
+        <h3>2.1 Reciprocal wavelength $\sigma$</h3>
         <p>
-            CERTUS natively operates uniformly inside the reciprocal wavenumber scaling domain:
+            With wavelength expressed in nanometres, the fit coordinate is
             $$ \sigma = \frac{1}{\lambda} \quad (\text{units: } \text{nm}^{-1}) $$
-            By moving into $\sigma$-space, optimization arrays natively cluster in extreme density atop high-energy zones, mimicking physical reality where complex band-gap structures possess maximum derivative variances. This fundamentally prevents sparse node alignment from missing critical $k$ discontinuities.
+            The knot density sets the range of spectral detail the spline can resolve. Features between measured points remain weakly constrained.
         </p>
         <div class="mermaid">
         flowchart LR
@@ -128,7 +151,7 @@
             $$ L = \ln(k) \quad \Rightarrow \quad k(\sigma) = \exp\left[L(\sigma)\right] $$
             In this representation, negative updates in $L$ reduce $k$ smoothly toward zero without allowing sign changes, which makes the parameterization numerically stable for passive thin-film inversion.
         </p>
-        <h2>Section 3: The CERTUS progression architecture Sequence Matrix</h2>
+        <h2>Section 3: Order of the fitting stages</h2>
         <p>
             Simultaneously releasing tens of node pairs horizontally and vertically relative to a physical thickness variable $d$ constructs an immense correlation matrix. Specifically, variations in $d$ can instantly cancel out variations in $n(\sigma)$ to maintain optical thickness ($nd$ phase stability). If left fully unconstrained, any optimization algorithm falls instantly into localized dimensional "Runge" oscillations. 
             CERTUS resolves this by utilizing rigorous, monotonic sequence-gating methodologies.
@@ -167,7 +190,7 @@
 
             M(["Validated Spline Extracted Data Object"]):::exit
         </div>
-        <h2 style="margin-top: 40px;">Section 4: Phase 01 Parameter Determinism (The Swanepoel Foundation)</h2>
+        <h2 style="margin-top: 40px;" id="swanepoel-initialization">Section 4: Initial thickness and index from Swanepoel envelopes</h2>
         <p>
             An unconstrained matrix optimization demands an intelligent baseline; utilizing a random $n=1.5, k=0$ uniform flat-line risks stranding the descent gradient in catastrophic $2\pi$ phase skipping (aliasing). 
             To construct starting variables that better mirror the physical structure, CERTUS implements a robust variant of the 1983 Swanepoel inversion method in <code>spline_smart_init.py</code> by mapping transmission extrema ($T_{max}$ and $T_{min}$).
@@ -231,7 +254,7 @@
             Thus the diagram describes the present code path, rather than a promise that every auto choice improves
             an already edited profile.
         </p>
-        <h2>Section 5: Phase 02 Vector Grids - The Rigid SOL 2 Architecture</h2>
+        <h2>Section 5: Fit the amplitudes on fixed knots (SOL 2)</h2>
         <p>
             Post-Phase 01 setup, the framework migrates into Phase 02 (<code>SOL 2</code>). Interference fringes possess severe harmonic redundancies: absolute physical depth ($d$) can slip into a neighboring fringe order without immediately inflating RMSE significantly if the nodes are completely uncoupled and capable of compensating instantly.
         </p>
@@ -257,7 +280,7 @@
         <p>
             What emerges from SOL 2 is the first internally coherent estimate of thickness, node amplitudes, and displayable $n(\lambda), k(\lambda)$ curves on the active objective domain. This state also becomes the reference warm start for the later free-knot transitions. Therefore, when describing the method in an article, SOL 2 should be presented as the stage that transforms a Swanepoel-informed prior into the first optimizer-consistent physical estimate.
         </p>
-        <h2>Section 6: Phase 03 - Free-Knot Dimension Splitting (SOL 3)</h2>
+        <h2 id="free-knots">Section 6: Fit knot positions and amplitudes (SOL 3)</h2>
         <p>
             Fixed-knot frameworks fall catastrophically short when mapping edge transitions (band-gaps). A structural UV band-edge discontinuity demands an extremely high spatial concentration of points to render accurate curvature, whereas visible regimes require near none. In Phase 03, Spatial constraints unlock entirely.
         </p>
@@ -267,8 +290,7 @@
         </p>
         <h3>6.2 Topological Preservation Mapping (Log-Proportion Encoding)</h3>
         <p>
-            An unconstrained horizontal descent engine will invariably attempt to slide Node 3 spatially behind Node 2 ($\sigma_3 \lt \sigma_2$), generating instant mathematical implosions within array handlers expecting monotonic sequences.
-            Rather than slowing the optimizer down with billions of complex local bound inequalities, the system implements robust log-proportion scalar encoding maps (Log-Softmax) embedded directly inside the solver matrix wrappers inside <code>spline_objective.py</code>:
+            Independent updates to knot wavelengths could reverse their order. The optimizer instead adjusts the logarithms of interval widths. The decoder in <code>spline_objective.py</code> maps these parameters back into the fitted spectral interval.
         </p>
         <div class="math-heavy">
             <strong>The Log-Proportion Spatial Encoder and Monotonicity Enforcement</strong><br>
@@ -276,10 +298,9 @@
             The decoding back to physical $\sigma$-coordinates follows:
             $$ w_i = \frac{\exp(x_{enc, i})}{\sum_{j=0}^{K-2} \exp(x_{enc, j})} $$
             $$ \sigma_i = \sigma_0 + (\sigma_{K-1} - \sigma_0) \sum_{j=0}^{i-1} w_j $$
-            Consequently, no matter exactly how aggressive the L-BFGS-B gradient vector commands a displacement modification, $\exp(x_{enc, i})$ is strictly positive, assuring sequence order preservation. To guarantee numerical stability and prevent division by zero or node merging under extreme updates, the decoder enforces a relative minimum separation constraint:
-            $$ \epsilon_s = \max\left(10^{-10},\,\, \text{SIGMA\_KNOTS\_MIN\_SEP\_REL} \times (\sigma_{K-1} - \sigma_0)\right) $$
-            where $\text{SIGMA\_KNOTS\_MIN\_SEP\_REL} = 0.005$ by default. Knots are then clipped sequentially:
-            $$ \sigma_i = \max\left(\sigma_i,\,\, \sigma_{i-1} + \epsilon_s\right) \quad \text{for } 1 \le i \le K-1 $$
+            In <code>sigma_knots_decode</code>, the log weights are clipped to $[-20,20]$ before exponentiation.
+            Both endpoints stay fixed. The decoder caps the requested minimum spacing at one quarter of the mean interval width,
+            then sweeps forward and backward through the interior knots. This preserves separation even when consecutive intervals collapse toward an endpoint.
         </div>
         <h3>6.3 Warm-Start Projection from SOL 2 into SOL 3</h3>
         <p>
@@ -293,7 +314,7 @@
         <p>
             The free-knot stages optimize a highly coupled spectral objective. Because termination may occur by budget exhaustion, line-search saturation, or simply because the last quasi-Newton step is not the best one seen, the code stores the best spectral incumbent throughout the trajectory. For a paper, this means the local solution should be described as the <strong>best observed incumbent over the bounded L-BFGS-B trajectory</strong>, not merely the terminal solver state.
         </p>
-        <h2>Section 7: Phase 04 - Isolating the Transparent Plane (SOL 3b)</h2>
+        <h2>Section 7: Refine absorption with the index fixed (SOL 3b)</h2>
         <p>
             Deep into highly transparent regions mapping (e.g. Glass Substrates in VIS-NIR domain), explicit calculated values of $k$ plummet exponentially downwards (e.g. $10^{-6}$). Analytically, the derivative gradient of global Transmittance concerning extremely low $k$ variations approaches mathematical absolute zero:
             $$ \frac{\partial T(\lambda)}{\partial L_{transparent}} \approx 0 $$
@@ -313,7 +334,12 @@
         <p>
             SOL 3b is a sensitivity-conditioned sub-problem. The incoming state from the broader optimization is projected onto a representation in which the refractive structure is fixed. The algorithm then optimizes only the absorptive geometry and amplitudes in regions where the transmission sensitivity to $k$ would otherwise be too weak to constrain them robustly. If the projected warm start is already worse than the incoming incumbent by a meaningful margin, the code can skip the stage rather than force a degrading refinement.
         </p>
-        <h2>Section 8: Objective Function Mathematics</h2>
+        <p><strong>Local polish.</strong> The default configuration enables the analytic gradient for the supported monotone-index parameterization.
+            When the polish uses that gradient, it first spends up to 3,000 function evaluations on finite differences,
+            then continues from the resulting point with the remaining budget. The controls are
+            <code>spline_mono_analytic_gradient</code> and <code>spline_polish_fd_prefix_maxfun</code>.</p>
+
+        <h2 id="objective-function">Section 8: Objective Function Mathematics</h2>
         <h3>8.1 Global Weighted Error Arrays</h3>
         <p>
             The centralized error computation handles overlapping photometric sources inside <code>SplinePWLObjective</code>:
@@ -423,7 +449,7 @@
             topology and objective alongside the curves; independent measurements are needed to test extrapolation
             or material causality.</p>
 
-        <h2>Section 12: Phase 09 Corridor Engine</h2>
+        <h2 id="thickness-corridors">Section 12: Phase 09 Corridor Engine</h2>
         <p>
             The corridor stage implemented in <code>spline_profile_corridors.py</code> is not a generic post-processing utility. It is a dedicated profiled-refit engine designed to quantify local identifiability of thickness $d$ while preserving the same spectral forward model and masking conventions as the main spline inversion pipeline.
         </p>
@@ -616,7 +642,7 @@
         <p>
             Corridor refit budgets are deliberately staged rather than maximal at each point: a first local fixed-$d$ pass and a second polish pass are applied with bounded evaluation counts derived from the corridor refit configuration. This bounded two-pass strategy is designed to keep the corridor as a local profiled sensitivity analysis while still allowing enough relaxation to avoid false failures. In manuscript language, this should be described as a <strong>budgeted local profiled refit with robustness fallbacks</strong>, not as a full global re-optimization at every tested thickness.
         </p>
-        <h2 style="margin-top:40px;">Section 14: UI-to-Engine Bridges (Autoshift, Auto-clean & Dichotomy)</h2>
+        <h2 style="margin-top:40px;" id="interface-controls">Section 14: UI-to-Engine Bridges (Autoshift, Auto-clean & Dichotomy)</h2>
         <p>
             The CERTUS GUI provides direct interaction with the spline algorithms. Key UI features map directly to specific optimization strategies:
         </p>
@@ -655,7 +681,7 @@
             If the optimization degrades due to local minima, the <strong>Recall Best RMSE</strong> feature restores the best-performing deterministic state.
         </p>
         
-        <h2 style="margin-top:40px;">Section 15: Manuscript-Ready Operational Narrative of the Full Pipeline</h2>
+        <h2 style="margin-top:40px;">Section 15: Reporting a spline reconstruction</h2>
         <p>
             The following description is written in a form close to a publishable Methods narrative.
         </p>
@@ -698,7 +724,7 @@
             <li><strong>[4] Likelihood-ratio corridors:</strong> Murphy, S. A., & Van der Vaart, A. W. (2000). <i>On profile likelihood.</i> Journal of the American Statistical Association, 95(450), 449-465. Foundation for Phase 09 confidence envelopes.</li>
         </ul>
 
-        <h2 style="margin-top: 40px; margin-bottom: 20px;">Section 17: Summary Analytical Architectural Chart</h2>
+        <h2 style="margin-top: 40px; margin-bottom: 20px;">Section 17: Pipeline summary</h2>
 
         <table class="var-table">
             <thead>
@@ -760,6 +786,6 @@
             <hr style="margin-bottom: 10px; border-top: 1px solid #cbd5e1;">
             <i>Implementation review: 2026-10-04. Confirm scientific conclusions against the cited model and input data.</i>
         </div>
-    </div>
+    </main>
 </body>
 </html>

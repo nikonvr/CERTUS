@@ -1,7 +1,7 @@
 :root {
             --primary-color: #0f172a;
             /* Slate 900 */
-            --secondary-color: #0284c7;
+            --secondary-color: #03658f;
             /* Light Blue 600 */
             --accent-color: #f59e0b;
             --bg-color: #f8fafc;
@@ -9,7 +9,7 @@
             --code-bg: #e2e8f0;
             --nav-bg: #ffffff;
             --nav-text: #0f172a;
-            --nav-hover: #0ea5e9;
+            --nav-hover: #075985;
         }
 
         body {
@@ -28,12 +28,8 @@
             padding: 70px;
             box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(15, 23, 42, 0.02);
             border-radius: 12px;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .container:hover {
-            transform: translateY(-2px);
-        }
 
         header {
             border-bottom: 3px solid var(--primary-color);
@@ -125,7 +121,7 @@
             padding: 3px 6px;
             border-radius: 4px;
             font-family: 'Fira Code', 'Consolas', monospace;
-            color: #e83e8c;
+            color: #92315a;
             font-size: 0.9em;
         }
 
@@ -143,7 +139,6 @@
 
         .algo-step:hover {
             background: #f1f5f9;
-            border-left-width: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
@@ -159,7 +154,7 @@
             margin-top: 60px;
             text-align: center;
             font-size: 0.85em;
-            color: #7f8c8d;
+            color: #526473;
             border-top: 1px solid #ecf0f1;
             padding-top: 30px;
         }
@@ -267,15 +262,62 @@
             white-space: nowrap;
         }
 
-/* ============================================================================
-   RESPONSIVE + PRINT
-   Added 2026-08-14. These pages are shown to customers, and until now they had
-   NO media query at all: a 7-column table sat as a direct child of .container,
-   which carries 70 px of padding and no box-sizing, so on a 375 px phone the
-   content had 235 px to render in and simply overflowed. Printing was worse --
-   the sticky navbar and the box-shadow came out on paper, and tables broke
-   across pages mid-row.
-   ============================================================================ */
+/* Document navigation and reading layout */
+.skip-link {
+    position: fixed;
+    top: .5rem;
+    left: .5rem;
+    z-index: 1001;
+    transform: translateY(-180%);
+    padding: .55rem 1rem;
+    background: white;
+    color: #075985;
+}
+.skip-link:focus { transform: none; }
+:focus-visible { outline: 3px solid #075985; outline-offset: 3px; }
+
+.docs-home { color: #0f172a; font-weight: 700; padding: .65rem 0; }
+.container summary { cursor: pointer; }
+.container details + details { margin-top: 1rem; }
+.container caption { text-align: start; font-weight: 600; padding: .5rem 0; }
+.nav-links { flex-wrap: wrap; column-gap: clamp(.65rem, 1.3vw, 1.55rem); row-gap: .4rem; }
+.nav-links a { white-space: nowrap; }
+.nav-links a:focus-visible::after { transform: scaleX(1); }
+.container, .theory-guide { overflow-wrap: anywhere; }
+.container { padding: clamp(1.25rem, 5vw, 4.375rem); }
+.container a, .theory-guide a { text-underline-offset: .15em; }
+.toc-nav {
+    margin: 1.25rem 0 2rem;
+    padding: 1rem 1.25rem;
+    border-left: 3px solid #03658f;
+    background: #f1f5f9;
+}
+.toc-nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem 1.25rem;
+    margin: .4rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+.toc-nav a { color: #075985; }
+.toc-nav summary { font-weight: 650; cursor: pointer; }
+.toc-nav ol { columns: 2; column-gap: 2rem; padding-left: 1.5rem; }
+.toc-nav li { break-inside: avoid; }
+
+pre, .math-heavy, mjx-container[display="true"] { max-width: 100%; overflow-x: auto; }
+.mermaid:not([data-processed]) { white-space: pre-wrap; text-align: left; }
+@media (max-width: 1250px) {
+    .navbar { position: static; flex-wrap: wrap; gap: .25rem 1rem; }
+    .nav-links { margin: 0; }
+    .container [id], .theory-guide [id] { scroll-margin-top: 1rem; }
+}
+@media (max-width: 600px) {
+    .toc-nav ol { columns: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0s !important; animation-duration: 0s !important; }
+}
 
 @media (max-width: 820px) {
     .container {
@@ -313,7 +355,7 @@
 }
 
 @media print {
-    .navbar,
+    .skip-link, .navbar,
     .toc-nav { display: none; }
     .container {
         max-width: none;
@@ -322,10 +364,11 @@
         box-shadow: none;
         border-radius: 0;
     }
-    .container:hover { transform: none; }
+    thead { display: table-header-group; }
+    pre { white-space: pre-wrap; }
     body { background: #fff; }
     /* A table or a boxed argument split across two pages is unreadable. */
-    table, .mermaid, .eq-box, .note, .highlight-box, .algo-step {
+    tr, .mermaid, .eq-box, .note, .highlight-box, .algo-step {
         break-inside: avoid;
         page-break-inside: avoid;
     }

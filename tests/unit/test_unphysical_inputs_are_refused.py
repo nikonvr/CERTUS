@@ -229,3 +229,62 @@ def test_xyz_of_a_valid_spectrum_is_unchanged() -> None:
     assert xyz.shape == (3,)
     assert np.all(np.isfinite(xyz))
     assert xyz[1] == pytest.approx(100.0, rel=1e-2)
+
+
+# =============================================================================
+# The guards of certus_inputs themselves, at their exact boundaries (mutation pilot, 2026-11-19)
+# =============================================================================
+
+
+def test_a_zero_or_positive_thickness_passes_the_guard() -> None:
+    from certus.physics.certus_inputs import require_non_negative_thickness
+
+    assert require_non_negative_thickness(d=np.array([0.0, -0.0, 0.5, 120.0])) is None
+
+
+def test_one_negative_thickness_among_valid_ones_is_refused_by_name() -> None:
+    from certus.physics.certus_inputs import require_non_negative_thickness
+
+    with pytest.raises(ValueError, match=r"^d: a thickness must be >= 0 nm$"):
+        require_non_negative_thickness(d=np.array([10.0, -1e-12, 20.0]))
+
+
+def test_a_lossless_or_absorbing_index_passes_the_extinction_guard() -> None:
+    from certus.physics.certus_inputs import require_non_negative_extinction
+
+    assert require_non_negative_extinction(n=np.array([complex(2.0, 0.0), complex(2.0, -0.0), complex(1.5, -3.0)])) is None
+
+
+@pytest.mark.parametrize("gain", [1e-12, 0.5])
+def test_one_index_with_negative_extinction_is_refused_by_name(gain) -> None:
+    from certus.physics.certus_inputs import require_non_negative_extinction
+
+    message = r"^n: k >= 0 is required \(index n - ik\); a negative extinction is gain$"
+    with pytest.raises(ValueError, match=message):
+        require_non_negative_extinction(n=np.array([complex(2.0, 0.0), complex(2.0, gain), complex(2.0, 0.0)]))
+
+
+def test_a_positive_substrate_passes_the_guard() -> None:
+    from certus.physics.certus_inputs import require_positive_substrate
+
+    assert require_positive_substrate(s=np.array([complex(1e-9, 0.0), complex(1.52, -0.1)])) is None
+
+
+@pytest.mark.parametrize("n_sub", [0.0, -0.0, -1.0])
+def test_one_substrate_value_without_positive_index_is_refused_by_name(n_sub) -> None:
+    from certus.physics.certus_inputs import require_positive_substrate
+
+    with pytest.raises(ValueError, match=r"^s: the substrate index must have n > 0$"):
+        require_positive_substrate(s=np.array([complex(1.52, 0.0), complex(n_sub, 0.0), complex(1.52, 0.0)]))
+
+
+def test_the_physical_substrate_guard_checks_finite_positive_and_extinction() -> None:
+    from certus.physics.certus_inputs import require_physical_substrate
+
+    assert require_physical_substrate(s=np.array([complex(1.52, -0.001)])) is None
+    with pytest.raises(ValueError, match="finite"):
+        require_physical_substrate(s=np.array([complex(np.nan, 0.0)]))
+    with pytest.raises(ValueError, match="n > 0"):
+        require_physical_substrate(s=np.array([complex(-1.0, 0.0)]))
+    with pytest.raises(ValueError, match="k >= 0"):
+        require_physical_substrate(s=np.array([complex(1.52, 0.01)]))

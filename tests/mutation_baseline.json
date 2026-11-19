@@ -1,6 +1,6 @@
 {
  "_comment": "Base du pilote de mutation (S3.6) : `python scripts/mutation_pilot.py <modules> --baseline tests/mutation_baseline.json`. `accepted_survivors` nomme les fautes que les tests laissent passer ET que l'on a jugees equivalentes ; toute autre faute qui survit fait sortir le code 1. `avant` : les memes modules avant les tests de limites de 2026-10-01.",
- "commit": "f9c8dd8 + les tests de limites du 2026-10-01",
+ "commit": "f9c8dd8 + les tests de limites du 2026-10-01 ; certus_inputs.py rejoue sur 053835d8 + les tests de bornes du 2026-11-19 (D108/D109/D114)",
  "runner": "NUMBA_DISABLE_JIT=1 pytest -x, une copie du depot par fil",
  "avant": {
   "certus/physics/certus_inputs.py": {
@@ -33,10 +33,10 @@
  },
  "modules": {
   "certus/physics/certus_inputs.py": {
-   "mutants": 63,
-   "score": 0.9841,
-   "score_sans_chaines": 0.9792,
-   "killed": 62,
+   "mutants": 83,
+   "score": 0.988,
+   "score_sans_chaines": 0.9846,
+   "killed": 82,
    "timeout": 0,
    "survived": 1,
    "error": 0

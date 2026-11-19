@@ -1,6 +1,6 @@
 """Adjoint of the monotone n reparametrization (``n_mono_band_nm``): d(cost)/d(xi) from d(cost)/d(physical n knots).
 
-Used by ``SplinePWLObjective._compute_analytic_gradient`` when ``spline_mono_analytic_gradient`` is on.
+Used by ``SplinePWLObjective._compute_analytic_gradient`` when ``spline_mono_analytic_gradient`` is on (the default).
 """
 
 from __future__ import annotations

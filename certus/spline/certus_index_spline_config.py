@@ -178,8 +178,8 @@ class SplineOptConfig:
     rmse_fit_lambda_nm: tuple[float, float] | None = None
     nk_profile_interp: str = "smooth"
     spline_min_delta_lambda_over_lambda_mean: float = 0.02
-    spline_mono_analytic_gradient: bool = False
-    spline_polish_fd_prefix_maxfun: int = 0
+    spline_mono_analytic_gradient: bool = True
+    spline_polish_fd_prefix_maxfun: int = 3000
 
     # --- Composed configs ---
     pglobal: SplinePGlobalConfig = field(default_factory=SplinePGlobalConfig)
@@ -222,8 +222,8 @@ class SplineOptConfig:
         rmse_fit_lambda_nm=None,
         nk_profile_interp="smooth",
         spline_min_delta_lambda_over_lambda_mean=0.02,
-        spline_mono_analytic_gradient=False,
-        spline_polish_fd_prefix_maxfun=0,
+        spline_mono_analytic_gradient=True,
+        spline_polish_fd_prefix_maxfun=3000,
         **kwargs,
     ):
         self.lam_nm = lam_nm

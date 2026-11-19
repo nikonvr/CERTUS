@@ -1,4 +1,4 @@
-"""L-BFGS-B call of the spline polish, with the optional finite-difference prefix (``spline_polish_fd_prefix_maxfun``).
+"""L-BFGS-B call of the spline polish, with the finite-difference prefix (``spline_polish_fd_prefix_maxfun``, 3000).
 
 With a prefix > 0 and the analytic gradient in use, a finite-difference pass runs first, then the analytic one from its
 end with the remaining budget: the exact gradient alone can settle in a nearby worse local minimum (chantier 21, TOTAL

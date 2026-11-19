@@ -3,7 +3,7 @@
 With ``n_mono_band_nm`` set, the n block of ``x`` holds xi, decoded chain by chain into physical n knots
 (``decode_xi_n_to_physical_n``). The INDEX SPLINE window sets this band from the spectrum, so the L-BFGS-B polish used
 finite differences (29 cost evaluations per gradient on ``TSIO2-1700-1.xlsx``). ``spline_mono_analytic_gradient``
-(off by default) adds the chain rule through the decode; these tests check it against centered finite differences of
+(on by default) adds the chain rule through the decode; these tests check it against centered finite differences of
 the objective's own cost, on the branches of the decode (several chains, saturated span, clamp at |xi| = 60), the
 penalty across a chain break, the k floor, R and R+T data, and the T ratio.
 """
@@ -57,6 +57,7 @@ def _config(kind: str = "T", *, on: bool = True, ratio: bool = False, n_points: 
         t_is_ratio=ratio,
         n_mono_band_nm=MONO_BAND,
         spline_mono_analytic_gradient=on,
+        spline_polish_fd_prefix_maxfun=0,
     )
 
 
@@ -128,10 +129,11 @@ def test_the_decode_vjp_is_the_transpose_of_its_jacobian(case: str) -> None:
 # --- the objective ---------------------------------------------------------------------------------------------------
 
 
-def test_the_option_is_off_by_default() -> None:
-    """C1: without the option, the monotone path keeps no analytic gradient, as before (L-BFGS-B differentiates)."""
+def test_the_option_is_on_by_default_and_off_falls_back_to_finite_differences() -> None:
+    """On by default (the user's order of 2026-11-19); off, the monotone path keeps no analytic gradient."""
     config = _config(on=False)
-    assert SplineOptConfig.spline_mono_analytic_gradient is False
+    assert SplineOptConfig.spline_mono_analytic_gradient is True
+    assert inspect.signature(SplineOptConfig.__init__).parameters["spline_mono_analytic_gradient"].default is True
     assert not spline_pwl_analytic_grad_supported(config)
     objective = SplinePWLObjective(config, _knots(config, 6))
     assert objective._compute_analytic_gradient(_point(_knots(config, 6), 120.0)) is None
@@ -304,10 +306,10 @@ def _polish_with(config: SplineOptConfig, maxfun: int) -> tuple[_CountingObjecti
     return objective, start, cost, nfev
 
 
-def test_the_fd_prefix_is_off_by_default() -> None:
-    """C1: the prefix is 0 by default, so the polish makes the single L-BFGS-B call it always made."""
-    assert SplineOptConfig.spline_polish_fd_prefix_maxfun == 0
-    assert inspect.signature(SplineOptConfig.__init__).parameters["spline_polish_fd_prefix_maxfun"].default == 0
+def test_the_fd_prefix_is_3000_by_default() -> None:
+    """3000 by default (the user's order of 2026-11-19); 0 gives back the single L-BFGS-B call."""
+    assert SplineOptConfig.spline_polish_fd_prefix_maxfun == 3000
+    assert inspect.signature(SplineOptConfig.__init__).parameters["spline_polish_fd_prefix_maxfun"].default == 3000
 
 
 @pytest.mark.parametrize("on", [False, True], ids=["fd", "analytic"])

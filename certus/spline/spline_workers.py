@@ -273,7 +273,7 @@ def _polish_lbfgsb_chunked(
         logging.getLogger("CERTUS").debug("Analytic gradient probe failed, falling back to numerical", exc_info=True)
 
     try:
-        _fd_prefix = int(getattr(_orig_obj.cfg, "spline_polish_fd_prefix_maxfun", 0) or 0)
+        _fd_prefix = int(getattr(_orig_obj.cfg, "spline_polish_fd_prefix_maxfun", 3000) or 0)
         res = minimize_polish(_minimize_fn, obj, x_cur, _minimize_jac, bds, int(maxfun_total), _fd_prefix, _cb)
 
         _xf = np.asarray(res.x, dtype=np.float64).ravel().copy()

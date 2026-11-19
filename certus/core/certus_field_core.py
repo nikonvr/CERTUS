@@ -54,6 +54,43 @@ def _trapz_numba(y: np.ndarray, x: np.ndarray) -> float:
         res += 0.5 * (y[j] + y[j+1]) * (x[j+1] - x[j])
     return res
 
+
+@numba.njit(cache=True)
+def _layer_field_couplings(
+    is_p_pol: bool, theta_inc: float, n0_sin_theta0: complex, nj: complex, cos_tj: complex
+) -> tuple[complex, complex]:
+    """Return (cx, cz) mapping tangential forward/backward waves to physical Ex, Ez."""
+    if not is_p_pol:
+        return 1.0 + 0j, 0.0j
+    cx = np.cos(theta_inc) + 0j
+    cz = -cx * (n0_sin_theta0 / (nj * cos_tj))
+    return cx, cz
+
+
+@numba.njit(cache=True)
+def _layer_e2_profile(
+    ai: complex,
+    bi: complex,
+    nj: complex,
+    dj: float,
+    cos_tj: complex,
+    k_vac: float,
+    integral_points: int,
+    cx: complex,
+    cz: complex,
+) -> np.ndarray:
+    """Sample total |E|^2 = |Ex|^2 + |Ez|^2 on a uniform depth grid inside one layer."""
+    z_grid = np.linspace(0.0, dj, integral_points)
+    e2_values = np.zeros(integral_points, dtype=np.float64)
+    for k in range(integral_points):
+        phase = k_vac * nj * z_grid[k] * cos_tj
+        wf = ai * np.exp(-1j * phase)
+        wb = bi * np.exp(1j * phase)
+        ex = cx * (wf + wb)
+        ez = cz * (wf - wb)
+        e2_values[k] = np.abs(ex)**2 + np.abs(ez)**2
+    return e2_values
+
 @numba.njit(cache=True)
 def _calculate_field_single_pol(indices_c1_cn: np.ndarray, ep_c1_cn: np.ndarray, nSub_r: float, lambda_calc: float, n_super: float, integral_points: int, theta_inc: float, is_p_pol: bool) -> tuple[float, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     n_layers = len(ep_c1_cn)
@@ -135,20 +172,18 @@ def _calculate_field_single_pol(indices_c1_cn: np.ndarray, ep_c1_cn: np.ndarray,
         
         Ai = 0.5 * (prev_E + prev_H / Yj)
         Bi = 0.5 * (prev_E - prev_H / Yj)
-        
-        z_integral = np.linspace(0, dj, integral_points)
-        e2_values = np.zeros(integral_points, dtype=np.float64)
-        for k in range(integral_points):
-            phase = k_vac * nj * z_integral[k] * cos_tj
-            E_z = Ai * np.exp(-1j * phase) + Bi * np.exp(1j * phase)
-            # For P-Pol, we should theoretically extract Ex and Ez, but for standard laser field models, |E|^2 tang is used or total |E|^2. 
-            # To keep it standard to Macleod, we'll use |E|^2 directly from amplitude propagation.
-            e2_values[k] = np.abs(E_z)**2
-            
+
+        cx, cz = _layer_field_couplings(is_p_pol, theta_inc, n0_sin_theta0, nj, cos_tj)
+        s_sum = abs(cx)**2 + abs(cz)**2
+        s_diff = abs(cx)**2 - abs(cz)**2
+
+        z_integral = np.linspace(0.0, dj, integral_points)
+        e2_values = _layer_e2_profile(Ai, Bi, nj, dj, cos_tj, k_vac, integral_points, cx, cz)
+
         int_val = _trapz_numba(e2_values, z_integral)
         integrals[i] = int_val
         averages[i] = int_val / dj if dj > 1e-9 else 0.0
-        
+
         peak_val = np.max(e2_values)
         if abs(delta.imag) < 1e-12:
             A_abs = np.abs(Ai)
@@ -157,12 +192,12 @@ def _calculate_field_single_pol(indices_c1_cn: np.ndarray, ep_c1_cn: np.ndarray,
                 angle_A = np.arctan2(Ai.imag, Ai.real)
                 angle_B = np.arctan2(Bi.imag, Bi.real)
                 phase_diff = angle_A - angle_B
-                phase_diff_mod = phase_diff % (2.0 * np.pi)
-                if phase_diff_mod <= 2.0 * delta.real:
-                    exact_peak = (A_abs + B_abs)**2
+                target_phase = phase_diff if s_diff >= 0.0 else phase_diff + np.pi
+                if target_phase % (2.0 * np.pi) <= 2.0 * delta.real:
+                    exact_peak = s_sum * (A_abs**2 + B_abs**2) + 2.0 * abs(s_diff) * A_abs * B_abs
                     if exact_peak > peak_val:
                         peak_val = exact_peak
-        
+
         peaks[i] = peak_val
 
     return R, averages, integrals, fields, cos_theta, Y, peaks
@@ -185,7 +220,7 @@ def _calculate_metrics_and_field_numba(indices_c1_cn: np.ndarray, ep_c1_cn: np.n
         averages = 0.5 * (avg_s + avg_p)
         integrals = 0.5 * (int_s + int_p)
         peaks = 0.5 * (peaks_s + peaks_p)
-        fields = fields_s # For plotting we return the S field by default for simplicity, or we could interpolate.
+        fields = fields_s # Metrics callers ignore interface fields; calculate_electric_field traces both polarizations.
         Y = Ys
         
     return R, averages[::-1], integrals[::-1], fields, indices_for_efield, ep_for_efield, cos_theta, Y, peaks[::-1]
@@ -225,41 +260,88 @@ def calculate_opt_metrics(n1_r: float, n2_r: float, nSub_r: float, l0: float, em
         'max_peak_2': max_peak_n2
     }
     
+@numba.njit(cache=True)
+def _trace_single_pol_e2(
+    indices_for_efield: np.ndarray,
+    ep_for_efield: np.ndarray,
+    fields: np.ndarray,
+    cos_theta: np.ndarray,
+    admittances: np.ndarray,
+    n_super: float,
+    theta_inc: float,
+    lambda_calc: float,
+    integral_points: int,
+    is_p_pol: bool,
+) -> np.ndarray:
+    """Trace total |E|^2 from superstrate to substrate for one polarization."""
+    n_layers = len(ep_for_efield)
+    k_vac = 2.0 * np.pi / lambda_calc
+    n0_sin_theta0 = (n_super + 0j) * np.sin(theta_inc)
+    e2_all = np.empty(n_layers * integral_points, dtype=np.float64)
+    offset = 0
+    for i in range(n_layers):
+        E_interface, H_interface = fields[i, 0], fields[i, 1]
+        Yj = admittances[i]
+        Ai = 0.5 * (E_interface + H_interface / Yj)
+        Bi = 0.5 * (E_interface - H_interface / Yj)
+        nj = indices_for_efield[i]
+        dj = ep_for_efield[i]
+        cos_tj = cos_theta[i]
+        cx, cz = _layer_field_couplings(is_p_pol, theta_inc, n0_sin_theta0, nj, cos_tj)
+        e2_layer = _layer_e2_profile(Ai, Bi, nj, dj, cos_tj, k_vac, integral_points, cx, cz)
+        e2_all[offset : offset + integral_points] = e2_layer
+        offset += integral_points
+    return e2_all
+
+
 def calculate_electric_field(n1_r: float, n2_r: float, nSub_r: float, l0: float, lambda_calc: float, emp_factors: list[float], layer_types: list[int] | None = None, n_superstrate_real: float = 1.0, integral_points: int = 50, theta_inc: float = 0.0, pol_flag: int = 0) -> tuple[np.ndarray, np.ndarray, list[float], list[float], list[float]]:
     indices_c1_cn, ep_c1_cn = get_layer_properties_from_list(n1_r, n2_r, emp_factors, layer_types, l0)
     n_layers = len(ep_c1_cn)
     if n_layers == 0:
         return np.array([0]), np.array([1]), [], [], []
 
-    _, averages, integrals, fields, indices_for_efield, ep_for_efield, cos_theta, Y, _ = _calculate_metrics_and_field_numba(
-        indices_c1_cn, ep_c1_cn, n1_r, n2_r, nSub_r, l0, lambda_calc, n_superstrate_real, integral_points, theta_inc, pol_flag
-    )
+    indices_for_efield = indices_c1_cn[::-1]
+    ep_for_efield = ep_c1_cn[::-1]
+    pol_modes = (False,) if pol_flag == 0 else ((True,) if pol_flag == 1 else (False, True))
+    averages_sum = np.zeros(n_layers, dtype=np.float64)
+    integrals_sum = np.zeros(n_layers, dtype=np.float64)
+    e2_sum = np.zeros(n_layers * integral_points, dtype=np.float64)
+    for is_p in pol_modes:
+        _, avg_pol, int_pol, fields_pol, cos_theta, y_pol, _ = _calculate_field_single_pol(
+            indices_for_efield, ep_for_efield, nSub_r, lambda_calc, n_superstrate_real, integral_points, theta_inc, is_p
+        )
+        averages_sum += avg_pol[::-1]
+        integrals_sum += int_pol[::-1]
+        e2_sum += _trace_single_pol_e2(
+            indices_for_efield,
+            ep_for_efield,
+            fields_pol,
+            cos_theta,
+            y_pol,
+            n_superstrate_real,
+            theta_inc,
+            lambda_calc,
+            integral_points,
+            is_p,
+        )
 
-    z_coords_final: list[float] = []
-    E2_values_final: list[float] = []
-    current_z_start = 0
-    k_vac = 2 * np.pi / lambda_calc
-    
-    for i in range(n_layers):
-        E_interface, H_interface = fields[i, 0], fields[i, 1]
-        n_curr, d_curr = indices_for_efield[i], ep_for_efield[i]
-        Yj = Y[i]
-        cos_tj = cos_theta[i]
-        
-        Ai = 0.5 * (E_interface + H_interface / Yj)
-        Bi = 0.5 * (E_interface - H_interface / Yj)
+    scale = 1.0 / len(pol_modes)
+    averages = averages_sum * scale
+    integrals = integrals_sum * scale
+    e2_super_to_sub = e2_sum * scale
 
-        z_local = np.linspace(0, d_curr, integral_points, endpoint=True)
-        # Recalculate field internally exactly like Numba
-        phase = k_vac * n_curr * z_local * cos_tj
-        E_layer_func = Ai * np.exp(-1j * phase) + Bi * np.exp(1j * phase)
-        
-        z_coords_final.extend(current_z_start + z_local)
-        E2_values_final.extend(np.abs(E_layer_func)**2)
+    z_coords_final = np.empty(n_layers * integral_points, dtype=np.float64)
+    current_z_start = 0.0
+    offset = 0
+    for d_curr in ep_for_efield:
+        z_coords_final[offset : offset + integral_points] = current_z_start + np.linspace(
+            0.0, d_curr, integral_points, endpoint=True
+        )
         current_z_start += d_curr
+        offset += integral_points
 
     # Return depth z from substrate (0) to superstrate (z_total), matching ep_c1_cn, integrals, averages, and plots.
     z_total = float(current_z_start)
-    z_sub_to_sup = np.maximum(0.0, z_total - np.asarray(z_coords_final, dtype=np.float64)[::-1])
-    e2_sub_to_sup = np.asarray(E2_values_final, dtype=np.float64)[::-1]
+    z_sub_to_sup = np.maximum(0.0, z_total - z_coords_final[::-1])
+    e2_sub_to_sup = e2_super_to_sub[::-1]
     return z_sub_to_sup, e2_sub_to_sup, list(ep_c1_cn), list(integrals), list(averages)

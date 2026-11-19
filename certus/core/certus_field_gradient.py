@@ -3,7 +3,11 @@
 import numba
 import numpy as np
 
-from certus.core.certus_field_core import _calculate_field_single_pol, get_layer_properties_from_list
+from certus.core.certus_field_core import (
+    _calculate_field_single_pol,
+    _layer_field_couplings,
+    get_layer_properties_from_list,
+)
 
 
 @numba.njit(cache=True)
@@ -20,6 +24,7 @@ def _field_trace_derivatives(
     cos_d = np.cos(phases)
     sin_d = np.sin(phases)
     y0 = superstrate / np.cos(angle) if is_p else superstrate * np.cos(angle)
+    n0_sin_theta0 = (superstrate + 0j) * np.sin(angle)
 
     # Differentiate the existing trace's boundary admittances, from the substrate up.
     derivative_y = np.zeros(count, dtype=np.complex128)
@@ -53,13 +58,20 @@ def _field_trace_derivatives(
         gradient_forward = 0.5 * (derivative_e + derivative_h / y)
         gradient_backward = 0.5 * (derivative_e - derivative_h / y)
 
+        cx, cz = _layer_field_couplings(is_p, angle, n0_sin_theta0, indices[layer], cosines[layer])
+        s_sum = abs(cx)**2 + abs(cz)**2
+        s_diff = abs(cx)**2 - abs(cz)**2
+
         best_intensity = -1.0
         best_fraction = 0.0
         for sample in range(points):
             fraction = sample / (points - 1)
             phase = phases[layer] * fraction
-            value = forward * np.exp(-1j * phase) + backward * np.exp(1j * phase)
-            intensity = abs(value)**2
+            wave_forward = forward * np.exp(-1j * phase)
+            wave_backward = backward * np.exp(1j * phase)
+            ex = cx * (wave_forward + wave_backward)
+            ez = cz * (wave_forward - wave_backward)
+            intensity = abs(ex)**2 + abs(ez)**2
             if intensity > best_intensity:
                 best_intensity = intensity
                 best_fraction = fraction
@@ -67,23 +79,30 @@ def _field_trace_derivatives(
         phase = phases[layer] * best_fraction
         wave_forward = forward * np.exp(-1j * phase)
         wave_backward = backward * np.exp(1j * phase)
-        value = wave_forward + wave_backward
-        derivative = gradient_forward * np.exp(-1j * phase) + gradient_backward * np.exp(1j * phase)
-        derivative[layer] += -1j * k[layer] * best_fraction * (wave_forward - wave_backward)
-        gradient_peaks[layer] = 2.0 * np.real(np.conj(value) * derivative)
+        ex = cx * (wave_forward + wave_backward)
+        ez = cz * (wave_forward - wave_backward)
+        deriv_sum = gradient_forward * np.exp(-1j * phase) + gradient_backward * np.exp(1j * phase)
+        deriv_sum[layer] += -1j * k[layer] * best_fraction * (wave_forward - wave_backward)
+        deriv_diff = gradient_forward * np.exp(-1j * phase) - gradient_backward * np.exp(1j * phase)
+        deriv_diff[layer] += -1j * k[layer] * best_fraction * (wave_forward + wave_backward)
+        gradient_peaks[layer] = 2.0 * np.real(np.conj(ex) * (cx * deriv_sum) + np.conj(ez) * (cz * deriv_diff))
 
         # The primal trace upgrades a sampled peak to an internal standing-wave maximum.
         amplitude_a, amplitude_b = abs(forward), abs(backward)
         phase_difference = np.arctan2(forward.imag, forward.real) - np.arctan2(backward.imag, backward.real)
+        target_phase = phase_difference if s_diff >= 0.0 else phase_difference + np.pi
+        exact_peak = s_sum * (amplitude_a**2 + amplitude_b**2) + 2.0 * abs(s_diff) * amplitude_a * amplitude_b
         exact_peak_active = (
             abs(phases[layer].imag) < 1e-12 and amplitude_a > 1e-12 and amplitude_b > 1e-12
-            and phase_difference % (2.0 * np.pi) <= 2.0 * phases[layer].real
-            and (amplitude_a + amplitude_b)**2 > best_intensity
+            and target_phase % (2.0 * np.pi) <= 2.0 * phases[layer].real
+            and exact_peak > best_intensity
         )
         if exact_peak_active:
-            gradient_peaks[layer] = 2.0 * (amplitude_a + amplitude_b) * np.real(
-                np.conj(forward) * gradient_forward / amplitude_a
-                + np.conj(backward) * gradient_backward / amplitude_b
+            weight_a = s_sum * amplitude_a + abs(s_diff) * amplitude_b
+            weight_b = s_sum * amplitude_b + abs(s_diff) * amplitude_a
+            gradient_peaks[layer] = 2.0 * (
+                weight_a * np.real(np.conj(forward) * gradient_forward) / amplitude_a
+                + weight_b * np.real(np.conj(backward) * gradient_backward) / amplitude_b
             )
 
         next_derivative_e = cos_d[layer] * derivative_e - 1j / y * sin_d[layer] * derivative_h

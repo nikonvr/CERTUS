@@ -2,7 +2,13 @@ import numpy as np
 from numba import njit, prange
 
 from certus.domain.constants import TWO_PI
-from certus.physics.certus_inputs import require_finite, require_layers_below_overflow
+from certus.physics.certus_inputs import (
+    require_finite,
+    require_layers_below_overflow,
+    require_non_negative_extinction,
+    require_non_negative_thickness,
+    require_positive_substrate,
+)
 from certus.physics.certus_opt_tmm import _compute_TMM_generic_rescaled, compute_RT_from_matrix, compute_TMM_generic
 from certus.physics.certus_substrate_absorption import (
     DEFAULT_SUBSTRATE_THICKNESS_NM,
@@ -342,6 +348,9 @@ def calculate_RT_vectorized_real(
         n_substrate_all_wls=n_substrate_all_wls,
         wls=wls,
     )
+    require_non_negative_thickness(thicknesses=thicknesses)
+    require_non_negative_extinction(n_layers_all_wls=n_layers_all_wls, n_substrate_all_wls=n_substrate_all_wls)
+    require_positive_substrate(n_substrate_all_wls=n_substrate_all_wls)
 
     require_layers_below_overflow(thicknesses, n_layers_all_wls, wls)
 

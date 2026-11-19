@@ -71,6 +71,37 @@ def require_finite(**arrays: object) -> None:
             raise ValueError(f"{name} must be finite (no NaN, no infinity)")
 
 
+def require_non_negative_thickness(**arrays: object) -> None:
+    """Raise a ValueError naming the first thickness array that holds a negative value (D114). Check finiteness first."""
+    for name, values in arrays.items():
+        if np.any(np.asarray(values, dtype=np.float64) < 0.0):
+            raise ValueError(f"{name}: a thickness must be >= 0 nm")
+
+
+def require_non_negative_extinction(**arrays: object) -> None:
+    """Raise a ValueError naming the first complex index array with k < 0 (D109).
+
+    Under the Macleod convention n - ik with k >= 0, a positive imaginary part is a negative extinction: gain, R + T > 1.
+    """
+    for name, values in arrays.items():
+        if np.any(np.imag(np.asarray(values)) > 0.0):
+            raise ValueError(f"{name}: k >= 0 is required (index n - ik); a negative extinction is gain")
+
+
+def require_positive_substrate(**arrays: object) -> None:
+    """Raise a ValueError naming the first substrate index array whose real part is not positive (D114)."""
+    for name, values in arrays.items():
+        if np.any(np.real(np.asarray(values)) <= 0.0):
+            raise ValueError(f"{name}: the substrate index must have n > 0")
+
+
+def require_physical_substrate(**arrays: object) -> None:
+    """A substrate index: finite, n > 0 and k >= 0."""
+    require_finite(**arrays)
+    require_positive_substrate(**arrays)
+    require_non_negative_extinction(**arrays)
+
+
 def require_layers_below_overflow(thicknesses: object, n_layers: object, wls: object) -> None:
     """Raise a ValueError if a layer absorbs so much that the matrix of the kernels overflows.
 

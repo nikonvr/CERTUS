@@ -8,6 +8,12 @@ from typing import Any
 
 import numpy as np
 
+from certus.physics.certus_inputs import (
+    require_finite,
+    require_non_negative_extinction,
+    require_non_negative_thickness,
+    require_physical_substrate,
+)
 from certus.physics.certus_substrate_absorption import DEFAULT_SUBSTRATE_THICKNESS_NM
 
 
@@ -41,11 +47,18 @@ def optim_prepare_stack_nk_back(
     if substrate_key not in mats_nk:
         keys = {key.lower(): key for key in mats_nk}
         substrate_key = keys.get("substrate", substrate_key)
+    # D108, D109, D114: the indices are checked once here, upstream of the fastmath kernels that read them.
+    for key, index in mats_nk.items():
+        require_finite(**{f"material {key!r}": index})
+        require_non_negative_extinction(**{f"material {key!r}": index})
     substrate = np.ascontiguousarray(mats_nk[substrate_key])
+    require_physical_substrate(**{f"substrate {substrate_key!r}": substrate})
     front = design_layer_indices(mats_nk, [layer.mat for layer in stack], complex_dtype)
     if has_back_stack:
         rear = design_layer_indices(mats_nk, [layer.mat for layer in stack_back], complex_dtype)
         rear_thickness: np.ndarray = np.ascontiguousarray(ep_back, dtype=float_dtype)
+        require_finite(ep_back=rear_thickness)
+        require_non_negative_thickness(ep_back=rear_thickness)
     else:
         rear = np.zeros((len(wls), 0), dtype=complex_dtype)
         rear_thickness = np.zeros(0, dtype=float_dtype)

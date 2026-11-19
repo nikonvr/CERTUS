@@ -8,6 +8,7 @@ from numba import njit, prange
 from scipy.interpolate import CubicSpline
 
 from certus.domain.constants import PI
+from certus.physics.certus_inputs import require_finite
 
 _FASTMATH_SAFE = {"nsz", "arcp", "contract", "afn", "reassoc"}
 
@@ -609,6 +610,8 @@ def get_nk_from_spline(
     p_arr = np.ascontiguousarray(p_spline_nk_values, dtype=np.float64)
     knot_arr = np.ascontiguousarray(knot_wavelengths, dtype=np.float64)
     target_arr = np.ascontiguousarray(target_lambda_array, dtype=np.float64)
+    # D108: the cached path turned a NaN knot into n = k = 0 (np.nan_to_num), a layer the TMM treats as absent.
+    require_finite(p_spline_nk_values=p_arr, knot_wavelengths=knot_arr, target_lambda_array=target_arr)
 
     # BOTH paths go through memoization: `use_cache` does not choose whether to
     # memoize, but which evaluation method to employ — pre-computed basis matrix,

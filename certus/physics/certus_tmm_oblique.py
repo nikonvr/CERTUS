@@ -2,7 +2,14 @@ import numpy as np
 from numba import njit, prange
 
 from certus.domain.constants import TWO_PI
-from certus.physics.certus_inputs import check_incidence_angle, is_s_polarization, require_finite
+from certus.physics.certus_inputs import (
+    check_incidence_angle,
+    is_s_polarization,
+    require_finite,
+    require_non_negative_extinction,
+    require_non_negative_thickness,
+    require_positive_substrate,
+)
 from certus.physics.certus_oblique_substrate import oblique_exit_admittance
 from certus.physics.certus_opt_tmm import compute_RT_from_matrix
 from certus.physics.certus_substrate_absorption import (
@@ -352,6 +359,9 @@ def calc_spectrum_oblique_vectorized(
     # The thicknesses and the wavelengths are what an optimizer moves; the index arrays are prepared once and
     # are the large ones: checking them here would cost a tenth of each evaluation (measured 0.15 of 1.5 ms).
     require_finite(wls=wls, d_layers=d_layers, n_sub=n_sub)
+    require_non_negative_thickness(d_layers=d_layers)
+    require_positive_substrate(n_sub=n_sub)
+    require_non_negative_extinction(n_sub=n_sub)
 
     # For normal incidence, use calc_spectrum_front
 
@@ -403,6 +413,9 @@ def calc_spectrum_oblique_backside_vectorized(
     # The thicknesses and the wavelengths are what an optimizer moves; the index arrays are prepared once and
     # are the large ones: checking them here would cost a tenth of each evaluation (measured 0.15 of 1.5 ms).
     require_finite(wls=wls, d_layers=d_layers, n_sub=n_sub)
+    require_non_negative_thickness(d_layers=d_layers)
+    require_positive_substrate(n_sub=n_sub)
+    require_non_negative_extinction(n_sub=n_sub)
 
     wls_f64 = np.ascontiguousarray(wls, dtype=np.float64)
 

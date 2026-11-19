@@ -1,6 +1,8 @@
 import numpy as np
 from numba import njit
 
+from certus.physics.certus_inputs import require_finite
+
 # COLORIMETRY
 
 
@@ -420,6 +422,10 @@ def _xyz_from_spectrum_kernel(
 
 
 def xyz_from_spectrum(wls: np.ndarray, R: np.ndarray) -> np.ndarray:
+    # D108: np.interp propagates NaN and answers garbage for a grid that does not increase; the kernel is fastmath.
+    require_finite(wls=wls, R=R)
+    if np.any(np.diff(np.asarray(wls, dtype=np.float64)) < 0.0):
+        raise ValueError("wls: the wavelengths of a spectrum must increase")
 
     R_interp = np.interp(CIE_LAMBDA, wls, R)
 

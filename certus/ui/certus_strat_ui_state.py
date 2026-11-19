@@ -1116,7 +1116,7 @@ class CertusStratStateMixin:
             "nucleation_max_rmse": self._get_float_safe("nucleation_max_rmse", 1.5),
             "nucleation_degradation": self._get_float_safe("nucleation_degradation", 1.4),
             "show_plots": True,
-            "export_excel": True,
+            "export_excel": _config_flag(getattr(self, "_loaded_config", {}), "export_excel", True),
             # ── AXIS 1.1: READING noise of monitoring signal ─────────────
             #
             # BY DEFAULT INACTIVE, and not due to superficial caution: it is a

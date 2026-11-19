@@ -147,6 +147,7 @@ from certus.core.certus_core import (
 # =============================================================================
 from certus.core.certus_hub_config import (
     HUB_APP_CATALOG,
+    MODULE_CHOICE_LABELS,
     RUN_MODULE_FLAG,
     HubAppCatalogItem,
     hub_grid_columns,
@@ -1101,12 +1102,7 @@ class CertusHub(CertusDialogMixin, QMainWindow):
             if len(candidates) == 1:
                 return candidates[0]
             if len(candidates) > 1:
-                explicit = by_name if by_name in candidates else None
-                if set(candidates) == {"CERTUS_METAL_SINGLE.py", "CERTUS_METAL_BILAYER.py"} and not any(
-                    word in name for word in ("single", "bilayer")
-                ):
-                    explicit = None  # a bare "metal" does not say which substrate: ask
-                return explicit or self._ask_module(path, candidates)
+                return by_name if by_name in candidates else self._ask_module(path, candidates)
             return by_name or "CERTUS_DESIGN.py"
         if name.endswith(".xlsx") and (by_name == "CERTUS_RE.py" or self._is_re_workbook(path)):
             return "CERTUS_RE.py"
@@ -1115,15 +1111,10 @@ class CertusHub(CertusDialogMixin, QMainWindow):
     def _ask_module(self, path: str, scripts: Sequence[str]) -> str | None:
         """Ask which of ``scripts`` should open ``path``; None when the operator declines."""
         titles = {item["script"]: item["title"] for item in self.apps}
-        subs = {item["script"]: item.get("sub", "") for item in self.apps}
-        labels = [titles.get(script, Path(script).stem) for script in scripts]
-        hints = "\n".join(
-            f"  {label}: {subs[script]}" for label, script in zip(labels, scripts, strict=True) if subs.get(script)
+        labels = [MODULE_CHOICE_LABELS.get(script) or titles.get(script, Path(script).stem) for script in scripts]
+        choice, accepted = QInputDialog.getItem(
+            self, "Open with…", f"{Path(path).name} can be read by several modules. Open it with:", labels, 0, False
         )
-        prompt = f"{Path(path).name} can be read by several modules:\n{hints}\n\nOpen it with:" if hints else (
-            f"{Path(path).name} can be read by several modules. Open it with:"
-        )
-        choice, accepted = QInputDialog.getItem(self, "Open with…", prompt, labels, 0, False)
         return scripts[labels.index(choice)] if accepted and choice in labels else None
 
     def _dropped_files(self, event) -> tuple[list[str], list[str]]:

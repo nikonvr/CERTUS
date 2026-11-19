@@ -102,7 +102,9 @@ def test_the_keys_of_the_other_modules(keys, expected) -> None:
     [
         ("metal_bilayer_config.json", BILAYER),
         ("metal_single_config.json", SINGLE),
-        ("metal_config.json", SINGLE),
+        ("metal_config.json", None),  # "metal" names both METAL modules (UX audit 2026-11-18, item 3)
+        ("opaque_film.json", BILAYER),
+        ("transparent_film.json", SINGLE),
         ("strat_config.json", STRAT),
         ("my_index_spline.json", SPLINE),
         ("config_RE.json", RE),
@@ -196,7 +198,10 @@ def test_a_metal_configuration_that_does_not_say_which_asks_and_obeys(hub, asked
     asked["answer"] = 1
 
     assert hub._module_for_dropped_file(str(config)) == BILAYER
-    assert asked["offered"] == ["METAL SINGLE", "METAL BILAYER"]
+    assert asked["offered"] == [
+        "METAL SINGLE: transparent substrate (R, T, Rb)",
+        "METAL BILAYER: opaque substrate",
+    ]
 
 
 def test_declining_the_question_opens_nothing(hub, asked, tmp_path, monkeypatch) -> None:
@@ -232,4 +237,33 @@ def test_a_configuration_that_cannot_be_read_falls_back_on_its_name(hub, asked, 
         path.write_text(contents[name], encoding="utf-8")
 
     assert hub._module_for_dropped_file(str(path)) == DESIGN
+    assert asked["offered"] is None
+
+
+# UX audit 2026-11-18, item 3: the bare word "metal" chose METAL SINGLE without asking which substrate the film is on.
+
+
+@pytest.mark.parametrize("name", ["lot.json", "metal_lot.json", "JSON-metal-example.json"])
+def test_a_metal_configuration_named_only_metal_asks_for_the_substrate(hub, asked, tmp_path, name) -> None:
+    config = _file(tmp_path, name, EXAMPLES / "example_metal_single/JSON-metal-example.json")
+
+    assert hub._module_for_dropped_file(str(config)) is None
+    assert asked["offered"] is not None, f"{name} chose a METAL module without asking"
+    assert any("transparent substrate" in label for label in asked["offered"])
+    assert any("opaque substrate" in label for label in asked["offered"])
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("metal_bilayer_lot.json", BILAYER),
+        ("lot_opaque.json", BILAYER),
+        ("metal_single_lot.json", SINGLE),
+        ("lot_transparent.json", SINGLE),
+    ],
+)
+def test_a_metal_configuration_with_a_specific_hint_opens_without_asking(hub, asked, tmp_path, name, expected) -> None:
+    config = _file(tmp_path, name, EXAMPLES / "example_metal_single/JSON-metal-example.json")
+
+    assert hub._module_for_dropped_file(str(config)) == expected
     assert asked["offered"] is None

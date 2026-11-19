@@ -235,16 +235,24 @@ _CONFIG_SIGNATURES: Final[tuple[tuple[tuple[str, ...], tuple[str, ...], tuple[st
     (("CERTUS_RE.py",), (), ("re_gui", "re_workbook_path", "workbook_path")),
 )
 
-#: The words of a file name that name a module, in the order they are tried ("bilayer" before "metal").
+#: The words of a file name that name a module, in the order they are tried. The bare word "metal" names both METAL
+#: modules, so it names none: the operator is asked which substrate the film is on (UX audit 2026-11-18, item 3).
 _NAME_TOKENS: Final[tuple[tuple[str, str], ...]] = (
     ("bilayer", "CERTUS_METAL_BILAYER.py"),
+    ("opaque", "CERTUS_METAL_BILAYER.py"),
     ("single", "CERTUS_METAL_SINGLE.py"),
+    ("transparent", "CERTUS_METAL_SINGLE.py"),
     ("strat", "CERTUS_STRAT.py"),
     ("field", "CERTUS_FIELD.py"),
     ("spline", "CERTUS_INDEX_SPLINE.py"),
-    ("metal", "CERTUS_METAL_SINGLE.py"),
     ("index", "CERTUS_INDEX.py"),
 )
+
+#: How the chooser names a module when its title alone does not say what it is for.
+MODULE_CHOICE_LABELS: Final[dict[str, str]] = {
+    "CERTUS_METAL_SINGLE.py": "METAL SINGLE: transparent substrate (R, T, Rb)",
+    "CERTUS_METAL_BILAYER.py": "METAL BILAYER: opaque substrate",
+}
 
 
 def script_for_name(name: str) -> str | None:

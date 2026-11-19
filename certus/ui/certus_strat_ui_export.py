@@ -223,6 +223,31 @@ class CertusStratExportMixin:
             paths.append(self._manifest_relpath(db_path))
         return list(dict.fromkeys(p for p in paths if p))
 
+    def _report_export_outcome(
+        self, base_name: str, saved_items: list[str], failed_items: list[str], report_dir: str
+    ) -> None:
+        """Record per-artifact export status and surface complete, partial, or failed outcomes."""
+        self._last_export_outcome = {
+            "base_name": base_name,
+            "dir": report_dir,
+            "saved": list(saved_items),
+            "failed": list(failed_items),
+        }
+        if not failed_items:
+            self._reports_exported = True
+            if hasattr(self, "status_label"):
+                self.status_label.setText(f"✓ Saved: {base_name}")
+            return
+        self._reports_exported = False
+        if saved_items:
+            msg = f"⚠ Partial export ({base_name}): saved {', '.join(saved_items)}; failed {', '.join(failed_items)}"
+            self.logger.warning("%s (dir=%s)", msg, report_dir)
+        else:
+            msg = f"❌ Export failed ({base_name}): {', '.join(failed_items)}"
+            self.logger.error("%s (dir=%s)", msg, report_dir)
+        if hasattr(self, "status_label"):
+            self.status_label.setText(msg)
+
     def on_excel_ready(self, excel_data: io.BytesIO, metadata: dict) -> Any:
         """Handle automatic export (Excel + HTML)"""
         self.logger.debug("[DEBUG-UI] on_excel_ready entered.")
@@ -301,31 +326,41 @@ class CertusStratExportMixin:
 
             # 1. Save Excel
             self.logger.info("[DEBUG-UI] Saving Excel report...")
+            saved_items: list[str] = []
+            failed_items: list[str] = []
 
-            with atomic_open(excel_path, "wb") as f:
-                f.write(excel_data.getvalue())
+            try:
+                with atomic_open(excel_path, "wb") as f:
+                    f.write(excel_data.getvalue())
+                saved_items.append("Excel")
+                self.logger.info("✅ Excel report saved: %s", excel_path)
+            except (*NUMERICAL_FAULT_EXCEPTIONS, OSError, TypeError) as exc:
+                failed_items.append("Excel")
+                self.logger.error("Excel export failed: %s", exc)
+
             if manifest_dict:
-                try:
-                    import openpyxl
+                if "Excel" in saved_items:
+                    try:
+                        import openpyxl
 
-                    wb_m = openpyxl.load_workbook(excel_path)
-                    if "Manifest" in wb_m.sheetnames:
-                        del wb_m["Manifest"]
-                    ws_m = wb_m.create_sheet("Manifest")
-                    ws_m.append(["Key", "Value"])
-                    for k, v in manifest_dict.items():
-                        ws_m.append([str(k), str(v)])
-                    atomic_save_workbook(wb_m, excel_path)
-                except (ImportError, OSError, ValueError, TypeError, RuntimeError) as exc:
-                    self.logger.warning("STRAT manifest Excel sheet injection skipped: %s", exc)
+                        wb_m = openpyxl.load_workbook(excel_path)
+                        if "Manifest" in wb_m.sheetnames:
+                            del wb_m["Manifest"]
+                        ws_m = wb_m.create_sheet("Manifest")
+                        ws_m.append(["Key", "Value"])
+                        for k, v in manifest_dict.items():
+                            ws_m.append([str(k), str(v)])
+                        atomic_save_workbook(wb_m, excel_path)
+                    except (ImportError, OSError, ValueError, TypeError, RuntimeError) as exc:
+                        self.logger.warning("STRAT manifest Excel sheet injection skipped: %s", exc)
                 try:
                     manifest_path = str(Path(report_dir) / f"{base_name}.manifest.json")
                     with atomic_open(manifest_path, "w", encoding="utf-8") as mf:
                         json.dump(manifest_dict, mf, ensure_ascii=False, indent=2)
+                    saved_items.append("Manifest")
                 except (OSError, ValueError, TypeError) as exc:
-                    self.logger.warning("STRAT manifest JSON write skipped: %s", exc)
-
-            self.logger.info("✅ Excel report saved: %s", excel_path)
+                    failed_items.append("Manifest")
+                    self.logger.warning("STRAT manifest JSON write failed: %s", exc)
 
             # 2. Generate HTML Report
             self.logger.info("[DEBUG-UI] Saving HTML report...")
@@ -385,14 +420,21 @@ class CertusStratExportMixin:
 
             all_sections = methodology_sections + sections
 
-            if generate_html_report(html_path, "CERTUS-STRAT Report", all_sections, figures):
-                self.logger.info("✅ HTML report saved: %s", html_path)
-                self._reports_exported = True
+            try:
+                if generate_html_report(html_path, "CERTUS-STRAT Report", all_sections, figures):
+                    self.logger.info("✅ HTML report saved: %s", html_path)
+                    saved_items.append("HTML")
+                else:
+                    self.logger.error("HTML export returned False: %s", html_path)
+                    failed_items.append("HTML")
+            except (*NUMERICAL_FAULT_EXCEPTIONS, OSError, TypeError) as exc:
+                failed_items.append("HTML")
+                self.logger.error("HTML export failed: %s", exc, exc_info=True)
 
-            self.status_label.setText(f"✓ Saved: {base_name}")
-            self.logger.info("[DEBUG-UI] on_excel_ready completed successfully.")
+            self._report_export_outcome(base_name, saved_items, failed_items, report_dir)
+            self.logger.info("[DEBUG-UI] on_excel_ready completed.")
 
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
+        except (*NUMERICAL_FAULT_EXCEPTIONS, OSError, TypeError) as e:
             self.logger.error("❌ Error during auto-export: %s", e, exc_info=True)
 
     def _write_export_excel(
@@ -403,7 +445,7 @@ class CertusStratExportMixin:
         report_dir: str,
         manifest_dict: dict,
         base_name: str,
-    ) -> None:
+    ) -> bool:
         """Build the auto-export Excel workbook (Summary + Top Strategies + Best
         Structure + Layer Extrema + optional Manifest sheet) and write it to
         ``excel_path``. Also persist the manifest as a side-car JSON next to it
@@ -548,15 +590,18 @@ class CertusStratExportMixin:
                 manifest_path = str(Path(report_dir) / f"{base_name}.manifest.json")
                 with atomic_open(manifest_path, "w", encoding="utf-8") as mf:
                     json.dump(manifest_dict, mf, ensure_ascii=False, indent=2)
+                return True
             except (OSError, ValueError, TypeError) as exc:
-                self.logger.warning("STRAT manifest JSON write skipped: %s", exc)
+                self.logger.warning("STRAT manifest JSON write failed: %s", exc)
+                return False
+        return True
 
     def _write_export_html(
         self,
         strats: list,
         rmse_val: float,
         html_path: str,
-    ) -> None:
+    ) -> bool:
         """Build the auto-export HTML report (overview, methodology, top
         strategies and inline figures) and write it to ``html_path``. Behavior
         is preserved bit-for-bit from the legacy inline implementation."""
@@ -646,8 +691,12 @@ class CertusStratExportMixin:
         if hasattr(self, "plot_spectrum") and self.plot_spectrum:
             figures.append(self.plot_spectrum)
 
-        if generate_html_report(html_path, "CERTUS-STRAT Report", all_sections, figures):
+        ok = bool(generate_html_report(html_path, "CERTUS-STRAT Report", all_sections, figures))
+        if ok:
             self.logger.info(f"✅ HTML saved: {Path(html_path).name}")
+        else:
+            self.logger.error("HTML export returned False: %s", html_path)
+        return ok
 
     def _auto_export_results(self) -> Any:
         """Self-export results without worker signal"""
@@ -742,29 +791,42 @@ class CertusStratExportMixin:
                     self.status_label.setText("Export blocked: incomplete manifest")
                 return
 
+            saved_items: list[str] = []
+            failed_items: list[str] = []
+
             # 1. EXCEL EXPORT
 
             try:
                 self.logger.info("[DEBUG-UI] Writing Excel report...")
-                self._write_export_excel(strats, rmse_val, excel_path, report_dir, manifest_dict, base_name)
+                manifest_ok = self._write_export_excel(strats, rmse_val, excel_path, report_dir, manifest_dict, base_name)
+                saved_items.append("Excel")
+                if manifest_dict:
+                    (saved_items if manifest_ok is not False else failed_items).append("Manifest")
                 self.logger.info("[DEBUG-UI] Excel report written successfully.")
 
-            except NUMERICAL_FAULT_EXCEPTIONS as e:
+            except (*NUMERICAL_FAULT_EXCEPTIONS, OSError, TypeError) as e:
+                failed_items.append("Excel")
+                if manifest_dict:
+                    failed_items.append("Manifest")
                 self.logger.error(f"Excel export failed:{e}")
 
             # 2. HTML EXPORT
 
             try:
                 self.logger.info("[DEBUG-UI] Writing HTML report...")
-                self._write_export_html(strats, rmse_val, html_path)
-                self.logger.info("[DEBUG-UI] HTML report written successfully.")
+                if self._write_export_html(strats, rmse_val, html_path):
+                    saved_items.append("HTML")
+                    self.logger.info("[DEBUG-UI] HTML report written successfully.")
+                else:
+                    failed_items.append("HTML")
 
-            except NUMERICAL_FAULT_EXCEPTIONS as e:
+            except (*NUMERICAL_FAULT_EXCEPTIONS, OSError, TypeError) as e:
+                failed_items.append("HTML")
                 self.logger.error(f"HTML export failed:{e}", exc_info=True)
 
-            self.status_label.setText(f"✓ Saved: {base_name}")
+            self._report_export_outcome(base_name, saved_items, failed_items, report_dir)
             self.logger.info("[DEBUG-UI] _auto_export_results completed.")
 
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
+        except (*NUMERICAL_FAULT_EXCEPTIONS, OSError, TypeError) as e:
             self.logger.error(f"❌ Self-export error:{e}", exc_info=True)
 

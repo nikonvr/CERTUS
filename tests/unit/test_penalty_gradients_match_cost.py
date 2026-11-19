@@ -12,7 +12,7 @@ from certus.physics.gradient_oblique import compute_gradient_all_layers_analytic
 @pytest.mark.unit
 def test_front_only_min_thickness_penalty_gradient_matches_cost_fd() -> None:
     wls = np.linspace(500.0, 900.0, 11, dtype=np.float64)
-    ep = np.array([12.0, 80.0, 100.0], dtype=np.float64)  # ep[0] < min_d=20.0
+    ep = np.array([19.9, 80.0, 100.0], dtype=np.float64)  # ep[0] < min_d=20.0 (avoid ULP masking on large penalty)
     n_layers = np.broadcast_to(np.array([2.2 + 0j, 1.46 + 0j, 2.2 + 0j], dtype=np.complex128), (len(wls), 3)).copy()
     n_sub = np.full(len(wls), 1.52 + 0j, dtype=np.complex128)
     tgt_vals = np.full(len(wls), 0.85, dtype=np.float64)
@@ -23,7 +23,7 @@ def test_front_only_min_thickness_penalty_gradient_matches_cost_fd() -> None:
         np.zeros((len(wls), 0), dtype=np.complex128), np.zeros(0, dtype=np.float64),
     )
 
-    eps = 1e-5
+    eps = 1e-3
     fd = np.zeros_like(ep)
     for i in range(len(ep)):
         ep_up = ep.copy()

@@ -3,7 +3,7 @@ from numba import njit, prange
 
 from certus.domain.constants import TWO_PI
 from certus.physics.certus_inputs import require_finite, require_layers_below_overflow
-from certus.physics.certus_opt_tmm import _scaled_phase_cos_isin, compute_RT_from_matrix, compute_TMM_generic
+from certus.physics.certus_opt_tmm import _compute_TMM_generic_rescaled, compute_RT_from_matrix, compute_TMM_generic
 from certus.physics.certus_substrate_absorption import (
     DEFAULT_SUBSTRATE_THICKNESS_NM,
     substrate_internal_transmittance,
@@ -75,46 +75,55 @@ def compute_TMM_single_point_k0(
 
     n_layers = len(thicknesses)
 
+    total_imag = 0.0
+    for i in range(n_layers):
+        total_imag += abs(n_layers_complex[i].imag) * abs(thicknesses[i])
+    if k0 * total_imag > 200.0:
+        return _compute_TMM_generic_rescaled(k0, thicknesses, n_layers_complex, complex(n0), n_sub)
+
     M00 = 1.0 + 0j
+
     M01 = 0.0 + 0j
+
     M10 = 0.0 + 0j
+
     M11 = 1.0 + 0j
-    log_scale = 0.0
+
+    I_VAL = +1j
 
     for i in range(n_layers):
         n_c = n_layers_complex[i]
+
         # -- Safety guard n-ik --
+
         if n_c.imag > 0.0:
             n_c = n_c.real - 1j * n_c.imag
 
         phi = k0 * n_c * thicknesses[i]
-        cp, isp, layer_log_s = _scaled_phase_cos_isin(phi)
-        log_scale += layer_log_s
+
+        cp = np.cos(phi)
+
+        isp = I_VAL * np.sin(phi)
+
         m01 = isp / n_c if abs(n_c) > 1e-12 else 0.0 + 0j
+
         m10 = isp * n_c
 
         # Pre-multiplication: M_new = L @ M_old (index 0 = substrate side)
+
         t00 = cp * M00 + m01 * M10
+
         t01 = cp * M01 + m01 * M11
+
         t10 = m10 * M00 + cp * M10
+
         t11 = m10 * M01 + cp * M11
+
         M00, M01, M10, M11 = t00, t01, t10, t11
 
-        max_m = max(abs(M00), abs(M01), abs(M10), abs(M11))
-        if max_m > 1e100:
-            inv_m = 1.0 / max_m
-            M00 *= inv_m
-            M01 *= inv_m
-            M10 *= inv_m
-            M11 *= inv_m
-            log_scale += np.log(max_m)
-
     # Delegate to factored helper: Air(n0=1) -> Sub(n_sub)
-    if log_scale == 0.0:
-        return compute_RT_from_matrix(M00, M01, M10, M11, complex(n0), n_sub)
-    R, T_scaled = compute_RT_from_matrix(M00, M01, M10, M11, complex(n0), n_sub)
-    T = 0.0 if log_scale > 350.0 else T_scaled * np.exp(-2.0 * log_scale)
-    return R, T
+
+    return compute_RT_from_matrix(M00, M01, M10, M11, complex(n0), n_sub)
 
 
 # --- LOCKED --- Validated by test_tmm_coherence.py ───

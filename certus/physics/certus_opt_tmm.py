@@ -49,6 +49,58 @@ def _scaled_phase_cos_isin(phi: complex) -> tuple[complex, complex, float]:
 
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
+def _compute_TMM_generic_rescaled(
+    k0: float,
+    thicknesses: np.ndarray,
+    n_layers_complex: np.ndarray,
+    n_inc: complex,
+    n_sub: complex,
+) -> tuple[float, float]:
+    """Overflow-safe TMM path using phase rescaling and matrix normalization."""
+    M00 = 1.0 + 0.0j
+    M01 = 0.0 + 0.0j
+    M10 = 0.0 + 0.0j
+    M11 = 1.0 + 0.0j
+    log_scale = 0.0
+
+    for i in range(len(thicknesses)):
+        n_c = n_layers_complex[i]
+        if n_c.imag > 0.0:
+            n_c = n_c.real - 1j * n_c.imag
+
+        phi = k0 * n_c * thicknesses[i]
+        cp, isp, layer_log_s = _scaled_phase_cos_isin(phi)
+        log_scale += layer_log_s
+
+        if abs(n_c) > 1e-12:
+            m01 = isp / n_c
+        else:
+            m01 = 0.0 + 0.0j
+
+        m10 = isp * n_c
+        t00 = cp * M00 + m01 * M10
+        t01 = cp * M01 + m01 * M11
+        t10 = m10 * M00 + cp * M10
+        t11 = m10 * M01 + cp * M11
+
+        M00, M01, M10, M11 = t00, t01, t10, t11
+        max_m = max(abs(M00), abs(M01), abs(M10), abs(M11))
+        if max_m > 1e100:
+            inv_m = 1.0 / max_m
+            M00 *= inv_m
+            M01 *= inv_m
+            M10 *= inv_m
+            M11 *= inv_m
+            log_scale += np.log(max_m)
+
+    if log_scale == 0.0:
+        return compute_RT_from_matrix(M00, M01, M10, M11, n_inc, n_sub)
+    R, T_scaled = compute_RT_from_matrix(M00, M01, M10, M11, n_inc, n_sub)
+    T = 0.0 if log_scale > 350.0 else T_scaled * np.exp(-2.0 * log_scale)
+    return R, T
+
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def compute_TMM_generic(
     k0: float,
     thicknesses: np.ndarray,
@@ -72,52 +124,61 @@ def compute_TMM_generic(
 
       - Complex clues: n̂ = n - ik (imag <= 0 for absorption)."""
 
+    total_imag = 0.0
+    for i in range(len(thicknesses)):
+        total_imag += abs(n_layers_complex[i].imag) * abs(thicknesses[i])
+    if k0 * total_imag > 200.0:
+        return _compute_TMM_generic_rescaled(k0, thicknesses, n_layers_complex, n_inc, n_sub)
+
     M00 = 1.0 + 0.0j
+
     M01 = 0.0 + 0.0j
+
     M10 = 0.0 + 0.0j
+
     M11 = 1.0 + 0.0j
-    log_scale = 0.0
+
+    I_VAL = +1j
 
     for i in range(len(thicknesses)):
         n_c = n_layers_complex[i]
+
         # -- SAFEGUARD n-ik: force Macleod convention --
+
         # If imag > 0 (non-physical gain), we silently correct.
+
         if n_c.imag > 0.0:
             n_c = n_c.real - 1j * n_c.imag  # n+ik -> n-ik
 
         phi = k0 * n_c * thicknesses[i]
-        cp, isp, layer_log_s = _scaled_phase_cos_isin(phi)
-        log_scale += layer_log_s
+
+        cp = np.cos(phi)
+
+        isp = I_VAL * np.sin(phi)  # factor i*sin(phi) once
 
         if abs(n_c) > 1e-12:
             m01 = isp / n_c
+
         else:
             m01 = 0.0 + 0.0j
 
         m10 = isp * n_c
 
         # M_new = L @ M_old  (cp == L00 == L11, diagonal symmetry)
+
         t00 = cp * M00 + m01 * M10
+
         t01 = cp * M01 + m01 * M11
+
         t10 = m10 * M00 + cp * M10
+
         t11 = m10 * M01 + cp * M11
 
         M00, M01, M10, M11 = t00, t01, t10, t11
-        max_m = max(abs(M00), abs(M01), abs(M10), abs(M11))
-        if max_m > 1e100:
-            inv_m = 1.0 / max_m
-            M00 *= inv_m
-            M01 *= inv_m
-            M10 *= inv_m
-            M11 *= inv_m
-            log_scale += np.log(max_m)
 
     # Delegate to factored helper (single source of truth for R/T extraction)
-    if log_scale == 0.0:
-        return compute_RT_from_matrix(M00, M01, M10, M11, n_inc, n_sub)
-    R, T_scaled = compute_RT_from_matrix(M00, M01, M10, M11, n_inc, n_sub)
-    T = 0.0 if log_scale > 350.0 else T_scaled * np.exp(-2.0 * log_scale)
-    return R, T
+
+    return compute_RT_from_matrix(M00, M01, M10, M11, n_inc, n_sub)
 
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")

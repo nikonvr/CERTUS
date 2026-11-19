@@ -51,8 +51,8 @@ def test_tmm_thick_opaque_layer_does_not_overflow() -> None:
 def test_tmm_thick_absorbing_slab_preserves_exact_non_zero_transmittance() -> None:
     wl = 500.0
     k0 = 2.0 * np.pi / wl
-    d = 6000.0
-    n_layer = complex(1.5, -1.0)  # |phi_i| = k0 * 1.0 * 6000 ~ 75.4 > 50, exp(-2*|phi_i|) ~ 3.3e-66 > 0
+    d = 18000.0
+    n_layer = complex(1.5, -1.0)  # |phi_i| = k0 * 1.0 * 18000 ~ 226.2 > 200, exp(-2*|phi_i|) ~ 1.4e-197 > 0
     n0 = 1.0 + 0j
     ns = 1.52 + 0j
     thicknesses = np.array([d], dtype=np.float64)

@@ -124,7 +124,7 @@ def cost_numba_fast(
 
         # Exact incoherent: T = (Tf * Tb) / (1 - Rf' * Rb')
         n_wls = len(wls)
-        T = np.empty(n_wls, dtype=wls.dtype)
+        T = np.empty(n_wls, dtype=np.float64)
 
         for i in prange(n_wls):
             d_val = 1.0 - Rf_prime[i] * Rb_prime[i]

@@ -249,8 +249,8 @@ def calculate_RT_with_backside_fused(
     """
     n_wls = len(wls)
     k0_arr = TWO_PI / wls
-    R_total = np.empty(n_wls, dtype=wls.dtype)
-    T_total = np.empty(n_wls, dtype=wls.dtype)
+    R_total = np.empty(n_wls, dtype=np.float64)
+    T_total = np.empty(n_wls, dtype=np.float64)
     d_rev = thicknesses[::-1].copy()
 
     for i in prange(n_wls):
@@ -378,9 +378,9 @@ def calculate_RT_no_backside(
 
     k0_arr = TWO_PI / wls
 
-    R_arr = np.empty(n_wls, dtype=wls.dtype)
+    R_arr = np.empty(n_wls, dtype=np.float64)
 
-    T_arr = np.empty(n_wls, dtype=wls.dtype)
+    T_arr = np.empty(n_wls, dtype=np.float64)
 
     for i in prange(n_wls):
         R, T = compute_TMM_single_point_k0(k0_arr[i], thicknesses, n_layers_all_wls[i], n_substrate_all_wls[i])

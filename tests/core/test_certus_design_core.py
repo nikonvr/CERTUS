@@ -86,8 +86,9 @@ def test_design_compute_oblique_error_common_no_weight():
     app._oblique_configs = [
         {
             "wls_config": np.array([500.0]),
-            "n_layers_T_config": np.zeros((1, 1), dtype=np.complex128),
-            "n_sub_config": np.zeros(1, dtype=np.complex128),
+            # Physical indices: a substrate of n <= 0 is refused at the door since D114 (2026-11-19).
+            "n_layers_T_config": np.full((1, 1), 1.9, dtype=np.complex128),
+            "n_sub_config": np.full(1, 1.52, dtype=np.complex128),
             "angle": 0.0,
             "pol": "s",
             "sw_cfg": np.array([1.0]),

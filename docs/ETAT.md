@@ -12,8 +12,7 @@
 > L'état présent seulement ; l'historique est dans `git log` et `reports/`. À la demande : actions ouvertes et protocole de mesure
 > ([`CHANTIERS_RESTANTS.md`](CHANTIERS_RESTANTS.md)), vocabulaire du Rate ([`ETAT_acquis.md`](ETAT_acquis.md)), preuves dans `reports/`.
 
-**Liste active** : [chantiers](CHANTIERS_RESTANTS.md), les ouverts seulement. Reprise de la campagne 49 :
-[REPRISE](../reports/chantier49_2026-11-18/REPRISE.md). La grille automatique et la sélection robuste de DESIGN sont
+**Liste active** : [chantiers](CHANTIERS_RESTANTS.md), les ouverts seulement. La grille automatique et la sélection robuste de DESIGN sont
 optionnelles ; le [guide DESIGN](../pages/CERTUS_DESIGN.html#design-robust-search) décrit leur activation et leurs limites.
 
 **Clone de travail** : `C:\dev\certus1111`, hors de Google Drive ; l'ancien clone sous

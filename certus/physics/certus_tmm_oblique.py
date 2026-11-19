@@ -173,49 +173,50 @@ def _calc_spectrum_oblique_parallel(
 
             # Optical admittance
 
-            if is_s_pol:
-                eta_layer = n_layer * cos_theta_layer
-
+            if abs(cos_theta_layer) < SMALL_EPSILON:
+                cp = complex(1.0, 0.0)
+                if is_s_pol:
+                    L01 = 1j * k * d
+                    L10 = complex(0.0, 0.0)
+                else:
+                    L01 = complex(0.0, 0.0)
+                    L10 = 1j * k * n_layer * n_layer * d
             else:
-                if abs(cos_theta_layer) < SMALL_EPSILON:
+                if is_s_pol:
+                    eta_layer = n_layer * cos_theta_layer
+                else:
+                    eta_layer = n_layer / cos_theta_layer
+
+                # Phase
+
+                phi = k * n_layer * d * cos_theta_layer
+
+                phi_r = phi.real
+
+                phi_i = phi.imag
+
+                # Stable complex trig
+
+                cos_phi_real, cos_phi_imag, sin_phi_real, sin_phi_imag = compute_complex_phase_components(phi_r, phi_i)
+
+                cp = complex(cos_phi_real, cos_phi_imag)
+
+                sp = complex(sin_phi_real, sin_phi_imag)
+
+                if abs(eta_layer) < SMALL_EPSILON:
                     R[i] = 1.0
 
                     T[i] = 0.0
 
                     break
 
-                eta_layer = n_layer / cos_theta_layer
+                # Macleod: L01 = i * sin / eta, L10 = i * eta * sin
 
-            # Phase
+                # Phase factor +1j
 
-            phi = k * n_layer * d * cos_theta_layer
+                L01 = 1j * sp / eta_layer
 
-            phi_r = phi.real
-
-            phi_i = phi.imag
-
-            # Stable complex trig
-
-            cos_phi_real, cos_phi_imag, sin_phi_real, sin_phi_imag = compute_complex_phase_components(phi_r, phi_i)
-
-            cp = complex(cos_phi_real, cos_phi_imag)
-
-            sp = complex(sin_phi_real, sin_phi_imag)
-
-            if abs(eta_layer) < SMALL_EPSILON:
-                R[i] = 1.0
-
-                T[i] = 0.0
-
-                break
-
-            # Macleod: L01 = i * sin / eta, L10 = i * eta * sin
-
-            # Phase factor +1j
-
-            L01 = 1j * sp / eta_layer
-
-            L10 = 1j * eta_layer * sp
+                L10 = 1j * eta_layer * sp
 
             # L00 = L11 = cp
 
@@ -453,27 +454,32 @@ def _oblique_stack_rt_single(
 
         cos_theta_layer = np.sqrt(1.0 - sin_theta_layer * sin_theta_layer)
 
-        if is_s_pol:
-            eta_layer = n_layer * cos_theta_layer
-
+        if abs(cos_theta_layer) < SMALL_EPSILON:
+            cp = complex(1.0, 0.0)
+            if is_s_pol:
+                L01 = 1j * k * d_layers[j]
+                L10 = complex(0.0, 0.0)
+            else:
+                L01 = complex(0.0, 0.0)
+                L10 = 1j * k * n_layer * n_layer * d_layers[j]
         else:
-            if abs(cos_theta_layer) < SMALL_EPSILON:
+            if is_s_pol:
+                eta_layer = n_layer * cos_theta_layer
+            else:
+                eta_layer = n_layer / cos_theta_layer
+
+            if abs(eta_layer) < SMALL_EPSILON:
                 return 1.0, 0.0
 
-            eta_layer = n_layer / cos_theta_layer
+            phi = k * n_layer * d_layers[j] * cos_theta_layer
 
-        if abs(eta_layer) < SMALL_EPSILON:
-            return 1.0, 0.0
+            cp = np.cos(phi)
 
-        phi = k * n_layer * d_layers[j] * cos_theta_layer
+            sp = np.sin(phi)
 
-        cp = np.cos(phi)
+            L01 = 1j * sp / eta_layer
 
-        sp = np.sin(phi)
-
-        L01 = 1j * sp / eta_layer
-
-        L10 = 1j * eta_layer * sp
+            L10 = 1j * eta_layer * sp
 
         t00 = cp * M00 + L01 * M10
 
@@ -593,33 +599,38 @@ def oblique_front_char_matrix_single(
 
         cos_theta_layer = np.sqrt(cos_theta_layer_sq)
 
-        if is_s_pol:
-            eta_layer = n_layer * cos_theta_layer
-
+        if abs(cos_theta_layer) < SMALL_EPSILON:
+            cp = complex(1.0, 0.0)
+            if is_s_pol:
+                L01 = 1j * k * d_layers[j]
+                L10 = complex(0.0, 0.0)
+            else:
+                L01 = complex(0.0, 0.0)
+                L10 = 1j * k * n_layer * n_layer * d_layers[j]
         else:
-            if abs(cos_theta_layer) < SMALL_EPSILON:
+            if is_s_pol:
+                eta_layer = n_layer * cos_theta_layer
+            else:
+                eta_layer = n_layer / cos_theta_layer
+
+            if abs(eta_layer) < SMALL_EPSILON:
                 return complex(1.0, 0.0), complex(0.0, 0.0), complex(0.0, 0.0), complex(1.0, 0.0)
 
-            eta_layer = n_layer / cos_theta_layer
+            phi = k * n_layer * d_layers[j] * cos_theta_layer
 
-        if abs(eta_layer) < SMALL_EPSILON:
-            return complex(1.0, 0.0), complex(0.0, 0.0), complex(0.0, 0.0), complex(1.0, 0.0)
+            phi_r = phi.real
 
-        phi = k * n_layer * d_layers[j] * cos_theta_layer
+            phi_i = phi.imag
 
-        phi_r = phi.real
+            cos_phi_real, cos_phi_imag, sin_phi_real, sin_phi_imag = compute_complex_phase_components(phi_r, phi_i)
 
-        phi_i = phi.imag
+            cp = complex(cos_phi_real, cos_phi_imag)
 
-        cos_phi_real, cos_phi_imag, sin_phi_real, sin_phi_imag = compute_complex_phase_components(phi_r, phi_i)
+            sp = complex(sin_phi_real, sin_phi_imag)
 
-        cp = complex(cos_phi_real, cos_phi_imag)
+            L01 = 1j * sp / eta_layer
 
-        sp = complex(sin_phi_real, sin_phi_imag)
-
-        L01 = 1j * sp / eta_layer
-
-        L10 = 1j * eta_layer * sp
+            L10 = 1j * eta_layer * sp
 
         t00 = cp * M00 + L01 * M10
 

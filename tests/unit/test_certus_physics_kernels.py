@@ -61,9 +61,8 @@ def test_epsilon_to_nk():
     assert np.isclose(n_arr[1], np.sqrt(0.5))
     assert np.isclose(k_arr[1], np.sqrt(0.5))
     
-    # is_valid should be False because sqrt(0.5) < n_min=1.0
-    # Due to a Numba prange assignment bug in the original code, is_valid returns True
-    assert is_valid is True
+    # is_valid must be False because sqrt(0.5) < n_min=1.0 (fixed in 698148c8 via prange reduction)
+    assert is_valid is False
 
 def test_epsilon1_TL_analytic():
     # Test valid TL parameter evaluation

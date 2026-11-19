@@ -15,3 +15,4 @@ python scripts\orient.py
 4. **Lire ciblé** (`offset`, `limit`) ; ne pas relire ce qu'on vient d'écrire ; préférer Read/Grep.
 5. **Une action, son résultat, la suivante** : ni agents ni mesures en parallèle.
 6. **Écrire court** : un fait, un seul endroit ; rapport de campagne dans `reports/`.
+7. **Répertoire unique** : rester exclusivement dans le dépôt Drive `certus1111` (jamais ailleurs, ex. `C:\dev`).

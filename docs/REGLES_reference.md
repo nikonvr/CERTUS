@@ -6,13 +6,14 @@ Complément de [`CLAUDE.md`](../CLAUDE.md) (même numérotation `CLAUDE.md §N`)
 
 - `preflight.py` vérifie l'import `certus` et ses dépendances sans chemin en dur.
 - Committer est local : le hook `.githooks/post-commit` ne s'active que via `git config core.hooksPath .githooks`. Vérifier `git config --get core.hooksPath` et `git status -sb`. Les données de 👤 sont son choix.
+- **Consigne absolue (👤 2026-11-19)** : rester exclusivement dans le dépôt Drive `certus1111` (`D:\drivfl`), ne jamais cloner/déplacer ailleurs (ex. `C:\dev`). Lire avec `git --no-optional-locks` ; purger un `.git\index.lock` vide ancien avant un commit.
 
 ## 2. Valider — pièges
 
 - Un échec isolé au premier run sur arbre neuf peut venir du cache Numba : relancer une fois avant de conclure.
 - Test Qt mort sans traceback = worker encore actif : relancer avec `QT_FORCE_STDERR_LOGGING=1` et `-s`. Vert seul / rouge en suite = état partagé.
 - Tout module typé dans `domain`/`physics`/`core` suit `tests/architecture_debt.json`.
-- Itérer : `python scripts\verify_changed.py` (`--list` explique ; `VERIF_CIBLEE=GO` suffit pour un commit local ; suite entière pour une fusion).
+- Itérer : `python scripts\verify_changed.py` (`--list` explique ; `VERIF_CIBLEE=GO` suffit pour un commit local ; suite entière pour une fusion) ; suite rapide : `python scripts\validate_parallel.py` (`VALIDATION=GO`).
 - Après modif du gel ou d'un point d'entrée de STRAT : `powershell tools\build_frozen.ps1` puis `python tools\release_checks.py --check-frozen --check-frozen-run`. Nettoyer `dist/` et `build/`, jamais `reports/`.
 
 ## 5. C1 au bit — mode d'emploi de `c1_diff`

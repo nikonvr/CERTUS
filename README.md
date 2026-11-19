@@ -9,9 +9,9 @@ reference (`tests/oracle/`): a silent error here is a wrong filter that someone 
 | **DESIGN** | synthesis: stochastic global optimization (PGLOBAL), needle insertion, analytic gradients |
 | **STRAT** | manufacturing: predictive monitoring strategy, error self-compensation |
 | **INDEX**, **INDEX SPLINE** | n, k extraction: Tauc-Lorentz (Kramers-Kronig consistent), or piecewise-linear splines |
-| **RE** | reverse engineering of refractive indices from experimental curves |
+| **RE** | reverse engineering of deposition parameters (thicknesses, tooling, calibration) from experimental spectra |
 | **FIELD** | electric-field profile and LIDT optimization |
-| **METAL SINGLE**, **METAL BILAYER** | metal strategies on transparent and on opaque substrates |
+| **METAL SINGLE**, **METAL BILAYER** | optical constant (n, k) and thickness extraction for metallic films on transparent or opaque substrates |
 | **SMOOTHER**, **SUBSTRATE INDEX** | smoothing of spectral data; refractive index of a substrate |
 
 ## Run
@@ -26,7 +26,7 @@ python scripts/preflight.py     # must end with PREFLIGHT=GO
 python CERTUS_HUB.py            # the launcher; or CERTUS_DESIGN.py, CERTUS_STRAT.py, ...
 ```
 
-`pip install -r requirements.lock` installs the same set, with hashes. Windows is the development and release platform.
+Windows is the development and release platform.
 
 ## Test
 
@@ -37,6 +37,6 @@ python -m pytest tests/unit/ -q --no-cov
 
 ## More
 
-- Method pages, to open in a browser: [`pages/CERTUS_DESIGN.html`](pages/CERTUS_DESIGN.html), [`pages/CERTUS_STRAT.html`](pages/CERTUS_STRAT.html).
+- Method pages, to open in a browser: [`pages/CERTUS_HUB.html`](pages/CERTUS_HUB.html) (index of all modules), [`pages/CERTUS_DESIGN.html`](pages/CERTUS_DESIGN.html), [`pages/CERTUS_STRAT.html`](pages/CERTUS_STRAT.html).
 - Working rules: [`CLAUDE.md`](CLAUDE.md). State of the project (measured figures, decisions, open defects): [`docs/ETAT.md`](docs/ETAT.md).
 - Licence: GPL-3.0-only ([`LICENSE`](LICENSE)); third-party notices: [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

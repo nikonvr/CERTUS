@@ -1,20 +1,20 @@
 # Chantiers restants — 19 novembre 2026
 
-Chantiers ouverts uniquement (les clos sortent de la page ; bilans dans `reports/`). Dépendances priment sur l'ordre ; profilage avant modif de gradients ; premier pas d'une session, mesurable, avec critère d'arrêt.
+Ouverts seuls (archivés : **31**, **32**, **26** ; bilans : `reports/`). Dépendances d'abord ; C3 (`CLAUDE.md §5`) ; valider entre lots. Décisions 👤 (19/11) : `ValueError` stricte (D108/D109/D114), retrait `ε1 ≥ 1`, `strat_local_search_fresh_id` actif, P3 écartés, **rester dans le dépôt Drive `certus1111`**.
 
-- **Décisions 👤 (15/11)** : graphes inchangés ; modèle de dépôt = `example/example_strat/JSON-strat-example.json` (31, 32) ; 41 trié en local par 👤 (rien sur GitHub).
-- **Décisions 👤 (17/11)** ([audit](../reports/audit_chantiers_2026-11-17_soir/bilan.md)) : 31 et 32 jugés sur [bilan 49](../reports/chantier49_2026-11-18/bilan.md) ; 05, 21, 41 indépendants ; 31 en session dédiée ; 33 bloqué (essais humains).
+| Lot | Prio | Chantier | Contenu et garde-fous | Fin ou arrêt | Src |
+|---|---|---|---|---|---|
+| **1a** | P1 | CI (D110) | Ajouter `pytest-benchmark`, `pytest-xdist`, `mypy` (`pyproject.toml` `dev`) + `uv.lock`/`requirements.lock` ; 3 scripts doc (`lint.yml`) ; `mypy` bloquant (`tests.yml`), `bench_kernels` non bloquant. | CI verte PR/push. | G |
+| **1b** | P1 | Entrées (D108/D109/D114) | `ValueError` sur `NaN`/`Inf` (`get_nk_from_spline`), `d < 0`, `k < 0`, `n_sub <= 0` en amont Python des noyaux `fastmath` (`optim_prepare_stack_nk_back`, `xyz_from_spectrum`, TMM) ; tests rouges + `c1_diff.py HEAD`. | Invalides refusés ; optimiseurs + 0 bit OK. | G |
+| **2a** | P2 | Plancher `ε1 ≥ 1` | Retirer `max(val, 1.0)` dans `epsilon1_TL_analytic` et `_compute_epsilon1_gradient_kernel` ; MAJ tests plancher + vérif `epsilon_to_nk` et 4 ex. | KK + gradient exacts. | — |
+| **2b** | P2 | `strat_local_search_fresh_id` | Activer par défaut (exception C1 dans `ETAT.md` §3 au commit) : `strategy_id` unique. | Identifiants uniques ; tests verts. | — |
+| **2c** | P2 | SUBSTRATE (05 réduit) | Valider `sellmeier_ir_pole` sur `example/exemple_substrate_index/exemple_substrate_index.xlsx` et `example/database_index/indices RT substrats.xlsx` (Jacobien std écarté). | Bilan dans `reports/`. | [05](../reports/chantier05_2026-11-18/bilan.md) |
+| **2d** | P2 | Base dépôts | Apparier T/R ; option TLU pleine plage `> 2200 nm` (C1 off) ; dépôt dans RE (`load_reverse_engineering_from_path`). | `bench_base_depots.py` + tests verts. | [db](../example/database_depots/README.md) |
+| **3** | P2 | Repères & gel | Remesurer 6 bancs + 99c (`ETAT.md` §2), puis gel (`tools\build_frozen.ps1` + `release_checks.py`). | `ETAT.md` §2 à jour + gel vert. | — |
+| **4** | P3 | SPLINE (21) | Chronométrer nœuds libres + Smart Init (`TOTAL`, `TSIO2`) ; seuil > 20 % et > 5 s. | Dérivées si seuil franchi, sinon archiver 21. | [21](../reports/chantier21_2026-11-19/bilan.md) |
 
-| Ordre | Priorité | Complexité | Chantier | État / Premier pas | Fin ou arrêt | Src |
-|---:|---|---|---|---|---|---|
-| 31 | P2 | Très forte | Co-conception B : épaisseurs et plan ensemble | [Bilan 49](../reports/chantier49_2026-11-18/bilan.md) : biais par couche = 6,9 % (nominal) / 2,6 % (robuste) de l'erreur². `native_evaluator` fige les épaisseurs nominales : chaque pas reconstruit l'évaluateur. Inactif par défaut (C1). | Archivé si 49 sans marge ; sinon gain sur 3 graines sans arrêt ajouté. | A §1.4 |
-| 32 | P3 | Moyenne | Co-conception C : contrôlabilité dans DESIGN | [Bilan 49](../reports/chantier49_2026-11-18/bilan.md) : seulement 2 plans, insuffisant pour corréler marges/dynamiques au SEEL. | Archivé si corrélation faible ; sinon critère proposé à 👤. | A §1.4 |
-| 05 | P3 | Moyenne | Ajustement Sellmeier SUBSTRATE (D6) | Tester `sellmeier_ir_pole` sur indice mesuré ([bilan](../reports/chantier05_2026-11-18/bilan.md)), puis Jacobien analytique de la variante standard. | Jacobien gardé s'il accélère. | A §4 |
-| 41 | P3 | Faible (👤) | PR Dependabot | Cinq PR CI (#10–#14 : `codeql-action`, `upload-artifact`, `setup-uv`). | 👤 fusionne ou ferme. | G §2.8 |
-| 21 | P3 | Forte | Dérivées SPLINE (D4/D5) | Profil puis dérivées des nœuds libres et du Smart Init ([bilan](../reports/chantier21_2026-11-19/bilan.md)). | Vérifier cas limites + replis ; garder si plus rapide. | A §4 |
-| 33 | P1 | Validation humaine | U13 : écran réel, Narrateur, 5 utilisateurs | Partie machine prête (`U13_protocole.md`). | Bloqué : date, testeurs, matériel. | U13 |
+- **Hors-IA (👤)** : 5 PR Dependabot #10–#14 (41, GitHub) ; essais U13 (33, [protocole](../reports/refactor_corridors_2026-11-11/U13_protocole.md)) ; Zenodo `certus_re` & Tikhonravov 1996.
 
 ## Sources
 
-- **A** : [audit 13/11](../reports/audits_2026-11-13/bilan.md) · **U13** : [protocole](../reports/refactor_corridors_2026-11-11/U13_protocole.md) · **G** : [audit général 14/11](../reports/audit_general_2026-11-14/bilan.md).
-- Chantier 26 gelé tant que les écarts/plantages du cache Numba restent ouverts.
+- **G** : [audit général 14/11](../reports/audit_general_2026-11-14/bilan.md) · [audit 13/11](../reports/audits_2026-11-13/bilan.md) · [bilan 49](../reports/chantier49_2026-11-18/bilan.md).

@@ -59,7 +59,7 @@ d'ajustement, pas des mesures indépendantes** ; avec les fonctions d'INDEX, les
 l'application à 10⁻⁹ près (le test le vérifie).
 
 ```bat
-python scriptsench_base_depots.py
+python scripts\bench_base_depots.py
 ```
 
 Le banc charge chaque référence dans la fenêtre INDEX comme un utilisateur, avec son substrat, sa normalisation et

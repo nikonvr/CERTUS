@@ -80,7 +80,7 @@ them (read from the installed metadata on 2026-10-06); the full texts are in eac
 |---|---|
 | Python runtime and standard library | PSF-2.0; the components it bundles (OpenSSL, libffi, SQLite, …) are listed in its licence file |
 | PyInstaller bootloader | GPL-2.0-or-later with the bootloader exception |
-| Microsoft Visual C++ runtime (`VCRUNTIME140.dll`, `VCRUNTIME140_1.dll`, `VCOMP140.DLL`) | Microsoft's Visual Studio 2022 terms let a program carry the files of `VC\redist` (runtime and OpenMP), unmodified, a right limited to licensed Visual Studio users ("Visual Studio 2022 Redistribution"); that it covers this distribution: « à confirmer par toi » |
+| Microsoft Visual C++ runtime (`VCRUNTIME140.dll`, `VCRUNTIME140_1.dll`, `VCOMP140.DLL`) | Microsoft's Visual Studio 2022 terms let a program carry the files of `VC\redist` (runtime and OpenMP), unmodified, a right limited to licensed Visual Studio users ("Visual Studio 2022 Redistribution"); redistribution coverage for this public binary release to be confirmed by the project owner |
 | PyQt6 | GPL-3.0-only |
 | Qt 6 (PyQt6-Qt6) | LGPL v3; the modules Qt itself bundles: <https://doc.qt.io/qt-6/licenses-used-in-qt.html> |
 | PyQt6-sip | BSD-2-Clause |

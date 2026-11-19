@@ -9,6 +9,8 @@
 
 **Branche** : `master`, poussée sur ordre de 👤 (`sparse-checkout` écarte les gros artefacts ; `git sparse-checkout disable` les restaure). **Python de référence : 3.15.2** (`requirements.lock`).
 
+**Répertoire unique (consigne absolue 👤 2026-11-19)** : travailler **exclusivement** dans le dépôt Drive `certus1111` (`D:\drivfl\...\CERTUS\certus1111`) — jamais de clone ni de déplacement ailleurs (ex. `C:\dev`).
+
 **Dernière validation complète** : le 2026-11-19 sous Windows sur `7b318542` (défauts SPLINE, SUBSTRATE et arrêt tardif allumés), `validate_parallel.py` : oracle 1 238, unit 6 375 (l'intermittent POEM vert seul en série), ui 1 676, reste 322, performance 30, contrôles documentaires et ruff verts, `VALIDATION=GO` ([résumé](../reports/chantier21_2026-11-19/validation_7b318542.txt)).
 
 En cas d'écart au bit : rejouer sur [cache Numba vierge](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md). **Décisions réservées à 👤** : §5.
@@ -20,9 +22,9 @@ En cas d'écart au bit : rejouer sur [cache Numba vierge](../reports/refactor_co
 | **Calcul (STRAT)** | étalon `r75x2`, fente 2 nm. Recherche locale finale avec garde au corridor (`r75x2` : −13,3 / −11,1 / neutre / −9,7 % SEEL, [bilan](../reports/STRAT_garde_2026-10-22/bilan.md)). Sans rampes : aucun plan optique pur déposable ; avec secours Rate : tous déposables au modèle Rate (§7) | [chantiers](CHANTIERS_RESTANTS.md) |
 | **Conception (DESIGN)** | mémétique, champion sans couche < 5 nm + relances par défaut (2026-10-23) ; séparatrice 400–1200 nm à 0,000135 ([bilan](../reports/DESIGN_bs5050_2026-10-22/bilan.md)) | [chantiers](CHANTIERS_RESTANTS.md) |
 | **RE** | indices tabulés en `n − ik` ; hors table, prolongement constant + avertissement | — |
-| **Base de dépôts** | 140 monocouches Photon RT (`example/database_depots/`) chargées par INDEX (`references_index.json`, `scripts\bench_base_depots.py`) : 9/11 références à < 2 % d'épaisseur, 2 écarts documentés. RE exige un classeur complet | §5 |
-| **Exécutable gelé** | OpenMP, 420 Mo, construit à `260e4e8c` (2026-11-17), hub + 10 modules démarrent, `BUILD_COMMIT.json`, `licenses/`. OpenMP gardé (TBB PyPI sous licence Intel hors GPL ; oneTBB Apache-2.0 à voir) | §5 |
-| **Qualité** | CI Linux (calcul) + Windows (UI/gel), `pip-audit`, `gitleaks`, tests isolés, 0 arête montante | §5 |
+| **Base de dépôts** | 140 monocouches Photon RT (`example/database_depots/`) chargées par INDEX (`references_index.json`, `scripts\bench_base_depots.py`) : 9/11 références à < 2 % d'épaisseur, 2 écarts documentés. RE exige un classeur complet | [chantiers](CHANTIERS_RESTANTS.md) |
+| **Exécutable gelé** | OpenMP, 420 Mo, construit à `260e4e8c` (2026-11-17) — à reconstruire en Lot 3 après le chantier (`BUILD_COMMIT.json`, `licenses/`). OpenMP gardé (TBB PyPI sous licence Intel hors GPL ; oneTBB Apache-2.0 optionnel) | [chantiers](CHANTIERS_RESTANTS.md) |
+| **Qualité** | CI Linux (calcul) + Windows (UI/gel), `pip-audit`, `gitleaks`, tests isolés, 0 arête montante | [chantiers](CHANTIERS_RESTANTS.md) |
 | **Validation externe** | 🔴 **aucune** : STRAT n'est validé que contre lui-même (dépôts réels du dichroïque annulés, 👤 2026-10-06) | — |
 
 ## 2. Repères mesurés — conditions précisées par ligne
@@ -40,7 +42,7 @@ Six bancs officiels du 2026-10-21, code `85a9e82f`, graine 42 ([bilan](../report
 | passe-bande 5 cav., 99 c., 4 témoins | **0,597** (0,575–0,670, gr. 42/101/202) | 0 % | fast ; fente 2 nm ; partition 0-22-42-76-99 ; `index_corridor_fixed_domain` armé ([rapport](../reports/STRAT_A3_99c_grille_2026-10-24/bilan.md)) |
 
 **Lire ces chiffres :**
-- 🔴 Antérieurs au code STRAT actuel (substrat « SiO2 », consensus) : à remesurer avant comparaison. Dernier juge de paix (2026-11-16) : **0,1704 nm**.
+- 🔴 Antérieurs au code STRAT actuel (substrat « SiO2 », consensus, arrêt tardif `oms_arming=1` et correctifs TMM/gradients du 19/11) : à remesurer avant comparaison. Dernier juge de paix (2026-11-16) : **0,1704 nm**.
 - 🔴 SEEL non comparables d'un composant à l'autre (§7) ; à 150 tirages σ ≈ 6 % (consensus `r75x2` σ ≈ 1,8 %) : < ~8 % indiscernables.
 - Comprennent le **biais de fente** ; garder `RESULT` et `RANK00` séparés (R130) ; structure > longueur pour la difficulté ; `100 %` en `fast` ne conclut rien.
 - Banc : `CERTUS_BENCH_TIMEOUT_S = max(5400, 4 × durée)` (`WAIT_TIMEOUT=` -> `RESULT=None`).
@@ -54,11 +56,11 @@ Six bancs officiels du 2026-10-21, code `85a9e82f`, graine 42 ([bilan](../report
 | cadence machine | 4 Hz, 1 lecture témoin/tour, 1 pt / 0,125 nm à 0,5 nm/s |
 | bruit de lecture | ±0,05 point (`A = 5e-4` en T) |
 | `reading_smoothing_window` | 1 (inactif) en exploitation ; 8 lectures dans le modèle figé |
-| `tp_hysteresis_factor` | 1,66 ; `tp_hysteresis_floor` 0,000415 (maintenu 2026-10-23, [analyse](../reports/ANALYSE_claude_2026-10-22/bilan.md)) |
-| `phase_a_level_margin_factor` | 1,66 (3,33 à évaluer) |
+| `tp_hysteresis_factor` | 1,66 dans `JSON-strat-example` (0,0 hors JSON) ; `tp_hysteresis_floor` 0,000415 (maintenu 2026-10-23, [analyse](../reports/ANALYSE_claude_2026-10-22/bilan.md)) |
+| `phase_a_level_margin_factor` | 1,66 dans `JSON-strat-example` (0,0 hors JSON) |
 | `index_corridor` | 0,005 en indice absolu, actif |
 | DESIGN global (2026-10-23) | mémétique, 1000 enfants, pop. 30 (`_memetic_children = 0` : PGLOBAL) ; champion sans couche < 5 nm ([bilan](../reports/DESIGN_bs5050_2026-10-22/bilan.md)) |
-| `photometric_curvature_amp` ; `affine_scale_amp`, `affine_offset_amp` | 0,00375 ; 0,05 et 0,02 |
+| `photometric_curvature_amp` ; `affine_scale_amp`, `affine_offset_amp` | 0,00375 ; 0,0 par défaut (sondes : 0,05 et 0,02) |
 | arrêt et étalonnage STRAT | arrêt tardif (`oms_arming` = 1, 👤 2026-11-19), étalonnage parfait (2026-11-17) ([bilan](../reports/chantier44_etape3_2026-11-17/bilan.md)) |
 | `allow_rate`, `rate_by_swing`, `rate_rescue` (`rate_rescue_few` 10) | vrais (2026-10-12) |
 | `elite_rate_moves`, `elite_rate_max_candidates` | vrai, 120 (2026-10-13) |
@@ -95,35 +97,27 @@ Six bancs officiels du 2026-10-21, code `85a9e82f`, graine 42 ([bilan](../report
 ### DESIGN, INDEX, RE et logiciel
 
 - DESIGN : bornes propres aux couches opaques ; pas de pol « Avg » ; 4 comportements par défaut acceptés (R29).
-- INDEX : absorption substrat affichée silicium seul ; stop IR garde le raffiné ; Phase 2 lit toute l'étendue des données (§5).
+- INDEX : absorption substrat affichée silicium seul ; stop IR garde le raffiné ; Phase 2 lit toute l'étendue des données ([chantiers](CHANTIERS_RESTANTS.md)).
 - RE : 2 rayons divergence ; pénalité QWOT gardée ; avertir sans refuser extrapolation. Matériau absent refuse calcul ; Nb2O5 « Syrus » brut > 4 µm.
 - `uv sync --upgrade` ; **fastmath gardé** ; tolérance C1 `10⁻¹⁰` pour code mort ; hub sans warmup JIT.
 - GPL-3.0 ; gel via environnement jetable `requirements.lock` + licences. `certus_re` sous CC BY 4.0.
 - Threads Numba : OpenMP, sauf STRAT et RE sous TBB optionnel (`certus_core.TBB_THREADING_LAYER`, 👤 2026-11-15 : juge de paix 1 074 s vs 1 339 s mêmes bits ; RE 17,5 s vs 28,2 s ; [STRAT](../reports/audit_oms5100_2026-11-15/profil_strat_complet/bilan.md), [INDEX/RE](../reports/audit_oms5100_2026-11-15/tbb_index_re/bilan.md)).
 - Fusion `master` soumise à 👤. Caps entrypoints dans `tests/unit/test_the_ai_entry_points_stay_small.py` (à abaisser librement).
 - Benchmarks litt. (2026-10-30) : Trubetskov 2020 (octave) / miroir chaud / antireflets hors champ ; OIC 2016 doit battre `0,0139`.
+- Décisions 2026-11-19 (👤) : politique stricte `ValueError` (D108/D109/D114 : `NaN`/`Inf`, `d < 0`, `k < 0`, `n_sub <= 0`) ; retrait du plancher `ε1 ≥ 1` dans INDEX ; `strat_local_search_fresh_id` par défaut (exception C1 à consigner au commit Lot 2b) ; chantiers **31**, **32** et **26** archivés ; optionnels P3 écartés (dérive Rate, guides HTML offline, bande fichiers récents étendue) ; consigne absolue de rester exclusivement dans le dépôt Drive `certus1111` (jamais cloner/déplacer ailleurs).
 
 ## 4. Limites et travaux ouverts
 
 Chantiers ouverts : [`CHANTIERS_RESTANTS.md`](CHANTIERS_RESTANTS.md). Limites : guides [DESIGN](../pages/CERTUS_DESIGN.html#design-limits) et [STRAT](../pages/CERTUS_STRAT.html). Cache Numba : [mode opératoire](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md).
 
-## 5. Ce qui attend une décision de 👤
+## 5. Ce qui attend une décision ou action de 👤
 
 | sujet | enjeu |
 |---|---|
-| **plancher ε1 d'INDEX** | ε1 ≥ 1 inactif sur les 4 exemples (≥ 2,24, [mesure](../reports/audit_code_2026-11-15/preuves/p_plancher_epsilon1.txt)) : garder ? |
-| **avis de tiers** | DLL Visual C++ (`THIRD_PARTY_NOTICES.md`) : droit de redistribution Microsoft |
-| **paquet `certus_re`** | citation saphir (Malitson & Dodge 1972) à committer puis Zenodo |
-| **interface** | revoir les 11 fenêtres (teintes, fichiers récents, bornes numériques) |
-| **base de dépôts** | RE depuis dépôt (`load_reverse_engineering_from_path`) ; apparier T/R ; plage λ complète phase 2 |
-| **ELITE « tour à tour »** | `elite_round_robin` : +0,7 % mesuré avant, inactif, manque variance même graine |
-| **Rate vs optique pure** | meilleur plan = Rate sous tous modèles d'arrêt ; Rate STRAT sans dérive/bruit vitesse (§7) ; A4 nul en arrêt tardif ([rapport](../reports/ANALYSE_claude_2026-10-22/bilan.md) §4) |
-| **comportements** | D108 (`ValueError`), D109 (`épaisseur >= 0` TMM), D114 (entrées invalides) |
-| **CI** (D110) | déclarer `pytest-benchmark` & `pytest-xdist`, 3 docs checks dans `lint.yml`, `mypy` et `bench_kernels` bloquants |
-| **A9** | refiger le protocole sur branche de travail avant GO |
-| **réglages STRAT** | `elite_rate_moves` (actif, ou `git revert 978b8f04`, [A2](../reports/STRAT_A2_continuation_2026-10-14/final_bilan_A2_20261014.md)), `rate_rescue_hard`, `tp_hysteresis_floor`, `strat_local_search_fresh_id` |
-| **modèles** | D69 (nouvelle définition de la couverture des noyaux) |
+| **avis de tiers** | DLL Visual C++ (`THIRD_PARTY_NOTICES.md`) : droit de redistribution Microsoft avant release binaire publique |
+| **paquet `certus_re`** | mise à jour Zenodo avec citation saphir (Malitson & Dodge 1972) |
 | **publication** | vitrine, autorisation écrite Tikhonravov 1996 (`example/example_design/JSON-design-reference-tikhonravov-1996-published-design.json`) |
+| **hors-IA** | 5 PR Dependabot CI #10–#14 (41) sur GitHub ; essais humains U13 (33) bloqués sur date/testeurs |
 
 ## 6. Ordre de travail
 

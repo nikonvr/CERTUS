@@ -9,6 +9,8 @@ Suite de **couches minces optiques** (PyQt6, NumPy/SciPy, Numba) : physique rée
 
 `python scripts\preflight.py` doit finir par `PREFLIGHT=GO` (`import certus` dans l'arbre édité).
 
+🔴 **Répertoire unique obligatoire (👤 2026-11-19)** : travailler **exclusivement** dans le dépôt Drive `certus1111` (`D:\drivfl\...\CERTUS\certus1111`). **Jamais** cloner, déplacer ou travailler dans `C:\dev\` ni un autre clone hors de cet arbre.
+
 🔴 **Dépôt PUBLIC** (`github.com/nikonvr/CERTUS`) : aucun secret, donnée tierce ni œuvre tierce (métadonnées Excel comprises). **Pousser publie : uniquement sur ordre de 👤.** Committer est local si `git config --get core.hooksPath` est vide (référence §1).
 
 ## 2. Valider — seul critère : `0 failed`

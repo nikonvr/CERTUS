@@ -106,7 +106,7 @@ Six bancs officiels et 99c remesurés le 2026-11-20, code `7a6fca38`, graine 42 
 - Threads Numba : OpenMP, sauf STRAT et RE sous TBB optionnel (`certus_core.TBB_THREADING_LAYER`, 👤 2026-11-15 : juge de paix 1 074 s vs 1 339 s mêmes bits ; RE 17,5 s vs 28,2 s ; [STRAT](../reports/audit_oms5100_2026-11-15/profil_strat_complet/bilan.md), [INDEX/RE](../reports/audit_oms5100_2026-11-15/tbb_index_re/bilan.md)).
 - Fusion `master` soumise à 👤. Caps entrypoints dans `tests/unit/test_the_ai_entry_points_stay_small.py` (à abaisser librement).
 - Benchmarks litt. (2026-10-30) : Trubetskov 2020 (octave) / miroir chaud / antireflets hors champ ; OIC 2016 doit battre `0,0139`.
-- Décisions 2026-11-20 (👤) : RE garde le refus des références normalisées (T/T_sub) ; budgets de la passe 2 SPLINE au quart ; fusion locale de la nuit dans `master`, sans pousser.
+- Décisions 2026-11-20 (👤) : RE garde le refus des références normalisées (T/T_sub) ; budgets de la passe 2 SPLINE au quart ; fusion locale de la nuit dans `master`, sans pousser ; chantier 7 : meilleur ELITE publié par le banc (`STRAT_BEST_ELITE`) et nombre de graines du contrôle réglable (2 par défaut).
 - Décisions 2026-11-19 (👤) : politique stricte `ValueError` (D108/D109/D114 : `NaN`/`Inf`, `d < 0`, `k < 0`, `n_sub <= 0`) ; retrait du plancher `ε1 ≥ 1` dans INDEX ; `strat_local_search_fresh_id` par défaut (exception C1 à consigner au commit Lot 2b) ; chantiers **31**, **32** et **26** archivés ; optionnels P3 écartés (dérive Rate, guides HTML offline, bande fichiers récents étendue) ; consigne absolue de rester exclusivement dans le dépôt Drive `certus1111` (jamais cloner/déplacer ailleurs).
 
 ## 4. Limites et travaux ouverts
@@ -121,7 +121,7 @@ Chantiers ouverts : [`CHANTIERS_RESTANTS.md`](CHANTIERS_RESTANTS.md). Limites : 
 | **paquet `certus_re`** | mise à jour Zenodo avec citation saphir (Malitson & Dodge 1972) |
 | **publication** | vitrine, autorisation écrite Tikhonravov 1996 (`example/example_design/JSON-design-reference-tikhonravov-1996-published-design.json`) |
 | **hors-IA** | 5 PR Dependabot CI #10–#14 (41) sur GitHub ; essais humains U13 (33) bloqués sur date/testeurs |
-| **contrôle de la recherche locale** | plus de graines au contrôle d'acceptation, ou meilleur ELITE publié à côté du `RESULT` (chantier 7) |
+| **contrôle de la recherche locale** | défaut de `strat_local_search_check_seeds` : garder 2 (proposé) ou passer à 6, qui coûte la recherche locale au 36c ([bilan](../reports/chantier07_2026-11-20/bilan.md)) |
 
 ## 6. Ordre de travail
 

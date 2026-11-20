@@ -436,7 +436,8 @@ LEVIERS: tuple[Levier, ...] = (
         genre="int",
         statut=RESERVE,
         mesure="Chantier 7 (2026-11-20) : sur deux graines, le verdict a bascule d'une version du code a l'autre et a deplace "
-               "seul les reperes 35c et 36c de -29 % et +12 % (reports/nuit_2026-11-19/bilan_6_ecarts_35c_36c.md).",
+               "seul les reperes 35c et 36c de -29 % et +12 % (reports/nuit_2026-11-19/bilan_6_ecarts_35c_36c.md). A 6 graines "
+               "(graine 42) : verdict du plan final inchange, repli du 36c refuse, RESULT +13 % (reports/chantier07_2026-11-20).",
         reserve="Au-dela de 2, non mesure. Chaque graine ajoute check_runs tirages pour chaque plan juge, repli compris ; "
                 "2 retablit le chemin d'avant.",
     ),

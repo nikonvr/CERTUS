@@ -1,0 +1,13 @@
+START 48c_premium
+END 48c_premium valid=True SEEL=0.18196866836866293
+START 75c_fast
+END 75c_fast valid=True SEEL=0.21424918883890628
+START 35c_deep
+END 35c_deep valid=True SEEL=0.34657659940501806
+START 3cav_livre_36c_deep
+END 3cav_livre_36c_deep valid=True SEEL=0.36275874819317994
+START r75x2_native_1nm_deep
+END r75x2_native_1nm_deep valid=True SEEL=0.48777256296313315
+START r75x2_rampes_2nm_deep
+END r75x2_rampes_2nm_deep valid=True SEEL=0.515652162974135
+BENCHES_EXIT=0

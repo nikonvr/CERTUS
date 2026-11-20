@@ -112,7 +112,23 @@ branche `claude/repertoire-courant-fb8caf`, départ `0d95cc60`. **Aucune poussé
   `spline_workers.py` 1974 → 1978, ajoutés par `ba8e8290`) → correctif réécrit à longueur nulle (budgets directement
   dans le contexte) `36f636fe` ; comportement identique (le gel `183ebcd9` porte la version précédente, équivalente).
   Validation finale : `VALIDATION=GO` sur `36f636fe` (5 artefacts de charge verts seuls en série), 05:27 ; §0 à jour.
-- [x] docs et validation finale. Suite décidée : chantier 5 (DYN-ALERT) si le temps le permet, avec revalidation. **Ne toucher aucun
+- [x] docs et validation finale. Suite décidée : chantier 5 (DYN-ALERT) si le temps le permet, avec revalidation.
+- [ ] 5 DYN-ALERT (05:35) : rouge (`test_rate_layers_are_not_counted_as_flat_layers.py`) ; `average_monitored_dynamics`
+      (njit, sentinelle −1 exclue, même ordre de somme), `dynamics_alerts` (pure, pas de ligne sur la sentinelle),
+      `_worst_layer_swing` sur les couches surveillées ; plafonds de dette abaissés (tâche 794 → 782 lignes, 73 → 69).
+      6 tests verts, mypy 0. `c1_diff` 1er essai : 9 tableaux `strat.batch#…#1` (avg_dyns) à 1 ulp (somme
+      conditionnelle sous fastmath) → boucle d'origine gardée pour le cas sans sentinelle : C1 TENU (9172). Commit
+      `b17a5844` — **fait par erreur avec 1 test rouge** (commande chaînée par `;`) : à identifier par la validation
+      (`/tmp/val_ch5.txt`) et à amender. → 2 échecs : `dynamics_alerts` absent de la façade
+      `certus_strat_robustness` ; égalité exacte d'une moyenne sous fastmath → tolérance 1e-15 ; amendé `ce4adfba`.
+- **Décisions de 👤 (2026-11-20, ~05 h 45)** : fusion locale dans `master` (sans pousser) une fois tout vert ; RE garde le
+  refus des références normalisées ; SPLINE : réduire les budgets de la passe 2 ; chantier 6 à instruire maintenant.
+- [x] 6 instruit ([bilan](bilan_6_ecarts_35c_36c.md)) : les deux écarts viennent du contrôle d'acceptation de la
+  recherche locale (2 graines, arrêts), pas d'ELITE (−9 %, −1 %). Décision ouverte pour 👤 : plus de graines au contrôle,
+  ou publier le meilleur ELITE à côté du RESULT.
+- [x] 4 budgets : sonde [`p4_pass2_budgets.py`](p4_pass2_budgets.py) ; facteur 0,25 retenu (TSIO2 8,4 s au lieu de
+      33,9 s, 84 % du gain ; TOTAL inchangé) → `babd2f9a` ; chantier 21 archivé. Docs (ETAT §3, §5 ; CHANTIERS :
+      reste le 7, contrôle de la recherche locale, à 👤). Reste : validation complète, puis fusion locale dans `master`. **Ne toucher aucun
   fichier suivi pendant les bancs** (le pilote exige un arbre suivi propre avant chaque banc).
 - Docs à appliquer après les bancs : `CHANTIERS_RESTANTS.md` (1a, 1b, 2a, 2b, 2c, 2d faits ; 3 remesuré ; 4 en attente
   de 👤 ; 2d normalisation RE à 👤), `ETAT.md` §0 (validation), §1 (base de dépôts : RE possible pour les absolues ;

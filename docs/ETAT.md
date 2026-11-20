@@ -42,7 +42,7 @@ Six bancs officiels et 99c remesurés le 2026-11-20, code `7a6fca38`, graine 42 
 | passe-bande 5 cav., 99 c., 4 témoins | **0,544** gr. 42 (0,597 ; 0,575–0,670, gr. 42/101/202) | 0 % | fast ; fente 2 nm ; partition 0-22-42-76-99 ; `index_corridor_fixed_domain` armé ([rapport](../reports/STRAT_A3_99c_grille_2026-10-24/bilan.md)) |
 
 **Lire ces chiffres :**
-- 🔴 Les écarts au 21/10 mêlent tout ce qui a changé depuis (recherche locale, consensus, arrêt tardif `oms_arming=1`, correctifs du 19/11, lots du 20/11) : aucune cause isolée ; 35c (−29 %) et 36c (+12 %) à instruire (chantier 6). Dernier juge de paix (2026-11-16) : **0,1704 nm**.
+- 🔴 Les écarts au 21/10 mêlent tout ce qui a changé depuis (recherche locale, consensus, arrêt tardif `oms_arming=1`, correctifs du 19/11, lots du 20/11) : 35c (−29 %) et 36c (+12 %) viennent du contrôle d'acceptation de la recherche locale (2 graines), ELITE −9 % et −1 % ([bilan](../reports/nuit_2026-11-19/bilan_6_ecarts_35c_36c.md)). Dernier juge de paix (2026-11-16) : **0,1704 nm**.
 - 🔴 SEEL non comparables d'un composant à l'autre (§7) ; à 150 tirages σ ≈ 6 % (consensus `r75x2` σ ≈ 1,8 %) : < ~8 % indiscernables.
 - Comprennent le **biais de fente** ; garder `RESULT` et `RANK00` séparés (R130) ; structure > longueur pour la difficulté ; `100 %` en `fast` ne conclut rien.
 - Banc : `CERTUS_BENCH_TIMEOUT_S = max(5400, 4 × durée)` (`WAIT_TIMEOUT=` -> `RESULT=None`).
@@ -86,6 +86,7 @@ Six bancs officiels et 99c remesurés le 2026-11-20, code `7a6fca38`, graine 42 
 | 2026-11-19 | C1 (paramètre inactif par défaut) | SPLINE : `spline_mono_analytic_gradient` et `spline_polish_fd_prefix_maxfun` = 3000 allumés | RMSE meilleur sur les deux exemples ([bilan](../reports/chantier21_2026-11-19/bilan.md)) |
 | 2026-11-19 | C1 (paramètre inactif par défaut) | SUBSTRATE : `sellmeier_ir_pole` allumé | écart au niveau du bruit sur substrats du catalogue ([bilan](../reports/chantier05_2026-11-18/bilan.md)) |
 | 2026-11-19 | C1 (paramètre inactif par défaut) | STRAT : `strat_local_search_fresh_id` allumé (l'identifiant exporté du plan affiné change, le parent dans `parent_strategy_id`) | identifiants uniques contrôlés sur toute la liste (8 bancs sur 8 portaient l'identifiant du parent, [analyse](../reports/ANALYSE_claude_2026-10-22/bilan.md)) |
+| 2026-11-20 | décision | SPLINE : budgets de la passe 2 d'Auto-Best au quart (2 500 / 5 000 / 10 000) | TSIO2 garde 84 % du gain pour 25 % du temps, TOTAL inchangé ([bilan](../reports/nuit_2026-11-19/bilan_4_spline_chrono.md)) |
 | 2026-11-19 | décision D98 | STRAT : arrêt tardif (`oms_arming` = 1) au lieu de l'attente sans fin | même meilleur SEEL, 101 plans optiques purs déposables contre 0 ([rapport](../reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md)) |
 
 ### STRAT
@@ -105,6 +106,7 @@ Six bancs officiels et 99c remesurés le 2026-11-20, code `7a6fca38`, graine 42 
 - Threads Numba : OpenMP, sauf STRAT et RE sous TBB optionnel (`certus_core.TBB_THREADING_LAYER`, 👤 2026-11-15 : juge de paix 1 074 s vs 1 339 s mêmes bits ; RE 17,5 s vs 28,2 s ; [STRAT](../reports/audit_oms5100_2026-11-15/profil_strat_complet/bilan.md), [INDEX/RE](../reports/audit_oms5100_2026-11-15/tbb_index_re/bilan.md)).
 - Fusion `master` soumise à 👤. Caps entrypoints dans `tests/unit/test_the_ai_entry_points_stay_small.py` (à abaisser librement).
 - Benchmarks litt. (2026-10-30) : Trubetskov 2020 (octave) / miroir chaud / antireflets hors champ ; OIC 2016 doit battre `0,0139`.
+- Décisions 2026-11-20 (👤) : RE garde le refus des références normalisées (T/T_sub) ; budgets de la passe 2 SPLINE au quart ; fusion locale de la nuit dans `master`, sans pousser.
 - Décisions 2026-11-19 (👤) : politique stricte `ValueError` (D108/D109/D114 : `NaN`/`Inf`, `d < 0`, `k < 0`, `n_sub <= 0`) ; retrait du plancher `ε1 ≥ 1` dans INDEX ; `strat_local_search_fresh_id` par défaut (exception C1 à consigner au commit Lot 2b) ; chantiers **31**, **32** et **26** archivés ; optionnels P3 écartés (dérive Rate, guides HTML offline, bande fichiers récents étendue) ; consigne absolue de rester exclusivement dans le dépôt Drive `certus1111` (jamais cloner/déplacer ailleurs).
 
 ## 4. Limites et travaux ouverts
@@ -119,8 +121,7 @@ Chantiers ouverts : [`CHANTIERS_RESTANTS.md`](CHANTIERS_RESTANTS.md). Limites : 
 | **paquet `certus_re`** | mise à jour Zenodo avec citation saphir (Malitson & Dodge 1972) |
 | **publication** | vitrine, autorisation écrite Tikhonravov 1996 (`example/example_design/JSON-design-reference-tikhonravov-1996-published-design.json`) |
 | **hors-IA** | 5 PR Dependabot CI #10–#14 (41) sur GitHub ; essais humains U13 (33) bloqués sur date/testeurs |
-| **RE et dépôts normalisés** | dénormaliser T/T_sub (10 références sur 11) pour RE : quel modèle de substrat ([chantiers](CHANTIERS_RESTANTS.md)) |
-| **SPLINE passe 2** | dérivées de la passe 2 d'Auto-Best (seuil franchi, gain faible) : jac hybride, budgets réduits ou statu quo (lot 4) |
+| **contrôle de la recherche locale** | plus de graines au contrôle d'acceptation, ou meilleur ELITE publié à côté du `RESULT` (chantier 7) |
 
 ## 6. Ordre de travail
 

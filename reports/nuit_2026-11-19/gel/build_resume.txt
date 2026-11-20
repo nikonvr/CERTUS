@@ -1,3 +1,3 @@
 427 INFO: PyInstaller: 6.22.3, contrib hooks: 2026.7
 427 INFO: Python: 3.15.2
-150093 INFO: Build complete! The results are available in: C:\Users\Fabien\AppData\Local\Temp\certus_gel_1120\dist
+150093 INFO: Build complete! The results are available in: %TEMP%\certus_gel_1120\dist

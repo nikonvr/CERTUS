@@ -99,11 +99,11 @@
     <p><strong>Pitfall — mathematical amplification:</strong> even when &Delta;<i>T<sub>sub</sub></i> is small, inversion amplifies it. From the differential of (1), propagated error is:</p>
     <div class="equation">&Delta;<i>n<sub>s</sub></i> = [ (<i>n<sub>s</sub></i><sup>2</sup> + 1)<sup>2</sup> / (2|<i>n<sub>s</sub></i><sup>2</sup> - 1|) ] &times; &Delta;<i>T<sub>sub</sub></i><span class="eq-num">(3)</span></div>
 
-    <p>For sapphire the bracketed factor ranges from 3.8 to 4.4. Using realistic non-linearity specs (see final budget, Section 7):</p>
+    <p>For sapphire the bracketed factor stays at 4.0: as a function of <i>n<sub>s</sub></i><sup>2</sup> it has its minimum, 4, at <i>n<sub>s</sub></i> = &radic;3 &approx; 1.73, and over <i>n<sub>s</sub></i> = 1.67&ndash;1.78 it lies between 4.000 and 4.013 (review 2026-11-20; an earlier version gave 3.8 to 4.4). Using realistic non-linearity specs (see final budget, Section 7):</p>
     <ul>
-        <li><strong>400 nm (UV):</strong> <i>n<sub>s</sub></i> &approx; 1.78. Detector very linear, &Delta;<i>T<sub>sub</sub></i> = 0.10% (0.001).<br>Uncertainty: &Delta;<i>n<sub>s</sub></i> = 3.8 &times; 0.001 = <strong>&pm; 0.0038</strong>.</li>
+        <li><strong>400 nm (UV):</strong> <i>n<sub>s</sub></i> &approx; 1.78. Detector very linear, &Delta;<i>T<sub>sub</sub></i> = 0.10% (0.001).<br>Uncertainty: &Delta;<i>n<sub>s</sub></i> = 4.0 &times; 0.001 = <strong>&pm; 0.0040</strong>.</li>
         <li><strong>1000 nm (NIR):</strong> <i>n<sub>s</sub></i> &approx; 1.75. &Delta;<i>T<sub>sub</sub></i> = 0.10%.<br>Uncertainty: &Delta;<i>n<sub>s</sub></i> = 4.0 &times; 0.001 = <strong>&pm; 0.0040</strong>.</li>
-        <li><strong>4500 nm (MIR):</strong> <i>n<sub>s</sub></i> &approx; 1.67. Lower SNR, &Delta;<i>T<sub>sub</sub></i> = 0.20%.<br>Uncertainty: &Delta;<i>n<sub>s</sub></i> = 4.4 &times; 0.002 = <strong>&pm; 0.0088</strong>.</li>
+        <li><strong>4500 nm (MIR):</strong> <i>n<sub>s</sub></i> &approx; 1.67. Lower SNR, &Delta;<i>T<sub>sub</sub></i> = 0.20%.<br>Uncertainty: &Delta;<i>n<sub>s</sub></i> = 4.0 &times; 0.002 = <strong>&pm; 0.0080</strong>.</li>
     </ul>
 
     <p><strong>Physical drawback (absorption trap):</strong> inversion assumes perfect transparency. Residual absorption (&alpha; &gt; 0, UV/IR tails) lowers <i>T<sub>sub</sub></i>; the model may misinterpret this as higher reflectance and overestimate <i>n<sub>s</sub></i>.</p>
@@ -221,6 +221,7 @@
         <tr><td>1000</td><td>0.05%/0.08%/0.10%</td><td>&pm;0.0040</td><td><strong>&pm;0.036</strong></td><td><strong>&pm;3.8e-5</strong></td></tr>
         <tr><td>4500</td><td>0.10%/0.15%/0.20%</td><td>&pm;0.0088</td><td><strong>&pm;0.078</strong></td><td><strong>&pm;2.3e-4</strong></td></tr>
     </table>
+    <p><strong>Note (review 2026-11-20):</strong> the &Delta;<i>n<sub>s</sub></i> column above was computed with factors 3.8 (400 nm) and 4.4 (4500 nm); with the exact factor 4.0 (Section 1.1) it becomes &pm;0.0040 at 400 nm and &pm;0.0080 at 4500 nm. The &Delta;<i>n</i> and &Delta;<i>k</i> columns derived from it have not been recomputed.</p>
     <p>At 1000 nm the budget gives Δ<i>n</i> of ±0.013 for Nb₂O₅ and ±0.036 for SiO₂. The corresponding Δ<i>k</i> values are ±3.6 × 10<sup>−5</sup> and ±3.8 × 10<sup>−5</sup>. By 4500 nm they reach ±2.1 × 10<sup>−4</sup> and ±2.3 × 10<sup>−4</sup>. Use the row closest to the wavelength of interest when reporting weak absorption.</p>
     <p>A coated sample transmitting 88% against a bare reference transmitting 80% would yield a relative transmission of 110%. Use absolute bare-plate transmission when estimating the substrate index. The <a href="CERTUS_SUBSTRATE_INDEX.html#sapphire-plate">sapphire example</a> shows the two-surface inversion on one measured row.</p>
 

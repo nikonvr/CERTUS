@@ -653,20 +653,14 @@
         <td>L-BFGS-B local polish (±5% bounds, 500 iters). Replaces former coordinate descent.</td>
     </tr>
     <tr>
-        <td><strong>Spline Refinement Worker</strong></td>
-        <td><code>SplineOptimizationWorker</code>: Post-TLU cubic spline pipeline. Knots placed by
-            curvature
-            analysis (15 n-knots + 15 k-knots independently) plus 6 IR extension knots.</td>
-    </tr>
-    <tr>
-        <td><strong>Pointwise IR Solver</strong></td>
-        <td><code>PointwiseIRSolver</code> (<code>certus_pointwise_ir.py</code>):
-            Wavelength-by-wavelength
-            $(n,k)$ inversion in the IR at fixed TLU thickness. Seeds the spline knots.</td>
+        <td><strong>Phase 2.3 k spline (IR Global Model)</strong></td>
+        <td><code>IRGlobalModelStrategy._run_phase23_spline_refinement</code>: after the IR global fit, k is refined
+            as a spline in log k on 8 knots deduced from the 8-parameter k law (<code>k_law_8p_eval</code>). The former
+            post-TLU spline worker and pointwise IR solver are no longer in the code (review 2026-11-20).</td>
     </tr>
     <tr>
         <td><strong>Frosted Glass Mode</strong></td>
-        <td><code>calculate_reflection_infinite_substrate_array</code>: Removes back-reflections for
+        <td><code>calculate_reflection_infinite_substrate_single</code>: Removes back-reflections for
             roughened
             substrates (reflection-only fitting).</td>
     </tr>
@@ -976,7 +970,7 @@
     <tr><td>12</td><td>$\beta$</td><td>[1, 8]</td><td>Linear</td></tr>
 </table>
 <p>
-    <code>log_indices = [0, 1, 2, 3, 4, 9, 10, 11]</code>: Sobol/uniform sampling is done in log-space for these
+    <code>log_clues = [0, 1, 2, 3, 4, 9, 10, 11]</code> (<code>certus_index_workers_ir_strat.py</code>): Sobol/uniform sampling is done in log-space for these
     indices, then converted to linear for evaluation. L-BFGS-B (all stages) uses linear bounds.
 </p>
 
@@ -1113,6 +1107,15 @@
 </table>
 
 <h2>7. Stage 2 — Spline Refinement Pipeline</h2>
+
+<p>
+    <strong>Status (review 2026-11-20).</strong> This section describes a former post-TLU stage whose code is gone:
+    <code>SplineOptimizationWorker</code>, the pointwise IR solver (<code>certus_pointwise_ir.py</code>) and the joint
+    re-optimization below are not in the current sources. In the current INDEX, the only spline is the Phase 2.3 refinement
+    of k in log k inside the IR Global Model (<code>IRGlobalModelStrategy._run_phase23_spline_refinement</code>, 8 knots
+    deduced from the 8-parameter k law); a free-form spline inversion of n and k is the separate
+    <a href="CERTUS_INDEX_SPLINE.html">INDEX-SPLINE</a> module. Read the subsections below as history, not as the method.
+</p>
 
 <p>
     This section describes the optional spline fit following TLU. For the global infrared extension and its wavelength selection rules, see the <a href="#infrared-spectra">IR workflow</a>.
@@ -1284,7 +1287,7 @@
 <div class="eq-box">
     $$ R_{frosted}(\lambda)=\left|r_{\mathrm{front\ stack}}(\lambda)\right|^2, $$
 </div>
-<p>The code uses <code>calculate_reflection_infinite_substrate_array</code> which:</p>
+<p>The code uses <code>calculate_reflection_infinite_substrate_single</code> which:</p>
 <ul>
     <li>Computes front-surface reflection via TMM.</li>
     <li>Uses the front-surface stack response without a back-face term; the frosted-glass mode does not add an
@@ -1464,7 +1467,7 @@
 <div class="footer">
     <p>Generated from source analysis of <code>CERTUS_INDEX.py</code>, <code>certus_ui.py</code>,
         <code>certus_pointwise_ir.py</code> &mdash; implementation review: 2026-10-03</p>
-    <p>&copy; CERTUS Scientific Suite v26-04 &bull; Scientific Analysis Report</p>
+    <p>&copy; CERTUS Scientific Suite v26.05 &bull; Scientific Analysis Report</p>
 </div>
     </main>
 

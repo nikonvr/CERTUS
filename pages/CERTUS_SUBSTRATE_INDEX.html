@@ -169,7 +169,10 @@
                     $$ n^2(\lambda) - 1 = \frac{B_1 \lambda^2}{\lambda^2 - L_1^2} + \frac{B_2 \lambda^2}{\lambda^2 - L_2^2} + \frac{B_3 \lambda^2}{\lambda^2 - L_3^2} $$
                 </div>
                 Optimized via multistart least squares + L-BFGS-B polish (log-reparameterization is disabled in favor of strict linear bounds). Catalogue priors from <code>SELLMEIER_COEFFS_BY_ID</code> can seed the search when
-                the material name identifies a known glass. The default <code>sellmeier_ir_pole</code> option also tests a catalogue-form fit with an infrared pole. The solver selects the accepted candidate with the lowest weighted RMSE over the fit window.</li>
+                the material name identifies a known glass. The default <code>sellmeier_ir_pole</code> option also tests a catalogue-form fit with an infrared pole. The solver selects the accepted candidate with the lowest weighted RMSE over the fit window. On measured
+                indices (2026-11-20), the infrared-pole candidate is retained where the data resolve the infrared dispersion
+                (sapphire to 5 µm, fused silica) and changes nothing elsewhere; with n taken from T alone, the scatter hides it
+                (<a href="../reports/nuit_2026-11-19/bilan_2c_sellmeier_ir_pole.md">validation</a>).</li>
             <li><strong>Spline:</strong> non-parametric smooth representation for comparison RMSE.</li>
             <li><strong>Sellmeier full auto:</strong> hides advanced time/iteration budgets; uncheck to tune DE/L-BFGS-B
                 / least_squares evaluation limits for difficult bands.</li>

@@ -501,7 +501,7 @@
                 <tr>
                     <td>Parameter study</td>
                     <td>Manual or save cfg; tedious for grids.</td>
-                    <td><code>(Internal batch API)</code></td>
+                    <td>No batch tool in the current sources (review 2026-11-20).</td>
                 </tr>
                 <tr>
                     <td>Read quality</td>
@@ -512,10 +512,9 @@
             </tbody>
         </table>
         <p>
-            Batch modes: <strong>full</strong> Cartesian sweep on envelope × HL reg × QWOT α × Tikhonov × substrate flag
-            (72 combos with default preset); <strong>refine30</strong> fixes envelope 0.5 and QWOT 0.20 then explores HL,
-            Tikhonov, substrate, per-phase schedule (24 combos); <strong>pipeline</strong> freezes the “winner” physics
-            block (<code>BATCH_WINNER_BASE</code>) and only varies multistarts × top-K × shake rounds (27 combos).
+            The former batch modes (<strong>full</strong> sweep, <strong>refine30</strong>, <strong>pipeline</strong>) and
+            their <code>re_batch_*.json</code> summaries are not in the current sources (review 2026-11-20): a parameter study
+            is run by saving configurations and launching the window programmatically, one configuration at a time.
         </p>
 
         <h2 id="read-the-logs">9. Reading the Logs (Science + Debugging)</h2>
@@ -584,7 +583,7 @@
             <tbody>
                 <tr>
                     <td><code>re_phase1_multistarts</code>, <code>re_phase2_top_k</code>, <code>re_phase3_shake_rounds</code></td>
-                    <td>Exploration breadth; pipeline grid varies only these on top of <code>BATCH_WINNER_BASE</code>.</td>
+                    <td>Exploration breadth: multistarts, top-K candidates, shake rounds.</td>
                 </tr>
                 <tr>
                     <td><code>re_phase1_maxiter</code>, <code>re_phase2_spline_prefit_maxiter</code>,
@@ -602,21 +601,21 @@
                 <tr>
                     <td><code>re_phase2b_substrate_cauchy</code>, <code>re_spline_tikhonov_scale</code>,
                         <code>re_hl_delta_re_reg_sqrt_w</code>, <code>re_envelope_scale</code></td>
-                    <td>Main physics/regularisation knobs in wide batch sweeps.</td>
+                    <td>Main physics/regularisation knobs.</td>
                 </tr>
             </tbody>
         </table>
 
         <h2 id="operational-checklist">12. Operational Checklist</h2>
         <ul>
-            <li><strong>Reproducibility:</strong> Archive workbook, git commit, Python version, full cfg dict, and JSON
-                batch output.</li>
-            <li><strong>Fair comparison:</strong> When comparing pipeline runs, keep <code>BATCH_WINNER_BASE</code>
-                identical — only vary multistarts / top-K / shakes.</li>
+            <li><strong>Reproducibility:</strong> Archive workbook, git commit, Python version, full cfg dict, and the
+                exported results.</li>
+            <li><strong>Fair comparison:</strong> When comparing runs, keep the physics settings identical and change one
+                exploration knob at a time (multistarts / top-K / shakes).</li>
             <li><strong>Performance:</strong> If CPUs are oversubscribed, set <code>OMP_NUM_THREADS=1</code> or reduce
                 <code>RE_PHASE2_FD_MAX_WORKERS</code>.</li>
-            <li><strong>Stopping:</strong> OS kill leaves no <code>re_batch_*.json</code>; prefer letting the budget
-                expire for a clean summary.</li>
+            <li><strong>Stopping:</strong> prefer the window's stop or the budget's expiry: an OS kill leaves no final
+                summary.</li>
         </ul>
 
         <h2>13. Source Map</h2>

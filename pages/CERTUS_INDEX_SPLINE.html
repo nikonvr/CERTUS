@@ -166,30 +166,32 @@
 
             A(["Raw Spectrometric Data (T, R)"]):::start --> B
 
-            B["<b>Phase 01: SMART Initialization</b><br>Swanepoel Envelope Mapping<br>n_sub isolation & T_MAX/T_MIN envelopes"]:::process --> C
+            B["<b>01: Bounds and start</b><br>Smart Init (Swanepoel extrema) seeds n, L and d<br>on the canonical σ mesh"]:::process --> C
 
-            C["<b>Phase 02: SOL 2 Matrix</b><br>PGlobal Thickness Interrogator<br>Frozen Horizontal σ_n, σ_L<br>Dimension: 1 + 2K"]:::phase --> D
+            C["<b>02: SOL 2</b><br>Local L-BFGS-B on fixed σ knots<br>x = [d, n_1..n_K, L_1..L_K], dim 1 + 2K<br>analytic-gradient polish with a finite-difference prefix"]:::phase --> D
 
-            D{"Is Objective <br> RMSE Diverging?"}:::warning
-            D -- Yes --> E["PGlobal Re-Seed & Trust Factor Decay"]:::warning
-            D -- No --> F
+            D["<b>03</b>: legacy free-knot stage<br>removed from the pipeline"]:::warning --> F
 
-            F["<b>Phase 03: SOL 3 Spatial Break</b><br>Split Free-Knot Arrays<br>Log-Proportion Spatial Encoders<br>Dimension: 4K - 1"]:::phase --> G
+            F["<b>05: Final fixed σ mesh</b><br>no knot insertion"]:::process --> G
 
-            G["<b>Phase 04: SOL 3b Sub-Band</b><br>Islanding Transparent Regions<br>L-Only L-BFGS-B Descent"]:::process --> H
+            G{"Standard mode and MWIR data?"}:::warning
+            G -- Yes --> H["<b>06: MWIR mid-σ node insertion</b>"]:::process --> I
+            G -- No --> I
 
-            H["<b>Phase 05: SMART Topology Correction</b><br>Barycentric Node Migration<br>Variance Drag Algorithms"]:::process --> I
+            I["<b>07: k floor and spectral polish</b>"]:::process --> J
 
-            I["<b>Phase 06: Constraint Validation</b><br>K_Floor Clamp (k > 1e-5)<br>Normal Dispersion Anomaly Penalization"]:::warning --> J
+            J["<b>08: σ-mesh polish</b><br>cubic σ-spline representation"]:::phase --> K
 
-            J["<b>Phase 07: Continuity Masking</b><br>C2 Spline Cubique vs Linear PWL<br>Not-A-Knot Edge Validations"]:::phase --> K
+            K(["<b>09</b>: RMSE synthesis, result returned to the window"]):::exit
 
-            K["<b>Phase 08: Photometric Scale Refinement</b><br>Bounded spectral scaling correction<br>Range: [0.995, 1.005]"]:::process --> L
-
-            L["<b>Phase 09: Uncertainty Continua Matrix</b><br>Heteroscedastic Likelihood Ratio (LR)<br>Δχ² Fixed-Thickness Continuation Mapping"]:::phase --> M
-
-            M(["Validated Spline Extracted Data Object"]):::exit
+            K -.-> AB["Optional, from the window: Auto-Best pass 2<br>(SOL 3, free σ knots for n and ln k)"]:::process
+            K -.-> COR["Optional: corridor engine (Section 12)"]:::process
         </div>
+        <p>
+            The step numbers are those of the worker log (<code>PIPELINE [NN/09]</code>). Since the free-knot stage left the
+            default pipeline (<code>[03/09] Legacy free-knot stage removed from pipeline</code>), SOL 3 (Section 6) runs only as
+            Auto-Best pass 2, and SOL 3b (Section 7) is no longer called. The former photometric-scale refinement is gone.
+        </p>
         <h2 style="margin-top: 40px;" id="swanepoel-initialization">Section 4: Initial thickness and index from Swanepoel envelopes</h2>
         <p>
             An unconstrained matrix optimization demands an intelligent baseline; utilizing a random $n=1.5, k=0$ uniform flat-line risks stranding the descent gradient in catastrophic $2\pi$ phase skipping (aliasing). 
@@ -263,14 +265,19 @@
             $$ \mathbf{x}_{SOL2} = \left[d_{nm}, \quad n_1, n_2 \dots n_K, \quad L_1, L_2 \dots L_K \right] \quad \Rightarrow \quad \dim(\mathbf{x}) = 1 + 2K $$
         </p>
         <p>
-            CERTUS delegates this space to <code>PGlobalOptimizer</code>. Instead of a single localized descent hook, <i>Basin-Hopping</i> mechanisms traverse trust regions bounded dynamically by the function <code>_pglobal_bounds_trust_region</code>. To prevent the algorithm from slipping into adjacent optical fringe interference orders, node interval constraints are manipulated inversely to spatial resolution.
-        </p>
-        <p>
-            As the meshing density $K$ expands, the tolerance variable $\rho$ contracts linearly between a loose bound ($\rho_{hi} = 0.5$) and a tight boundary ($\rho_{lo} = 0.12$). Furthermore, <code>PGlobal</code> enforces an asymmetrical regional relaxation explicitly: nodes resting geometrically beyond extreme spectrum bands ($\lambda \lt 600\text{ nm}$ or $\lambda \gt 3000\text{ nm}$) have their surrounding search boundaries artificially widened by a factor of 2.5x to compensate for the high signal uncertainty characteristic of extreme edge probe measurements (The Needle Probe).
+            SOL 2 is one bounded local L-BFGS-B stage (<code>spline_workers._run_single_spline_stage</code>) on fixed knot
+            positions, started from the Smart Init state (Section 4). With <code>stage_mandatory_local_maxfun</code> &gt; 0, a
+            mandatory L-BFGS-B run on the full bounds comes first, then the polish on the full physical bounds (see
+            <em>Local polish</em> below). The configuration still carries PGLOBAL trust-region fields
+            (<code>pglobal_trust_rho_lo</code>, <code>pglobal_trust_rho_hi</code>, <code>pglobal_trust_region_by_k</code>),
+            but the current pipeline does not read them; no global exploration and no edge-widened bounds are applied in SOL 2.
         </p>
         <h3>5.1 Step-by-Step Description of SOL 2</h3>
         <p>
-            The operational sequence of SOL 2 is as follows. A rigid state vector is assembled on the canonical knot mesh. A trust-bounded global exploration is then launched around the smart-initialized state rather than over the full admissible hypercube. The width of that trust region depends on mesh cardinality and is further relaxed at spectral edges where the initial estimate is less reliable. Once the best global observation has been found, CERTUS clips it back to the admissible bounds and immediately launches a local L-BFGS-B polish. The output of SOL 2 is therefore not simply a global-search result; it is a globally explored, locally polished, and incumbent-filtered rigid-knot solution.
+            The operational sequence of SOL 2 is as follows. A rigid state vector is assembled on the canonical knot mesh and
+            seeded by Smart Init. A bounded local L-BFGS-B solve then runs from that state (after the optional mandatory full-bounds
+            run), and the best spectral incumbent seen along the trajectory is kept. The output of SOL 2 is therefore a locally
+            optimized, incumbent-filtered rigid-knot solution; it inherits its fringe order from the initialization.
         </p>
         <h3>5.2 Why SOL 2 Is Kept Rigid</h3>
         <p>
@@ -281,6 +288,13 @@
             What emerges from SOL 2 is the first internally coherent estimate of thickness, node amplitudes, and displayable $n(\lambda), k(\lambda)$ curves on the active objective domain. This state also becomes the reference warm start for the later free-knot transitions. Therefore, when describing the method in an article, SOL 2 should be presented as the stage that transforms a Swanepoel-informed prior into the first optimizer-consistent physical estimate.
         </p>
         <h2 id="free-knots">Section 6: Fit knot positions and amplitudes (SOL 3)</h2>
+        <p>
+            <strong>Where SOL 3 runs now.</strong> The default pipeline no longer contains this stage (<code>[03/09]</code>).
+            It runs only as the second pass of Auto-Best (<code>worker_auto_best_split_knot_refinement</code>), seeded with
+            the result of the pipeline. Until 2026-11-20 that pass raised <code>IndexError</code> at its first phase; it is
+            repaired, and its three phase budgets are 2,500 / 5,000 / 10,000 evaluations (a quarter of the former ones, owner
+            decision; <a href="../reports/nuit_2026-11-19/bilan_4_spline_chrono.md">measurement</a>).
+        </p>
         <p>
             Fixed-knot frameworks fall catastrophically short when mapping edge transitions (band-gaps). A structural UV band-edge discontinuity demands an extremely high spatial concentration of points to render accurate curvature, whereas visible regimes require near none. In Phase 03, Spatial constraints unlock entirely.
         </p>
@@ -315,6 +329,10 @@
             The free-knot stages optimize a highly coupled spectral objective. Because termination may occur by budget exhaustion, line-search saturation, or simply because the last quasi-Newton step is not the best one seen, the code stores the best spectral incumbent throughout the trajectory. For a paper, this means the local solution should be described as the <strong>best observed incumbent over the bounded L-BFGS-B trajectory</strong>, not merely the terminal solver state.
         </p>
         <h2>Section 7: Refine absorption with the index fixed (SOL 3b)</h2>
+        <p>
+            <strong>Status.</strong> No current caller runs SOL 3b (<code>_run_free_knot_stage</code> with
+            <code>optimize_n=False</code>): neither the pipeline nor Auto-Best. This section documents the method as implemented.
+        </p>
         <p>
             Deep into highly transparent regions mapping (e.g. Glass Substrates in VIS-NIR domain), explicit calculated values of $k$ plummet exponentially downwards (e.g. $10^{-6}$). Analytically, the derivative gradient of global Transmittance concerning extremely low $k$ variations approaches mathematical absolute zero:
             $$ \frac{\partial T(\lambda)}{\partial L_{transparent}} \approx 0 $$
@@ -399,7 +417,7 @@
             It is imperative for scientific readers to clearly distinguish CERTUS's internal nomenclature. In many legacy optical engines, "analytic" referred to closed-form phenomenological dispersion laws (e.g. Tauc-Lorentz, Cody-Lorentz, or Cauchy families). CERTUS-INDEX-SPLINE uses the term differently: here it refers to an analytic derivative of the objective, not to a closed-form constitutive model for $n(\lambda)$ or $k(\lambda)$.
         </p>
         <p>
-            When CERTUS logs mention <code>compute_spline_pwl_objective_analytic_gradient</code>, "analytic" refers exclusively to the way the gradient is evaluated. Rather than relying on repeated finite-difference perturbations of the full parameter vector, the engine computes the derivative of the optical objective through dedicated sensitivity kernels. The resulting gradient provides direct derivatives with respect to thickness and spline parameters, improving numerical efficiency and reducing finite-difference noise in the local bounded L-BFGS-B phases.
+            When CERTUS logs mention <code>SplinePWLObjective._compute_analytic_gradient</code>, "analytic" refers exclusively to the way the gradient is evaluated. Rather than relying on repeated finite-difference perturbations of the full parameter vector, the engine computes the derivative of the optical objective through dedicated sensitivity kernels. The resulting gradient provides direct derivatives with respect to thickness and spline parameters, improving numerical efficiency and reducing finite-difference noise in the local bounded L-BFGS-B phases.
         </p>
         <h3>8.4 Step-by-Step Evaluation of a Single Objective Call</h3>
         <p>
@@ -690,11 +708,11 @@
             (1) The measured transmission and reflection spectra are sanitized with an objective mask that removes invalid samples and can restrict the fitting window.<br><br>
             (2) The wavelength axis is transformed into reciprocal coordinates $\sigma = 1/\lambda$, and density-corrected quadrature weights are computed on $\ln(\lambda)$ so that sampling density does not bias the objective.<br><br>
             (3) A Swanepoel-based initialization constructs a physically informed warm start for thickness and optical constants, reducing fringe-order aliasing.<br><br>
-            (4) A rigid SOL 2 stage estimates thickness and node amplitudes on fixed knot positions to stabilize the global phase structure.<br><br>
-            (5) A split free-knot SOL 3 stage releases the geometric degrees of freedom of the refractive and absorptive meshes, enabling local knot concentration near rapidly varying spectral regions.<br><br>
-            (6) A transparent-subband refinement (SOL 3b) regularizes low-sensitivity absorptive regions where $\partial T/\partial L \approx 0$, preventing noise-driven zigzag artifacts in $k(\lambda)$.<br><br>
-            (7) A spectral mesh polish re-optimizes the final state on a smooth spline representation, improving continuity and reducing residual staircase effects from piecewise-linear intermediate stages.<br><br>
-            (8) A joint photometric-scale polish is no longer part of the current pipeline and should be omitted from the method narrative.<br><br>
+            (4) A rigid SOL 2 stage, a bounded local L-BFGS-B solve, estimates thickness and node amplitudes on fixed knot positions from the initialization.<br><br>
+            (5) The final fixed σ mesh is kept (no knot insertion); in standard mode, mid-σ nodes may be inserted for MWIR data.<br><br>
+            (6) A k floor and a spectral polish follow.<br><br>
+            (7) A spectral mesh polish re-optimizes the final state on a smooth σ-spline representation, improving continuity and reducing residual staircase effects from piecewise-linear intermediate stages.<br><br>
+            (8) Optionally, Auto-Best runs a second pass with free knot positions for n and ln k (SOL 3). The former SOL 3b refinement and the joint photometric-scale polish are not part of the current pipeline and should be omitted from the method narrative.<br><br>
             (9) Corridor products are generated in two layers: a <strong>profile-likelihood acceptance</strong> continuation and, when requested, a <strong>regular-grid RMSE($d$)</strong> diagnostic sweep. The acceptance corridor uses a center best-of-$N$, optional adaptive $\Delta$, parallel or sequential $\pm d$ walks, optional span extension, and boundary bisection. The diagnostic sweep uses grid-centered visit order, breakpoint heuristics, reverse exploration, optional breakpoint-anchored global polish, a P0 neighbour-rescue pass, point provenance, and a base-grid coverage audit. When the local RMSE($d$) valley is sufficiently regular, a local parabolic fit estimates a continuous valley center for display, but the sampled refits remain the primary uncertainty evidence. New absolute-best refits along the diagnostic grid are logged explicitly for traceability.
         </div>
         <p>
@@ -747,23 +765,18 @@
                 </tr>
                 <tr>
                     <td><code>spline_objective</code></td>
-                    <td><code>compute_spline_pwl_objective_analytic_gradient</code></td>
+                    <td><code>SplinePWLObjective._compute_analytic_gradient</code></td>
                     <td>Computes analytic objective gradients for efficient local convergence.</td>
                 </tr>
                 <tr>
                     <td><code>spline_workers</code></td>
                     <td><code>_run_free_knot_stage</code></td>
-                    <td>Runs bounded free-knot stages in SOL 3 and SOL 3b with incumbent tracking.</td>
+                    <td>Runs the bounded free-knot stage (Auto-Best pass 2; SOL 3b is no longer called) with incumbent tracking.</td>
                 </tr>
                 <tr>
                     <td><code>spline_finalize</code></td>
                     <td><code>_spectral_polish_node_mesh_profile</code></td>
                     <td>Performs final spline smoothing and thickness refinement.</td>
-                </tr>
-                <tr>
-                    <td><code>spline_photometric_scale</code></td>
-                    <td>Photometric-scale refinement</td>
-                    <td>Jointly refines photometric scale, thickness, and spline variables under a bounded prior.</td>
                 </tr>
                 <tr>
                     <td><code>spline_profile_corridors</code></td>
@@ -784,7 +797,7 @@
         </table>
         <div style="margin-top: 40px; text-align: center; color: #64748b; font-size: 0.9em; padding-bottom: 20px;">
             <hr style="margin-bottom: 10px; border-top: 1px solid #cbd5e1;">
-            <i>Implementation review: 2026-10-04. Confirm scientific conclusions against the cited model and input data.</i>
+            <i>Implementation review: 2026-11-20. Confirm scientific conclusions against the cited model and input data.</i>
         </div>
     </main>
 </body>

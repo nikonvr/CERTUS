@@ -225,24 +225,29 @@
             <h3 id="strat-current-benchmarks">Dated reference measurements</h3>
             <table>
                 <caption>SEEL in nm; these are search results, with conditions retained from their source campaigns</caption>
-                <thead><tr><th scope="col">Component</th><th scope="col">Mode and conditions</th><th scope="col">SEEL</th><th scope="col">Reported crash rate</th></tr></thead>
+                <thead><tr><th scope="col">Component</th><th scope="col">Mode and conditions</th><th scope="col">SEEL, 2026-11-20</th><th scope="col">SEEL, October</th><th scope="col">Reported crash rate</th></tr></thead>
                 <tbody>
-                    <tr><td>48-layer dichroic</td><td>Premium, 2 nm slit with slit search</td><td>0.172</td><td>0%</td></tr>
-                    <tr><td>Three-cavity bandpass, true 35-layer profile</td><td>Deep, delivered physical settings</td><td>0.4907</td><td>0%</td></tr>
-                    <tr><td>Three-cavity delivered deep profile, 36 layers</td><td>Deep, delivered physical settings</td><td>0.3238</td><td>0%</td></tr>
-                    <tr><td>Random 75-layer stack</td><td>Delivered fast profile, fixed 2 nm slit</td><td>0.2225</td><td>0%</td></tr>
-                    <tr><td>Random stack at twice the thickness, native slit</td><td>Deep, fixed 1 nm slit</td><td>0.5833</td><td>0%</td></tr>
-                    <tr><td>Same thickness scale, delivered ramps</td><td>Deep, fixed 2 nm slit</td><td>0.5092</td><td>0%</td></tr>
+                    <tr><td>48-layer dichroic</td><td>Premium, 2 nm slit with slit search</td><td>0.182</td><td>0.172</td><td>0%</td></tr>
+                    <tr><td>Three-cavity bandpass, true 35-layer profile</td><td>Deep, delivered physical settings</td><td>0.3466</td><td>0.4907</td><td>0%</td></tr>
+                    <tr><td>Three-cavity delivered deep profile, 36 layers</td><td>Deep, delivered physical settings</td><td>0.3628</td><td>0.3238</td><td>0%</td></tr>
+                    <tr><td>Random 75-layer stack</td><td>Delivered fast profile, fixed 2 nm slit</td><td>0.2142</td><td>0.2225</td><td>0%</td></tr>
+                    <tr><td>Random stack at twice the thickness, native slit</td><td>Deep, fixed 1 nm slit</td><td>0.4878</td><td>0.5833</td><td>0%</td></tr>
+                    <tr><td>Same thickness scale, delivered ramps</td><td>Deep, fixed 2 nm slit</td><td>0.5157</td><td>0.5092</td><td>0%</td></tr>
                     <tr><td>Five-cavity bandpass, 99 layers, four witnesses</td>
                         <td>Fast, 2 nm slit; fixed partition 0–22–42–76–99; spectral-grid index-error domain</td>
-                        <td>Median 0.597; range 0.575–0.670</td><td>0%</td></tr>
+                        <td>0.544 (seed 42)</td><td>Median 0.597; range 0.575–0.670</td><td>0%</td></tr>
                 </tbody>
             </table>
-            <p>The first six rows come from the <a href="../reports/STRAT_A3_reperes_reprise_2026-10-21/bilan.md">2026-10-21
-                campaign</a>, code <code>85a9e82f</code>, seed 42. The last row comes from the
-                <a href="../reports/STRAT_A3_99c_grille_2026-10-24/bilan.md">2026-10-24 fixed-domain campaign</a>,
-                code <code>339e9cb3</code>, seeds 101, 42 and 202, with <code>index_corridor_fixed_domain</code> enabled.
-                Its 0.300 nm target was not reached. Earlier 99-layer assembly scores invalidated by the C2 checks are not current references.</p>
+            <p>The 2026-11-20 values come from the <a href="../reports/nuit_2026-11-19/lot3/bilan.md">night campaign</a>,
+                code <code>7a6fca38</code>, seed 42, one attempt per bench. The October values come from the
+                <a href="../reports/STRAT_A3_reperes_reprise_2026-10-21/bilan.md">2026-10-21 campaign</a>, code <code>85a9e82f</code>,
+                seed 42, and, for the last row, from the <a href="../reports/STRAT_A3_99c_grille_2026-10-24/bilan.md">2026-10-24
+                fixed-domain campaign</a>, code <code>339e9cb3</code>, seeds 101, 42 and 202, with
+                <code>index_corridor_fixed_domain</code> enabled. The differences mix every change between the two codes; the
+                35-layer (−29 %) and 36-layer (+12 %) gaps come from the acceptance check of the final local search, decided on
+                two fresh seeds, not from the ELITE stage (−9 % and −1 %): <a href="../reports/nuit_2026-11-19/bilan_6_ecarts_35c_36c.md">analysis</a>.
+                The 0.300 nm target of the 99-layer bandpass was not reached. Earlier 99-layer assembly scores invalidated by the C2
+                checks are not current references.</p>
             <p><strong>How to read these campaign values:</strong> their SEEL uses 2 × √score, in nm. The GUI uses a <a href="#strat-seel-calibration">separate calibration</a>. Compare only the same component,
                 scoring domain and noise model. These rows include slit bias. Search minima are not independent confirmations
                 of fixed plans; a zero crash rate in <code>fast</code> does not establish a validated production strategy.
@@ -4233,9 +4238,10 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     still unranked. Within a class: lower crash rate, then larger critical-layer margin
                     (clamped to 0–2 amplitude units), then lower raw score.
                     This describes the native ranker. <code>run_local_search</code> can replace it with
-                    <code>rank_refined_first</code>, placing an accepted refined plan first. By default,
-                    <code>strat_local_search_fresh_id=False</code> permits that row to keep its parent ID;
-                    the global uniqueness check is enabled for this final list only with the fresh-ID option.
+                    <code>rank_refined_first</code>, placing an accepted refined plan first. Since 2026-11-19,
+                    <code>strat_local_search_fresh_id=True</code> by default: that row gets a fresh ID (its parent is kept in
+                    <code>parent_strategy_id</code>) and the global uniqueness check runs on the final list;
+                    <code>False</code> restores the former path, where the refined row kept its parent's ID.
                     ELITE, consensus and optional Rate-post processing have their own internal ranking rules.
                 </p>
                 <div class="mermaid">

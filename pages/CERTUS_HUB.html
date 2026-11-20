@@ -163,7 +163,7 @@
 
         <h3>Which module opens a dropped file?</h3>
         <p>Drop the <a href="../example/example_RE/AR_filter_6layers_H800.xlsx">six-layer workbook</a> on the hub window. The measurement, design and index worksheets identify it as an RE input. The <a href="../example/example_index/H400-RTNBrel-sapphire.xlsx">sapphire spectrum</a> has a single worksheet and opens in INDEX. To send a spectrum to another fitter, use <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>O</kbd> and choose the module.</p>
-        <p>For a JSON configuration, the hub inspects its keys. When both metal fitters can read it and the filename leaves the geometry ambiguous, select SINGLE or BILAYER for the measured stack. For a multi-file drop the hub opens the first supported file and lists the others in the status bar and log. Open those files individually to process them.</p>
+        <p>For a JSON configuration, the hub inspects its keys. When both metal fitters can read it and the filename leaves the geometry ambiguous, select SINGLE or BILAYER for the measured stack. For a multi-file drop the hub asks which supported file to open (<em>Open which file?</em>), opens that one, and names every other dropped file as set aside in a notification and in the launch log; declining the choice opens nothing. Open the other files individually to process them.</p>
 
         <h2 id="keyboard-controls">6. User Interface and Keyboard Controls</h2>
         <p>These bindings are installed by <code>CERTUS_HUB._setup_shortcuts</code> and the File/Help menus:</p>
@@ -206,7 +206,7 @@
             <tr>
                 <td><strong><a href="CERTUS_RE.html">RE</a></strong></td>
                 <td>TRF + Spline prefit + Joint TRF</td>
-                <td>Measured-spectrum reverse engineering with shared oblique TMM and batch RMSE* ranking</td>
+                <td>Measured-spectrum reverse engineering with shared oblique TMM and RMSE* ranking of the runs</td>
             </tr>
             <tr>
                 <td><strong><a href="CERTUS_STRAT.html">STRAT</a></strong></td>
@@ -266,7 +266,7 @@
 
         <div class="footer">
             <p>Implementation paths: <code>CERTUS_HUB.py</code>, <code>certus/core/certus_hub_config.py</code> and <code>certus/core/certus_core.py</code>. Review: 2026-10-03.</p>
-            <p>&copy; CERTUS Scientific Suite v26-04 &bull; Scientific Analysis Report</p>
+            <p>&copy; CERTUS Scientific Suite v26.05 &bull; Scientific Analysis Report</p>
         </div>
     </main>
 

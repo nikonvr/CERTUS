@@ -53,7 +53,7 @@ se charge comme le catalogue l'annonce.
 ## Une référence dans RE
 
 ```bat
-python scriptse_depuis_depot.py sb2s3-silice
+python scripts\re_depuis_depot.py sb2s3-silice
 ```
 
 Écrit le classeur que RE lit (`measurement`, `design`, `index`) : les voies mesurées, la couche de la référence en

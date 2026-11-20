@@ -341,6 +341,35 @@ def validate_wavelengths_batch(
     return results
 
 
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
+def average_monitored_dynamics(all_dyns: np.ndarray) -> np.ndarray:
+    """Mean swing of each layer (column) over the runs that monitored it; -1.0 when no run did.
+
+    `certus_strat_growth` returns dyn = -1.0 for a Rate layer ("NOT MONITORED"): averaged in, the sentinel turned a
+    Rate layer into a flat one in `[DYN-ALERT]` and `_worst_layer_swing` (chantier 5, 2026-11-20). A layer monitored in
+    every run keeps the plain mean, summed in the same order.
+    """
+    n_runs, n_layers = all_dyns.shape
+    avg_dyns = np.zeros(n_layers, dtype=np.float64)
+    for layer_idx in range(n_layers):
+        # The plain loop of before, untouched: a conditional sum vectorizes otherwise under fastmath (1 ulp, c1_diff).
+        sum_dyn = 0.0
+        for r in range(n_runs):
+            sum_dyn += all_dyns[r, layer_idx]
+        avg_dyns[layer_idx] = sum_dyn / n_runs
+        n_monitored = 0
+        for r in range(n_runs):
+            if all_dyns[r, layer_idx] >= 0.0:
+                n_monitored += 1
+        if n_monitored < n_runs:
+            sum_monitored = 0.0
+            for r in range(n_runs):
+                if all_dyns[r, layer_idx] >= 0.0:
+                    sum_monitored += all_dyns[r, layer_idx]
+            avg_dyns[layer_idx] = sum_monitored / n_monitored if n_monitored > 0 else -1.0
+    return avg_dyns
+
+
 @njit(parallel=True, cache=True, fastmath=True, nogil=True, error_model="numpy")
 def simulate_stack_robustness_batch(
     p_thick_nominal: np.ndarray,
@@ -564,13 +593,7 @@ def simulate_stack_robustness_batch(
             all_m_level[r, i_layer] = m_lvl
             all_m_missed[r, i_layer] = m_mis
             all_m_fab[r, i_layer] = m_fab
-    avg_dyns = np.zeros(n_layers, dtype=np.float64)
-    for layer_idx in range(n_layers):
-        sum_dyn = 0.0
-        for r in range(n_runs):
-            sum_dyn += all_dyns[r, layer_idx]
-        avg_dyns[layer_idx] = sum_dyn / n_runs
-    return (results, avg_dyns, all_m_level, all_m_missed, all_m_fab)
+    return (results, average_monitored_dynamics(all_dyns), all_m_level, all_m_missed, all_m_fab)
 
 
 @njit(parallel=True, cache=True, fastmath=True, nogil=True, error_model="numpy")

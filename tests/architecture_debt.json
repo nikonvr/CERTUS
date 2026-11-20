@@ -20,7 +20,7 @@
     "certus/core/certus_re_solvers.py::re_execute_phase2_candidate": 307,
     "certus/core/certus_strat_robustness.py::run_final_simulation_block": 320,
     "certus/core/certus_strat_robustness_rate.py::_expand_with_rate_variants": 314,
-    "certus/core/certus_strat_robustness_task.py::_test_strategy_robustness_task": 794,
+    "certus/core/certus_strat_robustness_task.py::_test_strategy_robustness_task": 782,
     "certus/core/certus_substrate_index.py::IndexCore._fit_model_spline_adaptive": 357,
     "certus/core/certus_substrate_sellmeier.py::_fit_model_sellmeier3poles": 380,
     "certus/physics/certus_opt_needle.py::needle_scan_cached": 412,
@@ -49,7 +49,7 @@
     "certus/utils/certus_ux.py::build_premium_overrides": 574
   },
   "fonctions_complexes": {
-    "certus/core/certus_strat_robustness_task.py::_test_strategy_robustness_task": 73,
+    "certus/core/certus_strat_robustness_task.py::_test_strategy_robustness_task": 69,
     "certus/metal/pglobal_adapter.py::run_pglobal_optimization": 77,
     "certus/spline/certus_corridor_exploration.py::_corridor_profile_walk_side": 79,
     "certus/spline/certus_corridor_exploration.py::compute_bootstrap_corridors_by_d": 74,

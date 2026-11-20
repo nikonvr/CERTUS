@@ -172,6 +172,32 @@ def _phase_a_forced_layers(params: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def dynamics_alerts(
+    layer_wavelengths: Any, full_dyn_grid: dict, avg_dyns: Any, num_layers: int,
+) -> list[tuple[str, str]]:
+    """(level, message) per monitored layer: the grid swing (Phase A) against the simulated one (Phase B).
+
+    A layer with no monitoring wavelength, no grid swing, or a sentinel swing (-1.0: a Rate layer, not monitored) gets no
+    line: comparing the grid with the sentinel made 90 % of the `[DYN-ALERT]` lines (chantier 5, 2026-11-20).
+    """
+    lines: list[tuple[str, str]] = []
+    for i_layer in range(num_layers):
+        wl_sel = float(layer_wavelengths[i_layer])
+        if wl_sel <= 0.1:
+            continue
+        theory_dyn = full_dyn_grid.get(i_layer, {}).get(wl_sel, -1.0)
+        sim_dyn = float(avg_dyns[i_layer])
+        if theory_dyn < 0.0 or sim_dyn < 0.0:
+            continue
+        diff = abs(theory_dyn - sim_dyn)
+        if diff > 0.02:
+            lines.append(("warning", f"   [DYN-ALERT] Discrepancy L{i_layer + 1} @ {wl_sel:.0f}nm | Phase A (Grid): "
+                                     f"{theory_dyn * 100:.2f}% | Phase B (Sim): {sim_dyn * 100:.2f}% | DIFF: {diff * 100:.2f}%"))
+        else:
+            lines.append(("info", f"   [DYN-OK] L{i_layer + 1} @ {wl_sel:.0f}nm | A={theory_dyn * 100:.2f}% | B={sim_dyn * 100:.2f}%"))
+    return lines
+
+
 def _worst_layer_swing(results_per_noise: list[dict[str, Any]]) -> dict[str, Any]:
     """Poorest optical swing across layers, and where it sits.
 
@@ -189,14 +215,15 @@ def _worst_layer_swing(results_per_noise: list[dict[str, Any]]) -> dict[str, Any
         if not dyns:
             continue
         arr = np.asarray(dyns, dtype=np.float64)
-        if arr.size == 0:
+        monitored = np.flatnonzero(arr >= 0.0)  # -1.0: a Rate layer, not monitored, has no swing (chantier 5)
+        if monitored.size == 0:
             continue
-        idx = int(np.argmin(arr))
+        idx = int(monitored[np.argmin(arr[monitored])])
         return {
             "layer": idx,          # 0-based, as everywhere in the kernel
             "swing": float(arr[idx]),
-            "median_swing": float(np.median(arr)),
-            "n_below_swing_min": int(np.count_nonzero(arr < 0.04)),  # SWING_MIN
+            "median_swing": float(np.median(arr[monitored])),
+            "n_below_swing_min": int(np.count_nonzero(arr[monitored] < 0.04)),  # SWING_MIN
         }
     return {}
 

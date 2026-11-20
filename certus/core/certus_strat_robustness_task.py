@@ -15,6 +15,7 @@ from certus.core.certus_strat_robustness_diagnostics import (
     _resolve_witness_resets,
     _strategy_final_score,
     _worst_layer_swing,
+    dynamics_alerts,
 )
 from certus.core.certus_strat_robustness_gate import (
     CRASH_GATE_CONFIDENCE_KEY,
@@ -560,20 +561,8 @@ def _test_strategy_robustness_task(
             *stop_model_flags(params),
         )
 
-        for i_layer in range(num_layers):
-            wl_sel = float(layer_wavelengths[i_layer])
-            if wl_sel > 0.1:
-                theory_dyn = full_dyn_grid.get(i_layer, {}).get(wl_sel, -1.0)
-                sim_dyn = avg_dyns_batch[i_layer]
-                diff = abs(theory_dyn - sim_dyn)
-                if theory_dyn >= 0.0 and diff > 0.02:
-                    logger.warning(
-                        f"   [DYN-ALERT] Discrepancy L{i_layer + 1} @ {wl_sel:.0f}nm | Phase A (Grid): {theory_dyn * 100:.2f}% | Phase B (Sim): {sim_dyn * 100:.2f}% | DIFF: {diff * 100:.2f}%"
-                    )
-                elif theory_dyn >= 0.0:
-                    logger.info(
-                        f"   [DYN-OK] L{i_layer + 1} @ {wl_sel:.0f}nm | A={theory_dyn * 100:.2f}% | B={sim_dyn * 100:.2f}%"
-                    )
+        for level, message in dynamics_alerts(layer_wavelengths, full_dyn_grid, avg_dyns_batch, num_layers):
+            getattr(logger, level)(message)
 
         # NON-TERMINATING DEPOSITIONS, AND NOW BROKEN DOWN BY CAUSE.
         #

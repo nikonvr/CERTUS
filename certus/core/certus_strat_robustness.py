@@ -61,6 +61,7 @@ from certus.core.certus_strat_robustness_diagnostics import (
     _resolve_witness_resets,
     _strategy_final_score,
     _worst_layer_swing,
+    dynamics_alerts,
 )
 from certus.core.certus_strat_robustness_gate import (
     CRASH_GATE_CONFIDENCE_KEY,

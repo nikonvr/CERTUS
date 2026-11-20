@@ -1,7 +1,7 @@
 # CERTUS — état du projet
 
 > État présent et décisions de 👤 (tenu en place ; historique dans `git log` et `reports/`). Règles : [`CLAUDE.md`](../CLAUDE.md). À la demande : [`CHANTIERS_RESTANTS.md`](CHANTIERS_RESTANTS.md), [`ETAT_acquis.md`](ETAT_acquis.md), [`REGLES_reference.md`](REGLES_reference.md).
-> Mis à jour le 2026-11-19.
+> Mis à jour le 2026-11-20.
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
@@ -11,7 +11,7 @@
 
 **Répertoire unique (consigne absolue 👤 2026-11-19)** : travailler **exclusivement** dans le dépôt Drive `certus1111` (`D:\drivfl\...\CERTUS\certus1111`) — jamais de clone ni de déplacement ailleurs (ex. `C:\dev`).
 
-**Dernière validation complète** : le 2026-11-19 sous Windows sur `8945bb17` (UX-1..5 fusionnés, correctifs Lot 0, docs à jour), `validate_parallel.py` : oracle 1 252, unit 6 425 (2 artefacts de charge verts seuls en série), ui 1 704, reste 322, performance 30, contrôles documentaires (`coherence_md`, `check_claude_md`, `check_docs`) et ruff verts, `VALIDATION=GO`.
+**Dernière validation complète** : le 2026-11-20 sous Windows sur `36f636fe` (nuit du 19 au 20 : lots 1a à 3, [reprise](../reports/nuit_2026-11-19/REPRISE.md)), `validate_parallel.py` : oracle 1 253, unit 6 483 (5 artefacts de charge verts seuls en série), ui 1 704, reste 322, performance 41, contrôles documentaires (`coherence_md`, `check_claude_md`, `check_docs`) et ruff verts, `VALIDATION=GO`.
 
 En cas d'écart au bit : rejouer sur [cache Numba vierge](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md). **Décisions réservées à 👤** : §5.
 

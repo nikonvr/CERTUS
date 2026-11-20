@@ -108,7 +108,11 @@ branche `claude/repertoire-courant-fb8caf`, départ `0d95cc60`. **Aucune poussé
   Reconstruit avec System32 : `release_checks --check-frozen --check-frozen-run` **PASSED** ([bilan](gel/bilan.md)).
 - [x] 3 (bancs `183ebcd9`, gel vert).
 - Docs : `CHANTIERS_RESTANTS.md` réécrit (ouverts : 5 DYN-ALERT, 6 écarts 35c/36c, 4 SPLINE ; décisions 👤),
-  `ETAT.md` §1, §2, §5. Reste : validation finale, puis §0 (dernière validation). **Ne toucher aucun
+  `ETAT.md` §1, §2, §5 → `fea0c0b2`. Validation finale : NO-GO, cliquet de dette (`_run_free_knot_stage` 678 → 682,
+  `spline_workers.py` 1974 → 1978, ajoutés par `ba8e8290`) → correctif réécrit à longueur nulle (budgets directement
+  dans le contexte) `36f636fe` ; comportement identique (le gel `183ebcd9` porte la version précédente, équivalente).
+  Validation finale : `VALIDATION=GO` sur `36f636fe` (5 artefacts de charge verts seuls en série), 05:27 ; §0 à jour.
+- [x] docs et validation finale. Suite décidée : chantier 5 (DYN-ALERT) si le temps le permet, avec revalidation. **Ne toucher aucun
   fichier suivi pendant les bancs** (le pilote exige un arbre suivi propre avant chaque banc).
 - Docs à appliquer après les bancs : `CHANTIERS_RESTANTS.md` (1a, 1b, 2a, 2b, 2c, 2d faits ; 3 remesuré ; 4 en attente
   de 👤 ; 2d normalisation RE à 👤), `ETAT.md` §0 (validation), §1 (base de dépôts : RE possible pour les absolues ;

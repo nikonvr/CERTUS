@@ -11,7 +11,7 @@
 
 **Répertoire unique (consigne absolue 👤 2026-11-19)** : travailler **exclusivement** dans le dépôt Drive `certus1111` (`D:\drivfl\...\CERTUS\certus1111`) — jamais de clone ni de déplacement ailleurs (ex. `C:\dev`).
 
-**Dernière validation complète** : le 2026-11-20 sous Windows sur `4a188494` (relecture HTML, chantiers 7 et 8, [bilan 8](../reports/chantier08_2026-11-20/bilan.md)), `validate_parallel.py` : oracle 1 253, unit 6 512, ui 1 704, reste 322, performance 41, contrôles documentaires (`coherence_md`, `check_claude_md`, `check_docs`) et ruff verts, `VALIDATION=GO`.
+**Dernière validation complète** : le 2026-11-20 sous Windows sur `4a188494`, `validate_parallel.py` : oracle 1 253, unit 6 512, ui 1 704, reste 322, performance 41, contrôles documentaires (`coherence_md`, `check_claude_md`, `check_docs`) et ruff verts, `VALIDATION=GO`.
 
 En cas d'écart au bit : rejouer sur [cache Numba vierge](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md). **Décisions réservées à 👤** : §5.
 
@@ -19,8 +19,8 @@ En cas d'écart au bit : rejouer sur [cache Numba vierge](../reports/refactor_co
 
 | programme | état | suite |
 |---|---|---|
-| **Calcul (STRAT)** | étalon `r75x2`, fente 2 nm. Recherche locale finale avec garde au corridor (`r75x2` : −13,3 / −11,1 / neutre / −9,7 % SEEL, [bilan](../reports/STRAT_garde_2026-10-22/bilan.md)). Sans rampes : aucun plan optique pur déposable ; avec secours Rate : tous déposables au modèle Rate (§7) | [chantiers](CHANTIERS_RESTANTS.md) |
-| **Conception (DESIGN)** | mémétique, champion sans couche < 5 nm + relances par défaut (2026-10-23) ; séparatrice 400–1200 nm à 0,000135 ([bilan](../reports/DESIGN_bs5050_2026-10-22/bilan.md)) | [chantiers](CHANTIERS_RESTANTS.md) |
+| **Calcul (STRAT)** | étalon `r75x2`, fente 2 nm. Recherche locale finale avec garde au corridor. Sans rampes : aucun plan optique pur déposable ; avec secours Rate : tous déposables au modèle Rate (§7) | [chantiers](CHANTIERS_RESTANTS.md) |
+| **Conception (DESIGN)** | mémétique, champion sans couche < 5 nm + relances par défaut ; séparatrice 400–1200 nm à 0,000135 ([bilan](../reports/DESIGN_bs5050_2026-10-22/bilan.md)) | [chantiers](CHANTIERS_RESTANTS.md) |
 | **RE** | indices tabulés en `n − ik` ; hors table, prolongement constant + avertissement | — |
 | **Base de dépôts** | 140 monocouches Photon RT (`example/database_depots/`) chargées par INDEX (`references_index.json`, `scripts\bench_base_depots.py`) : 9/11 références à < 2 % d'épaisseur, 2 écarts documentés. T et R appariés à la lecture (13 paires) ; option `tlu_full_range` (inactive) ; RE : `scripts\re_depuis_depot.py` pour les références absolues (1/11), normalisées refusées | [chantiers](CHANTIERS_RESTANTS.md) |
 | **Exécutable gelé** | OpenMP, 422 Mo, construit à `183ebcd9` (2026-11-20) hors Drive dans `%TEMP%\certus_gel_1120`, `release_checks` vert ([bilan](../reports/nuit_2026-11-19/gel/bilan.md) ; `BUILD_COMMIT.json`, `licenses/`). OpenMP gardé (TBB PyPI sous licence Intel hors GPL ; oneTBB Apache-2.0 optionnel) | [chantiers](CHANTIERS_RESTANTS.md) |
@@ -29,20 +29,20 @@ En cas d'écart au bit : rejouer sur [cache Numba vierge](../reports/refactor_co
 
 ## 2. Repères mesurés — conditions précisées par ligne
 
-Six bancs officiels et 99c remesurés le 2026-11-20, code `7a6fca38`, graine 42 ([bilan](../reports/nuit_2026-11-19/lot3/bilan.md) ; 21/10 entre parenthèses, [bilan](../reports/STRAT_A3_reperes_reprise_2026-10-21/bilan.md)) — SEEL du `RESULT`, plantage de `RANK00` :
+Six bancs officiels et 99c du 2026-11-20, code `7a6fca38`, graine 42 ([bilan](../reports/nuit_2026-11-19/lot3/bilan.md)) — SEEL du `RESULT`, plantage de `RANK00` :
 
 | composant | SEEL (nm) | plantage RANK00 | condition |
 |---|---:|---:|---|
-| dichroïque 48 c., `JSON-strat-example` | **0,182 nm** (0,172) | 0 % | premium ; fente 2 nm (recherche) ; 2 373 strat., 12 blocs |
-| passe-bande 3 cav., vrai 35 c. | **0,3466** (0,4907) | 0 % | deep ; fente 2 nm (recherche) ; 1 515 strat., 21 blocs |
-| passe-bande 3 cav. deep livré, 36 c. | **0,3628** (0,3238) | 0 % | deep livré ; fente 2 nm (recherche) ; 1 436 strat., 21 blocs |
-| aléatoire `JSON-strat-random75`, 75 c. | **0,2142** (0,2225) | 0 % | fast livré ; fente fixe 2 nm ; 2 072 strat., 39 blocs |
-| aléatoire ×2 `r75x2`, fente native 1 nm | **0,4878** (0,5833) | 0 % | deep livré ; fente fixe 1 nm ; 4 020 strat., 43 blocs |
-| `r75x2` rampes livrées, fente 2 nm | **0,5157** (0,5092) | 0 % | deep livré ; fente fixe 2 nm ; 3 998 strat., 52 blocs |
-| passe-bande 5 cav., 99 c., 4 témoins | **0,544** gr. 42 (0,597 ; 0,575–0,670, gr. 42/101/202) | 0 % | fast ; fente 2 nm ; partition 0-22-42-76-99 ; `index_corridor_fixed_domain` armé ([rapport](../reports/STRAT_A3_99c_grille_2026-10-24/bilan.md)) |
+| dichroïque 48 c., `JSON-strat-example` | **0,182 nm** | 0 % | premium ; fente 2 nm (recherche) ; 2 373 strat., 12 blocs |
+| passe-bande 3 cav., vrai 35 c. | **0,3466** | 0 % | deep ; fente 2 nm (recherche) ; 1 515 strat., 21 blocs |
+| passe-bande 3 cav. deep livré, 36 c. | **0,3628** | 0 % | deep livré ; fente 2 nm (recherche) ; 1 436 strat., 21 blocs |
+| aléatoire `JSON-strat-random75`, 75 c. | **0,2142** | 0 % | fast livré ; fente fixe 2 nm ; 2 072 strat., 39 blocs |
+| aléatoire ×2 `r75x2`, fente native 1 nm | **0,4878** | 0 % | deep livré ; fente fixe 1 nm ; 4 020 strat., 43 blocs |
+| `r75x2` rampes livrées, fente 2 nm | **0,5157** | 0 % | deep livré ; fente fixe 2 nm ; 3 998 strat., 52 blocs |
+| passe-bande 5 cav., 99 c., 4 témoins | **0,544** (graine 42) | 0 % | fast ; fente 2 nm ; partition 0-22-42-76-99 ; `index_corridor_fixed_domain` armé ([rapport](../reports/STRAT_A3_99c_grille_2026-10-24/bilan.md)) |
 
 **Lire ces chiffres :**
-- 🔴 Les écarts au 21/10 mêlent tout ce qui a changé depuis (recherche locale, consensus, arrêt tardif `oms_arming=1`, correctifs du 19/11, lots du 20/11) : 35c (−29 %) et 36c (+12 %) viennent du contrôle d'acceptation de la recherche locale (2 graines), ELITE −9 % et −1 % ([bilan](../reports/nuit_2026-11-19/bilan_6_ecarts_35c_36c.md)). Dernier juge de paix (2026-11-16) : **0,1704 nm**.
+- 🔴 Le `RESULT` porte le verdict du contrôle d'acceptation de la recherche locale : comparer aussi `STRAT_BEST_ELITE`, qui n'en dépend pas ([bilan](../reports/nuit_2026-11-19/bilan_6_ecarts_35c_36c.md)).
 - 🔴 SEEL non comparables d'un composant à l'autre (§7) ; à 150 tirages σ ≈ 6 % (consensus `r75x2` σ ≈ 1,8 %) : < ~8 % indiscernables.
 - Comprennent le **biais de fente** ; garder `RESULT` et `RANK00` séparés (R130) ; structure > longueur pour la difficulté ; `100 %` en `fast` ne conclut rien.
 - Banc : `CERTUS_BENCH_TIMEOUT_S = max(5400, 4 × durée)` (`WAIT_TIMEOUT=` -> `RESULT=None`).
@@ -106,8 +106,8 @@ Six bancs officiels et 99c remesurés le 2026-11-20, code `7a6fca38`, graine 42 
 - Threads Numba : OpenMP, sauf STRAT et RE sous TBB optionnel (`certus_core.TBB_THREADING_LAYER`, 👤 2026-11-15 : juge de paix 1 074 s vs 1 339 s mêmes bits ; RE 17,5 s vs 28,2 s ; [STRAT](../reports/audit_oms5100_2026-11-15/profil_strat_complet/bilan.md), [INDEX/RE](../reports/audit_oms5100_2026-11-15/tbb_index_re/bilan.md)).
 - Fusion `master` soumise à 👤. Caps entrypoints dans `tests/unit/test_the_ai_entry_points_stay_small.py` (à abaisser librement).
 - Benchmarks litt. (2026-10-30) : Trubetskov 2020 (octave) / miroir chaud / antireflets hors champ ; OIC 2016 doit battre `0,0139`.
-- Décisions 2026-11-20 (👤) : RE garde le refus des références normalisées (T/T_sub) ; budgets de la passe 2 SPLINE au quart ; fusion locale de la nuit dans `master`, sans pousser ; chantier 7 : meilleur ELITE publié par le banc (`STRAT_BEST_ELITE`) et nombre de graines du contrôle réglable (2 par défaut).
-- Décisions 2026-11-19 (👤) : politique stricte `ValueError` (D108/D109/D114 : `NaN`/`Inf`, `d < 0`, `k < 0`, `n_sub <= 0`) ; retrait du plancher `ε1 ≥ 1` dans INDEX ; `strat_local_search_fresh_id` par défaut (exception C1 à consigner au commit Lot 2b) ; chantiers **31**, **32** et **26** archivés ; optionnels P3 écartés (dérive Rate, guides HTML offline, bande fichiers récents étendue) ; consigne absolue de rester exclusivement dans le dépôt Drive `certus1111` (jamais cloner/déplacer ailleurs).
+- Décisions 2026-11-20 (👤) : RE garde le refus des références normalisées (T/T_sub) ; budgets de la passe 2 SPLINE au quart.
+- Décisions 2026-11-19 (👤) : politique stricte `ValueError` (D108/D109/D114 : `NaN`/`Inf`, `d < 0`, `k < 0`, `n_sub <= 0`) ; retrait du plancher `ε1 ≥ 1` dans INDEX ; `strat_local_search_fresh_id` par défaut ; optionnels P3 écartés (dérive Rate, guides HTML offline, bande fichiers récents étendue) ; consigne absolue de rester exclusivement dans le dépôt Drive `certus1111` (jamais cloner/déplacer ailleurs).
 
 ## 4. Limites et travaux ouverts
 

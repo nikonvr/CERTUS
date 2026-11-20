@@ -76,7 +76,7 @@ un fichier peut porter des clés retirées, ignorées au chargement avec une lig
 | `tp_hysteresis_factor` | `float` | `1.66` | Seuil d'hystérésis pour la détection anti-bruit des points tournants. |
 | `phase_a_level_margin_factor` | `float` | `1.66` | Marge de sécurité requise entre le niveau de transmission visé et les extrema. |
 | `trigger_tolerance` | `float` | `0.05` | Bruit de lecture en **points de transmission** : l'amplitude en unités T vaut `trigger_tolerance / 100`. |
-| `oms_arming` | `int` | `1` (défaut) | Modèle d'arrêt OMS : `1` = arrêt tardif au dernier extremum (défaut depuis 2026-11-19), `2` = attente sans fin, `0` = chemin historique. |
+| `oms_arming` | `int` | `1` (défaut) | Modèle d'arrêt OMS : `1` = arrêt tardif au dernier extremum, `2` = attente sans fin, `0` = chemin historique. |
 
 ---
 

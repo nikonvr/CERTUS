@@ -121,6 +121,7 @@ Chantiers ouverts : [`CHANTIERS_RESTANTS.md`](CHANTIERS_RESTANTS.md). Limites : 
 | **paquet `certus_re`** | mise à jour Zenodo avec citation saphir (Malitson & Dodge 1972) |
 | **publication** | vitrine, autorisation écrite Tikhonravov 1996 (`example/example_design/JSON-design-reference-tikhonravov-1996-published-design.json`) |
 | **hors-IA** | 5 PR Dependabot CI #10–#14 (41) sur GitHub ; essais humains U13 (33) bloqués sur date/testeurs |
+| **bancs et cache Numba** | repères STRAT reproductibles au bit seulement à état de cache égal : bancs sur cache vierge, ou cache propre à la validation ([chantier 8](../reports/chantier08_2026-11-20/bilan.md)) |
 | **contrôle de la recherche locale** | défaut de `strat_local_search_check_seeds` : garder 2 (proposé) ou passer à 6, qui coûte la recherche locale au 36c ([bilan](../reports/chantier07_2026-11-20/bilan.md)) |
 
 ## 6. Ordre de travail

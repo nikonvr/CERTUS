@@ -134,3 +134,4 @@ branche `claude/repertoire-courant-fb8caf`, départ `0d95cc60`. **Aucune poussé
   de 👤 ; 2d normalisation RE à 👤), `ETAT.md` §0 (validation), §1 (base de dépôts : RE possible pour les absolues ;
   qualité : mypy bloquant), §2 (repères remesurés), §5 (2 décisions pour 👤 : dénormalisation RE, dérivées passe 2).
 - [ ] validation complète, docs
+- Validation avant fusion : `VALIDATION=GO` sur `71074616`, aucun artefact (06:39) ; §0 à jour ; fusion en avance rapide dans `master` (local, non poussé).

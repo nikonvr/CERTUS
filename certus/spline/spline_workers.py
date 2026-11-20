@@ -118,10 +118,10 @@ def _build_live_dict(
 
 
 def _free_knot_phase_budgets(cfg: SplineOptConfig, optimize_n: bool) -> tuple[int, int, int, list[int], float]:
-    """Compute phase budgets for the free-knot stage."""
-    mxf1 = int(sol3_phase1_maxfun_effective(cfg))
-    mxf2 = int(max(16000, 2 * mxf1))
-    mxf3 = int(max(40000, 4 * mxf1))
+    """Phase budgets of the free-knot stage: a quarter of the former 10 000 / 20 000 / 40 000 (owner, 2026-11-20)."""
+    mxf1 = int(sol3_phase1_maxfun_effective(cfg)) // 4
+    mxf2 = int(max(16000, 8 * mxf1)) // 4
+    mxf3 = int(max(40000, 16 * mxf1)) // 4
     phase_list = [mxf1, mxf2] + ([mxf3] if optimize_n else [])
     weight_total = float(max(1, sum(max(1, int(v)) for v in phase_list)))
     return mxf1, mxf2, mxf3, phase_list, weight_total

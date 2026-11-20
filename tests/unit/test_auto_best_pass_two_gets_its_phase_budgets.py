@@ -54,6 +54,8 @@ def test_the_first_phase_of_pass_two_sees_the_three_budgets(monkeypatch) -> None
 
     expected = list(spline_workers._free_knot_phase_budgets(cfg, True)[3])
     assert seen["budgets"] == expected
+    # A quarter of the former 10 000 / 20 000 / 40 000 (owner, 2026-11-20; reports/nuit_2026-11-19/p4_pass2_budgets.txt).
+    assert expected == [2500, 5000, 10000]
     assert len(expected) == 3
     assert seen["maxfun"] == expected[0]
     assert seen["bounds"][0] == 0.0

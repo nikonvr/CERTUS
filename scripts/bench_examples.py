@@ -827,6 +827,14 @@ def dump_strat_ranking(strategies: list, top: int = 10) -> None:
                 f"nblocks={len(blocks)} nwl={s.get('num_unique_wavelengths', '?')} "
                 f"wl=[{wls}]"
             )
+        # Chantier 7 (2026-11-20): RESULT is often the local search's plan, kept or refused on two fresh seeds; that
+        # binary verdict alone moved benchmarks by 10 to 30 %. The best ELITE plan does not depend on it.
+        elite = [float(s.get("robustness_score", float("nan"))) for s in strategies
+                 if isinstance(s, dict) and not s.get("crash_eliminated")
+                 and str((s.get("strategy") or {}).get("origin", "")) == "ELITE"]
+        elite = [score for score in elite if score == score]
+        if elite:
+            emit(f"STRAT_BEST_ELITE={min(elite):.6f}")
     except BaseException as exc:  # le classement est un diagnostic, il ne doit pas tuer le banc
         emit(f"WARN_RANKING_DUMP={exc!r}")
 

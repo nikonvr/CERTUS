@@ -1100,17 +1100,13 @@ def _run_free_knot_stage(
 
                 return None
 
-    _mxf1, _mxf2, _mxf3, _phase_maxfun_list, _phase_weight_total = _free_knot_phase_budgets(cfg, optimize_n)
-    opt_p1, opt_p2, opt_p3 = _free_knot_phase_options(_mxf1, _mxf2, _mxf3)
-    # The context was built before the budgets existed (placeholders 0 and []): hand them over, or the first phase
-    # raises IndexError in phase_progress_bounds (measured 2026-11-20 on TOTAL and TSIO2, since the split 0b7f4f0d).
-    ctx.mxf1, ctx.mxf2, ctx.mxf3 = _mxf1, _mxf2, _mxf3
-    ctx.phase_maxfun_list, ctx.phase_weight_total = list(_phase_maxfun_list), float(_phase_weight_total)
+    ctx.mxf1, ctx.mxf2, ctx.mxf3, ctx.phase_maxfun_list, ctx.phase_weight_total = _free_knot_phase_budgets(cfg, optimize_n)
+    opt_p1, opt_p2, opt_p3 = _free_knot_phase_options(ctx.mxf1, ctx.mxf2, ctx.mxf3)  # the context holds them (0b7f4f0d lost them)
 
 
 
 
-    _free_knot_emit_phase_start(log, seq_label, stage_name, optimize_n, K, z0, rmse_warm, d0, _mxf1, _mxf2, _mxf3, progress_cb)
+    _free_knot_emit_phase_start(log, seq_label, stage_name, optimize_n, K, z0, rmse_warm, d0, ctx.mxf1, ctx.mxf2, ctx.mxf3, progress_cb)
 
     ctx.reset_obj_tracker(z0)
 

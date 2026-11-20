@@ -98,3 +98,27 @@ def test_strat_local_search_rounds_reaches_the_worker_params(qapp, tmp_path):
     assert window.load_configuration(str(path))
     assert window.collect_params()["strat_local_search_rounds"] == 3
     assert window._collect_config()["strat_local_search_rounds"] == 3
+
+
+def test_strat_local_search_check_seeds_reaches_the_worker_params(qapp, tmp_path):
+    """Chantier 7 (2026-11-20): the number of fresh check seeds comes from the component file, and is saved with it."""
+    import json
+
+    source = Path(__file__).resolve().parents[2] / "example/example_strat/JSON-strat-example-fast.json"
+    config = json.loads(source.read_text(encoding="utf-8"))
+    config["strat_local_search_check_seeds"] = 6
+    path = tmp_path / "strat_check_seeds.json"
+    path.write_text(json.dumps(config), encoding="utf-8")
+
+    window = CertusSTRATApp()
+    assert window.load_configuration(str(path))
+    assert window.collect_params()["strat_local_search_check_seeds"] == 6
+    assert window._collect_config()["strat_local_search_check_seeds"] == 6
+
+
+def test_without_the_key_the_check_keeps_two_seeds(qapp):
+    window = CertusSTRATApp()
+    source = Path(__file__).resolve().parents[2] / "example/example_strat/JSON-strat-example-fast.json"
+    assert window.load_configuration(str(source))
+    assert window.collect_params()["strat_local_search_check_seeds"] == 2
+    assert "strat_local_search_check_seeds" not in window._collect_config()

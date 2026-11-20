@@ -1,0 +1,7 @@
+START 36c_deep_livre_2graines 07:23:51
+END 36c_deep_livre_2graines exit=0 07:42:34
+START 36c_deep_livre_6graines 07:42:34
+END 36c_deep_livre_6graines exit=0 07:54:06
+START 35c_deep_6graines 07:54:06
+END 35c_deep_6graines exit=0 08:04:11
+MESURE_FINIE 08:04:11

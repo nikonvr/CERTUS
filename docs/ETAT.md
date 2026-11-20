@@ -22,27 +22,27 @@ En cas d'écart au bit : rejouer sur [cache Numba vierge](../reports/refactor_co
 | **Calcul (STRAT)** | étalon `r75x2`, fente 2 nm. Recherche locale finale avec garde au corridor (`r75x2` : −13,3 / −11,1 / neutre / −9,7 % SEEL, [bilan](../reports/STRAT_garde_2026-10-22/bilan.md)). Sans rampes : aucun plan optique pur déposable ; avec secours Rate : tous déposables au modèle Rate (§7) | [chantiers](CHANTIERS_RESTANTS.md) |
 | **Conception (DESIGN)** | mémétique, champion sans couche < 5 nm + relances par défaut (2026-10-23) ; séparatrice 400–1200 nm à 0,000135 ([bilan](../reports/DESIGN_bs5050_2026-10-22/bilan.md)) | [chantiers](CHANTIERS_RESTANTS.md) |
 | **RE** | indices tabulés en `n − ik` ; hors table, prolongement constant + avertissement | — |
-| **Base de dépôts** | 140 monocouches Photon RT (`example/database_depots/`) chargées par INDEX (`references_index.json`, `scripts\bench_base_depots.py`) : 9/11 références à < 2 % d'épaisseur, 2 écarts documentés. RE exige un classeur complet | [chantiers](CHANTIERS_RESTANTS.md) |
-| **Exécutable gelé** | OpenMP, 420 Mo, construit à `260e4e8c` (2026-11-17) — à reconstruire en Lot 3 après le chantier (`BUILD_COMMIT.json`, `licenses/`). OpenMP gardé (TBB PyPI sous licence Intel hors GPL ; oneTBB Apache-2.0 optionnel) | [chantiers](CHANTIERS_RESTANTS.md) |
-| **Qualité** | CI Linux (calcul) + Windows (UI/gel), `pip-audit`, `gitleaks`, tests isolés, 0 arête montante | [chantiers](CHANTIERS_RESTANTS.md) |
+| **Base de dépôts** | 140 monocouches Photon RT (`example/database_depots/`) chargées par INDEX (`references_index.json`, `scripts\bench_base_depots.py`) : 9/11 références à < 2 % d'épaisseur, 2 écarts documentés. T et R appariés à la lecture (13 paires) ; option `tlu_full_range` (inactive) ; RE : `scripts\re_depuis_depot.py` pour les références absolues (1/11), normalisées refusées | [chantiers](CHANTIERS_RESTANTS.md) |
+| **Exécutable gelé** | OpenMP, 422 Mo, construit à `183ebcd9` (2026-11-20) hors Drive dans `%TEMP%\certus_gel_1120`, `release_checks` vert ([bilan](../reports/nuit_2026-11-19/gel/bilan.md) ; `BUILD_COMMIT.json`, `licenses/`). OpenMP gardé (TBB PyPI sous licence Intel hors GPL ; oneTBB Apache-2.0 optionnel) | [chantiers](CHANTIERS_RESTANTS.md) |
+| **Qualité** | CI Linux (calcul) + Windows (UI/gel), `mypy` bloquant, contrôles doc dans `lint.yml`, `pip-audit`, `gitleaks`, tests isolés, 0 arête montante | [chantiers](CHANTIERS_RESTANTS.md) |
 | **Validation externe** | 🔴 **aucune** : STRAT n'est validé que contre lui-même (dépôts réels du dichroïque annulés, 👤 2026-10-06) | — |
 
 ## 2. Repères mesurés — conditions précisées par ligne
 
-Six bancs officiels du 2026-10-21, code `85a9e82f`, graine 42 ([bilan](../reports/STRAT_A3_reperes_reprise_2026-10-21/bilan.md)) — SEEL du `RESULT`, plantage de `RANK00` :
+Six bancs officiels et 99c remesurés le 2026-11-20, code `7a6fca38`, graine 42 ([bilan](../reports/nuit_2026-11-19/lot3/bilan.md) ; 21/10 entre parenthèses, [bilan](../reports/STRAT_A3_reperes_reprise_2026-10-21/bilan.md)) — SEEL du `RESULT`, plantage de `RANK00` :
 
 | composant | SEEL (nm) | plantage RANK00 | condition |
 |---|---:|---:|---|
-| dichroïque 48 c., `JSON-strat-example` | **0,172 nm** | 0 % | premium ; fente 2 nm (recherche) ; 2 652 strat., 2 blocs |
-| passe-bande 3 cav., vrai 35 c. | **0,4907** | 0 % | deep ; fente 2 nm (recherche) ; 1 245 strat., 5 blocs |
-| passe-bande 3 cav. deep livré, 36 c. | **0,3238** | 0 % | deep livré ; fente 2 nm (recherche) ; 1 440 strat., 29 blocs |
-| aléatoire `JSON-strat-random75`, 75 c. | **0,2225** | 0 % | fast livré ; fente fixe 2 nm ; 2 634 strat., 51 blocs |
-| aléatoire ×2 `r75x2`, fente native 1 nm | **0,5833** | 0 % | deep livré ; fente fixe 1 nm ; 3 946 strat., 15 blocs |
-| `r75x2` rampes livrées, fente 2 nm | **0,5092** | 0 % | deep livré ; fente fixe 2 nm ; 4 691 strat., 56 blocs |
-| passe-bande 5 cav., 99 c., 4 témoins | **0,597** (0,575–0,670, gr. 42/101/202) | 0 % | fast ; fente 2 nm ; partition 0-22-42-76-99 ; `index_corridor_fixed_domain` armé ([rapport](../reports/STRAT_A3_99c_grille_2026-10-24/bilan.md)) |
+| dichroïque 48 c., `JSON-strat-example` | **0,182 nm** (0,172) | 0 % | premium ; fente 2 nm (recherche) ; 2 373 strat., 12 blocs |
+| passe-bande 3 cav., vrai 35 c. | **0,3466** (0,4907) | 0 % | deep ; fente 2 nm (recherche) ; 1 515 strat., 21 blocs |
+| passe-bande 3 cav. deep livré, 36 c. | **0,3628** (0,3238) | 0 % | deep livré ; fente 2 nm (recherche) ; 1 436 strat., 21 blocs |
+| aléatoire `JSON-strat-random75`, 75 c. | **0,2142** (0,2225) | 0 % | fast livré ; fente fixe 2 nm ; 2 072 strat., 39 blocs |
+| aléatoire ×2 `r75x2`, fente native 1 nm | **0,4878** (0,5833) | 0 % | deep livré ; fente fixe 1 nm ; 4 020 strat., 43 blocs |
+| `r75x2` rampes livrées, fente 2 nm | **0,5157** (0,5092) | 0 % | deep livré ; fente fixe 2 nm ; 3 998 strat., 52 blocs |
+| passe-bande 5 cav., 99 c., 4 témoins | **0,544** gr. 42 (0,597 ; 0,575–0,670, gr. 42/101/202) | 0 % | fast ; fente 2 nm ; partition 0-22-42-76-99 ; `index_corridor_fixed_domain` armé ([rapport](../reports/STRAT_A3_99c_grille_2026-10-24/bilan.md)) |
 
 **Lire ces chiffres :**
-- 🔴 Antérieurs au code STRAT actuel (substrat « SiO2 », consensus, arrêt tardif `oms_arming=1` et correctifs TMM/gradients du 19/11) : à remesurer avant comparaison. Dernier juge de paix (2026-11-16) : **0,1704 nm**.
+- 🔴 Les écarts au 21/10 mêlent tout ce qui a changé depuis (recherche locale, consensus, arrêt tardif `oms_arming=1`, correctifs du 19/11, lots du 20/11) : aucune cause isolée ; 35c (−29 %) et 36c (+12 %) à instruire (chantier 6). Dernier juge de paix (2026-11-16) : **0,1704 nm**.
 - 🔴 SEEL non comparables d'un composant à l'autre (§7) ; à 150 tirages σ ≈ 6 % (consensus `r75x2` σ ≈ 1,8 %) : < ~8 % indiscernables.
 - Comprennent le **biais de fente** ; garder `RESULT` et `RANK00` séparés (R130) ; structure > longueur pour la difficulté ; `100 %` en `fast` ne conclut rien.
 - Banc : `CERTUS_BENCH_TIMEOUT_S = max(5400, 4 × durée)` (`WAIT_TIMEOUT=` -> `RESULT=None`).
@@ -119,6 +119,8 @@ Chantiers ouverts : [`CHANTIERS_RESTANTS.md`](CHANTIERS_RESTANTS.md). Limites : 
 | **paquet `certus_re`** | mise à jour Zenodo avec citation saphir (Malitson & Dodge 1972) |
 | **publication** | vitrine, autorisation écrite Tikhonravov 1996 (`example/example_design/JSON-design-reference-tikhonravov-1996-published-design.json`) |
 | **hors-IA** | 5 PR Dependabot CI #10–#14 (41) sur GitHub ; essais humains U13 (33) bloqués sur date/testeurs |
+| **RE et dépôts normalisés** | dénormaliser T/T_sub (10 références sur 11) pour RE : quel modèle de substrat ([chantiers](CHANTIERS_RESTANTS.md)) |
+| **SPLINE passe 2** | dérivées de la passe 2 d'Auto-Best (seuil franchi, gain faible) : jac hybride, budgets réduits ou statu quo (lot 4) |
 
 ## 6. Ordre de travail
 

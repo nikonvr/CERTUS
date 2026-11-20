@@ -13,7 +13,8 @@ branche `claude/busy-visvesvaraya-1d8b72`, départ `80f06867`. Aucune poussée s
 - [x] Mesure (lancée 07:24, finie 08:04 ; [bilan](bilan.md) : verdict du plan final inchangé à 6 graines, repli du 36c refusé, RESULT +13 % ; témoin pas au bit, population variable : chantier 8), [script](run_mesure.sh), `sortie_mesure.txt`) : témoin 36c 2 graines, 36c 6 graines, 35c
       6 graines. Au lancement, 2 processus python d'une autre session (relecture HTML ?) tournaient peut-être : durées
       sous réserve, RESULT déterministe.
-- [ ] Bilan, docs (CHANTIERS, ETAT), validation, fusion locale dans `master`.
+- [x] Bilan, docs (CHANTIERS : 7 mesuré, 8 ouvert ; ETAT §3, §5) → `80f13adf` ; validation `VALIDATION=GO` (1 artefact de charge vert seul en série), ETAT §0.
+- [ ] Vraie fusion locale dans `master` (dossier principal), sans pousser.
 - Note de la session « Répertoire courant » (07:30) : `master` local est à `16855e2e` (relecture HTML : pages/*.html,
   reports/relecture_html_2026-11-20/, non poussée). Fusion finale = vraie fusion `git merge` (pas d'avance rapide) ;
   pas de rebase, pour garder `a059cf47`, le commit mesuré, dans l'historique.

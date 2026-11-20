@@ -80,6 +80,31 @@ SEARCH_SEED_OFFSET: int = 7_000_003
 CHECK_SEED_OFFSETS: tuple[int, ...] = (7_100_003, 7_100_011)
 #: Seeds that confirm an intermediate plan chosen on the check seeds (the choice is tuned to those draws).
 CONFIRM_SEED_OFFSETS: tuple[int, ...] = (7_200_003, 7_200_011)
+
+
+def check_seed_offsets(count: int) -> tuple[int, ...]:
+    """Offsets of the fresh seeds that judge the frozen plan: the two of before, then the same sequence (step 8)."""
+    if count < 1:
+        raise ValueError(f"a check needs at least one seed, got {count}")
+    return tuple(CHECK_SEED_OFFSETS[0] + 8 * i for i in range(count))
+
+
+def check_seeds_setting(params: dict[str, Any]) -> int:
+    """`strat_local_search_check_seeds`: how many fresh seeds judge the frozen plan (chantier 7, 2026-11-20).
+
+    2 by default, the check of before. On two seeds the verdict flipped between versions of the code and alone moved
+    the 35c and 36c benchmarks by -29 % and +12 % (reports/nuit_2026-11-19/bilan_6_ecarts_35c_36c.md). At least 1.
+    """
+    try:
+        return max(1, int(params.get("strat_local_search_check_seeds", 2)))
+    except (TypeError, ValueError, OverflowError):
+        return 2
+
+
+def check_seeds_for(params: dict[str, Any], base_seed: int) -> tuple[int, ...]:
+    """The fresh check seeds of the stage, offsets of `robustness_seed` = `base_seed`."""
+    return tuple(base_seed + offset for offset in check_seed_offsets(check_seeds_setting(params)))
+
 #: At most this many intermediate plans are re-judged when the check refuses the final one.
 MAX_FALLBACK_PLANS: int = 12
 #: Every further round (`strat_local_search_rounds`) shifts its search, check and confirmation seeds by this much, so a

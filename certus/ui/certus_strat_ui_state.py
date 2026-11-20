@@ -577,8 +577,7 @@ class CertusStratStateMixin:
         config["show_plots"] = True
         config["export_excel"] = True
         config["force_first_layer_same_wl"] = True
-        if (rounds := getattr(self, "_loaded_config", {}).get("strat_local_search_rounds")) is not None:
-            config["strat_local_search_rounds"] = rounds
+        config.update({k: v for k in ("strat_local_search_rounds", "strat_local_search_check_seeds") if (v := getattr(self, "_loaded_config", {}).get(k)) is not None})
         return config
 
     def save_config(self) -> None:
@@ -1167,7 +1166,7 @@ class CertusStratStateMixin:
             "tp_hysteresis_factor": _config_float(getattr(self, "_loaded_config", {}), "tp_hysteresis_factor"),
             "tp_hysteresis_floor": _config_float(getattr(self, "_loaded_config", {}), "tp_hysteresis_floor", 0.000415),  # T, 0 = off
             "strat_local_search": _config_flag_default(getattr(self, "_loaded_config", {}), "strat_local_search", True),
-            "strat_local_search_rounds": getattr(self, "_loaded_config", {}).get("strat_local_search_rounds", 1),
+            **{"strat_local_search_rounds": getattr(self, "_loaded_config", {}).get("strat_local_search_rounds", 1), "strat_local_search_check_seeds": getattr(self, "_loaded_config", {}).get("strat_local_search_check_seeds", 2)},
             # ── Safety margin at turning point, in noise multiples ──────
             # > 0 : the stopping level must be separated from neighboring turning points
             # by at least `factor x trigger_tolerance/100`, IN TRANSMISSION. Activates at the

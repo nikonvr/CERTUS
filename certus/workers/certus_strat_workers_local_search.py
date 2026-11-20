@@ -11,10 +11,10 @@ from collections.abc import Callable
 from typing import Any
 
 from certus.core.certus_strat_local_search import (
-    CHECK_SEED_OFFSETS,
     CONFIRM_SEED_OFFSETS,
     SEARCH_SEED_OFFSET,
     LocalSearchConfig,
+    check_seeds_for,
     further_rounds,
     guard_is_armed,
     index_guided_settings,
@@ -58,7 +58,7 @@ def run_local_search(
     base_seed = int(params.get("robustness_seed", 42)) if params.get("robustness_seed") is not None else 42  # as the task reads it
     rules = rate_rules_from_params(params)
     search_seed = base_seed + SEARCH_SEED_OFFSET
-    check_seeds = tuple(base_seed + o for o in CHECK_SEED_OFFSETS)
+    check_seeds = check_seeds_for(params, base_seed)
     confirm_seeds = tuple(base_seed + o for o in CONFIRM_SEED_OFFSETS)
     with SharedIndicesWorker(shared_clues_info) as clues:
         free = {

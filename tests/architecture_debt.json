@@ -75,7 +75,7 @@
     "certus/ui/certus_metal_base_app.py": 1745,
     "certus/ui/certus_re_excel_mixin.py": 2193,
     "certus/ui/certus_re_layout_mixin.py": 1743,
-    "certus/ui/certus_strat_ui_state.py": 1662,
+    "certus/ui/certus_strat_ui_state.py": 1661,
     "certus/utils/certus_re_helpers.py": 1972,
     "certus/utils/certus_strat_service.py": 1616,
     "certus/workers/certus_strat_workers.py": 1736

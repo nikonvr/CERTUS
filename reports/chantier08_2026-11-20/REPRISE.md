@@ -25,3 +25,5 @@ Worktree `sad-perlman-32940e`, branche `claude/busy-visvesvaraya-1d8b72` avancé
       cause mesurée : le contenu du cache Numba ([bilan](bilan.md)). Docs : CHANTIERS (8 → décision 👤), ETAT §5.
 - Bloquant signalé : `coherence_md` rouge sur `master` (`ec5603a5`, poussé) à cause de
   `reports/relecture_html_2026-11-20/bilan.md:19` (« §15 », « §17 » sans nommer la page) ; fusion du chantier 8 en attente.
+- 👤 « corrige et fusionne » : ligne 18-19 du bilan HTML écrite en toutes lettres → `4a188494`, `coherence_md` vert ;
+  validation complète `VALIDATION=GO` sans artefact (16:55) ; ETAT §0 ; fusion locale dans `master`, non poussée.

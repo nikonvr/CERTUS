@@ -1,3 +1,0 @@
-ECHEC (ruff), code 1, non rejoue : lire reports\RELECTURE_gemini_2026-10-22\validation_commandes\ruff.log
-VALIDATION=NO-GO
-La reference de CLAUDE.md section 2 reste la suite complete en serie.

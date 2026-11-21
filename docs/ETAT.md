@@ -5,13 +5,13 @@
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
-**Liste active** : [chantiers](CHANTIERS_RESTANTS.md) (ouverts seulement). Grille auto et sélection robuste DESIGN : optionnelles ([guide DESIGN](../pages/CERTUS_DESIGN.html#design-robust-search)).
+**Liste active** : [chantiers](CHANTIERS_RESTANTS.md) (ouverts seulement). Grille auto (dimensionnée par la TOT max ou le N max de la fenêtre) et sélection robuste DESIGN : optionnelles ([guide DESIGN](../pages/CERTUS_DESIGN.html#design-options)).
 
 **Branche** : `master`, poussée sur ordre de 👤 (`sparse-checkout` écarte les gros artefacts ; `git sparse-checkout disable` les restaure). **Python de référence : 3.15.2** (`requirements.lock`).
 
 **Répertoire unique (consigne absolue 👤 2026-11-19)** : travailler **exclusivement** dans le dépôt Drive `certus1111` (`D:\drivfl\...\CERTUS\certus1111`) — jamais de clone ni de déplacement ailleurs (ex. `C:\dev`).
 
-**Dernière validation complète** : le 2026-11-20 sous Windows sur `4a188494`, `validate_parallel.py` : oracle 1 253, unit 6 512, ui 1 704, reste 322, performance 41, contrôles documentaires (`coherence_md`, `check_claude_md`, `check_docs`) et ruff verts, `VALIDATION=GO`.
+**Dernière validation complète** : le 2026-11-21 sous Windows sur l'arbre des commits de la grille auto par TOT max ou N max (base `e7ae3217`), `validate_parallel.py` : oracle 1 253, unit 6 516 (un artefact de charge, vert seul en série), ui 1 707, reste 322, performance 41, contrôles documentaires (`coherence_md`, `check_claude_md`, `check_docs`) verts, ruff vert hors du dossier non suivi `reports/RICL_campagne24h_2026-11-20/` (accord de 👤), `c1_diff.py HEAD` : 9 172 tableaux identiques au bit, `VALIDATION=GO` ([journal](../reports/design_auto_grid_limits_2026-11-21/validation.txt)).
 
 En cas d'écart au bit : rejouer sur [cache Numba vierge](../reports/refactor_corridors_2026-11-11/cache_numba_arbre_neuf.md). **Décisions réservées à 👤** : §5.
 

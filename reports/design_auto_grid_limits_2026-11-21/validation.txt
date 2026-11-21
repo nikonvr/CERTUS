@@ -1,0 +1,93 @@
+campagne finie, départ 2026-11-21 12:35 ; autres python : 0
+
+=== validate_parallel sans ruff (2026-11-21 12:35) ===
+$ C:\Users\Fabien\AppData\Local\Programs\Python\Python315\python.exe scripts/validate_parallel.py --only docs oracle unit ui rest performance
+VALIDATION PARALLELE -- e7ae3217, 8 fichier(s) suivi(s) modifie(s)
+  python 3.15.2, 16 worker(s), ui 10, journaux : C:\Users\Fabien\AppData\Local\Temp\certus_validation_c1tss1vl
+  coherence_md    PASS      0:12  
+  check_claude_md PASS      0:00  
+  check_docs      PASS      0:00  
+  oracle          PASS      0:56  1253 passed
+  unit : 1 echec(s) en parallele, rejeu seul en serie...
+  unit            ARTEFACT  8:13  1 failed, 6516 passed, 7 skipped, 1 xfailed
+  ui              PASS      7:25  1707 passed, 12 skipped, 2 xfailed
+  rest            PASS      3:47  322 passed
+  performance     PASS      0:31  41 passed
+
+ARTEFACT de charge ou d'ordre (unit), verts seuls en serie :
+    tests/unit/test_strat_poem_anchors_are_exact_on_request.py::test_without_the_flag_the_kernel_keeps_the_coarse_samples_bit_for_bit
+VALIDATION=GO
+La reference de CLAUDE.md section 2 reste la suite complete en serie.
+code de sortie : 0
+
+=== ruff, dossier de la campagne exclu (2026-11-21 12:57) ===
+$ C:\Users\Fabien\AppData\Local\Programs\Python\Python315\python.exe -m ruff check . --extend-exclude reports/RICL_campagne24h_2026-11-20
+All checks passed!
+warning: Support for Python 3.15 is under development and may be unstable. Enable `preview` to remove this warning.
+code de sortie : 0
+
+=== c1_diff HEAD (2026-11-21 12:57) ===
+$ C:\Users\Fabien\AppData\Local\Programs\Python\Python315\python.exe scripts/c1_diff.py HEAD
+appelants.batch_abs              60          0         -            -
+appelants.batchc                 60          0         -            -
+appelants.batchc_abs             60          0         -            -
+appelants.batchu                 60          0         -            -
+appelants.batchu_abs             60          0         -            -
+appelants.batchw                 60          0         -            -
+appelants.batchw_abs             60          0         -            -
+appelants.front                 120          0         -            -
+appelants.front_abs             120          0         -            -
+appelants.full                  164          0         -            -
+appelants.full_abs              200          0         -            -
+normal.combination              120          0         -            -
+normal.combination_abs          120          0         -            -
+normal.cost0                     60          0         -            -
+normal.cost0_abs                 60          0         -            -
+normal.cost1                     60          0         -            -
+normal.cost1_abs                 60          0         -            -
+normal.fullexact                240          0         -            -
+normal.fullexact_abs            225          0         -            -
+normal.fused                    120          0         -            -
+normal.fused_abs                120          0         -            -
+normal.generic                  120          0         -            -
+normal.generic_abs              120          0         -            -
+normal.gradall0                 120          0         -            -
+normal.gradall0_abs             120          0         -            -
+normal.gradall1                 120          0         -            -
+normal.gradall1_abs             120          0         -            -
+normal.noback                   120          0         -            -
+normal.noback_abs               120          0         -            -
+normal.rtrback                  180          0         -            -
+normal.rtrback_abs              180          0         -            -
+normal.vecreal0                 120          0         -            -
+normal.vecreal0_abs             120          0         -            -
+normal.vecreal1                 120          0         -            -
+normal.vecreal1_abs             120          0         -            -
+oblique.backside                120          0         -            -
+oblique.backside_abs            120          0         -            -
+oblique.bundle                  240          0         -            -
+oblique.bundle_abs              240          0         -            -
+oblique.contrib                 180          0         -            -
+oblique.contrib_abs             180          0         -            -
+oblique.full                    120          0         -            -
+oblique.full_abs                120          0         -            -
+oblique.rtgrads0                240          0         -            -
+oblique.rtgrads0_abs            240          0         -            -
+oblique.rtgrads1                240          0         -            -
+oblique.rtgrads1_abs            240          0         -            -
+oblique.spectrum                120          0         -            -
+oblique.spectrum_abs            120          0         -            -
+strat.batch                      80          0         -            -
+strat.detailed                    3          0         -            -
+strat.growth                   2000          0         -            -
+strat.margins                   120          0         -            -
+strat.next                       60          0         -            -
+strat.scan                       90          0         -            -
+strat.states                     20          0         -            -
+strat.tprofile                   30          0         -            -
+strat.turning                   180          0         -            -
+
+C1 TENU : 9172 tableaux, tous identiques au bit
+code de sortie : 0
+
+FIN 13:05, code global 0

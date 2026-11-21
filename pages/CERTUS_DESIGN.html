@@ -147,7 +147,9 @@
                     <tr><td>Automatic restarts</td><td>Restart from the best design while the round improves by more
                         than 1%, with at most five restarts. Restore the best round if the last one is worse.</td></tr>
                     <tr><td>Configuration limits</td><td>The design file can set <code>max_layers</code>,
-                        <code>max_total_qwot</code> and <code>min_layer_ot_nm</code>. Setting
+                        <code>max_total_qwot</code> and <code>min_layer_ot_nm</code>. The first two are also the
+                        <strong>Max layers</strong> and <strong>Max TOT</strong> (QWOT at $\lambda_0$) fields of the
+                        window, where 0 means no limit. Setting
                         <code>_memetic_children = 0</code> on the window selects PGLOBAL.</td></tr>
                 </tbody>
             </table>
@@ -200,8 +202,19 @@
                         <td>Per-layer ceiling used to widen the global population search bounds.</td></tr>
                 </tbody>
             </table>
-            <p>The fixed grid samples each band in wavenumber. The automatic initial grid instead uses the optical
-                thickness $\sum_i n_i d_i$ and each target's wavenumber span. Refinement compares trapezoidal and
+            <p>The fixed grid samples each band in wavenumber. The automatic initial grid instead takes
+                $3 \cdot 4\,\mathrm{TOT}\,\Delta\sigma$ intervals per band, uniform in wavenumber, where $\Delta\sigma$ is the
+                band's wavenumber span. The TOT it resolves is the larger of the design's own $\sum_i n_i d_i$ and a
+                ceiling. The ceiling is the <strong>Max TOT</strong> when one is given. Otherwise, a
+                <strong>Max layers</strong> $N$ gives the ceiling $N / (4 \cdot 0.69 \cdot \sum \Delta\sigma)$, the
+                sum running over the merged bands. This is an empirical estimate by
+                degrees of freedom: 0.69 is the lowest ratio $N / (4\,\mathrm{TOT} \sum \Delta\sigma)$ found on the free
+                envelope of the 50/50 beamsplitter, $N$ = 8 to 34. Below the checkbox, the window shows the TOT used, what
+                set it, and the number of points per target. On the published 34-layer Tikhonravov design
+                (400–1200 nm), the grid sized from $N$ = 34 has 149 points and gives the RMSE within 1.7%.
+                The grid sized from the design's TOT has 80 points (11%), and 108 points per target give 4.4%
+                (<a href="../reports/design_auto_grid_limits_2026-11-21/bilan.md">measurement</a>).
+                Refinement compares trapezoidal and
                 Simpson quadrature in $\ln\lambda$ and adds points where the estimates disagree. A resonance that
                 lies between all sample points and midpoints can escape detection. Check narrow features on a
                 denser independent grid or with the resonance tool.

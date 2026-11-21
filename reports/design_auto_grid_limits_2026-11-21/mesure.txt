@@ -1,0 +1,11 @@
+file | grid | TOT nm (QWOT) from | points | RMSE grid | RMSE dense | error on the RMSE
+start | Points / Target 108 | - | 108 | 3.98097e-01 | 3.98069e-01 | 0.01%
+start | auto, no limit | 3825 (30.6) design | 78 | 3.97030e-01 | 3.98069e-01 | 0.26%
+start | auto, max layers 34 | 7391 (59.1) max layers | 149 | 3.98956e-01 | 3.98069e-01 | 0.22%
+start | label | Grid TOT 7391 nm (59.1 QWOT), from the max layers: 149 points (400-1200 nm: 149)
+start | auto, max layers 34, refined (1 rounds) | 7391 (59.1) max layers | 205 | 3.98203e-01 | 3.98069e-01 | 0.03%
+published | Points / Target 108 | - | 108 | 2.03883e-04 | 2.13229e-04 | 4.38%
+published | auto, no limit | 3924 (31.4) design | 80 | 1.89514e-04 | 2.13229e-04 | 11.12%
+published | auto, max layers 34 | 7391 (59.1) max layers | 149 | 2.09702e-04 | 2.13229e-04 | 1.65%
+published | label | Grid TOT 7391 nm (59.1 QWOT), from the max layers: 149 points (400-1200 nm: 149)
+published | auto, max layers 34, refined (3 rounds) | 7391 (59.1) max layers | 420 | 2.13201e-04 | 2.13229e-04 | 0.01%

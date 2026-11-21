@@ -14,11 +14,14 @@ import numpy as np
 import pytest
 
 from certus.core.certus_design_auto_grid import (
+    LAYERS_PER_NYQUIST_MIN,
     auto_grid_tot_nm,
     base_grid,
     estimate_layers_and_tot,
+    layers_tot_ceiling_nm,
     merge_bands,
     nyquist_count,
+    points_in_bands,
     refine_grid,
     target_values_and_weights,
 )
@@ -128,6 +131,53 @@ def test_an_antireflection_has_no_contrast_estimate():
 def test_the_grid_resolves_the_larger_of_the_design_and_the_ceiling():
     assert auto_grid_tot_nm(1000.0, None, 500.0) == 1000.0
     assert auto_grid_tot_nm(1000.0, 30, 500.0) == pytest.approx(3750.0)
+
+
+# A layer ceiling N gives a TOT ceiling by the degrees of freedom (owner, 2026-11-21): N layers shape about
+# 4 * TOT * sum(delta_sigma) * r values, r = N / (4 TOT sum(delta_sigma)) of the free envelope of the 50/50 beamsplitter
+# being 0.69 to 1.37 (report questions_design_2026-11-13, section 2.2); its least value bounds the TOT from above. An
+# empirical estimate: a TOT ceiling given by the user wins over it.
+
+
+def test_a_layer_ceiling_gives_a_tot_ceiling_by_the_degrees_of_freedom():
+    assert LAYERS_PER_NYQUIST_MIN == 0.69
+    sigma = 1.0 / 400.0 - 1.0 / 1200.0
+    assert layers_tot_ceiling_nm([(400.0, 1200.0)], 34) == pytest.approx(34 / (4.0 * 0.69 * sigma), rel=1e-12)
+    width = (1.0 / 400.0 - 1.0 / 500.0) + (1.0 / 600.0 - 1.0 / 700.0)
+    assert layers_tot_ceiling_nm([(400.0, 500.0), (600.0, 700.0)], 10) == pytest.approx(10 / (4.0 * 0.69 * width), rel=1e-12)
+    overlapping = layers_tot_ceiling_nm([(400.0, 500.0), (450.0, 600.0)], 10)
+    assert overlapping == pytest.approx(layers_tot_ceiling_nm([(400.0, 600.0)], 10), rel=1e-12), "a band counts once"
+    for layers, bands in ((None, [(400.0, 1200.0)]), (0, [(400.0, 1200.0)]), (34, []), (34, [(500.0, 500.0)])):
+        assert layers_tot_ceiling_nm(bands, layers) == 0.0
+
+
+def test_the_13_layer_beamsplitter_of_the_envelope_is_below_its_tot_ceiling():
+    # 19.02 QWOT at 500 nm for N = 13 (envelope of 2026-10-26); its own r is 0.82
+    assert layers_tot_ceiling_nm([(400.0, 1200.0)], 13) / 125.0 > 19.02
+
+
+def test_a_tot_ceiling_given_wins_over_the_estimate_from_the_layers_never_below_the_design():
+    bands = [(400.0, 1200.0)]
+    from_layers = layers_tot_ceiling_nm(bands, 34)
+    assert auto_grid_tot_nm(1000.0, None, 500.0, max_layers=34, bands=bands) == from_layers
+    assert auto_grid_tot_nm(1000.0, 30, 500.0, max_layers=34, bands=bands) == pytest.approx(3750.0)
+    assert auto_grid_tot_nm(1000.0, 80, 500.0, max_layers=34, bands=bands) == pytest.approx(10000.0)
+    assert auto_grid_tot_nm(9000.0, None, 500.0, max_layers=34, bands=bands) == 9000.0
+    assert auto_grid_tot_nm(9000.0, 30, 500.0, max_layers=34, bands=bands) == 9000.0
+
+
+def test_without_a_layer_ceiling_the_former_rule_holds_to_the_bit():
+    for stack, qwot in ((1000.0, None), (1000.0, 30), (4000.0, 30), (1234.5678, 17.25)):
+        before = auto_grid_tot_nm(stack, qwot, 500.0)
+        assert auto_grid_tot_nm(stack, qwot, 500.0, max_layers=None, bands=[(400.0, 1200.0)]) == before
+        assert auto_grid_tot_nm(stack, qwot, 500.0, max_layers=34) == before, "no band, no layer ceiling"
+
+
+def test_points_in_bands_counts_the_grid_inside_each_band():
+    grid = base_grid([(400.0, 500.0), (600.0, 700.0)], 2000.0)
+    counts = points_in_bands([(400.0, 500.0), (600.0, 700.0), (450.0, 650.0)], grid)
+    assert counts[0] + counts[1] == grid.size
+    assert counts[2] == np.count_nonzero((grid >= 450.0) & (grid <= 650.0))
 
 
 @pytest.mark.parametrize("has_back_calc", [False, True])

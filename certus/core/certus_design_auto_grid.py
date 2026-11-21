@@ -23,6 +23,10 @@ reflectance the targets ask for: a quarter-wave stack gives R = tanh^2(N rho), r
 width (4 / pi) rho; one interface brings (4 / pi) rho^2 of int atanh sqrt(R) d ln(sigma) and costs a quarter wave. On the
 50/50 beamsplitter 400-1200 nm (2.35 / 1.45) it gives 13 layers and 19.0 QWOT at 500 nm; the best known 13-layer design
 has 19.02 QWOT. One case, not a law: a first guess, to show, not to impose. It is 0 for an antireflection (R = 0).
+
+``auto_grid_tot_nm``: the TOT the base grid resolves, never below the design's: the ceiling ``max_total_qwot`` when
+given, else the estimate ``layers_tot_ceiling_nm`` from ``max_layers`` (degrees of freedom, empirical ratio
+``LAYERS_PER_NYQUIST_MIN``), else the design's alone.
 """
 
 from __future__ import annotations
@@ -41,6 +45,10 @@ OVERSAMPLING = 3.0
 REL_TOL = 0.01
 #: Highest reflectance the contrast estimate uses (atanh sqrt(R) diverges at 1).
 R_CAP = 0.9999
+#: Least ratio N / (4 * TOT * sum(delta_sigma)) measured on the free envelope of the 50/50 beamsplitter 400-1200 nm,
+#: N = 8 to 34 (median 1.19, at most 1.37; report questions_design_2026-11-13, section 2.2): with it, a layer ceiling
+#: gives a TOT ceiling that no design of that envelope exceeds. An empirical value, not a law.
+LAYERS_PER_NYQUIST_MIN = 0.69
 
 
 class TargetLike(Protocol):
@@ -215,8 +223,32 @@ def design_tot_nm(n_real: Sequence[float], thicknesses_nm: Sequence[float]) -> f
     return float(np.dot(np.asarray(n_real, dtype=np.float64), np.asarray(thicknesses_nm, dtype=np.float64)))
 
 
-def auto_grid_tot_nm(stack_tot_nm: float, max_total_qwot: Any, l0: float) -> float:
-    """TOT that the base grid must resolve: the larger of the design's and of the ceiling of the global stage
-    (``max_total_qwot`` quarter waves at ``l0``), when the file gives one."""
-    ceiling = float(max_total_qwot) * float(l0) / 4.0 if max_total_qwot else 0.0
+def layers_tot_ceiling_nm(bands: Iterable[tuple[float, float]], max_layers: Any, *,
+                          ratio: float = LAYERS_PER_NYQUIST_MIN) -> float:
+    """TOT ceiling (nm) of a design of at most ``max_layers`` layers, by its degrees of freedom: N layers shape about
+    ``ratio * 4 * TOT * sum(delta_sigma)`` independent values on the merged bands, so TOT <= N / (4 * ratio *
+    sum(delta_sigma)). 0 without a layer ceiling or without a band of nonzero width."""
+    width = sum(1.0 / lo - 1.0 / hi for lo, hi in merge_bands(bands) if hi > lo)
+    if not max_layers or width <= 0.0:
+        return 0.0
+    return float(max_layers) / (4.0 * float(ratio) * width)
+
+
+def points_in_bands(bands: Iterable[tuple[float, float]], wavelengths: np.ndarray) -> list[int]:
+    """Number of ``wavelengths`` inside each band (lmin, lmax), ends included, in the order of ``bands``."""
+    lam = np.asarray(wavelengths, dtype=np.float64).ravel()
+    return [int(np.count_nonzero((lam >= float(lo)) & (lam <= float(hi)))) for lo, hi in bands]
+
+
+def auto_grid_tot_nm(stack_tot_nm: float, max_total_qwot: Any, l0: float, *, max_layers: Any = None,
+                     bands: Iterable[tuple[float, float]] = ()) -> float:
+    """TOT that the base grid must resolve: the larger of the design's and of a ceiling. The ceiling is the one of the
+    global stage (``max_total_qwot`` quarter waves at ``l0``) when given; otherwise, with ``max_layers`` and the
+    ``bands``, the estimate ``layers_tot_ceiling_nm``; otherwise none."""
+    if max_total_qwot:
+        ceiling = float(max_total_qwot) * float(l0) / 4.0
+    elif max_layers:
+        ceiling = layers_tot_ceiling_nm(bands, max_layers)
+    else:
+        ceiling = 0.0
     return max(float(stack_tot_nm), ceiling)

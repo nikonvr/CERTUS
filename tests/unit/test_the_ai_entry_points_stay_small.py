@@ -3,7 +3,8 @@
 Every AI that takes the work over pays for these files in full, each session. Measured on 2026-10-18 with the `o200k_base` encoding:
 `CLAUDE.md` 4 000 tokens, section 0 of `docs/ETAT.md` 9 963 and `AGENTS.md` 132, so 14 095 before it could touch anything. After the split
 (rules in `CLAUDE.md`, the reference in `docs/REGLES_reference.md`, and separate on-demand records and actions),
-the same three cost 7 071, and `AGENTS.md` carries the instructions that keep the rest down.
+the same three cost 7 071, and `AGENTS.md` carried the instructions that keep the rest down. On 2026-11-21 (owner's
+request) `AGENTS.md` was removed and those instructions moved into `CLAUDE.md`, whose cap became the sum of the two.
 Nothing keeps that true by itself: each session appends a paragraph to the state file. These are the ratchets.
 
 * The caps below are a few percent above what was measured. Shrinking is free (lower the cap in the same commit). Raising one needs a reason that
@@ -25,8 +26,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 #: bytes of the file as git stores it (LF), re-measured 2026-11-19 after compaction
 CAPS = {
-    "CLAUDE.md": 6_200,
-    "AGENTS.md": 1_250,
+    "CLAUDE.md": 7_450,  # 6 200 + the 1 250 of AGENTS.md, merged into it on 2026-11-21
     "docs/CHANTIERS_RESTANTS.md": 2_780,
     "docs/ETAT_acquis.md": 990,
     "docs/REGLES_reference.md": 6_200,
@@ -69,14 +69,17 @@ def test_there_is_no_dot_ignore_file_at_the_root():
     assert not (ROOT / ".ignore").exists(), "ruff reads .ignore and would stop checking what it lists: use .rgignore, which only ripgrep reads"
 
 
-def test_the_instructions_reach_every_ai():
-    assert "@AGENTS.md" in _read("CLAUDE.md"), "Claude Code reads CLAUDE.md, not AGENTS.md: the import line is how it gets the reading discipline"
-    assert "CLAUDE.md" in _read("AGENTS.md"), "AGENTS.md is the entry of the other AIs: it must lead them to the rules"
+def test_the_reading_discipline_is_in_claude_md():
+    text = _read("CLAUDE.md")
+    why = "CLAUDE.md carries the reading discipline since AGENTS.md was merged into it (2026-11-21)"
+    assert "orient.py" in text, why
+    assert "pytest -q --no-cov" in text, why
+    assert not (ROOT / "AGENTS.md").exists(), "AGENTS.md was merged into CLAUDE.md on 2026-11-21 (owner's request)"
 
 
 def test_the_entry_points_name_only_scripts_and_documents_that_exist():
     missing = []
-    for source in ("AGENTS.md", "CLAUDE.md"):
+    for source in ("CLAUDE.md",):
         text = _read(source)
         scripts = sorted(set(re.findall(r"scripts\\([\w]+\.py)", text)))
         documents = sorted(set(re.findall(r"docs/([\w]+\.md)", text)))

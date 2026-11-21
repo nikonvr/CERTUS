@@ -33,8 +33,7 @@ MAX_LINES = 45  # le plafond du bref, verifie par tests/unit/test_orient.py
 
 #: Lus d'abord : (chemin, ce qu'il porte).
 READ_FIRST = (
-    ("CLAUDE.md", "les regles qui annulent un travail"),
-    ("AGENTS.md", "les consignes de sobriete de lecture"),
+    ("CLAUDE.md", "les regles qui annulent un travail et les consignes de sobriete de lecture"),
 )
 #: Lus a la demande : (chemin, quand les ouvrir).
 ON_DEMAND = (
@@ -183,7 +182,7 @@ def tree_lines() -> list[str]:
 
 def brief(with_processes: bool = True) -> str:
     etat = read("docs/ETAT.md")
-    lines = [f"orient  : {datetime.now():%Y-%m-%d %H:%M} | a lire dans l'ordre : CLAUDE.md, AGENTS.md, section 0 de docs/ETAT.md"]
+    lines = [f"orient  : {datetime.now():%Y-%m-%d %H:%M} | a lire dans l'ordre : CLAUDE.md, section 0 de docs/ETAT.md"]
 
     head = git("log", "-1", "--format=%h %s")
     branch = git("rev-parse", "--abbrev-ref", "HEAD")

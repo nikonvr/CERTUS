@@ -3,7 +3,14 @@
 Suite de **couches minces optiques** (PyQt6, NumPy/SciPy, Numba) : physique réelle — une erreur silencieuse fausse les résultats sans planter.
 
 - Règles ici ; détails par section dans [`docs/REGLES_reference.md`](docs/REGLES_reference.md) ; état dans [`docs/ETAT.md`](docs/ETAT.md) (lire §0 avant d'agir).
-- Sobriété : @AGENTS.md
+- Sobriété :
+  - `python scripts\orient.py` : tête git, arbre, processus python actifs (une mesure parallèle rend `RESULT=None`), dernière validation et coût des docs (`--carte` ajoute les titres).
+  - À la demande : `docs/CHANTIERS_RESTANTS.md`, `docs/ETAT_acquis.md`, `docs/REGLES_reference.md`.
+  - Jamais en entier : `reports/`, `studies/` (cachés à ripgrep par `.rgignore`) ; chercher par id (`rg -n "RICL" docs/CHANTIERS_RESTANTS.md`) ou lire `bilan.md`/`README.md`.
+  - Sortie sobre : `pytest -q --no-cov` (`-x`), jamais `--verbose` ; `git status -sb`, `git log --oneline -n 10`, `git diff --stat` avant `git diff`.
+  - Lire ciblé (`offset`, `limit`) ; ne pas relire ce qu'on vient d'écrire ; préférer Read/Grep.
+  - Une action, son résultat, la suivante : ni agents ni mesures en parallèle.
+  - Écrire court : un fait, un seul endroit ; rapport de campagne dans `reports/`.
 
 ## 1. Démarrage
 

@@ -505,6 +505,45 @@ class LayoutManager:
 
         row += 1
 
+        # Limits of the design (owner, 2026-11-21), the file's max_layers and max_total_qwot: 0 = none
+        self.ui.max_layers_spin = QSpinBox()
+        self.ui.max_layers_spin.setRange(0, 100000)
+        self.ui.max_layers_spin.setSpecialValueText("none")
+        self.ui.max_layers_spin.setToolTip(
+            "Most layers the workflow may grow to (max_layers); 0 = no limit.\n"
+            "With the automatic grid and no Max TOT, it sizes the grid through an estimated TOT ceiling:\n"
+            "N / (4 x 0.69 x sum of the band widths in wavenumber), an empirical ratio of the 50/50 envelope."
+        )
+        self.ui.max_layers_spin.valueChanged.connect(self.sync_design_limits)
+        opt_grid.addWidget(QLabel("Max layers:"), row, 0)
+        opt_grid.addWidget(self.ui.max_layers_spin, row, 1)
+
+        row += 1
+
+        self.ui.max_total_qwot_spin = QDoubleSpinBox()
+        self.ui.max_total_qwot_spin.setRange(0.0, 1.0e6)
+        self.ui.max_total_qwot_spin.setDecimals(3)
+        self.ui.max_total_qwot_spin.setSuffix(" QWOT")
+        self.ui.max_total_qwot_spin.setSpecialValueText("none")
+        self.ui.max_total_qwot_spin.setToolTip(
+            "Most total optical thickness of the global stage, in quarter waves at l0 (max_total_qwot); 0 = no limit.\n"
+            "With the automatic grid, the grid resolves this TOT (or the design's, if thicker); it wins over the\n"
+            "estimate from Max layers."
+        )
+        self.ui.max_total_qwot_spin.valueChanged.connect(self.sync_design_limits)
+        opt_grid.addWidget(QLabel("Max TOT:"), row, 0)
+        opt_grid.addWidget(self.ui.max_total_qwot_spin, row, 1)
+
+        row += 1
+
+        # What the automatic grid resolves and its points per target (shown only with the automatic grid)
+        self.ui.auto_grid_points_label = QLabel("")
+        self.ui.auto_grid_points_label.setWordWrap(True)
+        self.ui.auto_grid_points_label.setVisible(False)
+        opt_grid.addWidget(self.ui.auto_grid_points_label, row, 0, 1, 2)
+
+        row += 1
+
         # Least thickness of a final layer (owner, 2026-11-13): 5 nm was written in the code.
         self.ui.min_layer_spin = QDoubleSpinBox()
         self.ui.min_layer_spin.setRange(0.0, 100.0)
@@ -631,6 +670,13 @@ class LayoutManager:
         normal_incidence = not self.ui.oblique_mode
         self.ui.auto_grid_check.setEnabled(normal_incidence)
         self.ui.points_per_target_spin.setEnabled(not (normal_incidence and checked))
+        if hasattr(self.ui, "npts_spin"):
+            self.ui._update_optim_point_count()
+
+    def sync_design_limits(self, *_args) -> None:
+        """The limits of the design follow their fields, 0 being none (a loaded file then sets its exact values)."""
+        self.ui._max_layers_cap = int(self.ui.max_layers_spin.value()) or None
+        self.ui._max_total_qwot = float(self.ui.max_total_qwot_spin.value()) or None
         if hasattr(self.ui, "npts_spin"):
             self.ui._update_optim_point_count()
 

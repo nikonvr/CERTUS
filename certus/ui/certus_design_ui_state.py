@@ -41,6 +41,10 @@ DESIGN_OPTIMIZATION_TABLE = (
     ConfigField("auto_scale_y", "auto_scale_y_check", "bool", True),
     # Least thickness of a final layer, in nm: a file without it is a file at 5 nm, the value before the field existed.
     ConfigField("min_layer_nm", "min_layer_spin", "float", missing=5.0),
+    # Limits of the design, 0 = none: a file without them has none. `_collect_config` saves the exact values the
+    # window holds (`_max_layers_cap`, `_max_total_qwot`), which a file may give with more decimals than the field.
+    ConfigField("max_layers", "max_layers_spin", "int", missing=0),
+    ConfigField("max_total_qwot", "max_total_qwot_spin", "float", missing=0.0),
 )
 
 # The editable widgets the two tables do not carry, with the reason.
@@ -352,6 +356,7 @@ class StateManager:
 
         # Limits of the design, absent from most files: the most layers the workflow may grow to, and the most
         # total optical thickness (QWOT at l0, n4 convention) of the global stage. A file without them clears them.
+        # Their fields were set by the table; the values kept are the file's own, whatever the decimals of a field.
         self.ui._max_layers_cap = int(opt["max_layers"]) if opt.get("max_layers") else None
         self.ui._max_total_qwot = float(opt["max_total_qwot"]) if opt.get("max_total_qwot") else None
         # Least optical thickness n4 * d of a final layer, in nm; without it every final layer keeps 5 nm.

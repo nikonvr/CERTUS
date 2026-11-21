@@ -277,10 +277,9 @@ class CoreManager:
             return np.array([])
 
         if self._auto_wavelength_grid():
-            from certus.core.certus_design_auto_grid import auto_grid_tot_nm, base_grid
+            from certus.core.certus_design_auto_grid import base_grid
 
-            tot = auto_grid_tot_nm(self._current_tot_nm(active), getattr(self.ui, "_max_total_qwot", None), self.ui.l0_spin.value())
-            return base_grid([(t.lmin, t.lmax) for t in active], tot)
+            return base_grid([(t.lmin, t.lmax) for t in active], self._auto_grid_tot(active)[0])
 
         wls_list = []
 
@@ -324,6 +323,28 @@ class CoreManager:
         steps = getattr(self.ui, "_design_optional_steps", None) or {}
         return bool(steps.get("auto_wavelength_grid", False)) and not self.ui.oblique_mode
 
+    def _auto_grid_tot(self, active: list) -> tuple[float, str]:
+        """TOT (nm) the automatic grid resolves, and what sets it: "max TOT", "max layers" or "design"."""
+        from certus.core.certus_design_auto_grid import auto_grid_tot_nm
+
+        stack = self._current_tot_nm(active)
+        max_qwot = getattr(self.ui, "_max_total_qwot", None)
+        tot = auto_grid_tot_nm(stack, max_qwot, self.ui.l0_spin.value(),
+                               max_layers=getattr(self.ui, "_max_layers_cap", None), bands=[(t.lmin, t.lmax) for t in active])
+        return tot, ("design" if tot <= stack else "max TOT" if max_qwot else "max layers")
+
+    def _auto_grid_summary(self, active: list, wls: np.ndarray) -> str:
+        """What the automatic grid resolves, where it comes from, and its points per target."""
+        from certus.core.certus_design_auto_grid import points_in_bands
+
+        if not active:
+            return ""
+        tot, source = self._auto_grid_tot(active)
+        qwot = 4.0 * tot / self.ui.l0_spin.value()
+        counts = points_in_bands([(t.lmin, t.lmax) for t in active], wls)
+        per_target = ", ".join(f"{t.lmin:g}-{t.lmax:g} nm: {n}" for t, n in zip(active, counts, strict=True))
+        return f"Grid TOT {tot:.0f} nm ({qwot:.1f} QWOT), from the {source}: {len(wls)} points ({per_target})"
+
     def _current_tot_nm(self, active: list) -> float:
         """Total optical thickness of the front stack (nm), indices at the middle of the targets; 0 if unknown."""
         mats = self._get_materials()
@@ -366,10 +387,16 @@ class CoreManager:
 
         self.ui.npts_spin.setValue(len(wls))
 
-        hint = ""
+        hint = summary = ""
         if self._auto_wavelength_grid():
-            hint = self._layer_estimate_hint([t for t in self.ui._get_tgts() if t.valid()])
+            active = [t for t in self.ui._get_tgts() if t.valid()]
+            hint = self._layer_estimate_hint(active)
+            summary = self._auto_grid_summary(active, wls)
         self.ui.npts_spin.setToolTip(hint or "Total number of spectrum points evaluated (read-only).")
+        label = getattr(self.ui, "auto_grid_points_label", None)
+        if label is not None:
+            label.setText(summary)
+            label.setVisible(bool(summary))
 
     def _calculate_tikhonravov_points(self) -> int:
         """

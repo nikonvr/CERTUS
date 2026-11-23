@@ -12,6 +12,7 @@ from typing import Any
 import numpy as np
 
 from certus.core.certus_core import CFG, get_complex_dtype, get_export_config, get_float_dtype
+from certus.core.certus_design_immersion import immersed_cfg_for
 from certus.core.certus_design_worker_utils import design_substrate_thickness_nm
 
 
@@ -724,6 +725,8 @@ class DesignOrchestrator:
             "run_id": getattr(self.ui, "_workflow_run_id", None),
             "run_context": getattr(self.ui, "_workflow_run_ctx", None),
         }
+        if (cfg := immersed_cfg_for(self.ui, cfg)) is None:  # immersed medium: the air-equivalent problem
+            return
         if hasattr(self.ui, "progress_widget"):
             self.ui.progress_widget.start(phase="NEEDLE SCAN")
 

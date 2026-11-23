@@ -68,6 +68,7 @@ from certus.core.certus_core import (
     CFG,
     NUMERICAL_FAULT_EXCEPTIONS,
 )
+from certus.core.certus_design_immersion import incident_index_of, true_targets, true_wavelengths
 from certus.core.certus_design_worker_utils import (
     optim_calc_oblique_selected,
 )
@@ -244,6 +245,22 @@ def _design_objective_wrapper_common(app: Any, x: np.ndarray) -> Any:
         app._d_back,
         substrate_thickness_of(app),
     )
+
+def _run_incident_index(app: Any) -> float:
+    """Incident index of the run (1 = air); an immersed run works on the air-equivalent problem."""
+    cfg = getattr(app, "cfg", None)
+    return incident_index_of(cfg) if isinstance(cfg, dict) else 1.0
+
+
+def _true_wls(app: Any) -> np.ndarray:
+    """Display wavelengths of the run, in the units of the immersed problem (the same array in air)."""
+    return true_wavelengths(app._wls_display, _run_incident_index(app))
+
+
+def _true_tgts(app: Any) -> Any:
+    """Oblique targets of the run, in the units of the immersed problem (the same list in air)."""
+    return true_targets(app._oblique_tgts, _run_incident_index(app))
+
 
 def _design_compute_oblique_error_common(app: Any, ep_test: np.ndarray) -> Any:
     """Shared oblique-mode error grouped by (angle, polarization)."""
@@ -662,8 +679,8 @@ def _design_optimization_callback_common(app: Any, sample: Any) -> None:
 
                 result_data = {
                     "type": "intermediate",
-                    "self._wls": app._wls_display,
-                    "wls": app._wls_display,
+                    "self._wls": _true_wls(app),
+                    "wls": _true_wls(app),
                     "Ts": Ts,
                     "ep": ep_disp,
                     "rmse": current_rmse,
@@ -675,8 +692,8 @@ def _design_optimization_callback_common(app: Any, sample: Any) -> None:
                     result_data["self._oblique_mode"] = True
                     result_data["oblique_mode"] = True
                     result_data["spectra_display"] = spectra_display
-                    result_data["self._oblique_tgts"] = app._oblique_tgts
-                    result_data["oblique_tgts"] = app._oblique_tgts
+                    result_data["self._oblique_tgts"] = _true_tgts(app)
+                    result_data["oblique_tgts"] = _true_tgts(app)
                 else:
                     result_data["self._oblique_mode"] = False
                     result_data["oblique_mode"] = False
@@ -747,8 +764,8 @@ def _design_optimization_callback_common(app: Any, sample: Any) -> None:
 
                 best_data = {
                     "type": "intermediate",
-                    "self._wls": app._wls_display,
-                    "wls": app._wls_display,
+                    "self._wls": _true_wls(app),
+                    "wls": _true_wls(app),
                     "Ts": Ts_best,
                     "ep": ep_best.copy(),
                     "rmse": app.best_rmse_final,
@@ -760,8 +777,8 @@ def _design_optimization_callback_common(app: Any, sample: Any) -> None:
                     best_data["self._oblique_mode"] = True
                     best_data["oblique_mode"] = True
                     best_data["spectra_display"] = spectra_display_best if app._oblique_mode else {}
-                    best_data["self._oblique_tgts"] = app._oblique_tgts
-                    best_data["oblique_tgts"] = app._oblique_tgts
+                    best_data["self._oblique_tgts"] = _true_tgts(app)
+                    best_data["oblique_tgts"] = _true_tgts(app)
                 else:
                     best_data["self._oblique_mode"] = False
                     best_data["oblique_mode"] = False

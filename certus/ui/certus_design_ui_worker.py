@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 
 from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS
+from certus.core.certus_design_immersion import immersed_cfg_for
 from certus.core.certus_design_worker_utils import (
     design_substrate_thickness_nm,
     optim_rmse_display_string,
@@ -569,6 +570,8 @@ class WorkerManager:
                 "run_context": getattr(self.ui, "_workflow_run_ctx", None),
             }
 
+        if (cfg := immersed_cfg_for(self.ui, cfg)) is None:  # immersed medium: the air-equivalent problem
+            return
         # Start Worker
 
         self.ui._set_busy(True)

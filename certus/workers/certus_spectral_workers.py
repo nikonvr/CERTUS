@@ -23,6 +23,7 @@ from certus.core.certus_core import (
     get_complex_dtype,
     get_float_dtype,
 )
+from certus.core.certus_design_immersion import incident_index_of, true_targets, true_wavelengths
 from certus.physics.certus_inputs import is_s_polarization
 from certus.physics.certus_substrate_absorption import DEFAULT_SUBSTRATE_THICKNESS_NM, substrate_thickness_nm_of
 from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
@@ -287,6 +288,10 @@ def _build_eval_worker_result(
     oblique_tgts: Any,
 ) -> EvalWorkerResult:
     """Build EvalWorkerResult DTO from runtime outputs."""
+    # An immersed evaluation ran on the air-equivalent problem: wavelengths and targets back in true units.
+    n_inc = incident_index_of(cfg)
+    wls_vis, wls_optim = true_wavelengths(wls_vis, n_inc), true_wavelengths(wls_optim, n_inc)
+    oblique_tgts = true_targets(oblique_tgts, n_inc)
     return EvalWorkerResult.success(
         vis={"l": wls_vis, "Ts": ts_vis},
         optimization={"l": wls_optim, "Ts": ts_optim},

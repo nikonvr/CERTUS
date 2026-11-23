@@ -13,6 +13,7 @@ from typing import Any, Literal
 import numpy as np
 import pyqtgraph as pg
 
+from certus.core.certus_design_immersion import immersed_cfg_for
 from certus.core.certus_design_worker_utils import design_substrate_thickness_nm
 from certus.physics.certus_substrate_absorption import DEFAULT_SUBSTRATE_THICKNESS_NM
 from certus.ui.certus_engine_messages import ENGINE_WAITING
@@ -440,6 +441,9 @@ def spectrum_eval_build_worker_cfg(
 def spectrum_eval_start_worker(app: Any, cfg: dict[str, Any], eval_start: float) -> None:
 
     from certus.workers.certus_spectral_workers import EvalWorker
+
+    if (cfg := immersed_cfg_for(app, cfg)) is None:  # immersed medium: shown at the true wavelengths
+        return
 
     app._current_eval_generation += 1
 

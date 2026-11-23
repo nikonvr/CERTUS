@@ -6,6 +6,7 @@ from typing import Any
 import pyqtgraph as pg
 
 from certus.core.certus_core import CFG
+from certus.ui.certus_design_contest_score import show_oic2025_b1_score
 from certus.ui.certus_icons import set_themed_icon
 from certus.ui.certus_overview_tab import CertusKpiBanner, build_synthesis_tab
 from certus.ui.certus_qt_widgets import (
@@ -320,6 +321,44 @@ class LayoutManager:
         self.ui.oblique_check.stateChanged.connect(self.ui._toggle_oblique_mode)
 
         param_layout.addWidget(self.ui.oblique_check)
+
+        # Incident medium: 1 = air; above, the coating is lit from a glass (a cube, a prism) in the oblique mode
+        inc_lay = QHBoxLayout()
+
+        self.ui.incident_index_spin = QDoubleSpinBox()
+
+        self.ui.incident_index_spin.setRange(1.0, 4.0)
+
+        self.ui.incident_index_spin.setDecimals(4)
+
+        self.ui.incident_index_spin.setSingleStep(0.01)
+
+        self.ui.incident_index_spin.setValue(1.0)
+
+        self.ui.incident_index_spin.setToolTip(
+            "Index of the medium the light comes from: 1 for air; 1.80 for a coating on the hypotenuse of a glass cube "
+            "of index 1.80. Oblique mode only, back side off; the angles of the targets are angles in that medium."
+        )
+
+        self.ui.incident_index_spin.valueChanged.connect(self.ui._on_schedule_eval_instant_signal)
+
+        inc_lay.addWidget(QLabel("incident medium n:"))
+
+        inc_lay.addWidget(self.ui.incident_index_spin)
+
+        param_layout.addLayout(inc_lay)
+
+        # Score of the OIC 2025 contest, Problem B.1 (immersed notch filter), for the design on display
+        self.ui.oic2025_b1_btn = QPushButton("Contest score (B.1)")
+
+        self.ui.oic2025_b1_btn.setToolTip(
+            "Contest score of the current design for Problem B.1 of the OIC 2025 design contest (cube of index 1.80, "
+            "45 degrees, 3001 points), with the check of its rules. The design is not optimized on this score."
+        )
+
+        self.ui.oic2025_b1_btn.clicked.connect(functools.partial(show_oic2025_b1_score, self.ui))
+
+        param_layout.addWidget(self.ui.oic2025_b1_btn)
 
         # Auto Y Scale or Fixed (0-1)
 

@@ -46,6 +46,7 @@ def _keys(path: Path) -> dict:
     [
         ("example_design/JSON-design-example.json", (DESIGN,)),
         ("example_design/JSON-design-oblique-example.json", (DESIGN,)),
+        ("example_design/JSON-design-OIC2025-B1.json", (DESIGN,)),
         ("example_strat/JSON-strat-example.json", (STRAT,)),
         ("example_strat/JSON-strat-bandpass-3cav.json", (STRAT,)),
         ("example_field/test_hr_mirror.json", (FIELD,)),

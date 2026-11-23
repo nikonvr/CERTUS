@@ -58,6 +58,7 @@ _DESIGN_JSONS = [
     "example_design/JSON-design-example.json",
     "example_design/JSON-design-optimized.json",
     "example_design/JSON-design-oblique-example.json",
+    "example_design/JSON-design-OIC2025-B1.json",
     "example_design/JSON-design-seed-A.json",
     "example_design/JSON-design-seed-B.json",
     "example_design/JSON-design-target-achieved.json",

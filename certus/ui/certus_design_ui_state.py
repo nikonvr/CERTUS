@@ -23,6 +23,10 @@ DESIGN_CONFIG_TABLE = (
     ConfigField("back_coat", "back_coat_check", "bool", False),
     # Substrate thickness, mm: a file without it is a file at 1 mm, the thickness every kernel assumed before the field.
     ConfigField("substrate_thickness_mm", "sub_thickness_mm_spin", "float", 1.0, missing=1.0),
+    # Index of the incident medium (2026-11-23): a file without it is lit from air; saved only when it is not air, so
+    # the files saved in air are unchanged.
+    ConfigField("incident_index", "incident_index_spin", "float", 1.0, missing=1.0,
+                saved_if=lambda window: float(window.incident_index_spin.value()) != 1.0),
 )
 
 # The settings of the "optimization" block (the files of example/example_design name it "optim").
@@ -107,6 +111,9 @@ class StateManager:
 
             if hasattr(self.ui, "oblique_check"):
                 self.ui.oblique_check.setChecked(False)
+
+            if hasattr(self.ui, "incident_index_spin"):
+                self.ui.incident_index_spin.setValue(1.0)
 
             if hasattr(self.ui, "auto_scale_y_check"):
                 self.ui.auto_scale_y_check.setChecked(True)

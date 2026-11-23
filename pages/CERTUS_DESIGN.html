@@ -122,6 +122,27 @@
                 or in the <a href="#design-example">50/50 example above</a>.</p>
         </section>
 
+        <section id="design-immersed">
+            <h2>Immersed incidence · the OIC 2025 notch filter</h2>
+            <p>A coating on the hypotenuse of a glass cube is lit from the glass, not from air. In oblique mode, set
+                <strong>incident medium n</strong> to the index of that glass; the target angles are then angles in
+                it. DESIGN solves the equivalent problem lit from air, in which every index and every wavelength is
+                divided by $n_\mathrm{inc}$: the tilted admittances are all divided by $n_\mathrm{inc}$ and the phases
+                $2\pi n d\cos\theta/\lambda$ are unchanged, so R and T are exactly those of the immersed coating. The
+                thicknesses stay physical, and spectra and targets are shown at the true wavelengths. The rear face
+                must be off: the equivalence needs a semi-infinite exit medium. At $n_\mathrm{inc}=1$ nothing changes,
+                and a file lit from air does not store the field.</p>
+            <p>The <a href="../example/example_design/JSON-design-OIC2025-B1.json">OIC 2025 B.1 example</a> sets
+                Problem B.1 of the 2025 design contest as a component specification: a cube of index 1.80 on both
+                sides, 45&deg;, $R_s=1$ at 450, 550 and 650 nm, $T_s=1$ between the lines and $T_p=1$ from 400 to
+                700 nm. The window has five material slots: H (2.25) and L (1.38, the M of the contest) are the two
+                materials of the best designs, and A, B, C hold 2.15, 2.00 and 1.65. The button
+                <strong>Contest score (B.1)</strong> gives the contest score of the current design on its 3001
+                wavelengths, with the check of its rules (100 layers, 20&nbsp;&micro;m, contest materials). DESIGN
+                does not minimize that score: it counts only points above 99&nbsp;%, and a design that minimizes it
+                may reflect part of the light just below the threshold around and between the notches.</p>
+        </section>
+
         <section id="current-design">
             <h2>Choose a search</h2>
             <table>
